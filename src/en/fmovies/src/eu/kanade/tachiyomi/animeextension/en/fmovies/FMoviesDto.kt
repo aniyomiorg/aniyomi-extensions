@@ -39,3 +39,18 @@ data class FMoviesSubs(
 data class RawResponse(
     val rawURL: String,
 )
+
+@Serializable
+data class VidsrcResponse(
+    val result: ResultObject,
+) {
+    @Serializable
+    data class ResultObject(
+        val sources: List<SourceObject>,
+    ) {
+        @Serializable
+        data class SourceObject(
+            val file: String,
+        )
+    }
+}

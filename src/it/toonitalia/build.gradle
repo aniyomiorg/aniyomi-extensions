@@ -7,7 +7,7 @@ ext {
     extName = 'Toonitalia'
     pkgNameSuffix = 'it.toonitalia'
     extClass = '.Toonitalia'
-    extVersionCode = 10
+    extVersionCode = 14
     libVersion = '13'
 }
 

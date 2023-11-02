@@ -15,11 +15,10 @@ class RineCloud : AnimeStream(
     override val prefQualityValues = arrayOf("1080p", "720p", "480p", "360p", "240p")
     override val prefQualityEntries = prefQualityValues
 
+    private val rinecloudExtractor by lazy { RineCloudExtractor(client, headers) }
     override fun getVideoList(url: String, name: String): List<Video> {
         return when {
-            "rine.cloud" in url -> {
-                RineCloudExtractor(client).videosFromUrl(url, headers)
-            }
+            "rine.cloud" in url -> rinecloudExtractor.videosFromUrl(url)
             else -> emptyList()
         }
     }

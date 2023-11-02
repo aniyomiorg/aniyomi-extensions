@@ -12,12 +12,14 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.FormBody
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -205,20 +207,33 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
 
+    private val playlistUtils by lazy { PlaylistUtils(client, headers) }
+
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val videoList = mutableListOf<Video>()
 
-        val iframeElement = document.selectFirst("iframe")
-        val iframeUrl = if (iframeElement == null) {
-            val script = document.selectFirst("script:containsData(movie_player)")?.data() ?: error("Failed to extract iframe")
-            val newDoc = client.newCall(
-                GET(baseUrl + script.substringAfter("url : \"..").substringBefore("\"")),
-            ).execute().asJsoup()
-            newDoc.selectFirst("iframe")?.attr("src") ?: error("Failed to extract iframe")
-        } else {
-            iframeElement.attr("src")
-        }
+        val form = document.selectFirst("form.tt") ?: error("Failed to generate form")
+        val postUrl = form.attr("action")
+
+        val postBody = FormBody.Builder().apply {
+            form.select("input[type=hidden][name][value]").forEach {
+                add(it.attr("name"), it.attr("value"))
+            }
+        }.build()
+
+        val postHeaders = headers.newBuilder().apply {
+            add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+            add("Content-Type", "application/x-www-form-urlencoded")
+            add("Host", postUrl.toHttpUrl().host)
+            add("Origin", baseUrl)
+            add("Referer", "$baseUrl/")
+        }.build()
+
+        val newDocument = client.newCall(
+            POST(postUrl, body = postBody, headers = postHeaders),
+        ).execute().use { it.asJsoup() }
+
+        val iframeUrl = newDocument.selectFirst("iframe")?.attr("src") ?: error("Failed to extract iframe")
 
         val iframeHeaders = headers.newBuilder()
             .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
@@ -263,62 +278,52 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             iframeUrl.substringAfter("data=")
         }
 
-        val postHeaders = headers.newBuilder()
-            .add("Accept", "*/*")
-            .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-            .add("Origin", "https://${iframeUrl.toHttpUrl().host}")
-            .add("Referer", iframeUrl)
-            .add("X-Requested-With", "XMLHttpRequest")
-            .add("Cookie", cookieValue.substringBefore(";"))
-            .build()
+        val videoPostHeaders = headers.newBuilder().apply {
+            add("Accept", "*/*")
+            add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+            add("Origin", "https://${iframeUrl.toHttpUrl().host}")
+            add("Referer", iframeUrl)
+            add("X-Requested-With", "XMLHttpRequest")
+            add("Cookie", cookieValue.substringBefore(";"))
+        }.build()
 
-        val postBody = "hash=$hash&r=${java.net.URLEncoder.encode("$baseUrl/", "utf-8")}"
+        val videoPostBody = "hash=$hash&r=${java.net.URLEncoder.encode("$baseUrl/", "utf-8")}"
             .toRequestBody("application/x-www-form-urlencoded".toMediaType())
 
         val postResponse = client.newCall(
-            POST("https://${iframeUrl.toHttpUrl().host}/player/index.php?data=$hash&do=getVideo", body = postBody, headers = postHeaders),
-        ).execute()
+            POST("https://${iframeUrl.toHttpUrl().host}/player/index.php?data=$hash&do=getVideo", body = videoPostBody, headers = videoPostHeaders),
+        ).execute().use { it.body.string() }
 
-        val parsed = json.decodeFromString<IframeResponse>(postResponse.body.string())
+        val parsed = json.decodeFromString<IframeResponse>(postResponse)
 
-        if (parsed.hls) {
-            val playlistHeaders = headers.newBuilder()
-                .add("Accept", "*/*")
-                .add("Cookie", cookieValue.substringBefore(";"))
-                .add("Host", iframeUrl.toHttpUrl().host)
-                .add("Referer", iframeUrl)
-                .add("Sec-Fetch-Dest", "empty")
-                .add("Sec-Fetch-Mode", "cors")
-                .add("Sec-Fetch-Site", "same-origin")
-                .add("TE", "trailers")
-                .build()
+        return if (parsed.hls) {
+            val masterHeaders = headers.newBuilder().apply {
+                add("Accept", "*/*")
+                add("Cookie", cookieValue.substringBefore(";"))
+                add("Host", iframeUrl.toHttpUrl().host)
+                add("Referer", iframeUrl)
+                add("Sec-Fetch-Dest", "empty")
+                add("Sec-Fetch-Mode", "cors")
+                add("Sec-Fetch-Site", "same-origin")
+                add("TE", "trailers")
+            }.build()
 
-            val masterPlaylist = client.newCall(
-                GET(parsed.videoSource, headers = playlistHeaders),
-            ).execute().body.string()
+            fun genVideoHeaders(baseHeaders: Headers, referer: String, videoUrl: String): Headers {
+                return baseHeaders.newBuilder().apply {
+                    add("Accept", "*/*")
+                    add("Origin", "https://${iframeUrl.toHttpUrl().host}")
+                    add("Referer", "https://${iframeUrl.toHttpUrl().host}/")
+                }.build()
+            }
 
-            val videoHeaders = headers.newBuilder()
-                .add("Accept", "*/*")
-                .add("Origin", baseUrl)
-                .add("Referer", "$baseUrl/")
-                .add("Sec-Fetch-Dest", "empty")
-                .add("Sec-Fetch-Mode", "cors")
-                .add("Sec-Fetch-Site", "same-origin")
-                .build()
-
-            masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
-                .forEach {
-                    val quality = it.substringAfter("RESOLUTION=").substringAfter("x")
-                        .substringBefore(",").substringBefore("\n") + "p"
-                    val videoUrl = it.substringAfter("\n").substringBefore("\n")
-
-                    videoList.add(Video(videoUrl, quality, videoUrl, headers = videoHeaders, subtitleTracks = subtitleList))
-                }
+            playlistUtils.extractFromHls(
+                parsed.videoSource,
+                masterHeadersGen = { _, _ -> masterHeaders },
+                videoHeadersGen = ::genVideoHeaders,
+            )
+        } else {
+            emptyList()
         }
-
-        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
-
-        return videoList.sort()
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("Not Used")

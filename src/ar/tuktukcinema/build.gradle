@@ -5,11 +5,12 @@ ext {
     extName = 'توك توك سينما'
     pkgNameSuffix = 'ar.tuktukcinema'
     extClass = '.Tuktukcinema'
-    extVersionCode = 8
+    extVersionCode = 10
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-uqload-extractor'))
     implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-streamtape-extractor'))

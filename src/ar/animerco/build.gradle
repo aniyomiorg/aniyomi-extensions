@@ -7,11 +7,12 @@ ext {
     extName = 'Animerco'
     pkgNameSuffix = 'ar.animerco'
     extClass = '.Animerco'
-    extVersionCode = 31
+    extVersionCode = 34
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-uqload-extractor'))
     implementation(project(':lib-gdriveplayer-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-dood-extractor'))

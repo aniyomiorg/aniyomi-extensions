@@ -6,7 +6,7 @@ import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animeextension.en.multimovies.extractors.AutoEmbedExtractor
 import eu.kanade.tachiyomi.animeextension.en.multimovies.extractors.MultimoviesCloudExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -28,11 +28,11 @@ import uy.kohesive.injekt.api.get
 class Multimovies : DooPlay(
     "en",
     "Multimovies",
-    "https://multimovies.shop",
+    "https://multimovies.live",
 ) {
     override val client = network.cloudflareClient
 
-    private val defaultBaseUrl = "https://multimovies.shop"
+    private val defaultBaseUrl = "https://multimovies.live"
 
     override val baseUrl by lazy { getPrefBaseUrl() }
 
@@ -199,7 +199,7 @@ class Multimovies : DooPlay(
     companion object {
         private const val RESTART_ANIYOMI = "Restart Aniyomi to apply new setting."
         private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
-        private val BASE_URL_PREF = "overrideBaseUrl_v${AppInfo.getVersionName()}"
+        private val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_CODE}"
         private const val BASE_URL_PREF_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
 
         private const val PREF_SERVER_KEY = "preferred_server"

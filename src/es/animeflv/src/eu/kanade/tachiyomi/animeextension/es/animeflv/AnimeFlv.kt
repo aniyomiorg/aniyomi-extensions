@@ -14,10 +14,10 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
@@ -41,7 +41,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "es"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -51,24 +51,30 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+        private val QUALITY_LIST = arrayOf("1080", "720", "480", "360")
+
+        private const val PREF_SERVER_KEY = "preferred_server"
+        private const val PREF_SERVER_DEFAULT = "YourUpload"
+        private val SERVER_LIST = arrayOf("MailRu", "Okru", "YourUpload", "DoodStream", "StreamTape")
+    }
+
     override fun popularAnimeSelector(): String = "div.Container ul.ListAnimes li article"
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/browse?order=rating&page=$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(
-            baseUrl + element.select("div.Description a.Button")
-                .attr("href"),
-        )
+        anime.setUrlWithoutDomain(element.select("div.Description a.Button").attr("abs:href"))
         anime.title = element.select("a h3").text()
         anime.thumbnail_url = try {
             element.select("a div.Image figure img").attr("src")
         } catch (e: Exception) {
             element.select("a div.Image figure img").attr("data-cfsrc")
         }
-        anime.description =
-            element.select("div.Description p:eq(2)").text().removeSurrounding("\"")
+        anime.description = element.select("div.Description p:eq(2)").text().removeSurrounding("\"")
         return anime
     }
 
@@ -113,19 +119,22 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 jObject["SUB"]!!.jsonArray!!.forEach { servers ->
                     val json = servers!!.jsonObject
                     val quality = json!!["title"]!!.jsonPrimitive!!.content
-                    var url = json!!["code"]!!.jsonPrimitive!!.content
+                    val url = json!!["code"]!!.jsonPrimitive!!.content
                     val extractedVideos = runCatching {
                         when (quality) {
                             "Stape" -> {
                                 val stapeUrl = json!!["url"]!!.jsonPrimitive!!.content
-                                StreamTapeExtractor(client).videoFromUrl(stapeUrl)
-                                    ?.let(::listOf)
+                                StreamTapeExtractor(client).videoFromUrl(stapeUrl)?.let(::listOf)
                             }
-                            "Doodstream" ->
-                                DoodExtractor(client).videoFromUrl(url, "DoodStream", false)
-                                    ?.let(::listOf)
+                            "Doodstream" -> DoodExtractor(client).videoFromUrl(url, "DoodStream", false)?.let(::listOf)
                             "Okru" -> OkruExtractor(client).videosFromUrl(url)
                             "YourUpload" -> YourUploadExtractor(client).videoFromUrl(url, headers = headers)
+                            "SW" -> {
+                                val docHeaders = headers.newBuilder()
+                                    .add("Referer", "$baseUrl/")
+                                    .build()
+                                StreamWishExtractor(client, docHeaders).videosFromUrl(url, videoNameGen = { "StreamWish:$it" })
+                            }
                             else -> null
                         }
                     }.getOrNull() ?: emptyList<Video>()
@@ -141,27 +150,6 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
-
-    override fun List<Video>.sort(): List<Video> {
-        return try {
-            val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
-            ).toTypedArray()
-            val userPreferredQuality = preferences.getString("preferred_quality", "Okru:720p")
-            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
-            if (preferredIdx != -1) {
-                videoSorted.drop(preferredIdx + 1)
-                videoSorted[0] = videoSorted[preferredIdx]
-            }
-            videoSorted.toList()
-        } catch (e: Exception) {
-            this
-        }
-    }
-
-    private fun getNumberFromString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
-    }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
@@ -275,9 +263,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         fun toUriPart() = vals[state].second
     }
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        return popularAnimeFromElement(element)
-    }
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
     override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
@@ -285,16 +271,12 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = externalOrInternalImg(document.selectFirst("div.AnimeCover div.Image figure img")!!.attr("src"))
+        anime.thumbnail_url = document.selectFirst("div.AnimeCover div.Image figure img")!!.attr("abs:src")
         anime.title = document.selectFirst("div.Ficha.fchlt div.Container .Title")!!.text()
         anime.description = document.selectFirst("div.Description")!!.text().removeSurrounding("\"")
         anime.genre = document.select("nav.Nvgnrs a").joinToString { it.text() }
         anime.status = parseStatus(document.select("span.fa-tv").text())
         return anime
-    }
-
-    private fun externalOrInternalImg(url: String): String {
-        return if (url.contains("https")) url else "$baseUrl/$url"
     }
 
     private fun parseStatus(statusString: String): Int {
@@ -313,19 +295,25 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector() = popularAnimeSelector()
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(server, true) },
+                { it.quality.contains(quality) },
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
+        ).reversed()
+    }
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf(
-                "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
-                "YourUpload", "DoodStream", "StreamTape",
-            ) // video servers without resolution
-            entryValues = arrayOf(
-                "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
-                "YourUpload", "DoodStream", "StreamTape",
-            ) // video servers without resolution
-            setDefaultValue("Okru:720p")
+        ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
+            title = "Preferred server"
+            entries = SERVER_LIST
+            entryValues = SERVER_LIST
+            setDefaultValue(PREF_SERVER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -334,7 +322,22 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = "Preferred quality"
+            entries = QUALITY_LIST
+            entryValues = QUALITY_LIST
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
     }
 }

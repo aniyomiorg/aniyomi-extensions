@@ -59,7 +59,7 @@ object AnimeStreamFilters {
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
-        if (filters.isEmpty()) return FilterSearchParams()
+        if (filters.isEmpty() || !filterInitialized()) return FilterSearchParams()
 
         return FilterSearchParams(
             filters.parseCheckbox<GenresFilter>(GENRES_LIST, "genre"),
@@ -76,7 +76,7 @@ object AnimeStreamFilters {
 
     fun filterInitialized() = ::filterElements.isInitialized
 
-    private fun getPairListByIndex(index: Int) = filterElements.get(index)
+    fun getPairListByIndex(index: Int) = filterElements.get(index)
         .select("li")
         .map { element ->
             val key = element.selectFirst("label")!!.text()

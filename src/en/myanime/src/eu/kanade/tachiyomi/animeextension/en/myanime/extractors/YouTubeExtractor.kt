@@ -27,7 +27,6 @@ class YouTubeExtractor(private val client: OkHttpClient) {
 
     fun videosFromUrl(url: String, prefix: String): List<Video> {
         // Ported from https://github.com/dermasmid/scrapetube/blob/master/scrapetube/scrapetube.py
-        // TODO: Make code prettier
         // GET KEY
         var ytcfgString = ""
         val videoId = url.substringAfter("/embed/").substringBefore("?")
@@ -97,7 +96,7 @@ class YouTubeExtractor(private val client: OkHttpClient) {
         // Get Audio
         for (format in formats) {
             if (format.jsonObject["mimeType"]!!.jsonPrimitive.content.startsWith("audio/webm")) {
-                try {
+                runCatching {
                     audioTracks.add(
                         Track(
                             format.jsonObject["url"]!!.jsonPrimitive.content,
@@ -105,7 +104,7 @@ class YouTubeExtractor(private val client: OkHttpClient) {
                                 " (${formatBits(format.jsonObject["averageBitrate"]!!.jsonPrimitive.long)}ps)",
                         ),
                     )
-                } catch (a: Exception) { }
+                }
             }
         }
 
@@ -118,15 +117,14 @@ class YouTubeExtractor(private val client: OkHttpClient) {
 
             for (caption in captionTracks) {
                 val captionJson = caption.jsonObject
-                try {
+                runCatching {
                     subtitleTracks.add(
                         Track(
-                            // TODO: Would replacing srv3 with vtt work for every video?
                             captionJson["baseUrl"]!!.jsonPrimitive.content.replace("srv3", "vtt"),
                             captionJson["name"]!!.jsonObject["runs"]!!.jsonArray[0].jsonObject["text"]!!.jsonPrimitive.content,
                         ),
                     )
-                } catch (a: Exception) { }
+                }
             }
         }
 

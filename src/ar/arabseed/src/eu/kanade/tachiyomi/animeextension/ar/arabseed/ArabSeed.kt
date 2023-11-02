@@ -1,11 +1,11 @@
 package eu.kanade.tachiyomi.animeextension.ar.arabseed
 
 import android.app.Application
-import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -13,9 +13,15 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.OkHttpClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -36,11 +42,11 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = false
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
     override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -91,18 +97,30 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "div.containerServers ul li"
 
     private fun videosFromElement(document: Document): List<Video> {
-        return document.select(videoListSelector()).mapNotNull { element ->
-            val dataQu = element.text()
+        return document.select(videoListSelector()).parallelMap { element ->
+            val quality = element.text()
             val embedUrl = element.attr("data-link")
-            when {
-                embedUrl.contains("reviewtech") -> {
-                    val iframeResponse = client.newCall(GET(embedUrl)).execute().asJsoup()
-                    val videoUrl = iframeResponse.selectFirst("source")!!.attr("src")
-                    Video(embedUrl, dataQu + "p", videoUrl.replace("https", "http"))
-                }
-                else -> null
+            runCatching { getVideosFromUrl(embedUrl, quality) }.getOrElse { emptyList() }
+        }.flatten()
+    }
+
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+
+    private fun getVideosFromUrl(url: String, quality: String): List<Video> {
+        return when {
+            "reviewtech" in url || "reviewrate" in url -> {
+                val iframeResponse = client.newCall(GET(url)).execute()
+                    .use { it.asJsoup() }
+                val videoUrl = iframeResponse.selectFirst("source")!!.attr("abs:src")
+                listOf(Video(videoUrl, quality + "p", videoUrl))
             }
-        }
+            "dood" in url -> doodExtractor.videosFromUrl(url)
+            "fviplions" in url || "wish" in url -> streamwishExtractor.videosFromUrl(url)
+            "voe.sx" in url -> voeExtractor.videoFromUrl(url)?.let(::listOf)
+            else -> null
+        } ?: emptyList()
     }
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
@@ -232,13 +250,19 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(videoQualityPref)
     }
 
+    // ============================= Utilities ==============================
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
+
     companion object {
         // From egydead(ar)
-        private const val PREF_DOMAIN_KEY = "default_domain"
+        private const val PREF_DOMAIN_KEY = "default_domain_v${BuildConfig.VERSION_NAME}"
         private const val PREF_DOMAIN_TITLE = "Override default domain with a custom, different one"
-        private const val PREF_DOMAIN_DEFAULT = "https://g20.arabseed.ink"
+        private const val PREF_DOMAIN_DEFAULT = "https://m95.arabseed.show"
         private const val PREF_DOMAIN_DIALOG_TITLE = "Enter custom domain"
-        private const val PREF_DOMAIN_DIALOG_MESSAGE = "Default/Original domain: https://g20.arabseed.ink"
+        private const val PREF_DOMAIN_DIALOG_MESSAGE = "Default/Original domain: $PREF_DOMAIN_DEFAULT"
         private const val PREF_DOMAIN_SUMMARY = "You can change the site domain from here"
         private const val PREF_DOMAIN_TOAST = "Restart Aniyomi to apply changes"
 

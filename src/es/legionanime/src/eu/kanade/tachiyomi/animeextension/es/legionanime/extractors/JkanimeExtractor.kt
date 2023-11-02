@@ -33,7 +33,8 @@ class JkanimeExtractor(
     }
 
     fun getDesuFromUrl(url: String): Video {
-        val document = client.newCall(GET(url)).execute().asJsoup()
+        val headers = Headers.Builder().add("Referer", "https://jkanime.net/").build()
+        val document = client.newCall(GET(url, headers)).execute().asJsoup()
         val script = document.selectFirst("script:containsData(var parts = {)")!!.data()
         val streamUrl = script.substringAfter("url: '").substringBefore("'")
         return Video(streamUrl, "Desu", streamUrl)

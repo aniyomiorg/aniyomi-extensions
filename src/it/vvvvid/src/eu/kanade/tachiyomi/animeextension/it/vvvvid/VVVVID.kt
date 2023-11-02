@@ -547,7 +547,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun getRandomIntString(): String {
-        val allowedChars = ('0'..'9')
+        val allowedChars = '0'..'9'
         return (1..16)
             .map { allowedChars.random() }
             .joinToString("")
@@ -571,7 +571,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
         var b = false
         val mSize = m.size
 
-        while ((!b) && o < mSize) {
+        while (!b && o < mSize) {
             var n = m[o] shl 2
             o++
             var k = -1

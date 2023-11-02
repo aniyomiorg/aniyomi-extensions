@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.all.jellyfin
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
@@ -34,6 +35,10 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -47,11 +52,43 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
 
     private val json: Json by injectLazy()
 
-    override val client: OkHttpClient =
-        network.client
-            .newBuilder()
+    private fun getUnsafeOkHttpClient(): OkHttpClient {
+        // Create a trust manager that does not validate certificate chains
+        val trustAllCerts = arrayOf<TrustManager>(
+            @SuppressLint("CustomX509TrustManager")
+            object : X509TrustManager {
+                @SuppressLint("TrustAllX509TrustManager")
+                override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+                }
+
+                @SuppressLint("TrustAllX509TrustManager")
+                override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+                }
+
+                override fun getAcceptedIssuers() = arrayOf<X509Certificate>()
+            },
+        )
+
+        // Install the all-trusting trust manager
+        val sslContext = SSLContext.getInstance("SSL")
+        sslContext.init(null, trustAllCerts, java.security.SecureRandom())
+        // Create an ssl socket factory with our all-trusting manager
+        val sslSocketFactory = sslContext.socketFactory
+
+        return network.client.newBuilder()
+            .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
+            .hostnameVerifier { _, _ -> true }.build()
+    }
+
+    override val client by lazy {
+        if (preferences.getBoolean("preferred_trust_all_certs", false)) {
+            getUnsafeOkHttpClient()
+        } else {
+            network.client
+        }.newBuilder()
             .dns(Dns.SYSTEM)
             .build()
+    }
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -185,7 +222,7 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
             addQueryParameter("Recursive", "true")
             addQueryParameter("SortBy", "SortName")
             addQueryParameter("SortOrder", "Ascending")
-            addQueryParameter("includeItemTypes", "Movie,Season,BoxSet")
+            addQueryParameter("IncludeItemTypes", "Series,Movie,BoxSet")
             addQueryParameter("ImageTypeLimit", "1")
             addQueryParameter("EnableImageTypes", "Primary")
             addQueryParameter("ParentId", parentId)
@@ -196,11 +233,28 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
             GET(url.build().toString(), headers = headers),
         ).execute().parseAs<ItemsResponse>()
 
-        val animeList = items.Items.flatMap {
+        val movieList = items.Items.filter { it.Type == "Movie" }
+        val nonMovieList = items.Items.filter { it.Type != "Movie" }
+
+        val animeList = getAnimeFromMovie(movieList) + nonMovieList.flatMap {
             getAnimeFromId(it.Id)
         }
 
         return Observable.just(AnimesPage(animeList, 5 * page < items.TotalRecordCount))
+    }
+
+    private fun getAnimeFromMovie(movieList: List<ItemsResponse.Item>): List<SAnime> {
+        return movieList.map {
+            SAnime.create().apply {
+                title = it.Name
+                thumbnail_url = "$baseUrl/Items/${it.Id}/Images/Primary?api_key=$apiKey"
+                url = LinkData(
+                    "/Users/$userId/Items/${it.Id}?api_key=$apiKey",
+                    it.Id,
+                    it.Id,
+                ).toJsonString()
+            }
+        }
     }
 
     private fun getAnimeFromId(id: String): List<SAnime> {
@@ -589,6 +643,19 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
             }
         }
         screen.addPreference(metaTypePref)
+
+        val trustCertificatePref = SwitchPreferenceCompat(screen.context).apply {
+            key = "preferred_trust_all_certs"
+            title = "Trust all certificates"
+            summary = "Requires app restart to take effect."
+            setDefaultValue(false)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val new = newValue as Boolean
+                preferences.edit().putBoolean(key, new).commit()
+            }
+        }
+        screen.addPreference(trustCertificatePref)
     }
 
     private abstract class MediaLibPreference(context: Context) : ListPreference(context) {
@@ -596,60 +663,59 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
     }
 
     private fun medialibPreference(screen: PreferenceScreen) =
-        (
-            object : MediaLibPreference(screen.context) {
-                override fun reload() {
-                    this.apply {
-                        key = JFConstants.MEDIALIB_KEY
-                        title = JFConstants.MEDIALIB_TITLE
-                        summary = "%s"
+        object : MediaLibPreference(screen.context) {
+            override fun reload() {
+                this.apply {
+                    key = JFConstants.MEDIALIB_KEY
+                    title = JFConstants.MEDIALIB_TITLE
+                    summary = "%s"
 
-                        Thread {
-                            try {
-                                val mediaLibsResponse = client.newCall(
-                                    GET("$baseUrl/Users/$userId/Items?api_key=$apiKey"),
-                                ).execute()
-                                val mediaJson = mediaLibsResponse.body.let { json.decodeFromString<ItemsResponse>(it.string()) }?.Items
+                    Thread {
+                        try {
+                            val mediaLibsResponse = client.newCall(
+                                GET("$baseUrl/Users/$userId/Items?api_key=$apiKey"),
+                            ).execute()
+                            val mediaJson = mediaLibsResponse.body.let { json.decodeFromString<ItemsResponse>(it.string()) }?.Items
 
-                                val entriesArray = mutableListOf<String>()
-                                val entriesValueArray = mutableListOf<String>()
+                            val entriesArray = mutableListOf<String>()
+                            val entriesValueArray = mutableListOf<String>()
 
-                                if (mediaJson != null) {
-                                    for (media in mediaJson) {
-                                        entriesArray.add(media.Name)
-                                        entriesValueArray.add(media.Id)
-                                    }
+                            if (mediaJson != null) {
+                                for (media in mediaJson) {
+                                    entriesArray.add(media.Name)
+                                    entriesValueArray.add(media.Id)
                                 }
-
-                                entries = entriesArray.toTypedArray()
-                                entryValues = entriesValueArray.toTypedArray()
-                            } catch (ex: Exception) {
-                                entries = emptyArray()
-                                entryValues = emptyArray()
                             }
-                        }.start()
 
-                        setOnPreferenceChangeListener { _, newValue ->
-                            val selected = newValue as String
-                            val index = findIndexOfValue(selected)
-                            val entry = entryValues[index] as String
-                            parentId = entry
-                            preferences.edit().putString(key, entry).commit()
+                            entries = entriesArray.toTypedArray()
+                            entryValues = entriesValueArray.toTypedArray()
+                        } catch (ex: Exception) {
+                            entries = emptyArray()
+                            entryValues = emptyArray()
                         }
+                    }.start()
+
+                    setOnPreferenceChangeListener { _, newValue ->
+                        val selected = newValue as String
+                        val index = findIndexOfValue(selected)
+                        val entry = entryValues[index] as String
+                        parentId = entry
+                        preferences.edit().putString(key, entry).commit()
                     }
                 }
             }
-            ).apply { reload() }
+        }.apply { reload() }
+
+    private fun getSummary(isPassword: Boolean, value: String, placeholder: String) = when {
+        isPassword && value.isNotEmpty() || !isPassword && value.isEmpty() -> placeholder
+        else -> value
+    }
 
     private fun PreferenceScreen.editTextPreference(key: String, title: String, default: String, value: String, isPassword: Boolean = false, placeholder: String, mediaLibPref: MediaLibPreference): EditTextPreference {
         return EditTextPreference(context).apply {
             this.key = key
             this.title = title
-            summary = if ((isPassword && value.isNotEmpty()) || (!isPassword && value.isEmpty())) {
-                placeholder
-            } else {
-                value
-            }
+            summary = getSummary(isPassword, value, placeholder)
             this.setDefaultValue(default)
             dialogTitle = title
 
@@ -665,11 +731,7 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
                 try {
                     val newValueString = newValue as String
                     val res = preferences.edit().putString(key, newValueString).commit()
-                    summary = if ((isPassword && newValueString.isNotEmpty()) || (!isPassword && newValueString.isEmpty())) {
-                        placeholder
-                    } else {
-                        newValueString
-                    }
+                    summary = getSummary(isPassword, newValueString, placeholder)
                     val loginRes = login(true, context)
                     if (loginRes == true) {
                         mediaLibPref.reload()

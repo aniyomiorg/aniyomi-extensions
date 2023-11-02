@@ -6,7 +6,6 @@ import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.SolidFilesExtractor
-import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.UploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -16,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -81,7 +81,6 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        val headers = headers.newBuilder().add("referer", "https://uqload.com/").build()
         document.select("div.heroarea div.row div.col-md-12 ul.dropcaps li").forEach { it ->
             // val server = it.select("a").text()
             val urlBase64 = it.select("a").attr("data-player")
@@ -90,8 +89,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("ok") -> if (!url.contains("streamcherry")) videoList.addAll(OkruExtractor(client).videosFromUrl(url))
                 url.contains("solidfiles") -> videoList.addAll(SolidFilesExtractor(client).videosFromUrl(url))
                 url.contains("uqload") -> {
-                    val video = UploadExtractor(client).videoFromUrl(url, headers)
-                    if (video != null) videoList.add(video)
+                    videoList.addAll(UqloadExtractor(client).videosFromUrl(url))
                 }
                 url.contains("mp4upload") -> {
                     val videos = Mp4uploadExtractor(client).videosFromUrl(url, headers)
@@ -131,7 +129,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val genreFilter = (filters.find { it is GenreFilter } as? GenreFilter?) ?: GenreFilter()
+        val genreFilter = filters.filterIsInstance<GenreFilter>().firstOrNull() ?: GenreFilter()
         val yearFilter = try {
             (filters.find { it is YearFilter } as YearFilter).state.toInt()
         } catch (e: Exception) {

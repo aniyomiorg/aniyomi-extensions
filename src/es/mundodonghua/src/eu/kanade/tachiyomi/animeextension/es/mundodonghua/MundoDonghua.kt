@@ -1,11 +1,9 @@
 package eu.kanade.tachiyomi.animeextension.es.mundodonghua
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.mundodonghua.extractors.JsUnpacker
-import eu.kanade.tachiyomi.animeextension.es.mundodonghua.extractors.ProteaExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -13,17 +11,19 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.OkHttpClient
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
-
 class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "MundoDonghua"
@@ -32,34 +32,41 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "es"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularAnimeSelector(): String = "div.container.new-donghua-grid.sm-row div.col-md-9 div.sm-row.bg-white.pt-20.pr-20.pb-15.pl-20.br-8.of-a div.row div.item"
+    override fun popularAnimeSelector() = "div > div.row > div.item > a"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/lista-donghuas/$page")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/lista-donghuas/$page")
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(getExternalOrInternalUrl(element.select("a.angled-img").attr("href")))
-        anime.title = element.select("a.angled-img div.bottom-info.white h5").text().removeSurrounding("\"")
-        anime.thumbnail_url = baseUrl + element.select("a.angled-img div.img img").attr("src")
-        return anime
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        title = element.selectFirst("h5")!!.text().removeSurrounding("\"")
+        thumbnail_url = element.selectFirst("img")?.attr("abs:src")
     }
 
-    override fun popularAnimeNextPageSelector(): String = "ul.pagination li:last-child a"
+    override fun popularAnimeNextPageSelector() = "ul.pagination li:last-child a"
+
+    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
+
+    override fun latestUpdatesFromElement(element: Element) =
+        popularAnimeFromElement(element).apply {
+            url = url.replace("/ver/", "/donghua/").substringBeforeLast("/")
+        }
+
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lista-episodios/$page")
+
+    override fun latestUpdatesSelector() = popularAnimeSelector()
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = getExternalOrInternalUrl(
-            document.selectFirst("div.col-md-4.col-xs-12.mb-10 div.row.sm-row > div.side-banner > div.banner-side-serie")!!
-                .attr("style").substringAfter("background-image: url(").substringBefore(")"),
-        )
+        anime.thumbnail_url = baseUrl + document.selectFirst("div.col-md-4.col-xs-12.mb-10 div.row.sm-row > div.side-banner > div.banner-side-serie")!!
+            .attr("style").substringAfter("background-image: url(").substringBefore(")")
         anime.title = document.selectFirst("div.col-md-4.col-xs-12.mb-10 div.row.sm-row div div.sf.fc-dark.ls-title-serie")!!.html()
         anime.description = document.selectFirst("section div.row div.col-md-8 div.sm-row p.text-justify")!!.text().removeSurrounding("\"")
         anime.genre = document.select("div.col-md-8.col-xs-12 div.sm-row a.generos span.label").joinToString { it.text() }
@@ -72,7 +79,7 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         val epNum = element.attr("href").split("/").last().toFloat()
-        episode.setUrlWithoutDomain(getExternalOrInternalUrl(element.attr("href")))
+        episode.setUrlWithoutDomain(element.attr("href"))
         episode.episode_number = epNum
         episode.name = "Episodio $epNum"
         return episode
@@ -84,20 +91,8 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun fetchUrls(text: String?): List<String> {
         if (text.isNullOrEmpty()) return listOf()
-        val linkRegex = Regex("""(https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*))""")
+        val linkRegex = "(http|ftp|https):\\/\\/([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:\\/~+#-]*[\\w@?^=%&\\/~+#-])".toRegex()
         return linkRegex.findAll(text).map { it.value.trim().removeSurrounding("\"") }.toList()
-    }
-
-    private fun fixUrl(url: String): String {
-        if (url.startsWith("http")) return url
-        if (url.isEmpty()) return ""
-        val startsWithNoHttp = url.startsWith("//")
-        if (startsWithNoHttp) {
-            return "https:$url"
-        } else {
-            if (url.startsWith('/')) return baseUrl + url
-            return "$baseUrl/$url"
-        }
     }
 
     override fun videoListParse(response: Response): List<Video> {
@@ -109,29 +104,64 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 packedRegex.findAll(script.data()).map {
                     it.value
                 }.toList().map {
-                    val unpack = getAndUnpack(it)
-                    if (unpack!!.first()!!.contains("protea_tab")) {
-                        val protearegex = Regex("(protea_tab.*slug.*,type)")
-                        val slug = protearegex.findAll(unpack!!.first()).map {
-                            it.value.replace(Regex("(protea_tab.*slug\":\")"), "").replace("\"},type", "")
-                        }.first()
-                        val requestlink = "$baseUrl/api_donghua.php?slug=$slug"
-                        val headers = headers.newBuilder()
-                            .set("authority", "www.mundodonghua.com")
-                            .set("accept", "*/*")
-                            .set("accept-language", "es-MX,es-419;q=0.9,es;q=0.8,en;q=0.7")
-                            .set("dnt", "1")
-                            .set("Connection", "keep-alive")
-                            .set("Sec-Fetch-Dest", "empty")
-                            .set("Sec-Fetch-Mode", "no-cors")
-                            .set("Sec-Fetch-Site", "same-origin")
-                            .set("TE", "trailers")
-                            .set("Pragma", "no-cache")
-                            .set("Cache-Control", "no-cache")
-                            .set("referer", response!!.request!!.url!!.toString())
-                            .set("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36")
-                            .build()
-                        ProteaExtractor().videosFromUrl(requestlink, "Protea", headers = headers).map { vid -> videoList.add(vid) }
+                    val unpack = getAndUnpack(it).first()
+                    if (unpack.contains("amagi_tab")) {
+                        fetchUrls(unpack).map { url ->
+                            try {
+                                VoeExtractor(client).videoFromUrl(url, "VoeCDN")?.let { videoList.add(it) }
+                            } catch (_: Exception) {}
+                        }
+                    }
+                    if (unpack.contains("fmoon_tab")) {
+                        fetchUrls(unpack).map { url ->
+                            try {
+                                val newHeaders = headers.newBuilder()
+                                    .add("authority", url.toHttpUrl().host)
+                                    .add("referer", "$baseUrl/")
+                                    .add("Origin", "https://${url.toHttpUrl().host}")
+                                    .build()
+                                FilemoonExtractor(client).videosFromUrl(url, prefix = "Filemoon:", headers = newHeaders).also(videoList::addAll)
+                            } catch (_: Exception) {}
+                        }
+                    }
+                    if (unpack.contains("protea_tab")) {
+                        try {
+                            val slug = unpack.substringAfter("\"slug\":\"").substringBefore("\"")
+
+                            val newHeaders = headers.newBuilder()
+                                .add("referer", "${response.request.url}")
+                                .add("authority", baseUrl.substringAfter("//"))
+                                .add("accept", "*/*")
+                                .build()
+
+                            val slugPlayer = client.newCall(GET("$baseUrl/api_donghua.php?slug=$slug", headers = newHeaders)).execute().asJsoup().body().toString().substringAfter("\"url\":\"").substringBefore("\"")
+
+                            val videoHeaders = headers.newBuilder()
+                                .add("authority", "www.mdplayer.xyz")
+                                .add("referer", "$baseUrl/")
+                                .build()
+
+                            val videoId = client.newCall(GET("https://www.mdplayer.xyz/nemonicplayer/dmplayer.php?key=$slugPlayer", headers = videoHeaders))
+                                .execute().asJsoup().body().toString().substringAfter("video-id=\"").substringBefore("\"")
+
+                            DailymotionExtractor(client, headers).videosFromUrl("https://www.dailymotion.com/embed/video/$videoId", prefix = "Dailymotion:").let { videoList.addAll(it) }
+                        } catch (_: Exception) {}
+                    }
+                    if (unpack.contains("asura_tab")) {
+                        fetchUrls(unpack).map { url ->
+                            try {
+                                if (url.contains("redirector")) {
+                                    val newHeaders = headers.newBuilder()
+                                        .add("authority", "www.mdnemonicplayer.xyz")
+                                        .add("accept", "*/*")
+                                        .add("origin", baseUrl)
+                                        .add("referer", "$baseUrl/")
+                                        .build()
+
+                                    PlaylistUtils(client, newHeaders).extractFromHls(url, videoNameGen = { "Asura:$it" }).let { videoList.addAll(it) }
+                                }
+                            } catch (_: Exception) {}
+                        }
                     }
                 }
             }
@@ -146,24 +176,21 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        return try {
-            val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
-            ).toTypedArray()
-            val userPreferredQuality = preferences.getString("preferred_quality", "Protea:720p")
-            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
-            if (preferredIdx != -1) {
-                videoSorted.drop(preferredIdx + 1)
-                videoSorted[0] = videoSorted[preferredIdx]
+        val quality = preferences.getString("preferred_quality", "VoeCDN")
+        if (quality != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in this) {
+                if (video.quality == quality) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else {
+                    newList.add(video)
+                }
             }
-            videoSorted.toList()
-        } catch (e: Exception) {
-            this
+            return newList
         }
-    }
-
-    private fun getNumberFromString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
+        return this
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -242,10 +269,6 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
-    private fun getExternalOrInternalUrl(url: String): String {
-        return if (url.contains("https")) url else "$baseUrl/$url"
-    }
-
     private fun parseStatus(statusString: String): Int {
         return when {
             statusString.contains("En Emisión") -> SAnime.ONGOING
@@ -254,28 +277,25 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
-
-    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
-
-    override fun latestUpdatesRequest(page: Int) = popularAnimeRequest(page)
-
-    override fun latestUpdatesSelector() = popularAnimeSelector()
-
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "Protea:1080p",
-            "Protea:720p",
-            "Protea:480p",
-            "Protea:380p",
-            "Protea:360p",
+            "VoeCDN",
+            "Dailymotion:1080p",
+            "Dailymotion:720p",
+            "Dailymotion:480p",
+            "Filemoon:1080p",
+            "Filemoon:720p",
+            "Filemoon:480p",
+            "Asura:1080p",
+            "Asura:720p",
+            "Asura:480p",
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
             entries = qualities
             entryValues = qualities
-            setDefaultValue("Protea:720p")
+            setDefaultValue("VoeCDN")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->

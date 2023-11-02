@@ -148,7 +148,9 @@ class NimeGami : ParsedAnimeHttpSource() {
                 if (url.contains("bunga.nimegami")) {
                     if (usedBunga) {
                         return@mapNotNull null
-                    } else usedBunga = true
+                    } else {
+                        usedBunga = true
+                    }
                 }
                 runCatching {
                     extractVideos(url, quality, episodeIndex)

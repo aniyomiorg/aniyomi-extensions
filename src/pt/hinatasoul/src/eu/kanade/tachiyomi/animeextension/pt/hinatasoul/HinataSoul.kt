@@ -15,7 +15,6 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -45,73 +44,32 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Popular ===============================
     override fun popularAnimeSelector() = "div.FsssItem:contains(Mais Vistos) > a"
-    override fun popularAnimeRequest(page: Int): Request = GET(baseUrl)
+
+    override fun popularAnimeRequest(page: Int) = GET(baseUrl)
+
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
         title = element.text()
     }
-    override fun popularAnimeNextPageSelector(): String? = null
 
-    // ============================== Episodes ==============================
-    override fun episodeListSelector() = "div.aniContainer a"
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        var doc = getRealDoc(response.asJsoup())
-        val originalUrl = doc.location()
-        var pageNum = 1
-        val totalEpisodes = buildList {
-            do {
-                if (pageNum > 1) {
-                    doc = client.newCall(GET(originalUrl + "/page/$pageNum"))
-                        .execute()
-                        .asJsoup()
-                }
-                doc.select(episodeListSelector()).forEach {
-                    add(episodeFromElement(it))
-                }
-                pageNum++
-            } while (hasNextPage(doc))
-        }
-        return totalEpisodes.reversed()
-    }
+    override fun popularAnimeNextPageSelector() = null
 
-    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
-        val title = element.attr("title")
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET(baseUrl)
+
+    override fun latestUpdatesSelector() =
+        "div.tituloContainer:contains(lançamento) + div.epiContainer a"
+
+    override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
-        name = title
-        episode_number = title.substringAfterLast(" ").toFloatOrNull() ?: 0F
-        date_upload = element.selectFirst("div.lancaster_episodio_info_data")!!
-            .text()
-            .toDate()
+        val img = element.selectFirst("img")!!
+        thumbnail_url = img.attr("src")
+        title = img.attr("alt")
     }
 
-    // ============================ Video Links =============================
-    override fun videoListParse(response: Response): List<Video> {
-        return HinataSoulExtractor(headers).getVideoList(response)
-    }
-
-    override fun videoListSelector() = throw Exception("not used")
-    override fun videoFromElement(element: Element) = throw Exception("not used")
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun latestUpdatesNextPageSelector() = null
 
     // =============================== Search ===============================
-    override fun searchAnimeSelector(): String = episodeListSelector()
-    override fun searchAnimeNextPageSelector() = throw Exception("not used")
-
-    override fun searchAnimeFromElement(element: Element) = SAnime.create().apply {
-        setUrlWithoutDomain(element.attr("href"))
-        thumbnail_url = element.selectFirst("img")!!.attr("src")
-        title = element.selectFirst("div.ultimosAnimesHomeItemInfosNome")!!.text()
-    }
-
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        val document = response.asJsoup()
-        val animes = document.select(searchAnimeSelector()).map {
-            searchAnimeFromElement(it)
-        }
-        val hasNext = hasNextPage(document)
-        return AnimesPage(animes, hasNext)
-    }
-
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return if (query.startsWith(PREFIX_SEARCH)) {
             val slug = query.removePrefix(PREFIX_SEARCH)
@@ -128,8 +86,25 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(listOf(details), false)
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request =
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) =
         GET("$baseUrl/busca?busca=$query&page=$page")
+
+    override fun searchAnimeSelector() = episodeListSelector()
+
+    override fun searchAnimeNextPageSelector() = null
+
+    override fun searchAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        thumbnail_url = element.selectFirst("img")!!.attr("src")
+        title = element.selectFirst("div.ultimosAnimesHomeItemInfosNome")!!.text()
+    }
+
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        val document = response.use { it.asJsoup() }
+        val animes = document.select(searchAnimeSelector()).map(::searchAnimeFromElement)
+        val hasNext = hasNextPage(document)
+        return AnimesPage(animes, hasNext)
+    }
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
@@ -157,19 +132,43 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    // =============================== Latest ===============================
-    override fun latestUpdatesNextPageSelector(): String? = null
-    override fun latestUpdatesSelector(): String =
-        "div.tituloContainer:contains(lançamento) + div.epiContainer a"
-
-    override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
-        setUrlWithoutDomain(element.attr("href"))
-        val img = element.selectFirst("img")!!
-        thumbnail_url = img.attr("src")
-        title = img.attr("alt")
+    // ============================== Episodes ==============================
+    override fun episodeListSelector() = "div.aniContainer a"
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        var doc = getRealDoc(response.use { it.asJsoup() })
+        val totalEpisodes = buildList {
+            do {
+                if (isNotEmpty()) {
+                    val url = doc.selectFirst("div.mwidth > a:containsOwn(»)")!!.absUrl("href")
+                    doc = client.newCall(GET(url, headers)).execute().use { it.asJsoup() }
+                }
+                doc.select(episodeListSelector())
+                    .map(::episodeFromElement)
+                    .let(::addAll)
+            } while (hasNextPage(doc))
+            reverse()
+        }
+        return totalEpisodes
     }
 
-    override fun latestUpdatesRequest(page: Int): Request = GET(baseUrl)
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        val title = element.attr("title")
+        setUrlWithoutDomain(element.attr("href"))
+        name = title
+        episode_number = title.substringBeforeLast(" - FINAL").substringAfterLast(" ").toFloatOrNull() ?: 0F
+        date_upload = element.selectFirst("div.lancaster_episodio_info_data")!!
+            .text()
+            .toDate()
+    }
+
+    // ============================ Video Links =============================
+    private val extractor by lazy { HinataSoulExtractor(headers) }
+
+    override fun videoListParse(response: Response) = extractor.getVideoList(response)
+
+    override fun videoListSelector() = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -202,13 +201,18 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val currentUrl = doc.location()
         val nextUrl = doc.selectFirst("a:contains(»)")!!.attr("href")
         val endings = listOf("/1", "page=1")
-        return !endings.any(nextUrl::endsWith) && currentUrl != nextUrl
+        return endings.none(nextUrl::endsWith) && currentUrl != nextUrl
     }
 
     private val animeMenuSelector = "div.controlesBoxItem > a:has(i.iconLista)"
     private fun getRealDoc(document: Document): Document {
+        if (!document.location().contains("/videos/")) {
+            return document
+        }
+
         return document.selectFirst(animeMenuSelector)?.let {
-            client.newCall(GET(it.attr("href"), headers)).execute().asJsoup()
+            client.newCall(GET(it.attr("href"), headers)).execute()
+                .use { r -> r.asJsoup() }
         } ?: document
     }
 

@@ -7,11 +7,12 @@ ext {
     extName = 'WIT ANIME'
     pkgNameSuffix = 'ar.witanime'
     extClass = '.WitAnime'
-    extVersionCode = 42
+    extVersionCode = 46
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-dailymotion-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-mp4upload-extractor'))

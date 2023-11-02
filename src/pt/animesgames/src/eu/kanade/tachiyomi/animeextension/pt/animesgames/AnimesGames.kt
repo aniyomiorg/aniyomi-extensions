@@ -1,12 +1,12 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesgames
 
-import eu.kanade.tachiyomi.animeextension.pt.animesgames.extractors.BloggerExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.bloggerextractor.BloggerExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -29,7 +29,7 @@ class AnimesGames : ParsedAnimeHttpSource() {
 
     override val name = "Animes Games"
 
-    override val baseUrl = "https://animesgames.net"
+    override val baseUrl = "https://animesgames.cc"
 
     override val lang = "pt-BR"
 

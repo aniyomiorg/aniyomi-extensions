@@ -131,10 +131,9 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val serverId = it.attr("data-id")
             document.select("script").forEach { script ->
                 if (script.data().contains("var video = [];")) {
-                    val url = (
-                        script.data().substringAfter("video[$serverId] = '<iframe class=\"player_conte\" src=\"")
-                            .substringBefore("\"")
-                        )
+                    val url = script.data()
+                        .substringAfter("video[$serverId] = '<iframe class=\"player_conte\" src=\"")
+                        .substringBefore("\"")
                         .replace("$baseUrl/jkokru.php?u=", "http://ok.ru/videoembed/")
                         .replace("$baseUrl/jkvmixdrop.php?u=", "https://mixdrop.co/e/")
                         .replace("$baseUrl/jk.php?u=", "$baseUrl/")

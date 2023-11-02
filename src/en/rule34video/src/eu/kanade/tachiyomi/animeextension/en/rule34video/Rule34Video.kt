@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.rule34video
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -13,11 +12,11 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
@@ -34,53 +33,120 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val ddgInterceptor = DdosGuardInterceptor(network.client)
 
-    override val client: OkHttpClient = network.client
+    override val client = network.client
         .newBuilder()
         .addInterceptor(ddgInterceptor)
         .build()
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    // Popular Videos
+    // ============================== Popular ===============================
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/latest-updates/$page/")
 
-    override fun popularAnimeSelector(): String = "div.item.thumb"
+    override fun popularAnimeSelector() = "div.item.thumb"
 
-    override fun popularAnimeRequest(page: Int): Request =
-
-        GET("$baseUrl/latest-updates/$page/")
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a.th").attr("href"))
-        anime.title = element.select("a.th div.thumb_title").text()
-        anime.thumbnail_url = element.select("a.th div.img img").attr("data-original")
-
-        return anime
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.selectFirst("a.th")!!.attr("href"))
+        title = element.selectFirst("a.th div.thumb_title")!!.text()
+        thumbnail_url = element.selectFirst("a.th div.img img")?.attr("abs:data-original")
     }
 
-    override fun popularAnimeNextPageSelector(): String = "div.item.pager.next a"
+    override fun popularAnimeNextPageSelector() = "div.item.pager.next a"
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val episodes = mutableListOf<SEpisode>()
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = throw Exception("not used")
 
-        val episode = SEpisode.create().apply {
-            name = "Video"
-            date_upload = System.currentTimeMillis()
+    override fun latestUpdatesSelector() = throw Exception("not used")
+
+    override fun latestUpdatesFromElement(element: Element) = throw Exception("not used")
+
+    override fun latestUpdatesNextPageSelector() = throw Exception("not used")
+
+    // =============================== Search ===============================
+    private inline fun <reified R> AnimeFilterList.getUriPart() =
+        (find { it is R } as? UriPartFilter)?.toUriPart() ?: ""
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val orderFilter = filters.getUriPart<OrderFilter>()
+        val categoryFilter = filters.getUriPart<CategoryBy>()
+        val sortType = when (orderFilter) {
+            "latest-updates" -> "post_date"
+            "most-popular" -> "video_viewed"
+            "top-rated" -> "rating"
+            else -> ""
         }
-        episode.setUrlWithoutDomain(response.request.url.toString())
-        episodes.add(episode)
 
-        return episodes
+        val tagFilter = (filters.find { it is TagFilter } as? TagFilter)?.state ?: ""
+
+        val url = "$baseUrl/search_ajax.php?tag=${tagFilter.ifBlank { "." }}"
+        val response = client.newCall(GET(url, headers)).execute()
+        tagDocument = response.use { it.asJsoup() }
+
+        val tagSearch = filters.getUriPart<TagSearch>()
+
+        return if (query.isNotEmpty()) {
+            if (query.startsWith(PREFIX_SEARCH)) {
+                val newQuery = query.removePrefix(PREFIX_SEARCH).dropLastWhile { it.isDigit() }
+                GET("$baseUrl/search/$newQuery")
+            } else {
+                GET("$baseUrl/search/${query.replace(Regex("\\s"), "-")}/?flag1=$categoryFilter&sort_by=$sortType&from_videos=$page&tag_ids=all%2C$tagSearch")
+            }
+        } else {
+            GET("$baseUrl/search/?flag1=$categoryFilter&sort_by=$sortType&from_videos=$page&tag_ids=all%2C$tagSearch")
+        }
     }
+
+    override fun searchAnimeSelector() = popularAnimeSelector()
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
+
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        title = document.selectFirst("h1.title_video")!!.text()
+        val info = document.selectFirst("#tab_video_info")!!
+        author = info.select("div.label:contains(Artist:) + a").eachText().joinToString()
+        description = buildString {
+            info.selectFirst("div.label:contains(Description:) > em")?.text()?.also { append("$it\n") }
+            info.selectFirst("i.icon-eye + span")?.text()?.also { append("\nViews : ${it.replace(" ", ",")}") }
+            info.selectFirst("i.icon-clock + span")?.text()?.also { append("\nDuration : $it") }
+            document.select("div.label:contains(Download) ~ a.tag_item")
+                .eachText()
+                .joinToString { it.substringAfter(" ") }
+                .also { append("\nQuality : $it") }
+        }
+        genre = document.select("div.label:contains(Tags) ~ a.tag_item:not(:contains(Suggest))")
+            .eachText()
+            .joinToString()
+        status = SAnime.COMPLETED
+    }
+
+    // ============================== Episodes ==============================
+    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+        return Observable.just(
+            listOf(
+                SEpisode.create().apply {
+                    url = anime.url
+                    name = "Video"
+                },
+            ),
+        )
+    }
+
+    override fun episodeListParse(response: Response) = throw Exception("not used")
 
     override fun episodeListSelector() = throw Exception("not used")
 
     override fun episodeFromElement(element: Element) = throw Exception("not used")
 
+    private val noRedirectClient by lazy {
+        client.newBuilder().followRedirects(false).build()
+    }
+
+    // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val headersBuilder = headers.newBuilder()
+        val headers = headersBuilder()
             .apply {
                 val cookies = client.cookieJar.loadForRequest(response.request.url)
                     .filterNot { it.name in listOf("__ddgid_", "__ddgmark_") }
@@ -92,15 +158,22 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 add("Accept", "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5")
                 add("Referer", response.request.url.toString())
                 add("Accept-Language", "en-US,en;q=0.5")
-            }
+            }.build()
 
-        val document = response.asJsoup()
+        val document = response.use { it.asJsoup() }
 
-        return document.select("div.video_tools div:nth-child(3) div a.tag_item")
-            .map { element ->
-                val url = element.attr("href")
+        return document.select("div.label:contains(Download) ~ a.tag_item")
+            .mapNotNull { element ->
+                val originalUrl = element.attr("href")
+                // We need to do that because this url returns a http 403 error
+                // if you try to connect using http/1.1, which is the protocol
+                // that the player uses. OkHttp uses http/2 by default, so we
+                // fetch the video url first via okhttp and then pass it for the player.
+                val url = noRedirectClient.newCall(GET(originalUrl, headers)).execute()
+                    .use { it.headers["location"] }
+                    ?: return@mapNotNull null
                 val quality = element.text().substringAfter(" ")
-                Video(url, quality, url, headers = headersBuilder.build())
+                Video(url, quality, url, headers)
             }
     }
 
@@ -112,101 +185,37 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "720p") ?: return this
-        return this.sortedWith(compareByDescending { it.quality == quality })
+        return sortedWith(compareByDescending { it.quality == quality })
     }
 
-    // Search
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val orderFilter = filters.find { it is OrderFilter } as OrderFilter
-        val categoryFilter = filters.find { it is CategoryBy } as CategoryBy
-        val sortType = when (orderFilter.toUriPart()) {
-            "latest-updates" -> "post_date"
-            "most-popular" -> "video_viewed"
-            "top-rated" -> "rating"
-            else -> ""
-        }
-
-        val tagFilter: String = if (filters.find { it is TagFilter } is TagFilter) {
-            (filters.find { it is TagFilter } as TagFilter).state
-        } else {
-            ""
-        }
-
-        val url = "$baseUrl/search_ajax.php?tag=${tagFilter.ifBlank { "." }}"
-        val response = client.newCall(GET(url, headers)).execute()
-        tagDocument = response.asJsoup()
-
-        val tagSearch = try {
-            filters.find { it is TagSearch } as TagSearch
-        } catch (e: Exception) {
-            TagSearch(arrayOf()).apply { state = 0 }
-        }
-
-        return if (query.isNotEmpty()) {
-            if (query.startsWith("slug:")) {
-                var newQuery = query.split(':')[1].dropLastWhile { it.isDigit() }
-                GET("$baseUrl/search/$newQuery")
-            } else {
-                GET("$baseUrl/search/${query.replace(Regex("\\s"), "-")}/?flag1=${categoryFilter.toUriPart()}&sort_by=$sortType&from_videos=$page&tag_ids=all%2C${tagSearch.toUriPart()}")
-            }
-        } else {
-            GET("$baseUrl/search/?flag1=${categoryFilter.toUriPart()}&sort_by=$sortType&from_videos=$page&tag_ids=all%2C${tagSearch.toUriPart()}")
-        }
-    }
-
-    override fun searchAnimeSelector(): String = popularAnimeSelector()
-    override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
-
-    override fun searchAnimeNextPageSelector(): String = "div.item.pager.next a"
-
-    override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        anime.title = document.select("h1.title_video").text()
-        anime.author = document.select("#tab_video_info div:nth-child(3) div div:nth-child(2) a").joinToString { it.text() }
-        anime.description = document.select("#tab_video_info div:nth-child(2) div em").text() +
-            "\n\nViews : ${document.select("#tab_video_info div.info.row div:nth-child(2) span").text().replace((" "), ",")}\n" +
-            "Duration : ${document.select("#tab_video_info div.info.row div:nth-child(3) span").text()}\n" +
-            "Quality : ${document.select("div.video_tools div:nth-child(3) div a.tag_item").joinToString { it.text().substringAfter(" ") }}\n"
-        anime.genre = document.select("div.video_tools div:nth-child(4) div a").joinToString {
-            if (it.text() != "+ | Suggest") it.text() else ""
-        }
-        anime.status = SAnime.COMPLETED
-        return anime
-    }
-
-    override fun latestUpdatesNextPageSelector() = throw Exception("not used")
-
-    override fun latestUpdatesFromElement(element: Element) = throw Exception("not used")
-
-    override fun latestUpdatesRequest(page: Int) = throw Exception("not used")
-
-    override fun latestUpdatesSelector() = throw Exception("not used")
-
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("2160p", "1080p", "720p", "480p", "360p")
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
             entryValues = entries
-            setDefaultValue("1080p")
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
+
             setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putString(key, newValue as String).commit()
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
     }
 
-    // Filters
+    // ============================== Filters ===============================
     private var tagDocument = Document("")
 
     private fun tagsResults(document: Document): Array<Pair<String, String>> {
         val tagList = mutableListOf(Pair("<Select>", ""))
         tagList.addAll(
             document.select("div.item").map {
-                val tagValue = it.select("input").attr("value")
-                val tagName = it.select("label").text()
+                val tagValue = it.selectFirst("input")!!.attr("value")
+                val tagName = it.selectFirst("label")!!.text()
                 Pair(tagName, tagValue)
             },
         )
@@ -254,5 +263,10 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     companion object {
         const val PREFIX_SEARCH = "slug:"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "1080p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("2160p", "1080p", "720p", "480p", "360p")
     }
 }

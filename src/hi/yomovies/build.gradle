@@ -1,11 +1,13 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
 
 ext {
     extName = 'YoMovies'
     pkgNameSuffix = 'hi.yomovies'
     extClass = '.YoMovies'
-    extVersionCode = 2
+    extVersionCode = 7
     libVersion = '13'
     containsNsfw = true
 }

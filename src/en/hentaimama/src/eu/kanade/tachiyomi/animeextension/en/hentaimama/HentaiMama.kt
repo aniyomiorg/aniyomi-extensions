@@ -96,7 +96,7 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .add("action", "get_player_contents")
             .add(
                 "a",
-                (document.select("#post_report  input:nth-child(5)").attr("value")).toString(),
+                document.selectFirst("#post_report input:nth-child(5)")?.attr("value").toString(),
             )
             .build()
 
@@ -196,7 +196,7 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val parameters = getSearchParameters(filters)
         return if (query.isNotEmpty()) {
             filterSearch = false
-            GET("$baseUrl/page/$page/?s=${query.replace(("[\\W]").toRegex(), " ")}") // regular search
+            GET("$baseUrl/page/$page/?s=${query.replace(Regex("[\\W]"), " ")}") // regular search
         } else {
             filterSearch = true
             GET("$baseUrl/advance-search/page/$page/?$parameters") // filter search

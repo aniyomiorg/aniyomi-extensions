@@ -6,7 +6,7 @@ import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animeextension.it.animeworld.extractors.StreamHideExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -76,7 +76,7 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.name = "Episode: " + element.text()
         val epNum = getNumberFromEpsString(element.text())
         episode.episode_number = when {
-            (epNum.isNotEmpty()) -> epNum.toFloat()
+            epNum.isNotEmpty() -> epNum.toFloatOrNull() ?: 1F
             else -> 1F
         }
         return episode
@@ -574,7 +574,7 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
     companion object {
-        private val PREF_DOMAIN_KEY = "preferred_domain_name_v${AppInfo.getVersionName()}"
+        private val PREF_DOMAIN_KEY = "preferred_domain_name_v${BuildConfig.VERSION_CODE}"
         private const val PREF_DOMAIN_TITLE = "Override BaseUrl"
         private const val PREF_DOMAIN_DEFAULT = "https://www.animeworld.so"
         private const val PREF_DOMAIN_SUMMARY = "For temporary uses. Updating the extension will erase this setting."

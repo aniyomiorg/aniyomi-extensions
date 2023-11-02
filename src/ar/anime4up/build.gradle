@@ -1,21 +1,26 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+}
 
 ext {
     extName = 'Anime4up'
     pkgNameSuffix = 'ar.anime4up'
     extClass = '.Anime4Up'
-    extVersionCode = 49
+    extVersionCode = 52
     libVersion = '13'
 }
 
 dependencies {
-    implementation(project(':lib-streamwish-extractor'))
-    implementation(project(':lib-gdriveplayer-extractor'))
     implementation(project(':lib-dood-extractor'))
-    implementation(project(':lib-voe-extractor'))
-    implementation(project(':lib-vidbom-extractor'))
+    implementation(project(':lib-gdriveplayer-extractor'))
+    implementation(project(':lib-mp4upload-extractor'))
     implementation(project(':lib-okru-extractor'))
+    implementation(project(':lib-streamwish-extractor'))
+    implementation(project(':lib-uqload-extractor'))
+    implementation(project(':lib-vidbom-extractor'))
+    implementation(project(':lib-voe-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 

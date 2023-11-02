@@ -6,7 +6,6 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.pl.wbijam.extractors.CdaPlExtractor
-import eu.kanade.tachiyomi.animeextension.pl.wbijam.extractors.DailymotionExtractor
 import eu.kanade.tachiyomi.animeextension.pl.wbijam.extractors.VkExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -15,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -238,17 +238,6 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not used")
 
-//    private fun episodeFromElement(element: Element, seasonName: String): SEpisode {
-//        return SEpisode.create().apply {
-//            name = "[$seasonName] ${element.selectFirst("td a").text()}"
-//            episode_number = if (episodeName.contains("Episode ", true)) {
-//                episodeName.substringAfter("Episode ").substringBefore(" ").toFloatOrNull() ?: 0F
-//            } else { 0F }
-//            date_upload = element.selectFirst("span.date")?.let { parseDate(it.text()) } ?: 0L
-//            setUrlWithoutDomain(element.selectFirst("a[href]")!!.attr("href"))
-//        }
-//    }
-
     // ============================ Video Links =============================
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
@@ -275,7 +264,7 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             ?: serverDoc.selectFirst("span.odtwarzaj_vk")?.let { t -> "https://vk.com/video${t.attr("rel")}_${t.attr("id")}" } ?: "",
                     )
                 }
-            } else {}
+            }
         }
 
         videoList.addAll(
@@ -295,7 +284,7 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             VkExtractor(client).getVideosFromUrl(serverUrl, headers)
                         }
                         serverUrl.contains("dailymotion") -> {
-                            DailymotionExtractor(client).videosFromUrl(serverUrl, headers)
+                            DailymotionExtractor(client, headers).videosFromUrl(serverUrl)
                         }
                         else -> null
                     }

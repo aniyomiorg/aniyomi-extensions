@@ -1,13 +1,11 @@
 package eu.kanade.tachiyomi.animeextension.en.tokuzilla
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
-import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -32,101 +30,42 @@ class Tokuzilla : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = false
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
     // ============================== Popular ===============================
+    override fun popularAnimeSelector() = "div.col-sm-4.col-xs-12.item"
 
-    override fun popularAnimeSelector(): String = "div.col-sm-4.col-xs-12.item.post"
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/page/$page")
 
-    override fun popularAnimeRequest(page: Int): Request {
-        return GET("$baseUrl/page/$page")
-    }
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").replace("https://tokuzilla.net", ""))
-        anime.thumbnail_url = element.selectFirst("img")!!.attr("src")
-        anime.title = element.selectFirst("a")!!.attr("title")
-        return anime
-    }
-
-    override fun popularAnimeNextPageSelector(): String = "a.next.page-numbers"
-
-    // ============================== Episodes ==============================
-
-    override fun episodeListSelector() = throw Exception("not used")
-
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.asJsoup()
-        val episodeList = mutableListOf<SEpisode>()
-        val infoElement = document.selectFirst("ul.pagination.post-tape")
-        if (infoElement != null) {
-            infoElement.html().split("<a href=\"").drop(1).forEach {
-                val link = it.substringBefore("\"")
-                val episodeNumber = it.substringBefore("</a>").substringAfter(">")
-                val episode = SEpisode.create()
-                episode.setUrlWithoutDomain(link)
-                episode.episode_number = episodeNumber.toFloat()
-                episode.name = "Episode $episodeNumber"
-                episodeList.add(episode)
-            }
-        } else {
-            val link = document.selectFirst("meta[property=og:url]")!!.attr("content")
-            val episode = SEpisode.create()
-            episode.setUrlWithoutDomain(link)
-            episode.episode_number = 1F
-            episode.name = "Movie"
-            episodeList.add(episode)
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        element.selectFirst("a")!!.run {
+            setUrlWithoutDomain(attr("href"))
+            title = attr("title")
         }
-        return episodeList.reversed()
+        thumbnail_url = element.selectFirst("img")!!.attr("src")
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+    override fun popularAnimeNextPageSelector() = "a.next.page-numbers"
 
-    // ============================ Video Links =============================
+    // =============================== Latest ===============================
+    override fun latestUpdatesNextPageSelector() = throw Exception("not used")
 
-    override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        val videoList = mutableListOf<Video>()
-        val frameLink = document.selectFirst("iframe[id=frame]")!!.attr("src")
-        val videos = ChillxExtractor(client, headers).videoFromUrl(frameLink, baseUrl)
-        if (videos != null) {
-            videoList.addAll(videos)
-        }
-        return videoList.reversed()
-    }
+    override fun latestUpdatesFromElement(element: Element) = throw Exception("not used")
 
-    override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
-    }
+    override fun latestUpdatesRequest(page: Int): Request = throw Exception("not used")
 
-    override fun videoListSelector() = throw Exception("not used")
-    override fun videoFromElement(element: Element) = throw Exception("not used")
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun latestUpdatesSelector() = throw Exception("not used")
+
+    override fun latestUpdatesParse(response: Response) = throw Exception("not used")
 
     // =============================== Search ===============================
-
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun searchAnimeNextPageSelector(): String = "a.next.page-numbers"
+    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
 
-    override fun searchAnimeSelector(): String = "div.col-sm-4.col-xs-12.item"
+    override fun searchAnimeSelector() = popularAnimeSelector()
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         var url = baseUrl
@@ -167,59 +106,77 @@ class Tokuzilla : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create().apply {
-            genre = parseGenres(document.selectFirst("table")!!.html())
-            description = document.selectFirst("p")!!.text()
-            author = parseYear(document.selectFirst("table")!!.html())
-            status = parseStatus(document.selectFirst("table")!!.text())
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        val details = document.selectFirst("div.video-details")!!
+        title = details.selectFirst("h1")!!.text()
+        thumbnail_url = details.selectFirst("img")?.run {
+            absUrl("data-src").ifEmpty { absUrl("src") }
         }
-        return anime
-    }
-
-    private fun parseGenres(genreString: String): String {
-        val genres = buildString {
-            genreString.split("<a href=").drop(1).dropLast(1).forEach {
-                append(it.substringAfter("rel=\"tag\">").substringBefore("</a>"))
-                append(", ")
+        genre = details.select("span.meta > a").eachText().joinToString().takeIf(String::isNotBlank)
+        description = document.selectFirst("h2#plot + p")!!.text()
+        author = details.selectFirst("th:contains(Year) + td")?.text()?.let { "Year $it" }
+        status = details.selectFirst("th:contains(Status) + td")?.text().orEmpty().let {
+            when {
+                it.contains("Ongoing") -> SAnime.ONGOING
+                it.contains("Complete") -> SAnime.COMPLETED
+                else -> SAnime.UNKNOWN
             }
         }
-        return genres.dropLast(2)
     }
 
-    private fun parseYear(yearString: String): String {
-        return "Year " + yearString.substringAfter("Year").substring(47, 51)
-    }
+    // ============================== Episodes ==============================
+    override fun episodeListSelector() = "ul.pagination.post-tape a"
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val document = response.use { it.asJsoup() }
 
-    private fun parseStatus(statusString: String): Int {
-        return if (statusString.contains("Ongoing")) {
-            SAnime.ONGOING
+        val episodes = document.select(episodeListSelector())
+        return if (episodes.isNotEmpty()) {
+            episodes.map {
+                SEpisode.create().apply {
+                    setUrlWithoutDomain(it.attr("href"))
+                    val epNum = it.text()
+                    name = "Episode $epNum"
+                    episode_number = epNum.toFloatOrNull() ?: 1F
+                }
+            }.reversed()
         } else {
-            SAnime.COMPLETED
+            SEpisode.create().apply {
+                setUrlWithoutDomain(document.selectFirst("meta[property=og:url]")!!.attr("content"))
+                episode_number = 1F
+                name = "Movie"
+            }.let(::listOf)
         }
     }
 
-    // =============================== Latest ===============================
+    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("not used")
+    // ============================ Video Links =============================
+    override fun videoListParse(response: Response): List<Video> {
+        val document = response.use { it.asJsoup() }
+        val frameLink = document.selectFirst("iframe[id=frame]")!!.attr("src")
+        return ChillxExtractor(client, headers).videoFromUrl(frameLink, baseUrl)
+    }
 
-    override fun latestUpdatesFromElement(element: Element) = throw Exception("not used")
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("not used")
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
+    }
 
-    override fun latestUpdatesSelector(): String = throw Exception("not used")
-
-    override fun latestUpdatesParse(response: Response): AnimesPage = throw Exception("not used")
+    override fun videoListSelector() = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // ============================= Preference =============================
-
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
-            setDefaultValue("1080")
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -228,7 +185,14 @@ class Tokuzilla : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
+    }
+
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "1080p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p")
+        private val PREF_QUALITY_VALUES = PREF_QUALITY_ENTRIES
     }
 }

@@ -14,8 +14,15 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
+import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
+import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -30,7 +37,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Asia2TV"
 
-    override val baseUrl = "https://asia2tv.net"
+    override val baseUrl = "https://ww1.asia2tv.pw"
 
     override val lang = "ar"
 
@@ -42,8 +49,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    // ========================== popular =======================
-
+    // ============================== Popular ===============================
     override fun popularAnimeSelector(): String = "div.postmovie-photo a[title]"
 
     override fun popularAnimeNextPageSelector(): String = "div.nav-links a.next"
@@ -58,8 +64,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    // ========================== episodes =======================
-
+    // ============================== Episodes ==============================
     override fun episodeListSelector() = "div.loop-episode a"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -73,39 +78,51 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episode
     }
 
-    // ========================== video urls =======================
-
+    // ============================ Video Links =============================
     override fun videoListSelector() = "ul.server-list-menu li"
 
     override fun videoListRequest(episode: SEpisode): Request {
-        val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
+        val document = client.newCall(GET(baseUrl + episode.url)).execute()
+            .use { it.asJsoup() }
         val link = document.selectFirst("div.loop-episode a.current")!!.attr("href")
         return GET(link)
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        val videoList = mutableListOf<Video>()
-        document.select(videoListSelector()).forEach {
+        val document = response.use { it.asJsoup() }
+        return document.select(videoListSelector()).parallelCatchingFlatMap {
             val url = it.attr("data-server")
-            if (url.contains("dood")) {
-                val videosFromURL = DoodExtractor(client).videoFromUrl(url)
-                if (videosFromURL != null) videoList.add(videosFromURL)
-            } else if (url.contains("ok")) {
-                val videosFromURL = OkruExtractor(client).videosFromUrl(url)
-                videoList.addAll(videosFromURL)
-            } else if (url.contains("streamtape")) {
-                val videosFromURL = StreamTapeExtractor(client).videoFromUrl(url)
-                if (videosFromURL != null) videoList.add(videosFromURL)
-            } else if (url.contains("yodbox")) {
-                val html = client.newCall(GET(url)).execute().asJsoup()
-                val videoFromURL = html.select("source").attr("src")
-                if (videoFromURL.isNotEmpty()) {
-                    videoList.add(Video(videoFromURL, "Yodbox: mirror", videoFromURL))
+            getVideosFromUrl(url)
+        }
+    }
+
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val uqloadExtractor by lazy { UqloadExtractor(client) }
+    private val vidbomExtractor by lazy { VidBomExtractor(client) }
+
+    private fun getVideosFromUrl(url: String): List<Video> {
+        return when {
+            "dood" in url || "ds2play" in url -> doodExtractor.videosFromUrl(url)
+            "ok.ru" in url || "odnoklassniki.ru" in url -> okruExtractor.videosFromUrl(url)
+            "streamtape" in url -> streamtapeExtractor.videoFromUrl(url)?.let(::listOf)
+            STREAM_WISH_DOMAINS.any(url::contains) -> streamwishExtractor.videosFromUrl(url)
+            "uqload" in url -> uqloadExtractor.videosFromUrl(url)
+            VID_BOM_DOMAINS.any(url::contains) -> vidbomExtractor.videosFromUrl(url)
+            "youdbox" in url || "yodbox" in url -> {
+                client.newCall(GET(url)).execute().use {
+                    val doc = it.asJsoup()
+                    val videoUrl = doc.selectFirst("source")?.attr("abs:src")
+                    when (videoUrl) {
+                        null -> emptyList()
+                        else -> listOf(Video(videoUrl, "Yodbox: mirror", videoUrl))
+                    }
                 }
             }
-        }
-        return videoList
+            else -> null
+        } ?: emptyList()
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("not used")
@@ -130,8 +147,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
-    // ========================== search =======================
-
+    // =============================== Search ===============================
     override fun searchAnimeSelector(): String = "div.postmovie-photo a[title]"
 
     override fun searchAnimeNextPageSelector(): String = "div.nav-links a.next"
@@ -172,8 +188,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return GET(url, headers)
     }
 
-    // ========================== details =======================
-
+    // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("h1 span.title").text()
@@ -184,8 +199,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    // ========================== latest =======================
-
+    // =============================== Latest ===============================
     override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
     override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
@@ -194,8 +208,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector(): String = throw Exception("Not used")
 
-    // ========================== filters =======================
-
+    // ============================== Filters ===============================
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("الفلترات مش هتشتغل لو بتبحث او وهي فاضيه"),
         TypeList(typesName),
@@ -231,8 +244,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     )
 
-    // Preferences
-
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
@@ -250,5 +262,20 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         screen.addPreference(videoQualityPref)
+    }
+
+    // ============================= Utilities ==============================
+    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
+        runBlocking {
+            map {
+                async(Dispatchers.Default) {
+                    runCatching { f(it) }.getOrElse { emptyList() }
+                }
+            }.awaitAll().flatten()
+        }
+
+    companion object {
+        private val STREAM_WISH_DOMAINS by lazy { listOf("wishfast", "fviplions", "filelions", "streamwish", "dwish") }
+        private val VID_BOM_DOMAINS by lazy { listOf("vidbam", "vadbam", "vidbom", "vidbm") }
     }
 }

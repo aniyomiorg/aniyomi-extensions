@@ -4,100 +4,147 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Cookie
+import okhttp3.CookieJar
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.FormBody
+import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
+import okhttp3.internal.commonEmptyRequestBody
 
 class GoogleDriveExtractor(private val client: OkHttpClient, private val headers: Headers) {
 
     companion object {
-        private const val GOOGLE_DRIVE_HOST = "drive.google.com"
-        private const val ACCEPT = "text/html,application/xhtml+xml," +
-            "application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+        private const val ACCEPT = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
     }
 
-    private val noRedirectClient by lazy {
-        client.newBuilder().followRedirects(false).build()
-    }
+    private val cookieList = client.cookieJar.loadForRequest("https://drive.google.com".toHttpUrl())
 
-    // Default / headers for most requests
-    private fun headersBuilder(block: Headers.Builder.() -> Unit) = headers.newBuilder()
-        .set("Accept", ACCEPT)
-        .set("Connection", "keep-alive")
-        .set("Host", GOOGLE_DRIVE_HOST)
-        .set("Origin", "https://$GOOGLE_DRIVE_HOST")
-        .set("Referer", "https://$GOOGLE_DRIVE_HOST/")
-        .apply { block() }
+    private val noRedirectClient = OkHttpClient.Builder()
+        .followRedirects(false)
         .build()
 
-    // Needs to be the form of `https://drive.google.com/uc?id=GOOGLEDRIVEITEMID`
     fun videosFromUrl(itemUrl: String, videoName: String = "Video"): List<Video> {
-        val itemHeaders = headersBuilder {
-            set("Accept", "*/*")
-            set("Accept-Language", "en-US,en;q=0.5")
-            add("Cookie", getCookie(itemUrl))
+        val cookieJar = GDriveCookieJar()
+
+        cookieJar.saveFromResponse("https://drive.google.com".toHttpUrl(), cookieList)
+
+        val docHeaders = headers.newBuilder().apply {
+            add("Accept", ACCEPT)
+            add("Connection", "keep-alive")
+            add("Cookie", cookieList.toStr())
+            add("Host", "drive.google.com")
+        }.build()
+
+        val docResp = noRedirectClient.newCall(
+            GET(itemUrl, headers = docHeaders)
+        ).execute()
+
+        if (docResp.isRedirect) {
+            return videoFromRedirect(itemUrl, videoName, "", cookieJar)
         }
 
-        val document = client.newCall(GET(itemUrl, itemHeaders)).execute()
-            .use { it.asJsoup() }
+        val document = docResp.use { it.asJsoup() }
 
         val itemSize = document.selectFirst("span.uc-name-size")
             ?.let { " ${it.ownText().trim()} " }
             ?: ""
 
-        val url = document.selectFirst("form#download-form")?.attr("action") ?: return emptyList()
-        val redirectHeaders = headersBuilder {
-            add("Cookie", getCookie(url))
-            set("Referer", url.substringBeforeLast("&at="))
-        }
+        val downloadUrl = document.selectFirst("form#download-form")?.attr("action") ?: return emptyList()
+        val postHeaders = headers.newBuilder().apply {
+            add("Accept", ACCEPT)
+            add("Content-Type", "application/x-www-form-urlencoded")
+            set("Cookie", client.cookieJar.loadForRequest("https://drive.google.com".toHttpUrl()).toStr())
+            add("Host", "drive.google.com")
+            add("Referer", "https://drive.google.com/")
+        }.build()
 
-        val response = noRedirectClient.newCall(
-            POST(url, redirectHeaders, body = FormBody.Builder().build()),
+        val newUrl = noRedirectClient.newCall(
+            POST(downloadUrl, headers = postHeaders, body = commonEmptyRequestBody)
+        ).execute().use { it.headers["location"] ?: downloadUrl }
+
+        return videoFromRedirect(newUrl, videoName, itemSize, cookieJar)
+    }
+
+    private fun videoFromRedirect(
+        downloadUrl: String,
+        videoName: String,
+        itemSize: String,
+        cookieJar: GDriveCookieJar
+    ): List<Video> {
+        var newUrl = downloadUrl
+
+        val newHeaders = headers.newBuilder().apply {
+            add("Accept", ACCEPT)
+            set("Cookie", cookieJar.loadForRequest(newUrl.toHttpUrl()).toStr())
+            set("Host", newUrl.toHttpUrl().host)
+            add("Referer", "https://drive.google.com/")
+        }.build()
+
+        var newResp = noRedirectClient.newCall(
+            GET(newUrl, headers = newHeaders)
         ).execute()
 
-        val redirected = response.use { it.headers["location"] }
-            ?: return listOf(Video(url, videoName + itemSize, url))
+        var redirectCounter = 1
+        while (newResp.isRedirect && redirectCounter < 15) {
+            val setCookies = newResp.headers("Set-Cookie").mapNotNull { Cookie.parse(newResp.request.url, it) }
+            cookieJar.saveFromResponse(newResp.request.url, setCookies)
 
-        val redirectedHeaders = headersBuilder {
-            set("Host", redirected.toHttpUrl().host)
+            newUrl = newResp.headers["location"]!!
+            newResp.close()
+
+            val newHeaders = headers.newBuilder().apply {
+                add("Accept", ACCEPT)
+                set("Cookie", cookieJar.loadForRequest(newUrl.toHttpUrl()).toStr())
+                set("Host", newUrl.toHttpUrl().host)
+                add("Referer", "https://drive.google.com/")
+            }.build()
+
+            newResp = noRedirectClient.newCall(
+                GET(newUrl, headers = newHeaders)
+            ).execute()
+            redirectCounter += 1
         }
 
-        val redirectedResponseHeaders = noRedirectClient.newCall(
-            GET(redirected, redirectedHeaders),
-        ).execute().use { it.headers }
+        val videoUrl = newResp.use { it.request.url }
 
-        val authCookie = redirectedResponseHeaders.firstOrNull {
-            it.first == "set-cookie" && it.second.startsWith("AUTH_")
-        }?.second?.substringBefore(";") ?: return listOf(Video(url, videoName + itemSize, url))
-
-        val newRedirected = redirectedResponseHeaders["location"]
-            ?: return listOf(Video(redirected, videoName + itemSize, redirected))
-
-        val googleDriveRedirectHeaders = headersBuilder {
-            add("Cookie", getCookie(newRedirected))
-        }
-
-        val googleDriveRedirectUrl = noRedirectClient.newCall(
-            GET(newRedirected, googleDriveRedirectHeaders),
-        ).execute().use { it.headers["location"]!! }
-
-        val videoHeaders = headersBuilder {
-            add("Cookie", authCookie)
-            set("Host", googleDriveRedirectUrl.toHttpUrl().host)
-        }
+        val videoHeaders = headers.newBuilder().apply {
+            add("Accept", ACCEPT)
+            set("Cookie", cookieJar.loadForRequest(videoUrl).toStr())
+            set("Host", videoUrl.host)
+            add("Referer", "https://drive.google.com/")
+        }.build()
 
         return listOf(
-            Video(googleDriveRedirectUrl, videoName + itemSize, googleDriveRedirectUrl, headers = videoHeaders),
+            Video(
+                videoUrl.toString(),
+                videoName + itemSize,
+                videoUrl.toString(),
+                headers = videoHeaders
+            )
         )
     }
 
-    private fun getCookie(url: String): String {
-        val cookieList = client.cookieJar.loadForRequest(url.toHttpUrl())
-        return if (cookieList.isNotEmpty()) {
-            cookieList.joinToString("; ") { "${it.name}=${it.value}" }
-        } else {
-            ""
+    private fun List<Cookie>.toStr(): String {
+        return this.joinToString("; ") { "${it.name}=${it.value}" }
+    }
+}
+
+class GDriveCookieJar : CookieJar {
+
+    private val cookieStore = mutableMapOf<String, MutableList<Cookie>>()
+
+    // Append rather than overwrite, what could go wrong?
+    override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+        val oldCookies = (cookieStore[url.host] ?: emptyList()).filter { c ->
+            !cookies.any { t -> c.name == t.name }
         }
+        cookieStore[url.host] = (oldCookies + cookies).toMutableList()
+    }
+
+    override fun loadForRequest(url: HttpUrl): List<Cookie> {
+        val cookies = cookieStore[url.host] ?: emptyList()
+
+        return cookies.filter { it.expiresAt >= System.currentTimeMillis() }
     }
 }

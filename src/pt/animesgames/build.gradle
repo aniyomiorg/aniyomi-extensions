@@ -8,8 +8,12 @@ ext {
     extName = 'Animes Games'
     pkgNameSuffix = 'pt.animesgames'
     extClass = '.AnimesGames'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-blogger-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

@@ -27,7 +27,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -48,6 +47,8 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "pt-BR"
 
     override val supportsLatest = true
+
+    override val client = network.cloudflareClient
 
     private val json: Json by injectLazy()
 
@@ -204,7 +205,7 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun getVideosFromItem(item: Pair<String, String>): List<Video> {
         val (lang, query) = item
-        val headers = Headers.headersOf("referer", WAREZ_URL)
+        val headers = headersBuilder().set("referer", WAREZ_URL).build()
         val hostUrl = if ("warezcdn" in query) {
             "$WAREZ_URL/player/player.php$query"
         } else {
@@ -269,7 +270,7 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return SAnime.create().apply {
             title = element.selectFirst("div.i span")!!.text()
             thumbnail_url = element.selectFirst("img")!!.attr("src")
-            setUrlWithoutDomain("/" + element.attr("href"))
+            setUrlWithoutDomain(element.attr("abs:href"))
         }
     }
 

@@ -46,14 +46,30 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
 
     override val supportsLatest = false
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-    }
+    private val json = Json { ignoreUnknownKeys = true }
 
     override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    companion object {
+        private const val PREF_LANGUAGE_KEY = "preferred_language"
+        private const val PREF_LANGUAGE_DEFAULT = "[LAT]"
+        private val LANGUAGE_LIST = arrayOf("[LAT]", "[ENG]", "[CAST]", "[JAP]")
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+        private val QUALITY_LIST = arrayOf("1080", "720", "480", "360")
+
+        private const val PREF_SERVER_KEY = "preferred_server"
+        private const val PREF_SERVER_DEFAULT = "Voe"
+        private val SERVER_LIST = arrayOf(
+            "Tomatomatela", "YourUpload", "Doodstream", "Okru",
+            "Voe", "StreamTape", "StreamWish", "Filemoon",
+            "FileLions",
+        )
     }
 
     override fun popularAnimeSelector(): String = ".MovieList .TPostMv .TPost"
@@ -72,7 +88,7 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
         responseJson.props?.pageProps?.movies?.map { animeItem ->
             val anime = SAnime.create()
             val preSlug = animeItem.url?.slug ?: ""
-            val type = if (preSlug.startsWith("series")) "serie" else "pelicula"
+            val type = if (preSlug.startsWith("series")) "ver-serie" else "ver-pelicula"
 
             anime.title = animeItem.titles?.name ?: ""
             anime.thumbnail_url = animeItem.images?.poster?.replace("/original/", "/w200/") ?: ""
@@ -89,7 +105,7 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
     override fun episodeListParse(response: Response): List<SEpisode> {
         val episodes = mutableListOf<SEpisode>()
         val document = response.asJsoup()
-        if (response.request.url.toString().contains("/serie/")) {
+        if (response.request.url.toString().contains("/ver-serie/")) {
             val script = document.selectFirst("script:containsData({\"props\":{\"pageProps\":{)")!!.data()
             val responseJson = json.decodeFromString<AnimeEpisodesList>(script)
             responseJson.props?.pageProps?.thisSerie?.seasons?.map {
@@ -215,7 +231,7 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
             OkruExtractor(client).videosFromUrl(url, prefix, true).also(videoList::addAll)
         }
         if (embedUrl.contains("voe")) {
-            VoeExtractor(client).videoFromUrl(url, "$prefix Voex")?.let { videoList.add(it) }
+            VoeExtractor(client).videoFromUrl(url, prefix = "$prefix Voe:")?.let { videoList.add(it) }
         }
         if (embedUrl.contains("streamtape")) {
             StreamTapeExtractor(client).videoFromUrl(url, "$prefix StreamTape")?.let { videoList.add(it) }
@@ -227,6 +243,9 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
         if (embedUrl.contains("filemoon") || embedUrl.contains("moonplayer")) {
             FilemoonExtractor(client).videosFromUrl(url, "$prefix Filemoon:").also(videoList::addAll)
         }
+        if (embedUrl.contains("filelions") || embedUrl.contains("lion")) {
+            StreamWishExtractor(client, headers).videosFromUrl(url, videoNameGen = { "$prefix FileLions:$it" }).also(videoList::addAll)
+        }
         return videoList
     }
 
@@ -237,21 +256,17 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Voex")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
+        val lang = preferences.getString(PREF_LANGUAGE_KEY, PREF_LANGUAGE_DEFAULT)!!
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(lang) },
+                { it.quality.contains(server, true) },
+                { it.quality.contains(quality) },
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
+        ).reversed()
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -280,13 +295,14 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
         val newAnime = SAnime.create()
         val script = document.selectFirst("script:containsData({\"props\":{\"pageProps\":{)")!!.data()
         val responseJson = json.decodeFromString<AnimeEpisodesList>(script)
-        if (response.request.url.toString().contains("/serie/")) {
+        if (response.request.url.toString().contains("/ver-serie/")) {
             val data = responseJson.props?.pageProps?.thisSerie
             newAnime.status = SAnime.UNKNOWN
             newAnime.title = data?.titles?.name ?: ""
             newAnime.description = data?.overview ?: ""
             newAnime.thumbnail_url = data?.images?.poster?.replace("/original/", "/w500/")
             newAnime.genre = data?.genres?.joinToString { it.name ?: "" }
+            newAnime.artist = data?.cast?.acting?.firstOrNull()?.name ?: ""
             newAnime.setUrlWithoutDomain(response.request.url.toString())
         } else {
             val data = responseJson.props?.pageProps?.thisMovie
@@ -295,6 +311,7 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
             newAnime.description = data?.overview ?: ""
             newAnime.thumbnail_url = data?.images?.poster?.replace("/original/", "/w500/")
             newAnime.genre = data?.genres?.joinToString { it.name ?: "" }
+            newAnime.artist = data?.cast?.acting?.firstOrNull()?.name ?: ""
             newAnime.setUrlWithoutDomain(response.request.url.toString())
         }
 
@@ -342,17 +359,12 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val qualities = arrayOf(
-            "Streamlare:1080p", "Streamlare:720p", "Streamlare:480p", "Streamlare:360p", "Streamlare:240p", // Streamlare}
-            "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
-            "StreamTape", "Amazon", "Voex", "DoodStream", "YourUpload", "Filemoon", "StreamWish", "Tomatomatela", "YourUpload",
-        )
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = qualities
-            entryValues = qualities
-            setDefaultValue("Voex")
+        ListPreference(screen.context).apply {
+            key = PREF_LANGUAGE_KEY
+            title = "Preferred language"
+            entries = LANGUAGE_LIST
+            entryValues = LANGUAGE_LIST
+            setDefaultValue(PREF_LANGUAGE_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -361,7 +373,38 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = "Preferred quality"
+            entries = QUALITY_LIST
+            entryValues = QUALITY_LIST
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
+            title = "Preferred server"
+            entries = SERVER_LIST
+            entryValues = SERVER_LIST
+            setDefaultValue(PREF_SERVER_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
     }
 }

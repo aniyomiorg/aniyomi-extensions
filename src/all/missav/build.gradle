@@ -1,0 +1,20 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+ext {
+    extName = 'MissAV'
+    pkgNameSuffix = 'all.missav'
+    extClass = '.MissAV'
+    extVersionCode = 5
+    containsNsfw = true
+}
+
+dependencies {
+    implementation(project(':lib-unpacker'))
+    implementation(project(':lib-playlist-utils'))
+    implementation(project(':lib-javcoverfetcher'))
+}
+
+apply from: "$rootDir/common.gradle"

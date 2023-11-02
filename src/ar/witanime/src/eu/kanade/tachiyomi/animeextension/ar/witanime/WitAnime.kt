@@ -1,9 +1,9 @@
 package eu.kanade.tachiyomi.animeextension.ar.witanime
 
 import android.app.Application
+import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.DailymotionExtractor
 import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.SharedExtractor
 import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.SoraPlayExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
@@ -22,7 +23,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import okhttp3.OkHttpClient
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -34,13 +34,13 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "WIT ANIME"
 
-    override val baseUrl = "https://witanime.live"
+    override val baseUrl = "https://witanime.rest"
 
     override val lang = "ar"
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
     override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
@@ -116,7 +116,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListSelector() = "div.ehover6 > div.episodes-card-title > h3 a"
 
     override fun episodeFromElement(element: Element) = SEpisode.create().apply {
-        setUrlWithoutDomain(element.attr("href"))
+        setUrlWithoutDomain(element.getEncodedUrl())
         name = element.text()
         episode_number = name.substringAfterLast(" ").toFloatOrNull() ?: 0F
     }
@@ -127,7 +127,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return document.select("ul#episode-servers li a")
             .distinctBy { it.text().substringBefore(" -") } // remove duplicates by server name
             .parallelMap {
-                val url = it.attr("data-ep-url")
+                val url = it.getEncodedUrl()
                 runCatching { extractVideos(url) }.getOrElse { emptyList() }
             }.flatten()
     }
@@ -135,7 +135,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val soraPlayExtractor by lazy { SoraPlayExtractor(client) }
     private val doodExtractor by lazy { DoodExtractor(client) }
     private val sharedExtractor by lazy { SharedExtractor(client) }
-    private val dailymotionExtractor by lazy { DailymotionExtractor(client) }
+    private val dailymotionExtractor by lazy { DailymotionExtractor(client, headers) }
     private val okruExtractor by lazy { OkruExtractor(client) }
     private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
     private val vidBomExtractor by lazy { VidBomExtractor(client) }
@@ -144,7 +144,10 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return when {
             url.contains("yonaplay") -> extractFromMulti(url)
             url.contains("soraplay") -> {
-                soraPlayExtractor.videosFromUrl(url, headers)
+                when {
+                    url.contains("/mirror") -> extractFromMulti(url)
+                    else -> soraPlayExtractor.videosFromUrl(url, headers)
+                }
             }
             url.contains("dood") -> {
                 doodExtractor.videoFromUrl(url, "Dood mirror")
@@ -159,7 +162,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
 
             url.contains("dailymotion") -> {
-                dailymotionExtractor.videosFromUrl(url, headers)
+                dailymotionExtractor.videosFromUrl(url)
             }
             url.contains("ok.ru") -> {
                 okruExtractor.videosFromUrl(url)
@@ -175,9 +178,22 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun extractFromMulti(url: String): List<Video> {
-        val doc = client.newCall(GET(url, headers)).execute().asJsoup()
-        return doc.select("div.OD li").flatMap {
-            val videoUrl = it.attr("onclick").substringAfter("go_to_player('").substringBefore("')")
+        val newHeaders = when {
+            url.contains("soraplay") ->
+                super.headersBuilder().set("referer", "https://yonaplay.org").build()
+            else -> headers
+        }
+        val doc = client.newCall(GET(url, newHeaders)).execute()
+            .use { it.asJsoup() }
+        return doc.select(".OD li").flatMap { element ->
+            val videoUrl = element.attr("onclick").substringAfter("go_to_player('")
+                .substringBefore("')")
+                .let {
+                    when {
+                        it.startsWith("https:") -> it
+                        else -> "https:$it"
+                    }
+                }
             runCatching { extractVideos(videoUrl) }.getOrElse { emptyList() }
         }
     }
@@ -223,6 +239,11 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             client.newCall(GET(it.attr("href"), headers)).execute().asJsoup()
         } ?: document
     }
+
+    private fun Element.getEncodedUrl() = attr("onclick")
+        .substringAfter("'")
+        .substringBefore("'")
+        .let { String(Base64.decode(it, Base64.DEFAULT)) }
 
     companion object {
         // From TukTukCinema(AR)

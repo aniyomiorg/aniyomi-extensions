@@ -311,19 +311,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         )
 
         videoJson.data.episode.sourceUrls.forEach { video ->
-            val videoUrl = if (video.sourceUrl.startsWith("##")) {
-                AllAnimeDecryptor.decryptAllAnime(
-                    "1234567890123456789",
-                    video.sourceUrl.substringAfter("##"),
-                )
-            } else if (video.sourceUrl.startsWith("#")) {
-                AllAnimeDecryptor.decryptAllAnime(
-                    "allanimenews",
-                    video.sourceUrl.substringAfter("#"),
-                )
-            } else {
-                video.sourceUrl
-            }
+            val videoUrl = video.sourceUrl.decryptSource()
 
             val matchingMapping = mappings.firstOrNull { (altHoster, urlMatches) ->
                 altHosterSelection.contains(altHoster) && videoUrl.containsAny(urlMatches)
@@ -433,6 +421,18 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     private inline fun <reified T> Response.parseAs(transform: (String) -> String = { it }): T {
         val responseBody = use { transform(it.body.string()) }
         return json.decodeFromString(responseBody)
+    }
+
+    private fun String.decryptSource(): String {
+        return if (this.startsWith("-")) {
+            this.substringAfterLast('-').chunked(2)
+                .map { it.toInt(16).toByte() }
+                .toByteArray().map {
+                    (it.toInt() xor 56).toChar()
+                }.joinToString("")
+        } else {
+            this
+        }
     }
 
     private fun prioritySort(pList: List<Pair<Video, Float>>): List<Video> {

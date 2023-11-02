@@ -1,8 +1,12 @@
 package eu.kanade.tachiyomi.animeextension.all.javguru
 
+import android.app.Application
 import android.util.Base64
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.all.javguru.extractors.EmTurboExtractor
 import eu.kanade.tachiyomi.animeextension.all.javguru.extractors.MaxStreamExtractor
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -10,12 +14,14 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.javcoverfetcher.JavCoverFetcher
+import eu.kanade.tachiyomi.lib.javcoverfetcher.JavCoverFetcher.fetchHDCovers
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.network.asObservableSuccess
-import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -28,9 +34,11 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.select.Elements
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import kotlin.math.min
 
-class JavGuru : AnimeHttpSource() {
+class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
 
     override val name = "Jav Guru"
 
@@ -40,16 +48,15 @@ class JavGuru : AnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client = network.cloudflareClient.newBuilder()
-        .rateLimit(2)
-        .build()
+    override val client = network.cloudflareClient
 
     private val noRedirectClient = client.newBuilder()
         .followRedirects(false)
         .build()
 
-    override fun headersBuilder() = super.headersBuilder()
-        .add("Referer", "$baseUrl/")
+    private val preference by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     private lateinit var popularElements: Elements
 
@@ -186,9 +193,11 @@ class JavGuru : AnimeHttpSource() {
     override fun animeDetailsParse(response: Response): SAnime {
         val document = response.asJsoup()
 
+        val javId = document.selectFirst(".infoleft li:contains(code)")?.ownText()
+        val siteCover = document.select(".large-screenshot img").attr("abs:src")
+
         return SAnime.create().apply {
             title = document.select(".titl").text()
-            thumbnail_url = document.select(".large-screenshot img").attr("abs:src")
             genre = document.select(".infoleft a[rel*=tag]").joinToString { it.text() }
             author = document.selectFirst(".infoleft li:contains(studio) a")?.text()
             artist = document.selectFirst(".infoleft li:contains(label) a")?.text()
@@ -200,6 +209,11 @@ class JavGuru : AnimeHttpSource() {
                 document.selectFirst(".infoleft li:contains(label)")?.text()?.let { append("$it\n") }
                 document.selectFirst(".infoleft li:contains(actor)")?.text()?.let { append("$it\n") }
                 document.selectFirst(".infoleft li:contains(actress)")?.text()?.let { append("$it\n") }
+            }
+            thumbnail_url = if (preference.fetchHDCovers) {
+                javId?.let { JavCoverFetcher.getCoverById(it) } ?: siteCover
+            } else {
+                siteCover
             }
         }
     }
@@ -257,7 +271,7 @@ class JavGuru : AnimeHttpSource() {
             .build()
 
         val redirectUrl = noRedirectClient.newCall(GET(olidUrl, newHeaders))
-            .execute().header("location")
+            .execute().use { it.header("location") }
             ?: return null
 
         if (redirectUrl.toHttpUrlOrNull() == null) {
@@ -267,18 +281,22 @@ class JavGuru : AnimeHttpSource() {
         return redirectUrl
     }
 
+    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
     private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
     private val doodExtractor by lazy { DoodExtractor(client) }
     private val mixDropExtractor by lazy { MixDropExtractor(client) }
-    private val maxStreamExtractor by lazy { MaxStreamExtractor(client) }
-    private val emTurboExtractor by lazy { EmTurboExtractor(client) }
+    private val maxStreamExtractor by lazy { MaxStreamExtractor(client, headers) }
+    private val emTurboExtractor by lazy { EmTurboExtractor(client, headers) }
 
     private fun getVideos(hosterUrl: String): List<Video> {
         return runCatching {
             when {
+                hosterUrl.contains("javplaya") -> {
+                    streamWishExtractor.videosFromUrl(hosterUrl)
+                }
+
                 hosterUrl.contains("streamtape") -> {
-                    streamTapeExtractor.videoFromUrl(hosterUrl)
-                        ?.let(::listOf) ?: emptyList()
+                    streamTapeExtractor.videoFromUrl(hosterUrl).let(::listOfNotNull)
                 }
 
                 hosterUrl.contains("dood") -> {
@@ -302,6 +320,14 @@ class JavGuru : AnimeHttpSource() {
                 }
             }
         }.getOrDefault(emptyList())
+    }
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preference.getString(PREF_QUALITY, PREF_QUALITY_DEFAULT)!!
+
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
     }
 
     private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
@@ -336,6 +362,19 @@ class JavGuru : AnimeHttpSource() {
         }
     }
 
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY
+            title = PREF_QUALITY_TITLE
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+        }.also(screen::addPreference)
+
+        JavCoverFetcher.addPreferenceToScreen(screen)
+    }
+
     companion object {
         const val PREFIX_ID = "id:"
 
@@ -347,6 +386,10 @@ class JavGuru : AnimeHttpSource() {
             "mixdrop",
             "mixdroop",
         )
+
+        private const val PREF_QUALITY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "720"
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {

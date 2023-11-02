@@ -1,0 +1,30 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'PelisForte'
+    pkgNameSuffix = 'es.pelisforte'
+    extClass = '.PelisForte'
+    extVersionCode = 5
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-voe-extractor'))
+    implementation(project(':lib-burstcloud-extractor'))
+    implementation(project(':lib-mp4upload-extractor'))
+    implementation(project(':lib-streamwish-extractor'))
+    implementation(project(':lib-yourupload-extractor'))
+    implementation(project(':lib-fastream-extractor'))
+    implementation(project(':lib-upstream-extractor'))
+    implementation(project(':lib-filemoon-extractor'))
+    implementation(project(':lib-uqload-extractor'))
+    implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-playlist-utils'))
+    implementation(project(':lib-streamlare-extractor'))
+    implementation(project(':lib-okru-extractor'))
+}
+
+apply from: "$rootDir/common.gradle"

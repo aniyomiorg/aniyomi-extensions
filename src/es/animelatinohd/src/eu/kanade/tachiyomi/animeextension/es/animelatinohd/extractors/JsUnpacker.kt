@@ -26,7 +26,7 @@ class JsUnpacker(packedJS: String?) {
      */
     fun unpack(): String? {
         val js = packedJS
-        try {
+        runCatching {
             var p =
                 Pattern.compile("""\}\s*\('(.*)',\s*(.*?),\s*(\d+),\s*'(.*?)'\.split\('\|'\)""", Pattern.DOTALL)
             var m = p.matcher(js)
@@ -35,16 +35,8 @@ class JsUnpacker(packedJS: String?) {
                 val radixStr = m.group(2)
                 val countStr = m.group(3)
                 val symtab = m.group(4).split("\\|".toRegex()).toTypedArray()
-                var radix = 36
-                var count = 0
-                try {
-                    radix = radixStr.toInt()
-                } catch (e: Exception) {
-                }
-                try {
-                    count = countStr.toInt()
-                } catch (e: Exception) {
-                }
+                val radix = radixStr.toIntOrNull() ?: 36
+                val count = countStr.toIntOrNull() ?: 0
                 if (symtab.size != count) {
                     throw Exception("Unknown p.a.c.k.e.r. encoding")
                 }
@@ -67,7 +59,6 @@ class JsUnpacker(packedJS: String?) {
                 }
                 return decoded.toString()
             }
-        } catch (e: Exception) {
         }
         return null
     }

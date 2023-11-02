@@ -73,6 +73,7 @@ android {
         renderScript false
         resValues false
         shaders false
+        buildConfig true
     }
 
     compileOptions {

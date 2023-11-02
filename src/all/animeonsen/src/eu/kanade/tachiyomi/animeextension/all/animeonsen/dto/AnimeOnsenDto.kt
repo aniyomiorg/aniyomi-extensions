@@ -1,8 +1,12 @@
 package eu.kanade.tachiyomi.animeextension.all.animeonsen.dto
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonTransformingSerializer
 
 @Serializable
 data class AnimeListResponse(
@@ -18,16 +22,21 @@ data class AnimeListItem(
 )
 
 @Serializable
-data class AnimeListCursor(
-    val next: JsonArray,
-)
+data class AnimeListCursor(val next: JsonArray)
 
 @Serializable
 data class AnimeDetails(
     val content_id: String,
     val content_title: String?,
     val content_title_en: String?,
+    @Serializable(with = MalSerializer::class)
     val mal_data: MalData?,
+)
+
+@Serializable
+data class EpisodeDto(
+    @SerialName("contentTitle_episode_en")
+    val name: String,
 )
 
 @Serializable
@@ -39,14 +48,10 @@ data class MalData(
 )
 
 @Serializable
-data class Genre(
-    val name: String,
-)
+data class Genre(val name: String)
 
 @Serializable
-data class Studio(
-    val name: String,
-)
+data class Studio(val name: String)
 
 @Serializable
 data class VideoData(
@@ -55,14 +60,12 @@ data class VideoData(
 )
 
 @Serializable
-data class MetaData(
-    val subtitles: JsonObject,
-)
+data class MetaData(val subtitles: Map<String, String>)
 
 @Serializable
 data class StreamData(
     val stream: String,
-    val subtitles: JsonObject,
+    val subtitles: Map<String, String>,
 )
 
 @Serializable
@@ -70,3 +73,11 @@ data class SearchResponse(
     val status: Int,
     val result: List<AnimeListItem>,
 )
+
+object MalSerializer : JsonTransformingSerializer<MalData>(MalData.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement =
+        when (element) {
+            is JsonPrimitive -> JsonObject(emptyMap())
+            else -> element
+        }
+}

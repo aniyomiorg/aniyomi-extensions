@@ -6,11 +6,12 @@ ext {
     extName = 'NeoNime'
     pkgNameSuffix = 'id.neonime'
     extClass = '.NeoNime'
-    extVersionCode = 11
+    extVersionCode = 12
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-blogger-extractor'))
     implementation(project(':lib-gdriveplayer-extractor'))
     implementation(project(':lib-yourupload-extractor'))
     implementation(project(':lib-okru-extractor'))

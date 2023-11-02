@@ -6,11 +6,12 @@ ext {
     extName = 'HDFilme'
     pkgNameSuffix = 'de.hdfilme'
     extClass = '.HDFilme'
-    extVersionCode = 2
+    extVersionCode = 3
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-vudeo-extractor'))
     implementation(project(':lib-mixdrop-extractor'))
     implementation(project(':lib-dood-extractor'))
 }

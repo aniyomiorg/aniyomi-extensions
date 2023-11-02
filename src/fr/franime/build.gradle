@@ -8,13 +8,14 @@ ext {
     extName = 'FrAnime'
     pkgNameSuffix = 'fr.franime'
     extClass = '.FrAnime'
-    extVersionCode = 6
+    extVersionCode = 9
     libVersion = '13'
     containsNsfw = true
 }
 
 dependencies {
-    implementation(project(':lib-mytv-extractor'))
+    implementation(project(':lib-vido-extractor'))
+    implementation(project(':lib-vk-extractor'))
     implementation(project(':lib-sendvid-extractor'))
     implementation(project(':lib-sibnet-extractor'))
 }

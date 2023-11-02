@@ -16,7 +16,6 @@ import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -24,7 +23,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import kotlin.Exception
 
@@ -40,10 +38,18 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val json: Json by injectLazy()
-
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+        private val QUALITY_LIST = arrayOf("1080", "720", "480", "360")
+
+        private const val PREF_SERVER_KEY = "preferred_server"
+        private const val PREF_SERVER_DEFAULT = "DoodStream"
+        private val SERVER_LIST = arrayOf("Okru", "DoodStream", "StreamTape")
     }
 
     override fun popularAnimeSelector(): String = "ul.peliculas li.peli_bx"
@@ -91,13 +97,16 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         document.select(".tab_container .tab_content iframe").forEach { iframe ->
             val url = iframe.attr("src")
             val embedUrl = url.lowercase()
-            if (url.lowercase().contains("streamtape")) {
-                val video = StreamTapeExtractor(client).videoFromUrl(url, "Streamtape")
+            if (embedUrl.contains("streamtape")) {
+                val video = StreamTapeExtractor(client).videoFromUrl(url, "StreamTape")
                 if (video != null) {
                     videoList.add(video)
                 }
             }
-            if (url.lowercase().contains("doodstream") || url.lowercase().contains("dood")) {
+            if (embedUrl.contains("doodstream") ||
+                embedUrl.contains("dood") ||
+                embedUrl.contains("ds2play")
+            ) {
                 val video = try {
                     DoodExtractor(client).videoFromUrl(url, "DoodStream", true)
                 } catch (e: Exception) {
@@ -107,7 +116,7 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videoList.add(video)
                 }
             }
-            if (url.lowercase().contains("okru")) {
+            if (embedUrl.contains("okru") || embedUrl.contains("ok.ru")) {
                 val videos = OkruExtractor(client).videosFromUrl(url)
                 videoList.addAll(videos)
             }
@@ -120,23 +129,6 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
-
-    override fun List<Video>.sort(): List<Video> {
-        return try {
-            val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
-            ).toTypedArray()
-            val userPreferredQuality = preferences.getString("preferred_quality", "DoodStream")
-            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
-            if (preferredIdx != -1) {
-                videoSorted.drop(preferredIdx + 1)
-                videoSorted[0] = videoSorted[preferredIdx]
-            }
-            videoSorted.toList()
-        } catch (e: Exception) {
-            this
-        }
-    }
 
     private fun getNumberFromString(epsStr: String): String {
         return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
@@ -242,25 +234,25 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector() = popularAnimeSelector()
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(server, true) },
+                { it.quality.contains(quality) },
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
+        ).reversed()
+    }
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf(
-                "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
-                "YourUpload", "DoodStream", "StreamTape",
-            ) // video servers without resolution
-            entryValues = arrayOf(
-                "Okru:1080p",
-                "Okru:720p",
-                "Okru:480p",
-                "Okru:360p",
-                "Okru:240p",
-                "Okru:144p", // Okru
-                "DoodStream",
-                "StreamTape",
-            ) // video servers without resolution
-            setDefaultValue("DoodStream")
+        ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
+            title = "Preferred server"
+            entries = SERVER_LIST
+            entryValues = SERVER_LIST
+            setDefaultValue(PREF_SERVER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -269,7 +261,22 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = "Preferred quality"
+            entries = QUALITY_LIST
+            entryValues = QUALITY_LIST
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
     }
 }

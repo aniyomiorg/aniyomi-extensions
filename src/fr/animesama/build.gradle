@@ -8,13 +8,12 @@ ext {
     extName = 'Anime-Sama'
     pkgNameSuffix = 'fr.animesama'
     extClass = '.AnimeSama'
-    extVersionCode = 3
+    extVersionCode = 6
     libVersion = 13
     containsNsfw = false
 }
 
 dependencies {
-    implementation(project(':lib-mytv-extractor'))
     implementation(project(':lib-sibnet-extractor'))
     implementation(project(':lib-vk-extractor'))
     implementation(project(':lib-sendvid-extractor'))

@@ -8,14 +8,15 @@ import okhttp3.OkHttpClient
 
 class SoraPlayExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, headers: Headers): List<Video> {
-        val doc = client.newCall(GET(url)).execute().asJsoup()
+        val newHeaders = headers.newBuilder().set("referer", "https://yonaplay.org/").build()
+        val doc = client.newCall(GET(url, newHeaders)).execute().asJsoup()
         val script = doc.selectFirst("script:containsData(sources)")!!
         val data = script.data().substringAfter("sources: [").substringBefore("],")
 
         return data.split("\"file\":\"").drop(1).map { source ->
             val src = source.substringBefore("\"")
             val quality = "Soraplay: " + source.substringAfter("\"label\":\"").substringBefore("\"")
-            Video(src, quality, src, headers = headers)
+            Video(src, quality, src, headers = newHeaders)
         }
     }
 }

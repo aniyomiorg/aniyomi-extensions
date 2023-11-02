@@ -38,8 +38,8 @@ private object BigIntegerSerializer : KSerializer<BigInteger> {
 
 @Serializable
 data class Anime(
-    @SerialName("themes") val genres: Array<String>,
-    @SerialName("saisons") val seasons: Array<Season>,
+    @SerialName("themes") val genres: List<String>,
+    @SerialName("saisons") val seasons: List<Season>,
     @SerialName("_id") val uid: String?,
     @SerialName("id") val id: BigIntegerJson,
     @SerialName("source_url") val sourceUrl: String,
@@ -63,7 +63,7 @@ data class Anime(
 @Serializable
 data class Season(
     @SerialName("title") val title: String,
-    @SerialName("episodes") val episodes: Array<Episode>,
+    @SerialName("episodes") val episodes: List<Episode>,
 )
 
 @Serializable
@@ -80,7 +80,7 @@ data class EpisodeLanguages(
 
 @Serializable
 data class EpisodeLanguage(
-    @SerialName("lecteurs") val players: Array<String>,
+    @SerialName("lecteurs") val players: List<String>,
 )
 
 @Serializable

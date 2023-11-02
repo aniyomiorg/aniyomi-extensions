@@ -1,3 +1,7 @@
+# DISCLAIMER
+
+This extension requires you to log in through Google and relies heavily on scraping the website of Google Drive, which may be against their terms of service. Use at your own risk.
+
 # Google Drive
 
 Table of Content
@@ -9,7 +13,11 @@ Table of Content
 
 ## FAQ
 
-### How do i add entries?
+### How do I customize info?
+
+The Google Drive Extension allow for editing the same way as [local anime](https://aniyomi.org/docs/guides/local-anime-source/advanced)      .
+
+### How do I add entries?
 The Google Drive Extension *only* supports google drive folders, so no shared drives (but folders inside shared drives works fine!). If you have a folder, which contains sub-folders of an anime, such as:
 ```
 https://drive.google.com/drive/folders/some-long-id

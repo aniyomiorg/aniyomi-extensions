@@ -31,7 +31,7 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AsianLoad"
 
-    override val baseUrl = "https://asianhdplay.pro"
+    override val baseUrl = "https://asianhd1.com"
 
     override val lang = "en"
 
@@ -102,7 +102,7 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val epNum = element.selectFirst("div.name")!!.text().substringAfter("Episode ")
         name = element.selectFirst("div.type span")!!.text() + " Episode: $epNum"
         episode_number = when {
-            (epNum.isNotEmpty()) -> epNum.toFloatOrNull() ?: 1F
+            epNum.isNotEmpty() -> epNum.toFloatOrNull() ?: 1F
             else -> 1F
         }
         date_upload = element.selectFirst("span.date")?.text()?.toDate() ?: 0L

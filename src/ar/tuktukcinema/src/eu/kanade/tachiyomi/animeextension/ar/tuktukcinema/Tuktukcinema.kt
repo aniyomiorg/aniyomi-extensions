@@ -6,7 +6,6 @@ import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.UQLoadExtractor
 import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.UpStreamExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -18,6 +17,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -163,7 +163,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 DoodExtractor(client).videoFromUrl("https://www.$finalUrl", "Dood mirror", false)?.let(::listOf)
             }
             url.contains("uqload") -> {
-                UQLoadExtractor(client).videoFromUrl(url, "Uqload mirror")?.let(::listOf)
+                UqloadExtractor(client).videosFromUrl(url, "mirror")
             }
             url.contains("tape") -> {
                 StreamTapeExtractor(client).videoFromUrl(url)?.let(::listOf)

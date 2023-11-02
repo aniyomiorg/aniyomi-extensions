@@ -5,16 +5,16 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.en.fmovies.extractors.StreamtapeExtractor
+import eu.kanade.tachiyomi.animeextension.en.fmovies.extractors.VidsrcExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
-import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
@@ -24,8 +24,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import okhttp3.Headers
-import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -42,7 +40,7 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "FMovies"
 
-    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
+    override val baseUrl = "https://fmoviesz.to"
 
     override val lang = "en"
 
@@ -56,20 +54,21 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    private val vrfHelper by lazy { FMoviesHelper(client, headers) }
+
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/trending${page.toPageQuery()}", headers)
 
     override fun popularAnimeSelector(): String = "div.items > div.item"
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val a = element.selectFirst("div.meta a")!!
-
-        return SAnime.create().apply {
-            setUrlWithoutDomain(a.attr("abs:href"))
-            thumbnail_url = element.select("div.poster img").attr("data-src")
+    override fun popularAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
+        element.selectFirst("div.meta a")!!.let { a ->
             title = a.text()
+            setUrlWithoutDomain(a.attr("abs:href"))
         }
+
+        thumbnail_url = element.select("div.poster img").attr("data-src")
     }
 
     override fun popularAnimeNextPageSelector(): String = "ul.pagination > li.active + li"
@@ -87,19 +86,11 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =============================== Search ===============================
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
-
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val params = FMoviesFilters.getSearchParameters(filters)
-        return client.newCall(searchAnimeRequest(page, query, params))
-            .asObservableSuccess()
-            .map { response ->
-                searchAnimeParse(response)
-            }
-    }
 
-    private fun searchAnimeRequest(page: Int, query: String, filters: FMoviesFilters.FilterSearchParams): Request =
-        GET("$baseUrl/filter?keyword=$query${filters.filter}${page.toPageQuery(false)}", headers)
+        return GET("$baseUrl/filter?keyword=$query${params.filter}${page.toPageQuery(false)}", headers)
+    }
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
@@ -139,16 +130,17 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListRequest(anime: SAnime): Request {
         val id = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
             .selectFirst("div[data-id]")!!.attr("data-id")
-        val vrf = callConsumet(id, "fmovies-vrf")
 
-        val vrfHeaders = headers.newBuilder()
-            .add("Accept", "application/json, text/javascript, */*; q=0.01")
-            .add("Host", baseUrl.toHttpUrl().host)
-            .add("Referer", baseUrl + anime.url)
-            .add("X-Requested-With", "XMLHttpRequest")
-            .build()
+        val vrf = vrfHelper.getVrf(id)
 
-        return GET("$baseUrl/ajax/episode/list/$id?$vrf", headers = vrfHeaders)
+        val vrfHeaders = headers.newBuilder().apply {
+            add("Accept", "application/json, text/javascript, */*; q=0.01")
+            add("Host", baseUrl.toHttpUrl().host)
+            add("Referer", baseUrl + anime.url)
+            add("X-Requested-With", "XMLHttpRequest")
+        }.build()
+
+        return GET("$baseUrl/ajax/episode/list/$id?vrf=$vrf", headers = vrfHeaders)
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -165,17 +157,19 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
 
             season.select("li").forEach { ep ->
-                val a = ep.selectFirst("a")!!
                 episodeList.add(
                     SEpisode.create().apply {
                         name = "$seasonPrefix${ep.text().trim()}".replace("Episode ", "Ep. ")
-                        episode_number = a.attr("data-num").toFloatOrNull() ?: 0F
-                        url = json.encodeToString(
-                            EpisodeInfo(
-                                id = a.attr("data-id"),
-                                url = "$baseUrl${a.attr("href")}",
-                            ),
-                        )
+
+                        ep.selectFirst("a")!!.let { a ->
+                            episode_number = a.attr("data-num").toFloatOrNull() ?: 0F
+                            url = json.encodeToString(
+                                EpisodeInfo(
+                                    id = a.attr("data-id"),
+                                    url = "$baseUrl${a.attr("href")}",
+                                ),
+                            )
+                        }
                     },
                 )
             }
@@ -200,8 +194,7 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListRequest(episode: SEpisode): Request {
         val data = json.decodeFromString<EpisodeInfo>(episode.url)
-
-        val vrf = callConsumet(data.id, "fmovies-vrf")
+        val vrf = vrfHelper.getVrf(data.id)
 
         val vrfHeaders = headers.newBuilder()
             .add("Accept", "application/json, text/javascript, */*; q=0.01")
@@ -210,8 +203,12 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .add("X-Requested-With", "XMLHttpRequest")
             .build()
 
-        return GET("$baseUrl/ajax/server/list/${data.id}?$vrf", headers = vrfHeaders)
+        return GET("$baseUrl/ajax/server/list/${data.id}?vrf=$vrf", headers = vrfHeaders)
     }
+
+    private val vidsrcExtractor by lazy { VidsrcExtractor(client, headers) }
+    private val filemoonExtractor by lazy { FilemoonExtractor(client) }
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
 
     private fun videoListParse(response: Response, episode: SEpisode): List<Video> {
         val data = json.decodeFromString<EpisodeInfo>(episode.url)
@@ -219,67 +216,43 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             response.parseAs<AjaxResponse>().result,
         )
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
-        val videoList = mutableListOf<Video>()
 
-        videoList.addAll(
-            document.select("ul.servers > li.server").parallelMap { server ->
-                runCatching {
-                    val name = server.text().trim()
-                    if (!hosterSelection.contains(name)) return@runCatching null
+        return document.select("ul.servers > li.server").parallelMap { server ->
+            runCatching {
+                val name = server.text().trim()
+                if (!hosterSelection.contains(name)) return@runCatching emptyList()
 
-                    // Get decrypted url
-                    val vrf = callConsumet(server.attr("data-link-id"), "fmovies-vrf")
-                    val vrfHeaders = headers.newBuilder()
-                        .add("Accept", "application/json, text/javascript, */*; q=0.01")
-                        .add("Host", baseUrl.toHttpUrl().host)
-                        .add("Referer", data.url)
-                        .add("X-Requested-With", "XMLHttpRequest")
-                        .build()
-                    val encrypted = client.newCall(
-                        GET("$baseUrl/ajax/server/${server.attr("data-link-id")}?$vrf", headers = vrfHeaders),
-                    ).execute().parseAs<AjaxServerResponse>().result.url
-                    val decrypted = callConsumet(encrypted, "fmovies-decrypt")
+                // Get decrypted url
+                val vrf = vrfHelper.getVrf(server.attr("data-link-id"))
 
-                    when (name) {
-                        // Stolen from 9anime extension
-                        "Vidstream", "MyCloud" -> {
-                            val embedReferer = Headers.headersOf(
-                                "referer",
-                                "https://" + decrypted.toHttpUrl().host + "/",
-                            )
-                            val vidId = decrypted.substringAfterLast("/").substringBefore("?")
-                            val (serverName, action) = when (name) {
-                                "Vidstream" -> Pair("Vidstream", "rawVizcloud")
-                                "MyCloud" -> Pair("MyCloud", "rawMcloud")
-                                else -> return@parallelMap null
+                val vrfHeaders = headers.newBuilder()
+                    .add("Accept", "application/json, text/javascript, */*; q=0.01")
+                    .add("Host", baseUrl.toHttpUrl().host)
+                    .add("Referer", data.url)
+                    .add("X-Requested-With", "XMLHttpRequest")
+                    .build()
+                val encrypted = client.newCall(
+                    GET("$baseUrl/ajax/server/${server.attr("data-link-id")}?vrf=$vrf", headers = vrfHeaders),
+                ).execute().parseAs<AjaxServerResponse>().result.url
+
+                val decrypted = vrfHelper.decrypt(encrypted)
+
+                when (name) {
+                    "Vidplay", "MyCloud" -> vidsrcExtractor.videosFromUrl(decrypted, name)
+                    "Filemoon" -> filemoonExtractor.videosFromUrl(decrypted, headers = headers)
+                    "Streamtape" -> {
+                        val subtitleList = decrypted.toHttpUrl().queryParameter("sub.info")?.let {
+                            client.newCall(GET(it, headers)).execute().parseAs<List<FMoviesSubs>>().map { t ->
+                                Track(t.file, t.label)
                             }
+                        } ?: emptyList()
 
-                            val playlistUrl = callConsumet(vidId, action)
-                            val playlist = client.newCall(GET(playlistUrl, embedReferer)).execute()
-
-                            parseVizPlaylist(
-                                playlist.body.string(),
-                                playlist.request.url,
-                                serverName,
-                                embedReferer,
-                                decrypted.toHttpUrl().queryParameter("sub.info"),
-                            )
-                        }
-                        "Filemoon" -> {
-                            FilemoonExtractor(client).videosFromUrl(decrypted, headers = headers)
-                        }
-                        "Streamtape" -> {
-                            StreamtapeExtractor(client, headers).videosFromUrl(decrypted)
-                        }
-                        else -> null
+                        streamtapeExtractor.videoFromUrl(decrypted, subtitleList = subtitleList)?.let(::listOf) ?: emptyList()
                     }
-                }.getOrNull()
-            }.filterNotNull().flatten(),
-        )
-
-        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
-
-        return videoList.sort()
+                    else -> emptyList()
+                }
+            }.getOrElse { emptyList() }
+        }.flatten().ifEmpty { throw Exception("Failed to fetch videos") }
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -287,71 +260,6 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
-
-    // ============== Utilities stolen from 9anime extension ================
-
-    private fun callConsumet(query: String, action: String): String {
-        return client.newCall(
-            GET("https://9anime.eltik.net/$action?query=$query&apikey=aniyomi"),
-        ).execute().body.string().let {
-            when (action) {
-                "rawVizcloud", "rawMcloud" -> {
-                    val rawURL = json.decodeFromString<RawResponse>(it).rawURL
-                    val referer = if (action == "rawVizcloud") "https://vidstream.pro/" else "https://mcloud.to/"
-                    val apiResponse = client.newCall(
-                        GET(
-                            url = rawURL,
-                            headers = Headers.headersOf("Referer", referer),
-                        ),
-                    ).execute().body.string()
-                    apiResponse.substringAfter("file\":\"").substringBefore("\"")
-                }
-                "fmovies-decrypt" -> {
-                    json.decodeFromString<VrfResponse>(it).url
-                }
-                else -> {
-                    json.decodeFromString<VrfResponse>(it).let { vrf ->
-                        "vrf=${java.net.URLEncoder.encode(vrf.url, "utf-8")}"
-                    }
-                }
-            }
-        }
-    }
-
-    private fun parseVizPlaylist(
-        masterPlaylist: String,
-        masterUrl: HttpUrl,
-        prefix: String,
-        embedReferer: Headers,
-        subtitlesUrl: String?,
-    ): List<Video> {
-        val playlistHeaders = embedReferer.newBuilder()
-            .add("accept", "*/*")
-            // .add("host", masterUrl.host)
-            .add("connection", "keep-alive")
-            .build()
-
-        val subtitleList = mutableListOf<Track>()
-        runCatching {
-            if (subtitlesUrl != null) {
-                val subData = client.newCall(GET(subtitlesUrl, headers)).execute().parseAs<List<FMoviesSubs>>()
-                subtitleList.addAll(
-                    subData.map {
-                        Track(it.file, it.label)
-                    },
-                )
-            }
-        }
-
-        return masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
-            .split("#EXT-X-STREAM-INF:").map {
-                val quality = "$prefix - " + it.substringAfter("RESOLUTION=")
-                    .substringAfter("x").substringBefore("\n") + "p"
-                val videoUrl = masterUrl.toString().substringBeforeLast("/") + "/" +
-                    it.substringAfter("\n").substringBefore("\n")
-                Video(videoUrl, quality, videoUrl, playlistHeaders, subtitleTracks = subtitleList)
-            }
-    }
 
     // ============================= Utilities ==============================
 
@@ -385,57 +293,24 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     companion object {
         private val HOSTERS = arrayOf(
-            "Vidstream",
+            "Vidplay",
             "MyCloud",
             "Filemoon",
             "Streamtape",
         )
 
-        private const val PREF_DOMAIN_KEY = "preferred_domain"
-        private val PREF_DOMAIN_DEFAULT = "https://fmovies.to"
-
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_DEFAULT = "1080"
 
         private const val PREF_SERVER_KEY = "preferred_server"
-        private const val PREF_SERVER_DEFAULT = "Vidstream"
+        private const val PREF_SERVER_DEFAULT = "Vidplay"
 
         private const val PREF_HOSTER_KEY = "hoster_selection"
-        private val PREF_HOSTER_DEFAULT = setOf("Vidstream", "Filemoon")
+        private val PREF_HOSTER_DEFAULT = setOf("Vidplay", "Filemoon")
     }
     // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        ListPreference(screen.context).apply {
-            key = PREF_DOMAIN_KEY
-            title = "Preferred domain (requires app restart)"
-            entries = arrayOf(
-                "fmovies.to",
-                "fmovies.wtf",
-                "fmovies.taxi",
-                "fmovies.pub",
-                "fmovies.cafe",
-                "fmovies.world",
-            )
-            entryValues = arrayOf(
-                "https://fmovies.to",
-                "https://fmovies.wtf",
-                "https://fmovies.taxi",
-                "https://fmovies.pub",
-                "https://fmovies.cafe",
-                "https://fmovies.world",
-            )
-            setDefaultValue(PREF_DOMAIN_DEFAULT)
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }.also(screen::addPreference)
-
         ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = "Preferred quality"

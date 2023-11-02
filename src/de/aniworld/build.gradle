@@ -6,7 +6,7 @@ ext {
     extName = 'AniWorld (experimental)'
     pkgNameSuffix = 'de.aniworld'
     extClass = '.AniWorld'
-    extVersionCode = 16
+    extVersionCode = 20
     libVersion = '13'
 }
 

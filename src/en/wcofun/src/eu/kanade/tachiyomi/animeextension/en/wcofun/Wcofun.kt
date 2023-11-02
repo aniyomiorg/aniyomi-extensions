@@ -32,7 +32,7 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Wcofun"
 
-    override val baseUrl = "https://www.wcofun.org"
+    override val baseUrl = "https://www.wcofun.tv"
 
     override val lang = "en"
 
@@ -108,7 +108,7 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val ep = epName.substringAfter("Episode ")
         val seasonNum = season.substringBefore(" ").toIntOrNull() ?: 1
         val epNum = ep.substringBefore(" ").toIntOrNull() ?: 1
-        episode_number = ((seasonNum * 100) + epNum).toFloat()
+        episode_number = (seasonNum * 100 + epNum).toFloat()
         name = "Season $seasonNum - Episode $epNum"
     }
 

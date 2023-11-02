@@ -6,7 +6,7 @@ import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -34,7 +34,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "DramaCool"
 
-    private val defaultBaseUrl = "https://dramacool.hr"
+    private val defaultBaseUrl = "https://dramacool.pa"
 
     override val baseUrl by lazy { getPrefBaseUrl() }
 
@@ -125,7 +125,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             setUrlWithoutDomain(element.attr("abs:href"))
             name = element.select("span.type").text() + ": Episode " + element.select("h3").text().substringAfter("Episode ")
             episode_number = when {
-                (epNum.isNotEmpty()) -> epNum.toFloat()
+                epNum.isNotEmpty() -> epNum.toFloatOrNull() ?: 1F
                 else -> 1F
             }
             date_upload = parseDate(element.select("span.time").text())
@@ -163,13 +163,6 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("dwish") -> {
                     val video = StreamWishExtractor(client, headers).videosFromUrl(url)
                     videoList.addAll(video)
-                }
-
-                url.contains("streamtape") -> {
-                    val video = StreamTapeExtractor(client).videoFromUrl(url)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
                 }
 
                 url.contains("streamtape") -> {
@@ -218,7 +211,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
 
-        private val BASE_URL_PREF = "overrideBaseUrl_v${AppInfo.getVersionName()}"
+        private val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_CODE}"
 
         private const val BASE_URL_PREF_SUMMARY = "For temporary uses. Update extension will erase this setting."
 

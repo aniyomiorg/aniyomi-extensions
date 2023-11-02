@@ -5,11 +5,12 @@ ext {
     extName = 'Vostfree'
     pkgNameSuffix = 'fr.vostfree'
     extClass = '.Vostfree'
-    extVersionCode = 15
+    extVersionCode = 17
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-vudeo-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-mytv-extractor'))
     implementation(project(':lib-okru-extractor'))

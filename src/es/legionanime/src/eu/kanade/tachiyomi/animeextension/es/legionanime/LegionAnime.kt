@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.JkanimeExtractor
-import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.UqloadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -19,6 +18,7 @@ import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -280,7 +280,11 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
             url.contains("jkanime") -> {
-                listOf(JkanimeExtractor(client).getDesuFromUrl(url))
+                try {
+                    listOf(JkanimeExtractor(client).getDesuFromUrl(url))
+                } catch (_: Exception) {
+                    emptyList()
+                }
             }
             url.contains("/stream/amz.php?") -> {
                 try {
@@ -338,12 +342,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
             url.contains("uqload") -> {
-                val video = UqloadExtractor(client).videoFromUrl(url, headers)
-                if (video != null) {
-                    listOf(video)
-                } else {
-                    emptyList()
-                }
+                UqloadExtractor(client).videosFromUrl(url)
             }
             else -> emptyList()
         }

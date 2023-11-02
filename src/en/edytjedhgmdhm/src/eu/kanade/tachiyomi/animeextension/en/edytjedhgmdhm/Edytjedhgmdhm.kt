@@ -16,6 +16,8 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import java.net.URI
+import java.net.URISyntaxException
 
 class Edytjedhgmdhm : ParsedAnimeHttpSource() {
 
@@ -36,19 +38,19 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
     private val miscList by lazy {
         client.newCall(GET("$baseUrl/misc/")).execute()
             .asJsoup()
-            .select("a")
+            .select(LINK_SELECTOR)
     }
 
     private val moviesList by lazy {
         client.newCall(GET("$baseUrl/movies/")).execute()
             .asJsoup()
-            .select("a")
+            .select(LINK_SELECTOR)
     }
 
     private val tvsList by lazy {
         client.newCall(GET("$baseUrl/tvs/")).execute()
             .asJsoup()
-            .select("a")
+            .select(LINK_SELECTOR)
     }
 
     // ============================== Popular ===============================
@@ -60,10 +62,10 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
         val animeList = if (results.isEmpty()) {
             emptyList()
         } else {
-            results.get(page - 1).map {
+            results[page - 1].map {
                 SAnime.create().apply {
                     title = it.text()
-                    setUrlWithoutDomain(it.attr("abs:href"))
+                    url = getUrlWithoutDomain(it.attr("abs:href"))
                     thumbnail_url = ""
                 }
             }
@@ -120,10 +122,10 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
         val animeList = if (results.isEmpty()) {
             emptyList()
         } else {
-            results.get(page - 1).map {
+            results[page - 1].map {
                 SAnime.create().apply {
                     title = it.text()
-                    setUrlWithoutDomain(it.attr("abs:href"))
+                    url = getUrlWithoutDomain(it.attr("abs:href"))
                     thumbnail_url = ""
                 }
             }
@@ -170,13 +172,14 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
 
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
         val episodeList = mutableListOf<SEpisode>()
-        var counter = 1
 
         fun traverseDirectory(url: String) {
             val doc = client.newCall(GET(url)).execute().asJsoup()
 
-            doc.select("a").forEach { link ->
-                val href = link.selectFirst("a")!!.attr("abs:href")
+            var counter = 1
+
+            doc.select(LINK_SELECTOR).forEach { link ->
+                val href = link.attr("abs:href")
 
                 if (href.isNotBlank()) {
                     if (href.endsWith("/")) {
@@ -190,12 +193,15 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
                         } else {
                             "/"
                         }
-                        val size = link.selectFirst("td[data-order]")?.let { formatBytes(it.attr("data-order").toLongOrNull()) }
+
+                        val size = link.parent()?.parent()?.nextElementSibling()?.attr("data-order")?.toLongOrNull()?.let {
+                            formatBytes(it)
+                        }
 
                         episodeList.add(
                             SEpisode.create().apply {
                                 name = videoFormats.fold(paths.last()) { acc, suffix -> acc.removeSuffix(suffix).trimInfo() }
-                                setUrlWithoutDomain(href)
+                                this.url = getUrlWithoutDomain(href)
                                 scanlator = "${if (size == null) "" else "$size • "}$extraInfo"
                                 date_upload = -1L
                                 episode_number = counter.toFloat()
@@ -231,15 +237,33 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
 
     // ============================= Utilities ==============================
 
-    private fun formatBytes(bytes: Long?): String? {
-        val units = arrayOf("B", "KB", "MB", "GB", "TB", "PB", "EB")
-        var value = bytes?.toDouble() ?: return null
-        var i = 0
-        while (value >= 1000 && i < units.size - 1) {
-            value /= 1000
-            i++
+    private fun formatBytes(bytes: Long): String {
+        return when {
+            bytes >= 1_000_000_000 -> "%.2f GB".format(bytes / 1_000_000_000.0)
+            bytes >= 1_000_000 -> "%.2f MB".format(bytes / 1_000_000.0)
+            bytes >= 1_000 -> "%.2f KB".format(bytes / 1_000.0)
+            bytes > 1 -> "$bytes bytes"
+            bytes == 1L -> "$bytes byte"
+            else -> ""
         }
-        return String.format("%.2f %s", value, units[i])
+    }
+
+    // Same as the one in `AnimeHttpSource` but path, query, and fragment are replaced with it's
+    // "raw" equivalent as to not decode url characters when it shouldn't
+    private fun getUrlWithoutDomain(orig: String): String {
+        return try {
+            val uri = URI(orig.replace(" ", "%20"))
+            var out = uri.rawPath
+            if (uri.query != null) {
+                out += "?" + uri.rawQuery
+            }
+            if (uri.fragment != null) {
+                out += "#" + uri.rawFragment
+            }
+            out
+        } catch (e: URISyntaxException) {
+            orig
+        }
     }
 
     private fun String.trimInfo(): String {
@@ -257,5 +281,6 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
 
     companion object {
         private const val CHUNKED_SIZE = 30
+        private const val LINK_SELECTOR = "table tbody a:not([href=..])"
     }
 }

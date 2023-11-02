@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.SharedExtractor
-import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.UQLoadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -18,6 +17,7 @@ import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
+import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -171,7 +171,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
     private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
     private val sharedExtractor by lazy { SharedExtractor(client) }
-    private val uqloadExtractor by lazy { UQLoadExtractor(client) }
+    private val uqloadExtractor by lazy { UqloadExtractor(client) }
     private val vidBomExtractor by lazy { VidBomExtractor(client) }
     private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
     private val okruExtractor by lazy { OkruExtractor(client) }
@@ -193,7 +193,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             "streamtape" in url -> streamTapeExtractor.videoFromUrl(url)?.let(::listOf)
             "4shared" in url -> sharedExtractor.videoFromUrl(url)?.let(::listOf)
-            "uqload" in url -> uqloadExtractor.videoFromUrl(url)?.let(::listOf)
+            "uqload" in url -> uqloadExtractor.videosFromUrl(url)
             VIDBOM_DOMAINS.any(url::contains) -> vidBomExtractor.videosFromUrl(url)
             else -> null
         } ?: emptyList()

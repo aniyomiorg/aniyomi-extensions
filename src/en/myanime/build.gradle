@@ -6,11 +6,12 @@ ext {
     extName = 'Myanime'
     pkgNameSuffix = 'en.myanime'
     extClass = '.Myanime'
-    extVersionCode = 4
+    extVersionCode = 5
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-dailymotion-extractor'))
     implementation(project(':lib-gdriveplayer-extractor'))
     implementation(project(':lib-okru-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"

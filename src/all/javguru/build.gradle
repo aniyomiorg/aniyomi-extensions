@@ -7,17 +7,19 @@ ext {
     extName = 'Jav Guru'
     pkgNameSuffix = 'all.javguru'
     extClass = '.JavGuru'
-    extVersionCode = 4
+    extVersionCode = 9
     libVersion = '13'
     containsNsfw = true
 }
 
 dependencies {
+    implementation(project(':lib-streamwish-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-mixdrop-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
     implementation(project(':lib-playlist-utils'))
+    implementation(project(':lib-javcoverfetcher'))
 }
 
 apply from: "$rootDir/common.gradle"
