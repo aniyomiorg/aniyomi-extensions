@@ -11,6 +11,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
@@ -75,56 +76,40 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Video Extractor
 
-    override fun videoListRequest(episode: SEpisode): Request {
-        return GET(baseUrl + episode.url, headers = Headers.headersOf("if-modified-since", ""))
-    }
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val doodExtractor by lazy { DoodExtractor(client) }
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        return videosFromElement(document)
-    }
+        val iframeurl = document.selectFirst("div.player-container-wrap > iframe")
+            ?.attr("src")
+            ?: error("No videos!")
+        val iframeDoc = client.newCall(GET(iframeurl)).execute().use { it.asJsoup() }
 
-    private fun videosFromElement(document: Document): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val iframeurl = document.select("div.embed-responsive-item.player-container-wrap iframe").attr("src")
-        val iframedoc = client.newCall(GET(iframeurl, headers = Headers.headersOf("if-modified-since", ""))).execute().asJsoup()
-        val lis = iframedoc.select("div._player ul._player-mirrors li")
-        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("stape", "dood"))
-        for (li in lis) {
-            when {
-                li.text().contains("streamtape.com") && hosterSelection?.contains("stape") == true -> {
-                    val url = li.attr("data-link")
-                    runCatching {
-                        with(
-                            client.newCall(GET(url, headers = Headers.headersOf("Referer", baseUrl, "Cookie", "Fuck Streamtape because they add concatenation to fuck up scrapers")))
-                                .execute().asJsoup(),
-                        ) {
-                            linkRegex.find(this.select("script:containsData(document.getElementById('robotlink'))").toString())?.let {
-                                val quality = "Streamtape"
-                                val id = it.groupValues[1].replace("%27+%20(%27xcdb", "")
-                                val videoUrl = "https://streamtape.com/get_video?$id&stream=1".replace("""" + '""", "")
-                                videoList.add(Video(videoUrl, quality, videoUrl))
-                            }
-                        }
-                    }
-                }
+        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("stape", "dood"))!!
+        val items = iframeDoc.select("div._player ul._player-mirrors li")
 
-                li.text().contains("doodstream.com") && hosterSelection?.contains("dood") == true -> {
-                    val quality = "Doodstream"
-                    val link = "https:" + li.attr("data-link")
-                    val video = DoodExtractor(client).videoFromUrl(link, quality, false)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
+        val videoList = items.flatMap { element ->
+            val url = element.attr("data-link").run {
+                takeIf { startsWith("https") }
+                    ?: "https:$this"
             }
+
+            runCatching {
+                when {
+                    url.contains("streamtape") && hosterSelection.contains("stape") -> {
+                        streamtapeExtractor.videosFromUrl(url)
+                    }
+                    url.startsWith("https://dood") && hosterSelection.contains("dood") -> {
+                        doodExtractor.videosFromUrl(url)
+                    }
+                    else -> emptyList()
+                }
+            }.getOrElse { emptyList() }
         }
 
         return videoList
     }
-
-    private val linkRegex =
-        Regex("""(i(|" \+ ')d(|" \+ ')=.*?&(|" \+ ')e(|" \+ ')x(|" \+ ')p(|" \+ ')i(|" \+ ')r(|" \+ ')e(|" \+ ')s(|" \+ ')=.*?&(|" \+ ')i(|" \+ ')p(|" \+ ')=.*?&(|" \+ ')t(|" \+ ')o(|" \+ ')k(|" \+ ')e(|" \+ ')n(|" \+ ')=.*)'""")
 
     override fun List<Video>.sort(): List<Video> {
         val hoster = preferences.getString("preferred_hoster", "Streamtape")
