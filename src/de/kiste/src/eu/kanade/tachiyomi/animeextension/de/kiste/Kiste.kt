@@ -21,6 +21,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
+import java.net.URLEncoder
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 
@@ -114,7 +115,7 @@ class Kiste : ParsedAnimeHttpSource() {
 
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
         val slug = anime.url.substringAfterLast("/")
-        val vrf = encryptRC4(slug)
+        val vrf = URLEncoder.encode(encryptRC4(slug).trimEnd(), "utf-8")
         val newDoc = client.newCall(GET("$baseUrl/ajax/film/servers.php?id=$slug&vrf=$vrf&episode=1-1&token="))
             .execute()
             .use { json.decodeFromString<HtmlData>(it.body.string()).html }
