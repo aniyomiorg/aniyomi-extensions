@@ -3272,10 +3272,10 @@
   {
     "name": "Aniyomi: OtakuDesu",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.otakudesu",
-    "apk": "aniyomi-id.otakudesu-v13.21.apk",
+    "apk": "aniyomi-id.otakudesu-v13.22.apk",
     "lang": "id",
-    "code": 21,
-    "version": "13.21",
+    "code": 22,
+    "version": "13.22",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3284,7 +3284,7 @@
         "name": "OtakuDesu",
         "lang": "id",
         "id": "3428487071093013526",
-        "baseUrl": "https://otakudesu.wiki",
+        "baseUrl": "https://otakudesu.cam",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -3858,27 +3858,6 @@
     ]
   },
   {
-    "name": "Aniyomi: AnimeTV",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animetv",
-    "apk": "aniyomi-pt.animetv-v12.1.apk",
-    "lang": "pt-BR",
-    "code": 1,
-    "version": "12.1",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "AnimeTV",
-        "lang": "pt-BR",
-        "id": "2719038923991789737",
-        "baseUrl": "https://appanimeplus.tk/play-api.php",
-        "versionId": 1,
-        "hasCloudflare": 0
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: Anitube",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.anitube",
     "apk": "aniyomi-pt.anitube-v13.12.apk",
@@ -4112,10 +4091,10 @@
   {
     "name": "Aniyomi: Muito Hentai",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.muitohentai",
-    "apk": "aniyomi-pt.muitohentai-v12.1.apk",
+    "apk": "aniyomi-pt.muitohentai-v13.2.apk",
     "lang": "pt-BR",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
