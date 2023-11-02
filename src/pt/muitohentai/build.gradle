@@ -1,12 +1,15 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+}
 
 ext {
     extName = 'Muito Hentai'
     pkgNameSuffix = 'pt.muitohentai'
     extClass = '.MuitoHentai'
-    extVersionCode = 1
-    libVersion = '12'
+    extVersionCode = 2
+    libVersion = '13'
     containsNsfw = true
 }
 
