@@ -11,8 +11,8 @@ class IframeExtractor(private val client: OkHttpClient) {
         val iframeElement = doc.selectFirst("div#div_video iframe")!!
         val iframeUrl = iframeElement.attr("src")
         val response = client.newCall(GET(iframeUrl, headers)).execute()
-        val html = response.body.string()
-        val url = html.substringAfter("play_url")
+            .use { it.body.string() }
+        val url = response.substringAfter("play_url")
             .substringAfter(":\"")
             .substringBefore("\"")
         val video = Video(url, "Default", url, headers = headers)

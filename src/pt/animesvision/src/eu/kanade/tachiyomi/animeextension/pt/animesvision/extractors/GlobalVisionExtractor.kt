@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors
 
 import eu.kanade.tachiyomi.animesource.model.Video
+
 class GlobalVisionExtractor {
     companion object {
         private val REGEX_URL = Regex(""""file":"(\S+?)",.*?"label":"(.*?)"""")

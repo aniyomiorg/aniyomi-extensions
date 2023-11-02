@@ -16,9 +16,7 @@ object MAFilters {
     }
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return first { it is R }.let {
-            (it as QueryPartFilter).toQueryPart()
-        }
+        return (first { it is R } as QueryPartFilter).toQueryPart()
     }
 
     class LetterFilter : QueryPartFilter("Letra inicial", MAFiltersData.LETTERS)
@@ -45,6 +43,8 @@ object MAFilters {
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
+        if (filters.isEmpty()) return FilterSearchParams()
+
         return FilterSearchParams(
             filters.asQueryPart<LetterFilter>(),
             filters.asQueryPart<YearFilter>(),

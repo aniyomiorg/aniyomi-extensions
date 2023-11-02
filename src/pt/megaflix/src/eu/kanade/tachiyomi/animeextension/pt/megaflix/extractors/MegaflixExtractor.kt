@@ -12,7 +12,7 @@ class MegaflixExtractor(private val client: OkHttpClient, private val headers: H
 
     fun videosFromUrl(url: String, lang: String = ""): List<Video> {
         val unpacked = client.newCall(GET(url, headers)).execute()
-            .body.string()
+            .use { it.body.string() }
             .let(JsUnpacker::unpackAndCombine)
             ?.replace("\\", "")
             ?: return emptyList()

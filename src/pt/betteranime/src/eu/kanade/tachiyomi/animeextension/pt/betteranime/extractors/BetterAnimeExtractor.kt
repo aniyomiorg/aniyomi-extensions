@@ -9,7 +9,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
@@ -36,24 +35,24 @@ class BetterAnimeExtractor(
         }.filterNotNull()
     }
 
-    private fun videoUrlFromToken(qtoken: String, _token: String): String? {
+    private fun videoUrlFromToken(qtoken: String, token: String): String? {
         val body = """
             {
-                "_token": "$_token",
+                "_token": "$token",
                 "info": "$qtoken"
             }
         """.trimIndent()
         val reqBody = body.toRequestBody("application/json".toMediaType())
         val request = POST("$baseUrl/changePlayer", headers, reqBody)
         return runCatching {
-            val response = client.newCall(request).execute()
-            val resJson = json.decodeFromString<ChangePlayerDto>(response.body.string())
+            val response = client.newCall(request).execute().use { it.body.string() }
+            val resJson = json.decodeFromString<ChangePlayerDto>(response)
             resJson.frameLink?.let(::videoUrlFromPlayer)
         }.getOrNull()
     }
 
     private fun videoUrlFromPlayer(url: String): String {
-        val html = client.newCall(GET(url, headers)).execute().body.string()
+        val html = client.newCall(GET(url, headers)).execute().use { it.body.string() }
 
         val videoUrl = html.substringAfter("file\":")
             .substringAfter("\"")
@@ -63,9 +62,9 @@ class BetterAnimeExtractor(
         return videoUrl
     }
 
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking(Dispatchers.Default) {
-            map { async { f(it) } }.awaitAll()
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
 
     companion object {

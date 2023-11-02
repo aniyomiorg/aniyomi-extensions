@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.donghuanosekai
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.donghuanosekai.extractors.DonghuaNoSekaiExtractor
@@ -21,7 +20,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -53,7 +51,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -65,7 +63,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
         title = element.attr("title")
-        thumbnail_url = element.selectFirst("img")!!.attr("src")
+        thumbnail_url = element.selectFirst("img")?.attr("src")
     }
 
     override fun popularAnimeNextPageSelector() = null
@@ -78,7 +76,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
         title = element.selectFirst("div.title h3")!!.text()
-        thumbnail_url = element.selectFirst("div.thumb img")!!.attr("src")
+        thumbnail_url = element.selectFirst("div.thumb img")?.attr("src")
     }
 
     override fun latestUpdatesNextPageSelector() = "ul.content-pagination > li.next"
@@ -132,7 +130,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 addQueryParameter("filter_order", params.orderBy)
                 addQueryParameter("filter_status", params.status)
                 addQueryParameter("type_url", "ONA")
-            }.build().encodedQuery
+            }.build().encodedQuery.orEmpty()
 
             val genres = params.genres.joinToString { "\"$it\"" }
             val delgenres = params.deleted_genres.joinToString { "\"$it\"" }
@@ -166,7 +164,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
         val doc = getRealDoc(document)
         setUrlWithoutDomain(doc.location())
-        thumbnail_url = doc.selectFirst("div.poster > img")!!.attr("src")
+        thumbnail_url = doc.selectFirst("div.poster > img")?.attr("src")
         val infos = doc.selectFirst("div.dados")!!
 
         title = infos.selectFirst("h1")!!.text()
@@ -179,7 +177,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             doc.select("div.articleContent:has(div:contains(Sinopse)) > div.context > p")
                 .eachText()
                 .joinToString("\n\n")
-                .let(::append)
+                .also(::append)
 
             append("\n")
 
@@ -199,7 +197,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element) = SEpisode.create().apply {
         setUrlWithoutDomain(element.attr("href"))
-        element.selectFirst("span.episode")!!.text().let {
+        element.selectFirst("span.episode")!!.text().also {
             name = it
             episode_number = it.substringAfterLast(" ").toFloatOrNull() ?: 0F
         }
@@ -207,9 +205,9 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
+    private val extractor by lazy { DonghuaNoSekaiExtractor(client, headers) }
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.use { it.asJsoup() }
-        val extractor = DonghuaNoSekaiExtractor(client, headers)
 
         return doc.select("div.slideItem[data-video-url]").parallelMap {
             runCatching {
@@ -263,7 +261,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } ?: document
     }
 
-    private fun String?.parseStatus() = when (this?.trim()?.lowercase()) {
+    private fun String?.parseStatus() = when (this?.run { trim().lowercase() }) {
         "completo" -> SAnime.COMPLETED
         "em lançamento" -> SAnime.ONGOING
         "em pausa" -> SAnime.ON_HIATUS

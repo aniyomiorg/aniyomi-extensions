@@ -29,8 +29,8 @@ class DonghuaNoSekaiExtractor(
                 val iframeUrl = iframe.attr("src")
                 when {
                     iframeUrl.contains("nativov2.php") || iframeUrl.contains("/embed2/") -> {
-                        val url = iframeUrl.toHttpUrl().let {
-                            it.queryParameter("id") ?: it.queryParameter("v")
+                        val url = iframeUrl.toHttpUrl().run {
+                            queryParameter("id") ?: queryParameter("v")
                         } ?: return emptyList()
 
                         val quality = url.substringAfter("_").substringBefore("_")
@@ -51,16 +51,16 @@ class DonghuaNoSekaiExtractor(
                         .substringBefore("]")
                         .split("{")
                         .drop(1)
-                        .map {
-                            val url = it.substringAfter("file: \"").substringBefore('"')
-                            val quality = it.substringAfter("label: \"")
+                        .map { line ->
+                            val url = line.substringAfter("file: \"").substringBefore('"')
+                            val quality = line.substringAfter("label: \"")
                                 .substringBefore('"')
-                                .let { label ->
-                                    when (label) {
+                                .run {
+                                    when (this) {
                                         "SD" -> "480p"
                                         "HD" -> "720p"
                                         "FHD", "FULLHD" -> "1080p"
-                                        else -> label
+                                        else -> this
                                     }
                                 }
                             Video(url, "$playerName - $quality", url, headers)
