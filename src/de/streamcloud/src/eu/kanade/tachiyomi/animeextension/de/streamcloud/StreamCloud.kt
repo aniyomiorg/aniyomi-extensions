@@ -11,6 +11,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -103,6 +104,7 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
     private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
     private val doodExtractor by lazy { DoodExtractor(client) }
+    private val mixdropExtractor by lazy { MixDropExtractor(client) }
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.use { it.asJsoup() }
@@ -127,6 +129,9 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                     url.startsWith("https://dood") && hosterSelection.contains("dood") -> {
                         doodExtractor.videosFromUrl(url)
+                    }
+                    url.contains("mixdrop.") && hosterSelection.contains("mixdrop") -> {
+                        mixdropExtractor.videosFromUrl(url)
                     }
                     else -> emptyList()
                 }
@@ -189,8 +194,8 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         private const val PREF_HOSTER_SELECTION_KEY = "hoster_selection"
         private const val PREF_HOSTER_SELECTION_TITLE = "Hoster auswählen"
-        private val PREF_HOSTER_SELECTION_ENTRIES = PREF_HOSTER_ENTRIES
-        private val PREF_HOSTER_SELECTION_VALUES = arrayOf("stape", "dood")
+        private val PREF_HOSTER_SELECTION_ENTRIES = arrayOf("Streamtape", "DoodStream", "MixDrop")
+        private val PREF_HOSTER_SELECTION_VALUES = arrayOf("stape", "dood", "mixdrop")
         private val PREF_HOSTER_SELECTION_DEFAULT by lazy { PREF_HOSTER_SELECTION_VALUES.toSet() }
     }
 }
