@@ -14,8 +14,6 @@ import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
-import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -39,57 +37,84 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularAnimeSelector(): String = "#dle-content div.item"
+    // ============================== Popular ===============================
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/beliebte-filme/")
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/beliebte-filme/")
+    override fun popularAnimeSelector() = "div#dle-content > div.item > div.thumb > a"
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("div.thumb a").attr("href"))
-        anime.thumbnail_url = baseUrl + element.select("div.thumb a img").attr("src")
-        anime.title = element.select("div.thumb a img").attr("alt")
-        return anime
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        element.selectFirst("img")!!.run {
+            thumbnail_url = absUrl("src")
+            title = attr("alt")
+        }
     }
 
-    override fun popularAnimeNextPageSelector(): String? = null
+    override fun popularAnimeNextPageSelector() = null
 
-    // episodes
+    // =============================== Latest ===============================
+    override fun latestUpdatesNextPageSelector() = throw Exception("Not used")
+
+    override fun latestUpdatesFromElement(element: Element) = throw Exception("Not used")
+
+    override fun latestUpdatesRequest(page: Int) = throw Exception("Not used")
+
+    override fun latestUpdatesSelector() = throw Exception("Not used")
+
+    // =============================== Search ===============================
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) =
+        GET("$baseUrl/index.php?do=search&subaction=search&search_start=$page&full_search=0&story=$query")
+
+    override fun searchAnimeSelector() = popularAnimeSelector()
+
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+
+    override fun searchAnimeNextPageSelector() = "#nextlink"
+
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        title = document.selectFirst("#title span.title")!!.text()
+        status = SAnime.COMPLETED
+        with(document.selectFirst("div#longInfo")!!) {
+            thumbnail_url = selectFirst("img")?.absUrl("src")
+            genre = selectFirst("span.masha_index10")?.let {
+                it.text().split("/").joinToString()
+            }
+            description = select("#storyline > span > p").eachText().joinToString("\n")
+            author = selectFirst("strong:contains(Regie:) + div > a")?.text()
+        }
+    }
+
+    // ============================== Episodes ==============================
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val document = response.use { it.asJsoup() }
+        val episode = SEpisode.create().apply {
+            name = document.selectFirst("#title span.title")!!.text()
+            episode_number = 1F
+            setUrlWithoutDomain(document.location())
+        }
+        return listOf(episode)
+    }
 
     override fun episodeListSelector() = throw Exception("not used")
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.asJsoup()
-        val episodeList = mutableListOf<SEpisode>()
-        val episode = SEpisode.create()
-        episode.name = document.select("#title span.title").text()
-        episode.episode_number = 1F
-        episode.setUrlWithoutDomain(document.select("meta[property=\"og:url\"]").attr("content"))
-        episodeList.add(episode)
-        return episodeList.reversed()
-    }
-
-    override fun episodeListRequest(anime: SAnime): Request {
-        return GET(baseUrl + anime.url, headers = Headers.headersOf("if-modified-since", ""))
-    }
-
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
-    // Video Extractor
-
+    // ============================ Video Links =============================
     private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
     private val doodExtractor by lazy { DoodExtractor(client) }
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
+        val document = response.use { it.asJsoup() }
         val iframeurl = document.selectFirst("div.player-container-wrap > iframe")
             ?.attr("src")
             ?: error("No videos!")
         val iframeDoc = client.newCall(GET(iframeurl)).execute().use { it.asJsoup() }
 
-        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("stape", "dood"))!!
+        val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
         val items = iframeDoc.select("div._player ul._player-mirrors li")
 
-        val videoList = items.flatMap { element ->
+        return items.flatMap { element ->
             val url = element.attr("data-link").run {
                 takeIf { startsWith("https") }
                     ?: "https:$this"
@@ -107,44 +132,14 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }.getOrElse { emptyList() }
         }
-
-        return videoList
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val hoster = preferences.getString("preferred_hoster", "Streamtape")
-        val hosterList = mutableListOf<Video>()
-        val otherList = mutableListOf<Video>()
-        if (hoster != null) {
-            for (video in this) {
-                if (video.url.contains(hoster)) {
-                    hosterList.add(video)
-                } else {
-                    otherList.add(video)
-                }
-            }
-        } else {
-            otherList += this
-        }
-        val newList = mutableListOf<Video>()
-        var preferred = 0
-        for (video in hosterList) {
-            if (hoster?.let { video.quality.contains(it) } == true) {
-                newList.add(preferred, video)
-                preferred++
-            } else {
-                newList.add(video)
-            }
-        }
-        for (video in otherList) {
-            if (hoster?.let { video.quality.contains(it) } == true) {
-                newList.add(preferred, video)
-                preferred++
-            } else {
-                newList.add(video)
-            }
-        }
-        return newList
+        val hoster = preferences.getString(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
+
+        return sortedWith(
+            compareBy { it.url.contains(hoster) },
+        ).reversed()
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -153,56 +148,14 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
-    // Search
-
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("div.thumb a").attr("href"))
-        anime.thumbnail_url = baseUrl + element.select("div.thumb a img").attr("src")
-        anime.title = element.select("div.thumb a img").attr("alt")
-        return anime
-    }
-
-    override fun searchAnimeNextPageSelector(): String = "#nextlink"
-
-    override fun searchAnimeSelector(): String = "#dle-content div.item"
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/index.php?do=search&subaction=search&search_start=$page&full_search=0&story=$query")
-
-    // Details
-
-    override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        anime.thumbnail_url = baseUrl + document.select("#longInfo img").attr("src")
-        anime.title = document.select("#title span.masha_index4").text()
-        anime.genre = document.select("#longInfo span.masha_index10").text().split("/").joinToString(", ") { it }
-        anime.description = document.select("#longInfo #storyline span p").text()
-        if (document.select("#longInfo div[style] a").attr("href").toString().contains("director")) {
-            anime.author = document.select("#longInfo div[style] a").toString().substringAfter("</span>").substringBefore("</a>")
-        }
-        anime.status = SAnime.COMPLETED
-        return anime
-    }
-
-    // Latest
-
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
-
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
-
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
-
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
-
-    // Preferences
-
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val hosterPref = ListPreference(screen.context).apply {
-            key = "preferred_hoster"
-            title = "Standard-Hoster"
-            entries = arrayOf("Streamtape", "DoodStream")
-            entryValues = arrayOf("https://streamtape.com", "https://dood.")
-            setDefaultValue("https://streamtape.com")
+        ListPreference(screen.context).apply {
+            key = PREF_HOSTER_KEY
+            title = PREF_HOSTER_TITLE
+            entries = PREF_HOSTER_ENTRIES
+            entryValues = PREF_HOSTER_VALUES
+            setDefaultValue(PREF_HOSTER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -211,19 +164,33 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        val subSelection = MultiSelectListPreference(screen.context).apply {
-            key = "hoster_selection"
-            title = "Hoster auswählen"
-            entries = arrayOf("Streamtape", "Doodstream")
-            entryValues = arrayOf("stape", "dood")
-            setDefaultValue(setOf("stape", "dood"))
+        }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_HOSTER_SELECTION_KEY
+            title = PREF_HOSTER_SELECTION_TITLE
+            entries = PREF_HOSTER_SELECTION_ENTRIES
+            entryValues = PREF_HOSTER_SELECTION_VALUES
+            setDefaultValue(PREF_HOSTER_SELECTION_DEFAULT)
 
             setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
             }
-        }
-        screen.addPreference(hosterPref)
-        screen.addPreference(subSelection)
+        }.also(screen::addPreference)
+    }
+
+    companion object {
+        private const val PREF_HOSTER_KEY = "preferred_hoster"
+        private const val PREF_HOSTER_TITLE = "Standard-Hoster"
+        private const val PREF_HOSTER_DEFAULT = "https://streamtape.com"
+        private val PREF_HOSTER_ENTRIES = arrayOf("Streamtape", "DoodStream")
+        private val PREF_HOSTER_VALUES = arrayOf("https://streamtape.com", "https://dood.")
+
+        private const val PREF_HOSTER_SELECTION_KEY = "hoster_selection"
+        private const val PREF_HOSTER_SELECTION_TITLE = "Hoster auswählen"
+        private val PREF_HOSTER_SELECTION_ENTRIES = PREF_HOSTER_ENTRIES
+        private val PREF_HOSTER_SELECTION_VALUES = arrayOf("stape", "dood")
+        private val PREF_HOSTER_SELECTION_DEFAULT by lazy { PREF_HOSTER_SELECTION_VALUES.toSet() }
     }
 }
