@@ -7,6 +7,8 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -68,6 +70,8 @@ class Cinemathek : DooPlay(
     private val streamlareExtractor by lazy { StreamlareExtractor(client) }
     private val filemoonExtractor by lazy { FilemoonExtractor(client) }
     private val doodExtractor by lazy { DoodExtractor(client) }
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }
 
     private fun getPlayerVideos(url: String, hosterSelection: Set<String>): List<Video>? {
         return when {
@@ -78,8 +82,14 @@ class Cinemathek : DooPlay(
             url.contains("https://filemoon") && hosterSelection.contains("fmoon") -> {
                 filemoonExtractor.videosFromUrl(url)
             }
-            url.contains("ds2play") || url.contains("https://doo") && hosterSelection.contains("dood") -> {
+            (url.contains("ds2play") || url.contains("https://doo")) && hosterSelection.contains("dood") -> {
                 doodExtractor.videosFromUrl(url)
+            }
+            url.contains("streamtape") && hosterSelection.contains("stape") -> {
+                streamtapeExtractor.videosFromUrl(url)
+            }
+            (url.contains("filelions") || url.contains("streamwish")) && hosterSelection.contains("swish") -> {
+                streamwishExtractor.videosFromUrl(url)
             }
             else -> null
         }
@@ -154,13 +164,13 @@ class Cinemathek : DooPlay(
         private const val PREF_HOSTER_KEY = "preferred_hoster"
         private const val PREF_HOSTER_TITLE = "Standard-Hoster"
         private const val PREF_HOSTER_DEFAULT = "https://filemoon"
-        private val PREF_HOSTER_ENTRIES = arrayOf("Streamlare", "Filemoon", "DoodStream")
-        private val PREF_HOSTER_VALUES = arrayOf("https://streamlare", "https://filemoon", "https://doo")
+        private val PREF_HOSTER_ENTRIES = arrayOf("Streamlare", "Filemoon", "DoodStream", "StreamTape", "StreamWish/Filelions")
+        private val PREF_HOSTER_VALUES = arrayOf("https://streamlare", "https://filemoon", "https://doo", "https://streamtape", "https://streamwish")
 
         private const val PREF_HOSTER_SELECTION_KEY = "hoster_selection"
         private const val PREF_HOSTER_SELECTION_TITLE = "Hoster auswählen"
         private val PREF_HOSTER_SELECTION_ENTRIES = PREF_HOSTER_ENTRIES
-        private val PREF_HOSTER_SELECTION_VALUES = arrayOf("slare", "fmoon", "dood")
+        private val PREF_HOSTER_SELECTION_VALUES = arrayOf("slare", "fmoon", "dood", "stape", "swish")
         private val PREF_HOSTER_SELECTION_DEFAULT = PREF_HOSTER_SELECTION_VALUES.toSet()
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
