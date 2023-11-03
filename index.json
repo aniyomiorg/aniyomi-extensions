@@ -880,10 +880,10 @@
   {
     "name": "Aniyomi: Cinemathek",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.cinemathek",
-    "apk": "aniyomi-de.cinemathek-v13.17.apk",
+    "apk": "aniyomi-de.cinemathek-v13.18.apk",
     "lang": "de",
-    "code": 17,
-    "version": "13.17",
+    "code": 18,
+    "version": "13.18",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
