@@ -26,6 +26,7 @@ object AVFilters {
         options: Array<Pair<String, String>>,
     ): String {
         return (getFirst<R>() as CheckBoxFilterList).state
+            .asSequence()
             .filter { it.state }
             .map { checkbox -> options.find { it.first == checkbox.name }!!.second }
             .filter(String::isNotBlank)

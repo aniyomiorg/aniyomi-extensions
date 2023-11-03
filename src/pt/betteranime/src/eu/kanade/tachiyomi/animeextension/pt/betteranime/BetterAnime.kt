@@ -106,7 +106,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeParse(response: Response): AnimesPage {
         val body = response.body.string()
         val data = json.decodeFromString<LivewireResponseDto>(body)
-        val html = data.effects.html?.unescape() ?: ""
+        val html = data.effects.html?.unescape().orEmpty()
         val document = Jsoup.parse(html)
         val animes = document.select(searchAnimeSelector()).map { element ->
             searchAnimeFromElement(element)

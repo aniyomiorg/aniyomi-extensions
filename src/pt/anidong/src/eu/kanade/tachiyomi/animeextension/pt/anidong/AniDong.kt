@@ -13,7 +13,6 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.Request
@@ -43,6 +42,10 @@ class AniDong : ParsedAnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
+    override fun popularAnimeRequest(page: Int) = GET(baseUrl)
+
+    override fun popularAnimeSelector() = "article.top10_animes_item > a"
+
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
         title = element.attr("title")
@@ -50,20 +53,134 @@ class AniDong : ParsedAnimeHttpSource() {
     }
 
     override fun popularAnimeNextPageSelector() = null
-    override fun popularAnimeRequest(page: Int) = GET(baseUrl)
-    override fun popularAnimeSelector() = "article.top10_animes_item > a"
 
-    // ============================== Episodes ==============================
-    override fun episodeFromElement(element: Element): SEpisode {
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lancamentos/page/$page/")
+
+    override fun latestUpdatesSelector() = "article.main_content_article > a"
+
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
+
+    override fun latestUpdatesNextPageSelector() = "div.paginacao > a.next"
+
+    // =============================== Search ===============================
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
+            val id = query.removePrefix(PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/anime/$id"))
+                .asObservableSuccess()
+                .map(::searchAnimeByIdParse)
+        } else {
+            super.fetchSearchAnime(page, query, filters)
+        }
+    }
+
+    private fun searchAnimeByIdParse(response: Response): AnimesPage {
+        val details = animeDetailsParse(response.use { it.asJsoup() })
+        return AnimesPage(listOf(details), false)
+    }
+
+    override fun getFilterList() = AniDongFilters.FILTER_LIST
+
+    private val nonce by lazy {
+        client.newCall(GET("$baseUrl/?js_global=1&ver=6.2.2")).execute()
+            .use { it.body.string() }
+            .substringAfter("search_nonce")
+            .substringAfter("'")
+            .substringBefore("'")
+    }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val params = AniDongFilters.getSearchParameters(filters)
+
+        val body = FormBody.Builder()
+            .add("letra", "")
+            .add("action", "show_animes_ajax")
+            .add("nome", query)
+            .add("status", params.status)
+            .add("formato", params.format)
+            .add("search_nonce", nonce)
+            .add("paged", page.toString())
+            .apply {
+                params.genres.forEach { add("generos[]", it) }
+            }.build()
+
+        return POST("$baseUrl/wp-admin/admin-ajax.php", headers = apiHeaders, body = body)
+    }
+
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        val searchData: SearchResultDto = response.use { it.body.string() }
+            .takeIf { it.trim() != "402" }
+            ?.let(json::decodeFromString)
+            ?: return AnimesPage(emptyList(), false)
+
+        val animes = searchData.animes.map {
+            SAnime.create().apply {
+                setUrlWithoutDomain(it.url)
+                title = it.title
+                thumbnail_url = it.thumbnail_url
+            }
+        }
+
+        val hasNextPage = searchData.pages > 1 && searchData.animes.size == 10
+
+        return AnimesPage(animes, hasNextPage)
+    }
+
+    override fun searchAnimeSelector(): String {
         throw UnsupportedOperationException("Not used.")
     }
 
+    override fun searchAnimeFromElement(element: Element): SAnime {
+        throw UnsupportedOperationException("Not used.")
+    }
+
+    override fun searchAnimeNextPageSelector(): String? {
+        throw UnsupportedOperationException("Not used.")
+    }
+
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        val doc = getRealDoc(document)
+        val infos = doc.selectFirst("div.anime_infos")!!
+
+        setUrlWithoutDomain(doc.location())
+        title = infos.selectFirst("div > h3")!!.ownText()
+        thumbnail_url = infos.selectFirst("img")?.attr("src")
+        genre = infos.select("div[itemprop=genre] a").eachText().joinToString()
+        artist = infos.selectFirst("div[itemprop=productionCompany]")?.text()
+
+        status = doc.selectFirst("div:contains(Status) span")?.text().let {
+            when {
+                it == null -> SAnime.UNKNOWN
+                it == "Completo" -> SAnime.COMPLETED
+                it.contains("Lançamento") -> SAnime.ONGOING
+                else -> SAnime.UNKNOWN
+            }
+        }
+
+        description = buildString {
+            infos.selectFirst("div.anime_name + div.anime_info")?.text()?.also {
+                append("Nomes alternativos: $it\n")
+            }
+
+            doc.selectFirst("div[itemprop=description]")?.text()?.also {
+                append("\n$it")
+            }
+        }
+    }
+
+    // ============================== Episodes ==============================
     override fun episodeListSelector(): String {
         throw UnsupportedOperationException("Not used.")
     }
 
+    override fun episodeFromElement(element: Element): SEpisode {
+        throw UnsupportedOperationException("Not used.")
+    }
+
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = getRealDoc(response.asJsoup())
+        val doc = getRealDoc(response.use { it.asJsoup() })
 
         val id = doc.selectFirst("link[rel=shortlink]")!!.attr("href").substringAfter("=")
         val body = FormBody.Builder()
@@ -71,8 +188,9 @@ class AniDong : ParsedAnimeHttpSource() {
             .add("anime_id", id)
             .build()
 
-        val res = client.newCall(POST("$baseUrl/api", headers = apiHeaders, body = body)).execute()
-        val data = json.decodeFromString<EpisodeListDto>(res.body.string())
+        val res = client.newCall(POST("$baseUrl/api", apiHeaders, body)).execute()
+            .use { it.body.string() }
+        val data = json.decodeFromString<EpisodeListDto>(res)
 
         return buildList {
             data.episodes.forEach { add(episodeFromObject(it, "Episódio")) }
@@ -88,40 +206,9 @@ class AniDong : ParsedAnimeHttpSource() {
         name = "$prefix ${episode.epi_num}"
     }
 
-    // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
-        val doc = getRealDoc(document)
-        val infos = doc.selectFirst("div.anime_infos")!!
-
-        setUrlWithoutDomain(doc.location())
-        title = infos.selectFirst("div > h3")!!.ownText()
-        thumbnail_url = infos.selectFirst("img")!!.attr("src")
-        genre = infos.select("div[itemprop=genre] a").eachText().joinToString()
-        artist = infos.selectFirst("div[itemprop=productionCompany]")!!.text()
-
-        status = doc.selectFirst("div:contains(Status) span")?.text().let {
-            when {
-                it == null -> SAnime.UNKNOWN
-                it == "Completo" -> SAnime.COMPLETED
-                it.contains("Lançamento") -> SAnime.ONGOING
-                else -> SAnime.UNKNOWN
-            }
-        }
-
-        description = buildString {
-            infos.selectFirst("div.anime_name + div.anime_info")?.text()?.let {
-                append("Nomes alternativos: $it\n")
-            }
-
-            doc.selectFirst("div[itemprop=description]")?.text()?.let {
-                append("\n$it")
-            }
-        }
-    }
-
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.asJsoup()
+        val doc = response.use { it.asJsoup() }
         return doc.select("div.player_option").flatMap {
             val url = it.attr("data-playerlink")
             val playerName = it.text().trim()
@@ -158,97 +245,13 @@ class AniDong : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
-    // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        val searchData: SearchResultDto = response.use { it.body.string() }
-            .takeIf { it.trim() != "402" }
-            ?.let(json::decodeFromString)
-            ?: return AnimesPage(emptyList<SAnime>(), false)
-
-        val animes = searchData.animes.map {
-            SAnime.create().apply {
-                setUrlWithoutDomain(it.url)
-                title = it.title
-                thumbnail_url = it.thumbnail_url
-            }
-        }
-
-        val hasNextPage = searchData.pages > 1 && searchData.animes.size == 10
-
-        return AnimesPage(animes, hasNextPage)
-    }
-
-    override fun getFilterList() = AniDongFilters.FILTER_LIST
-
-    private val nonce by lazy {
-        client.newCall(GET("$baseUrl/?js_global=1&ver=6.2.2")).execute()
-            .use { it.body.string() }
-            .substringAfter("search_nonce")
-            .substringAfter("'")
-            .substringBefore("'")
-    }
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val params = AniDongFilters.getSearchParameters(filters)
-
-        val body = FormBody.Builder()
-            .add("letra", "")
-            .add("action", "show_animes_ajax")
-            .add("nome", query)
-            .add("status", params.status)
-            .add("formato", params.format)
-            .add("search_nonce", nonce)
-            .add("paged", page.toString())
-            .apply {
-                params.genres.forEach { add("generos[]", it) }
-            }.build()
-
-        return POST("$baseUrl/wp-admin/admin-ajax.php", headers = apiHeaders, body = body)
-    }
-
-    override fun searchAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
-            val id = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/anime/$id"))
-                .asObservableSuccess()
-                .map(::searchAnimeByIdParse)
-        } else {
-            super.fetchSearchAnime(page, query, filters)
-        }
-    }
-
-    private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.asJsoup())
-        return AnimesPage(listOf(details), false)
-    }
-
-    // =============================== Latest ===============================
-    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
-
-    override fun latestUpdatesNextPageSelector() = "div.paginacao > a.next"
-
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lancamentos/page/$page/")
-
-    override fun latestUpdatesSelector() = "article.main_content_article > a"
-
     // ============================= Utilities ==============================
     private fun getRealDoc(document: Document): Document {
         if (!document.location().contains("/video/")) return document
 
         return document.selectFirst(".episodioControleItem:has(i.ri-grid-fill)")?.let {
-            client.newCall(GET(it.attr("href"), headers)).execute().asJsoup()
+            client.newCall(GET(it.attr("href"), headers)).execute()
+                .use { req -> req.asJsoup() }
         } ?: document
     }
 

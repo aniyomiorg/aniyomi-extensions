@@ -16,7 +16,6 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -49,50 +48,109 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
-    override fun popularAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
-    override fun popularAnimeNextPageSelector() = null
     override fun popularAnimeRequest(page: Int) = GET(baseUrl)
     override fun popularAnimeSelector() = latestUpdatesSelector()
+    override fun popularAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
+    override fun popularAnimeNextPageSelector() = null
 
-    // ============================== Episodes ==============================
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = getRealDoc(response.asJsoup())
-        val pagination = doc.selectFirst("ul.content-pagination")
-        return if (pagination != null) {
-            val episodes = mutableListOf<SEpisode>()
-            episodes += doc.select(episodeListSelector()).map(::episodeFromElement)
-            val lastPage = doc.selectFirst("ul.content-pagination > li:nth-last-child(2) > span")!!.text().toInt()
-            for (i in 2..lastPage) {
-                val request = GET(doc.location() + "/page/$i", headers)
-                val res = client.newCall(request).execute()
-                val pageDoc = res.use { it.asJsoup() }
-                episodes += pageDoc.select(episodeListSelector()).map(::episodeFromElement)
-            }
-            episodes
-        } else doc.select(episodeListSelector()).map(::episodeFromElement)
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lancamentos/page/$page")
+
+    override fun latestUpdatesSelector() = "div.b_flex:nth-child(2) > div.itemE > a"
+
+    override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        thumbnail_url = element.selectFirst("img")!!.let {
+            it.attr("data-lazy-src").ifEmpty { it.attr("src") }
+        }
+        title = element.selectFirst("span.title_anime")!!.text()
     }
 
-    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
-        setUrlWithoutDomain(element.attr("href"))
-        val epname = element.selectFirst("div.episode")!!.text()
-        episode_number = epname.substringAfterLast(" ").toFloatOrNull() ?: 1F
-        name = buildString {
-            append(epname)
-            element.selectFirst("div.sub_title")?.text()?.let {
-                if (!it.contains("Ainda não tem um titulo oficial")) {
-                    append(" - $it")
-                }
-            }
+    override fun latestUpdatesNextPageSelector() = "ul > li.next"
+
+    // =============================== Search ===============================
+    override fun getFilterList() = AnimesDigitalFilters.FILTER_LIST
+
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
+            val id = query.removePrefix(PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/anime/a/$id"))
+                .asObservableSuccess()
+                .map(::searchAnimeByIdParse)
+        } else {
+            super.fetchSearchAnime(page, query, filters)
         }
     }
 
-    override fun episodeListSelector() = "div.item_ep > a"
+    private fun searchAnimeByIdParse(response: Response): AnimesPage {
+        val details = animeDetailsParse(response.use { it.asJsoup() })
+        return AnimesPage(listOf(details), false)
+    }
+
+    private val searchToken by lazy {
+        client.newCall(GET("$baseUrl/animes-legendado")).execute()
+            .use {
+                it.asJsoup().selectFirst("div.menu_filter_box")!!.attr("data-secury")
+            }
+    }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val params = AnimesDigitalFilters.getSearchParameters(filters)
+        val body = FormBody.Builder().apply {
+            add("type", "lista")
+            add("limit", "30")
+            add("token", searchToken)
+            if (query.isNotEmpty()) {
+                add("search", query)
+            }
+            add("pagina", "$page")
+            val filterData = baseUrl.toHttpUrl().newBuilder().apply {
+                addQueryParameter("type_url", params.type)
+                addQueryParameter("filter_audio", params.audio)
+                addQueryParameter("filter_letter", params.initialLetter)
+                addQueryParameter("filter_order", "name")
+            }.build().encodedQuery.orEmpty()
+
+            val genres = params.genres.joinToString { "\"$it\"" }
+            val delgenres = params.deleted_genres.joinToString { "\"$it\"" }
+
+            add("filters", """{"filter_data": "$filterData", "filter_genre_add": [$genres], "filter_genre_del": [$delgenres]}""")
+        }.build()
+
+        return POST("$baseUrl/func/listanime", body = body, headers = headers)
+    }
+
+    override fun searchAnimeSelector() = "div.itemA > a"
+
+    override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
+
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        return runCatching {
+            val data = response.parseAs<SearchResponseDto>()
+            val animes = data.results.map(Jsoup::parse)
+                .mapNotNull { it.selectFirst(searchAnimeSelector()) }
+                .map(::searchAnimeFromElement)
+            val hasNext = data.total_page > data.page
+            AnimesPage(animes, hasNext)
+        }.getOrElse { AnimesPage(emptyList(), false) }
+    }
+
+    @Serializable
+    data class SearchResponseDto(
+        val results: List<String>,
+        val page: Int,
+        val total_page: Int,
+    )
+
+    override fun searchAnimeNextPageSelector(): String? {
+        throw UnsupportedOperationException("Not used.")
+    }
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
         val doc = getRealDoc(document)
         setUrlWithoutDomain(doc.location())
-        thumbnail_url = doc.selectFirst("div.poster > img")!!.attr("data-lazy-src")
+        thumbnail_url = doc.selectFirst("div.poster > img")?.attr("data-lazy-src")
         status = when (doc.selectFirst("div.clw > div.playon")?.text()) {
             "Em Lançamento" -> SAnime.ONGOING
             "Completo" -> SAnime.COMPLETED
@@ -110,11 +168,47 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         description = infos.selectFirst("div.sinopse")?.text()
     }
 
+    // ============================== Episodes ==============================
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val doc = getRealDoc(response.use { it.asJsoup() })
+        val pagination = doc.selectFirst("ul.content-pagination")
+        return if (pagination != null) {
+            val episodes = mutableListOf<SEpisode>()
+            episodes += doc.select(episodeListSelector()).map(::episodeFromElement)
+            val lastPage = doc.selectFirst("ul.content-pagination > li:nth-last-child(2) > span")!!.text().toInt()
+            for (i in 2..lastPage) {
+                val request = GET(doc.location() + "/page/$i", headers)
+                val res = client.newCall(request).execute()
+                val pageDoc = res.use { it.asJsoup() }
+                episodes += pageDoc.select(episodeListSelector()).map(::episodeFromElement)
+            }
+            episodes
+        } else {
+            doc.select(episodeListSelector()).map(::episodeFromElement)
+        }
+    }
+
+    override fun episodeListSelector() = "div.item_ep > a"
+
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        val epname = element.selectFirst("div.episode")!!.text()
+        episode_number = epname.substringAfterLast(" ").toFloatOrNull() ?: 1F
+        name = buildString {
+            append(epname)
+            element.selectFirst("div.sub_title")?.text()?.let {
+                if (!it.contains("Ainda não tem um titulo oficial")) {
+                    append(" - $it")
+                }
+            }
+        }
+    }
+
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val player = response.asJsoup().selectFirst("div#player")!!
-        return player.select("div.tab-video").flatMap {
-            it.select(videoListSelector()).flatMap { element ->
+        val player = response.use { it.asJsoup() }.selectFirst("div#player")!!
+        return player.select("div.tab-video").flatMap { div ->
+            div.select(videoListSelector()).flatMap { element ->
                 runCatching {
                     videosFromElement(element)
                 }.onFailure { it.printStackTrace() }.getOrElse { emptyList() }
@@ -133,18 +227,18 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         }
                     }
                 client.newCall(GET(url, headers)).execute()
-                    .asJsoup()
+                    .use { it.asJsoup() }
                     .select(videoListSelector())
                     .flatMap(::videosFromElement)
             }
             "script" -> {
                 val scriptData = element.data().let {
                     when {
-                        "eval(function" in it -> Unpacker.unpack(it).ifEmpty { null }
+                        "eval(function" in it -> Unpacker.unpack(it)
                         else -> it
                     }
-                }?.replace("\\", "")
-                scriptData?.let(::videosFromScript) ?: emptyList()
+                }.ifEmpty { null }?.replace("\\", "")
+                scriptData?.let(::videosFromScript).orEmpty()
             }
             else -> emptyList()
         }
@@ -177,99 +271,6 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
-    // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
-
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        return runCatching {
-            val data = response.parseAs<SearchResponseDto>()
-            val animes = data.results.map(Jsoup::parse)
-                .mapNotNull { it.selectFirst(searchAnimeSelector()) }
-                .map(::searchAnimeFromElement)
-            val hasNext = data.total_page > data.page
-            AnimesPage(animes, hasNext)
-        }.getOrElse { AnimesPage(emptyList(), false) }
-    }
-
-    @Serializable
-    data class SearchResponseDto(
-        val results: List<String>,
-        val page: Int,
-        val total_page: Int,
-    )
-
-    override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    private val searchToken by lazy {
-        client.newCall(GET("$baseUrl/animes-legendado")).execute()
-            .use {
-                it.asJsoup().selectFirst("div.menu_filter_box")!!.attr("data-secury")
-            }
-    }
-
-    override fun getFilterList() = AnimesDigitalFilters.FILTER_LIST
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val params = AnimesDigitalFilters.getSearchParameters(filters)
-        val body = FormBody.Builder().apply {
-            add("type", "lista")
-            add("limit", "30")
-            add("token", searchToken)
-            if (query.isNotEmpty()) {
-                add("search", query)
-            }
-            add("pagina", "$page")
-            val filterData = baseUrl.toHttpUrl().newBuilder().apply {
-                addQueryParameter("type_url", params.type)
-                addQueryParameter("filter_audio", params.audio)
-                addQueryParameter("filter_letter", params.initialLetter)
-                addQueryParameter("filter_order", "name")
-            }.build().encodedQuery
-
-            val genres = params.genres.joinToString { "\"$it\"" }
-            val delgenres = params.deleted_genres.joinToString { "\"$it\"" }
-
-            add("filters", """{"filter_data": "$filterData", "filter_genre_add": [$genres], "filter_genre_del": [$delgenres]}""")
-        }.build()
-
-        return POST("$baseUrl/func/listanime", body = body, headers = headers)
-    }
-
-    override fun searchAnimeSelector() = "div.itemA > a"
-
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
-            val id = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/anime/a/$id"))
-                .asObservableSuccess()
-                .map(::searchAnimeByIdParse)
-        } else {
-            super.fetchSearchAnime(page, query, filters)
-        }
-    }
-
-    private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.asJsoup())
-        return AnimesPage(listOf(details), false)
-    }
-
-    // =============================== Latest ===============================
-    override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
-        setUrlWithoutDomain(element.attr("href"))
-        thumbnail_url = element.selectFirst("img")!!.let {
-            it.attr("data-lazy-src").ifEmpty { it.attr("src") }
-        }
-        title = element.selectFirst("span.title_anime")!!.text()
-    }
-
-    override fun latestUpdatesNextPageSelector() = "ul > li.next"
-
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lancamentos/page/$page")
-
-    override fun latestUpdatesSelector() = "div.b_flex:nth-child(2) > div.itemE > a"
-
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
@@ -300,7 +301,7 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return document.selectFirst("div.subitem > a:contains(menu)")?.let { link ->
             client.newCall(GET(link.attr("href")))
                 .execute()
-                .asJsoup()
+                .use { it.asJsoup() }
         } ?: document
     }
 
@@ -309,15 +310,11 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun Element.getInfo(key: String): String? {
-        return selectFirst("div.info:has(span:containsOwn($key))")
-            ?.ownText()
-            ?.trim()
-            ?.let {
-                when (it) {
-                    "", "?" -> null
-                    else -> it
-                }
-            }
+        return selectFirst("div.info:has(span:containsOwn($key))")?.run {
+            ownText()
+                .trim()
+                .takeUnless { it.isBlank() || it == "?" }
+        }
     }
 
     private fun String.substringAfterKey() = substringAfter(":")

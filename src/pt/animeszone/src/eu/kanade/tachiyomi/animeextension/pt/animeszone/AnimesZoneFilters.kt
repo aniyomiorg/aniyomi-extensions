@@ -18,38 +18,22 @@ object AnimesZoneFilters {
     private class CheckBoxVal(name: String, state: Boolean = false) : AnimeFilter.CheckBox(name, state)
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(name: String): String {
-        val value = this.filterIsInstance<R>().joinToString("") {
-            (it as QueryPartFilter).toQueryPart()
-        }
-        return if (value.isEmpty()) {
-            ""
-        } else {
-            "&$name=$value"
-        }
-    }
-
-    private inline fun <reified R> AnimeFilterList.getFirst(): R {
-        return this.filterIsInstance<R>().first()
+        return (first { it is R } as QueryPartFilter).toQueryPart()
+            .takeUnless(String::isEmpty)
+            ?.let { "&$name=$it" }
+            .orEmpty()
     }
 
     private inline fun <reified R> AnimeFilterList.parseCheckbox(
         options: Array<Pair<String, String>>,
         name: String,
     ): String {
-        return (this.getFirst<R>() as CheckBoxFilterList).state
-            .mapNotNull { checkbox ->
-                if (checkbox.state) {
-                    options.find { it.first == checkbox.name }!!.second
-                } else {
-                    null
-                }
-            }.joinToString("%2C").let {
-                if (it.isBlank()) {
-                    ""
-                } else {
-                    "&$name=$it"
-                }
-            }
+        return (first { it is R } as CheckBoxFilterList).state
+            .asSequence()
+            .filter { it.state }
+            .map { checkbox -> options.find { it.first == checkbox.name }!!.second }
+            .filter(String::isNotBlank)
+            .joinToString("%2C") { "&$name=$it" }
     }
 
     class GenreFilter : CheckBoxFilterList(

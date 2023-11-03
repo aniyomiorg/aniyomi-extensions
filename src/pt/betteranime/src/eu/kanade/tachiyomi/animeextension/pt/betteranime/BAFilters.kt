@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 
 object BAFilters {
-
     open class QueryPartFilter(
         displayName: String,
         val vals: Array<Pair<String, String>>,
@@ -19,14 +18,18 @@ object BAFilters {
     open class CheckBoxFilterList(name: String, values: List<CheckBox>) : AnimeFilter.Group<AnimeFilter.CheckBox>(name, values)
     private class CheckBoxVal(name: String, state: Boolean = false) : AnimeFilter.CheckBox(name, state)
 
-    private inline fun <reified R> AnimeFilterList.getFirst(): R {
-        return first { it is R } as R
+    private inline fun <reified R> AnimeFilterList.parseCheckbox(
+        options: Array<Pair<String, String>>,
+    ): List<String> {
+        return (first { it is R } as CheckBoxFilterList).state
+            .asSequence()
+            .filter { it.state }
+            .map { checkbox -> options.find { it.first == checkbox.name }!!.second }
+            .toList()
     }
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return getFirst<R>().let {
-            (it as QueryPartFilter).toQueryPart()
-        }
+        return (first { it is R } as QueryPartFilter).toQueryPart()
     }
 
     class LanguageFilter : QueryPartFilter("Idioma", BAFiltersData.LANGUAGES)
@@ -52,12 +55,7 @@ object BAFilters {
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
         if (filters.isEmpty()) return FilterSearchParams()
 
-        val genres = listOf(" ") + filters.getFirst<GenresFilter>().state
-            .mapNotNull { genre ->
-                if (genre.state) {
-                    BAFiltersData.GENRES.find { it.first == genre.name }!!.second
-                } else { null }
-            }.toList()
+        val genres = listOf(" ") + filters.parseCheckbox<GenresFilter>(BAFiltersData.GENRES)
 
         return FilterSearchParams(
             filters.asQueryPart<LanguageFilter>(),

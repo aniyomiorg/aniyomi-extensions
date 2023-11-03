@@ -19,26 +19,20 @@ object DonghuaNoSekaiFilters {
     open class TriStateFilterList(name: String, values: List<TriFilterVal>) : AnimeFilter.Group<TriState>(name, values)
     class TriFilterVal(name: String) : TriState(name)
 
-    private inline fun <reified R> AnimeFilterList.getFirst(): R {
-        return first { it is R } as R
-    }
-
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return getFirst<R>().let {
-            (it as QueryPartFilter).toQueryPart()
-        }
+        return (first { it is R } as QueryPartFilter).toQueryPart()
     }
 
     private inline fun <reified R> AnimeFilterList.parseTriFilter(
         options: Array<Pair<String, String>>,
     ): List<List<String>> {
-        return (getFirst<R>() as TriStateFilterList).state
+        return (first { it is R } as TriStateFilterList).state
             .filterNot { it.isIgnored() }
             .map { filter -> filter.state to options.find { it.first == filter.name }!!.second }
             .groupBy { it.first } // group by state
-            .let {
-                val included = it.get(TriState.STATE_INCLUDE)?.map { it.second } ?: emptyList<String>()
-                val excluded = it.get(TriState.STATE_EXCLUDE)?.map { it.second } ?: emptyList<String>()
+            .let { dict ->
+                val included = dict.get(TriState.STATE_INCLUDE)?.map { it.second }.orEmpty()
+                val excluded = dict.get(TriState.STATE_EXCLUDE)?.map { it.second }.orEmpty()
                 listOf(included, excluded)
             }
     }

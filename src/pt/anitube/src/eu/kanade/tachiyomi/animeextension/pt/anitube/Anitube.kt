@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.anitube
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.anitube.extractors.AnitubeExtractor
@@ -13,7 +12,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -34,9 +32,9 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -114,7 +112,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val infos = content.selectFirst("div.anime_infos")!!
 
         title = doc.selectFirst("div.anime_container_titulo")!!.text()
-        thumbnail_url = content.selectFirst("img")!!.attr("src")
+        thumbnail_url = content.selectFirst("img")?.attr("src")
         genre = infos.getInfo("Gêneros")
         author = infos.getInfo("Autor")
         artist = infos.getInfo("Estúdio")
@@ -125,7 +123,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         description = buildString {
             append(doc.selectFirst("div.sinopse_container_content")!!.text() + "\n")
             infoItems.forEach { item ->
-                infos.getInfo(item)?.let { append("\n$item: $it") }
+                infos.getInfo(item)?.also { append("\n$item: $it") }
             }
         }
     }
@@ -134,15 +132,15 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListSelector() = "div.animepag_episodios_item > a"
 
     override fun episodeListParse(response: Response) = buildList {
-        var doc = getRealDoc(response.asJsoup())
+        var doc = getRealDoc(response.use { it.asJsoup() })
         do {
             if (isNotEmpty()) {
                 val path = doc.selectFirst(popularAnimeNextPageSelector())!!.attr("href")
-                doc = client.newCall(GET(baseUrl + path, headers)).execute().asJsoup()
+                doc = client.newCall(GET(baseUrl + path, headers)).execute().use { it.asJsoup() }
             }
             doc.select(episodeListSelector())
                 .map(::episodeFromElement)
-                .let(::addAll)
+                .also(::addAll)
         } while (doc.selectFirst(popularAnimeNextPageSelector()) != null)
         reverse()
     }
@@ -192,7 +190,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return document.selectFirst("div.controles_ep > a[href]:has(i.spr.listaEP)")
             ?.let {
                 val path = it.attr("href")
-                client.newCall(GET(baseUrl + path, headers)).execute().asJsoup()
+                client.newCall(GET(baseUrl + path, headers)).execute().use { it.asJsoup() }
             } ?: document
     }
 

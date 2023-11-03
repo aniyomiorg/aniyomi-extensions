@@ -16,9 +16,7 @@ object AnimesAriaFilters {
     }
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return this.first { it is R }.let {
-            (it as QueryPartFilter).toQueryPart()
-        }
+        return (first { it is R } as QueryPartFilter).toQueryPart()
     }
 
     class TypeFilter : QueryPartFilter("Tipo", AnimesAriaFiltersData.TYPES)
@@ -40,16 +38,18 @@ object AnimesAriaFilters {
     )
 
     data class FilterSearchParams(
-        val type: String,
-        val genre: String,
-        val status: String,
-        val letter: String,
-        val audio: String,
-        val year: String,
-        val season: String,
+        val type: String = "",
+        val genre: String = "",
+        val status: String = "",
+        val letter: String = "",
+        val audio: String = "",
+        val year: String = "",
+        val season: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
+        if (filters.isEmpty()) return FilterSearchParams()
+
         return FilterSearchParams(
             filters.asQueryPart<TypeFilter>(),
             filters.asQueryPart<GenreFilter>(),
