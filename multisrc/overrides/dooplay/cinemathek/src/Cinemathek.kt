@@ -12,10 +12,13 @@ import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import uy.kohesive.injekt.api.get
 
 class Cinemathek : DooPlay(
     "de",
@@ -46,9 +49,9 @@ class Cinemathek : DooPlay(
     override fun videoListParse(response: Response): List<Video> {
         val players = response.use { it.asJsoup().select("ul#playeroptionsul li") }
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
-        return players.mapNotNull { player ->
+        return players.parallelMapNotNull { player ->
             runCatching {
-                val url = getPlayerUrl(player).ifEmpty { return@mapNotNull null }
+                val url = getPlayerUrl(player).ifEmpty { return@parallelMapNotNull null }
                 getPlayerVideos(url, hosterSelection)
             }.getOrNull()
         }.flatten()
@@ -159,6 +162,11 @@ class Cinemathek : DooPlay(
             ),
         ).reversed()
     }
+
+    private inline fun <A, B> Iterable<A>.parallelMapNotNull(crossinline f: suspend (A) -> B?): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll().filterNotNull()
+        }
 
     companion object {
         private const val PREF_HOSTER_KEY = "preferred_hoster"
