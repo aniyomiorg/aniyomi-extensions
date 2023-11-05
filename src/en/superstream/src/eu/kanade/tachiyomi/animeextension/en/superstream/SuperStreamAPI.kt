@@ -862,7 +862,7 @@ class SuperStreamAPI(val json: Json) {
     // Free Tibet, The Tienanmen Square protests of 1989
     private val iv = base64Decode("d0VpcGhUbiE=")
     private val key = base64Decode("MTIzZDZjZWRmNjI2ZHk1NDIzM2FhMXc2")
-    private val apiUrl = base64Decode("aHR0cHM6Ly9zaG93Ym94LnNoZWd1Lm5ldC9hcGkvYXBpX2NsaWVudC9pbmRleC8=")
+    val apiUrl = base64Decode("aHR0cHM6Ly9zaG93Ym94LnNoZWd1Lm5ldC9hcGkvYXBpX2NsaWVudC9pbmRleC8=")
     private val appKey = base64Decode("bW92aWVib3g=")
     private val appId = base64Decode("Y29tLnRkby5zaG93Ym94")
 
