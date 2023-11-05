@@ -686,7 +686,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.POST
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonPrimitive
@@ -815,7 +814,7 @@ class SuperStreamAPI(val json: Json) {
         }
     }
 
-    private fun queryApi(query: String, altApi: Boolean = false): Response {
+    private fun queryApi(query: String): Response {
         val encryptedQuery = CipherUtils.encrypt(query, key, iv)!!
         val appKeyHash = CipherUtils.md5(appKey)!!
         val newBody =
@@ -837,15 +836,14 @@ class SuperStreamAPI(val json: Json) {
             .add("medium", "Website&token$token")
             .build()
         try {
-            val url = if (altApi) secondApiUrl else thirdApiUrl
-            return client.newCall(POST(url, headers = headers, body = formData)).execute()
+            return client.newCall(POST(apiUrl, headers = headers, body = formData)).execute()
         } catch (e: Exception) {
             throw Exception("Query Failed\n$e")
         }
     }
 
-    private inline fun <reified T : Any> queryApiParsed(query: String, altApi: Boolean = false): T {
-        return parseJson(queryApi(query, altApi).body.string())
+    private inline fun <reified T : Any> queryApiParsed(query: String): T {
+        return parseJson(queryApi(query).body.string())
     }
 
     private val unixTime: Long
@@ -864,13 +862,7 @@ class SuperStreamAPI(val json: Json) {
     // Free Tibet, The Tienanmen Square protests of 1989
     private val iv = base64Decode("d0VpcGhUbiE=")
     private val key = base64Decode("MTIzZDZjZWRmNjI2ZHk1NDIzM2FhMXc2")
-    private val ip = base64Decode("aHR0cHM6Ly8xNTIuMzIuMTQ5LjE2MA==")
-    val apiUrl = "$ip${base64Decode("L2FwaS9hcGlfY2xpZW50L2luZGV4Lw==")}"
-
-    // Thanks @Blatzar and his dream from cloudstream for the secondurl
-    private val secondApiUrl =
-        base64Decode("aHR0cHM6Ly9tYnBhcGkuc2hlZ3UubmV0L2FwaS9hcGlfY2xpZW50L2luZGV4Lw==")
-    private val thirdApiUrl = base64Decode("aHR0cHM6Ly9zaG93Ym94LnNoZWd1Lm5ldC9hcGkvYXBpX2NsaWVudC9pbmRleC8=")
+    private val apiUrl = base64Decode("aHR0cHM6Ly9zaG93Ym94LnNoZWd1Lm5ldC9hcGkvYXBpX2NsaWVudC9pbmRleC8=")
     private val appKey = base64Decode("bW92aWVib3g=")
     private val appId = base64Decode("Y29tLnRkby5zaG93Ym94")
 
@@ -940,13 +932,13 @@ class SuperStreamAPI(val json: Json) {
         val apiQuery =
             // Originally 8 pagelimit
             """{"childmode":"$hideNsfw","app_version":"11.5","appid":"$appId","module":"Search3","channel":"Website","page":"$page","lang":"en","type":"all","keyword":"$query","pagelimit":"20","expired_date":"${getExpiryDate()}","platform":"android"}"""
-        val searchResponse = parseJson<MainData>(queryApi(apiQuery, true).body.string()).data.mapNotNull {
+        val searchResponse = parseJson<MainData>(queryApi(apiQuery).body.string()).data.mapNotNull {
             it.toSearchResponse()
         }
         return searchResponse
     }
 
-    fun load(url: String, altApi: Boolean = false): Pair<MovieData?, Pair<SeriesData?, List<SeriesEpisode>?>> {
+    fun load(url: String): Pair<MovieData?, Pair<SeriesData?, List<SeriesEpisode>?>> {
         val loadData = parseJson<LoadData>(url)
         // val module = if(type === "TvType.Movie") "Movie_detail" else "*tv series module*"
 
@@ -955,14 +947,14 @@ class SuperStreamAPI(val json: Json) {
         if (isMovie) { // 1 = Movie
             val apiQuery =
                 """{"childmode":"$hideNsfw","uid":"","app_version":"11.5","appid":"$appId","module":"Movie_detail","channel":"Website","mid":"${loadData.id}","lang":"en","expired_date":"${getExpiryDate()}","platform":"android","oss":"","group":""}"""
-            val data = queryApiParsed<MovieDataProp>(apiQuery, altApi).data
+            val data = queryApiParsed<MovieDataProp>(apiQuery).data
                 ?: throw RuntimeException("API error")
 
             return Pair(data, Pair(null, null))
         } else { // 2 Series
             val apiQuery =
                 """{"childmode":"$hideNsfw","uid":"","app_version":"11.5","appid":"$appId","module":"TV_detail_1","display_all":"1","channel":"Website","lang":"en","expired_date":"${getExpiryDate()}","platform":"android","tid":"${loadData.id}"}"""
-            val data = queryApiParsed<SeriesDataProp>(apiQuery, altApi).data
+            val data = queryApiParsed<SeriesDataProp>(apiQuery).data
                 ?: throw RuntimeException("API error")
 
             val episodes = data.season.mapNotNull {
