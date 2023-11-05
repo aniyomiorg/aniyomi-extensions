@@ -27,6 +27,8 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "SuperStream"
 
+    private val superStreamAPI = SuperStreamAPI(json)
+
     override val baseUrl = superStreamAPI.apiUrl
 
     override val lang = "en"
@@ -34,8 +36,6 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
     override val supportsLatest = true
 
     private val json: Json by injectLazy()
-
-    private val superStreamAPI = SuperStreamAPI(json)
 
     override val client: OkHttpClient = network.cloudflareClient
 
