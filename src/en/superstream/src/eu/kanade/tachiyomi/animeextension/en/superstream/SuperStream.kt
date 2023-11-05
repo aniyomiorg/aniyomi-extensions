@@ -27,7 +27,7 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "SuperStream"
 
-    override val baseUrl = "https://i1.sndcdn.com/artworks-000570872354-fmnvll-t500x500.jpg"
+    override val baseUrl = superStreamAPI.apiUrl
 
     override val lang = "en"
 
