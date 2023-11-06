@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.es.tioanimeh.extractors.VidGuardExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -11,10 +12,23 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.burstcloudextractor.BurstCloudExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.fastreamextractor.FastreamExtractor
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.streamhidevidextractor.StreamHideVidExtractor
+import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
+import eu.kanade.tachiyomi.lib.upstreamextractor.UpstreamExtractor
+import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -34,6 +48,23 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+        private val QUALITY_LIST = arrayOf("1080", "720", "480", "360")
+
+        private const val PREF_SERVER_KEY = "preferred_server"
+        private const val PREF_SERVER_DEFAULT = "Voe"
+        private val SERVER_LIST = arrayOf(
+            "YourUpload", "Voe", "Mp4Upload", "Doodstream",
+            "Upload", "BurstCloud", "Upstream", "StreamTape",
+            "Fastream", "Filemoon", "StreamWish", "Okru",
+            "Amazon", "AmazonES", "Fireload", "FileLions",
+            "Uqload", "Streamlare", "StreamHideVid", "MixDrop",
+            "VidGuard",
+        )
     }
 
     override fun popularAnimeSelector(): String = "ul.animes.list-unstyled.row li.col-6.col-sm-4.col-md-3.col-xl-2"
@@ -81,21 +112,100 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
 
         serverList.forEach {
             val servers = it.split(",")
-            val serverName = servers[0]
             val serverUrl = servers[1].replace("\\/", "/")
-            when (serverName.lowercase()) {
-                "okru" -> {
-                    OkruExtractor(client).videosFromUrl(serverUrl).map { vid -> videoList.add(vid) }
-                }
-                "yourupload" -> {
-                    videoList.addAll(
-                        YourUploadExtractor(client).videoFromUrl(serverUrl, headers = headers),
-                    )
-                }
-            }
+            serverVideoResolver(serverUrl).also(videoList::addAll)
         }
 
         return videoList
+    }
+
+    private fun serverVideoResolver(url: String): List<Video> {
+        val videoList = mutableListOf<Video>()
+        val embedUrl = url.lowercase()
+        try {
+            if (embedUrl.contains("voe")) {
+                VoeExtractor(client).videoFromUrl(url, prefix = "Voe:")?.let { videoList.add(it) }
+            }
+            if ((embedUrl.contains("amazon") || embedUrl.contains("amz")) && !embedUrl.contains("disable")) {
+                val video = amazonExtractor(baseUrl + url.substringAfter(".."))
+                if (video.isNotBlank()) {
+                    if (url.contains("&ext=es")) {
+                        videoList.add(Video(video, "AmazonES", video))
+                    } else {
+                        videoList.add(Video(video, "Amazon", video))
+                    }
+                }
+            }
+            if (embedUrl.contains("ok.ru") || embedUrl.contains("okru")) {
+                runCatching {
+                    OkruExtractor(client).videosFromUrl(url).also(videoList::addAll)
+                }
+            }
+            if (embedUrl.contains("filemoon") || embedUrl.contains("moonplayer")) {
+                val vidHeaders = headers.newBuilder()
+                    .add("Origin", "https://${url.toHttpUrl().host}")
+                    .add("Referer", "https://${url.toHttpUrl().host}/")
+                    .build()
+                FilemoonExtractor(client).videosFromUrl(url, prefix = "Filemoon:", headers = vidHeaders).also(videoList::addAll)
+            }
+            if (embedUrl.contains("uqload") || embedUrl.contains("upload")) {
+                UqloadExtractor(client).videosFromUrl(url).also(videoList::addAll)
+            }
+            if (embedUrl.contains("mp4upload")) {
+                Mp4uploadExtractor(client).videosFromUrl(url, headers).let { videoList.addAll(it) }
+            }
+            if (embedUrl.contains("wishembed") || embedUrl.contains("embedwish") || embedUrl.contains("streamwish") || embedUrl.contains("strwish") || embedUrl.contains("wish")) {
+                val docHeaders = headers.newBuilder()
+                    .add("Origin", "https://streamwish.to")
+                    .add("Referer", "https://streamwish.to/")
+                    .build()
+                StreamWishExtractor(client, docHeaders).videosFromUrl(url, videoNameGen = { "StreamWish:$it" }).also(videoList::addAll)
+            }
+            if (embedUrl.contains("doodstream") || embedUrl.contains("dood.")) {
+                DoodExtractor(client).videoFromUrl(url, "DoodStream", false)?.let { videoList.add(it) }
+            }
+            if (embedUrl.contains("streamlare")) {
+                StreamlareExtractor(client).videosFromUrl(url).let { videoList.addAll(it) }
+            }
+            if (embedUrl.contains("yourupload") || embedUrl.contains("upload")) {
+                YourUploadExtractor(client).videoFromUrl(url, headers = headers).let { videoList.addAll(it) }
+            }
+            if (embedUrl.contains("burstcloud") || embedUrl.contains("burst")) {
+                BurstCloudExtractor(client).videoFromUrl(url, headers = headers).let { videoList.addAll(it) }
+            }
+            if (embedUrl.contains("fastream")) {
+                FastreamExtractor(client, headers).videosFromUrl(url).also(videoList::addAll)
+            }
+            if (embedUrl.contains("upstream")) {
+                UpstreamExtractor(client).videosFromUrl(url).let { videoList.addAll(it) }
+            }
+            if (embedUrl.contains("streamtape") || embedUrl.contains("stp") || embedUrl.contains("stape")) {
+                StreamTapeExtractor(client).videoFromUrl(url)?.let { videoList.add(it) }
+            }
+            if (embedUrl.contains("ahvsh") || embedUrl.contains("streamhide")) {
+                StreamHideVidExtractor(client).videosFromUrl(url).let { videoList.addAll(it) }
+            }
+            if (embedUrl.contains("filelions") || embedUrl.contains("lion")) {
+                StreamWishExtractor(client, headers).videosFromUrl(url, videoNameGen = { "FileLions:$it" }).also(videoList::addAll)
+            }
+            if (embedUrl.contains("vembed") || embedUrl.contains("guard")) {
+                VidGuardExtractor(client).videosFromUrl(url).also(videoList::addAll)
+            }
+        } catch (_: Exception) { }
+        return videoList
+    }
+
+    private fun amazonExtractor(url: String): String {
+        val document = client.newCall(GET(url)).execute().asJsoup()
+        val videoURl = document.selectFirst("script:containsData(sources: [)")!!.data()
+            .substringAfter("[{\"file\":\"")
+            .substringBefore("\",").replace("\\", "")
+
+        return try {
+            if (client.newCall(GET(videoURl)).execute().code == 200) videoURl else ""
+        } catch (e: Exception) {
+            ""
+        }
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -105,24 +215,15 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        return try {
-            val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
-            ).toTypedArray()
-            val userPreferredQuality = preferences.getString("preferred_quality", "Okru:720p")
-            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
-            if (preferredIdx != -1) {
-                videoSorted.drop(preferredIdx + 1)
-                videoSorted[0] = videoSorted[preferredIdx]
-            }
-            videoSorted.toList()
-        } catch (e: Exception) {
-            this
-        }
-    }
-
-    private fun getNumberFromString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(server, true) },
+                { it.quality.contains(quality) },
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
+        ).reversed()
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -135,9 +236,7 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
             else -> GET("$baseUrl/directorio?p=$page ")
         }
     }
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        return popularAnimeFromElement(element)
-    }
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
     override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
@@ -148,7 +247,7 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
         anime.title = document.select("h1.title").text()
         anime.description = document.selectFirst("p.sinopsis")!!.ownText()
         anime.genre = document.select("p.genres span.btn.btn-sm.btn-primary.rounded-pill a").joinToString { it.text() }
-        anime.status = parseStatus(document.select("a.btn.btn-success.btn-block.status").text())
+        anime.status = parseStatus(document.select(".btn-block.status").text())
         return anime
     }
 
@@ -208,21 +307,12 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val qualities = arrayOf(
-            "Okru:1080p",
-            "Okru:720p",
-            "Okru:480p",
-            "Okru:360p",
-            "Okru:240p",
-            "Okru:144p", // Okru
-            "YourUpload", // video servers without resolution
-        )
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
             title = "Preferred quality"
-            entries = qualities
-            entryValues = qualities
-            setDefaultValue("Okru:720p")
+            entries = QUALITY_LIST
+            entryValues = QUALITY_LIST
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -231,7 +321,22 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
+            title = "Preferred server"
+            entries = SERVER_LIST
+            entryValues = SERVER_LIST
+            setDefaultValue(PREF_SERVER_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
     }
 }
