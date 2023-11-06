@@ -27,8 +27,6 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "SuperStream"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", superStreamAPI.apiUrl)!! }
-
     override val lang = "en"
 
     override val supportsLatest = true
@@ -36,6 +34,8 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
     private val json: Json by injectLazy()
 
     private val superStreamAPI = SuperStreamAPI(json)
+
+    override val baseUrl = superStreamAPI.apiUrl
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -137,7 +137,7 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun searchAnimeParse(response: Response) = throw Exception("not used")
 
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        val data = superStreamAPI.load(anime.url, true)
+        val data = superStreamAPI.load(anime.url)
         val ani = SAnime.create()
         val (movie, seriesData) = data
         val (detail, _) = seriesData
@@ -192,21 +192,6 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun animeDetailsParse(response: Response) = throw Exception("not used")
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val domainPref = ListPreference(screen.context).apply {
-            key = "preferred_domain"
-            title = "Preferred domain (requires app restart)"
-            entries = arrayOf("Default")
-            entryValues = arrayOf(superStreamAPI.apiUrl)
-            setDefaultValue(superStreamAPI.apiUrl)
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
@@ -222,7 +207,6 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
-        screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
     }
 
