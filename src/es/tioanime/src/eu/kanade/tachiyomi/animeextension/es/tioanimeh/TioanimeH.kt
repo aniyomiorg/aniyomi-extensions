@@ -36,13 +36,12 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 
 open class TioanimeH(override val name: String, override val baseUrl: String) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "es"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -247,6 +246,7 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
         anime.title = document.select("h1.title").text()
         anime.description = document.selectFirst("p.sinopsis")!!.ownText()
         anime.genre = document.select("p.genres span.btn.btn-sm.btn-primary.rounded-pill a").joinToString { it.text() }
+        anime.thumbnail_url = document.select(".thumb img").attr("abs:src")
         anime.status = parseStatus(document.select(".btn-block.status").text())
         return anime
     }
@@ -259,13 +259,23 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
         }
     }
 
-    override fun latestUpdatesNextPageSelector() = throw Exception("not used")
+    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
 
-    override fun latestUpdatesFromElement(element: Element) = throw Exception("not used")
+    override fun latestUpdatesFromElement(element: Element): SAnime {
+        val anime = SAnime.create()
+        anime.title = element.select("article a h3").text()
+        anime.thumbnail_url = baseUrl + element.select("article a div figure img").attr("src")
 
-    override fun latestUpdatesRequest(page: Int) = throw Exception("not used")
+        val slug = if (baseUrl.contains("hentai")) "/hentai/" else "/anime/"
+        val fixUrl = element.select("article a").attr("href").split("-").toTypedArray()
+        val realUrl = fixUrl.copyOf(fixUrl.size - 1).joinToString("-").replace("/ver/", slug)
+        anime.setUrlWithoutDomain(realUrl)
+        return anime
+    }
 
-    override fun latestUpdatesSelector() = throw Exception("not used")
+    override fun latestUpdatesRequest(page: Int) = GET(baseUrl)
+
+    override fun latestUpdatesSelector() = ".episodes li"
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
