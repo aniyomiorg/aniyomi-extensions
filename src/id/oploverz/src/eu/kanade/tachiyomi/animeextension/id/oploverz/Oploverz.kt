@@ -22,7 +22,6 @@ import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONObject
-import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -44,39 +43,30 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun popularAnimeRequest(page: Int): Request =
         GET("$baseUrl/anime-list/page/$page/?order=popular")
 
-    override fun popularAnimeParse(response: Response): AnimesPage {
-        val doc = response.asJsoup()
-        val animes = doc.select("div.relat > article").map {
-            getAnimeFromAnimeElement(it)
-        }
-        return AnimesPage(animes, hasNextPage(doc))
-    }
+    override fun popularAnimeParse(response: Response): AnimesPage =
+        getAnimeParse(response, "div.relat > article")
 
     // =============================== Latest ===============================
 
     override fun latestUpdatesRequest(page: Int): Request =
         GET("$baseUrl/anime-list/page/$page/?order=latest")
 
-    override fun latestUpdatesParse(response: Response): AnimesPage {
-        val doc = response.asJsoup()
-        val animes = doc.select("div.relat > article").map {
-            getAnimeFromAnimeElement(it)
-        }
-        return AnimesPage(animes, hasNextPage(doc))
-    }
+    override fun latestUpdatesParse(response: Response): AnimesPage =
+        getAnimeParse(response, "div.relat > article")
 
     // =============================== Search ===============================
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request =
-        GET("$baseUrl/page/$page/?s=$query")
-
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        val doc = response.asJsoup()
-        val animes = doc.select("main.site-main.relat > article").map {
-            getAnimeFromAnimeElement(it)
-        }
-        return AnimesPage(animes, hasNextPage(doc))
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val params = OploverzFilters.getSearchParameters(filters)
+        return GET("$baseUrl/anime-list/page/$page/?title=$query${params.filter}", headers)
     }
+
+    override fun searchAnimeParse(response: Response): AnimesPage =
+        getAnimeParse(response, "div.relat > article")
+
+    // ============================== Filters ===============================
+
+    override fun getFilterList(): AnimeFilterList = OploverzFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
 
@@ -152,25 +142,24 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
-    private fun getAnimeFromAnimeElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("div.animposx > a")!!.attr("href"))
-            title = element.selectFirst("div.title > h2")!!.text()
-            thumbnail_url =
-                element.selectFirst("div.content-thumb > img")!!.attr("src")
+    private fun getAnimeParse(response: Response, query: String): AnimesPage {
+        val doc = response.asJsoup()
+        val animes = doc.select(query).map {
+            SAnime.create().apply {
+                setUrlWithoutDomain(it.selectFirst("div.animposx > a")!!.attr("href"))
+                title = it.selectFirst("div.title > h2")!!.text()
+                thumbnail_url = it.selectFirst("div.content-thumb > img")!!.attr("src")
+            }
         }
-    }
-
-    private fun hasNextPage(document: Document): Boolean {
-        return try {
-            val pagination = document.selectFirst("div.pagination")!!
-            val totalPage =
-                pagination.selectFirst("span:nth-child(1)")!!.text().split(" ").last().toInt()
-            val currentPage = pagination.selectFirst("span.page-numbers.current")!!.text().toInt()
-            currentPage < totalPage
+        val hasNextPage = try {
+            val pagination = doc.selectFirst("div.pagination")!!
+            val totalPage = pagination.selectFirst("span:nth-child(1)")!!.text().split(" ").last()
+            val currentPage = pagination.selectFirst("span.page-numbers.current")!!.text()
+            currentPage.toInt() < totalPage.toInt()
         } catch (_: Exception) {
             false
         }
+        return AnimesPage(animes, hasNextPage)
     }
 
     private fun parseStatus(status: String?): Int {
@@ -188,7 +177,6 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
             add("nume", element.attr("data-nume"))
             add("type", element.attr("data-type"))
         }.build()
-
         return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = form))
             .execute()
             .use { Pair(it.asJsoup().selectFirst(".playeriframe")!!.attr("src"), "") }
@@ -197,22 +185,21 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun getVideosFromEmbed(link: String): List<Video> {
         return when {
             "blogger" in link -> {
-                client.newCall(GET(link)).execute().use {
-                    val res = it.body.string()
-                    val json = JSONObject(res.substringAfter("= ").substringBefore("<"))
+                client.newCall(GET(link)).execute().use { it.body.string() }.let {
+                    val json = JSONObject(it.substringAfter("= ").substringBefore("<"))
                     val streams = json.getJSONArray("streams")
                     val videoList = mutableListOf<Video>()
                     for (i in 0 until streams.length()) {
-                        val item = streams.getJSONObject(i)
-                        val url = item.getString("play_url")
-                        val quality = when (item.getString("format_id")) {
+                        val stream = streams.getJSONObject(i)
+                        val url = stream.getString("play_url")
+                        val quality = when (stream.getString("format_id")) {
                             "18" -> "Google - 360p"
                             "22" -> "Google - 720p"
                             else -> "Unknown Resolution"
                         }
                         videoList.add(Video(url, quality, url))
                     }
-                    return videoList
+                    videoList
                 }
             }
 
