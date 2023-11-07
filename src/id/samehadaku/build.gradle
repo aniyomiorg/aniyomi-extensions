@@ -5,7 +5,7 @@ ext {
     extName = 'Samehadaku'
     pkgNameSuffix = 'id.samehadaku'
     extClass = '.Samehadaku'
-    extVersionCode = 2
+    extVersionCode = 3
     libVersion = '13'
 }
 
