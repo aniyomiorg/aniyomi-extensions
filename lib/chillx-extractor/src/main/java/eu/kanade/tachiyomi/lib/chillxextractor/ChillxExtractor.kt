@@ -30,9 +30,12 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
     }
 
     fun videoFromUrl(url: String, referer: String, prefix: String = "Chillx - "): List<Video> {
-        val body = client.newCall(GET(url, Headers.headersOf("Referer", "$referer/")))
-            .execute()
-            .use { it.body.string() }
+        val newHeaders = headers.newBuilder()
+            .set("Referer", "$referer/")
+            .set("Accept-Language", "en-US,en;q=0.5")
+            .build()
+
+        val body = client.newCall(GET(url, newHeaders)).execute().use { it.body.string() }
 
         val master = REGEX_MASTER_JS.find(body)?.groupValues?.get(1) ?: return emptyList()
         val aesJson = json.decodeFromString<CryptoInfo>(master)
