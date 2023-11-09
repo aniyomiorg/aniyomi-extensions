@@ -1678,10 +1678,10 @@
   {
     "name": "Aniyomi: Kaido",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kaido",
-    "apk": "aniyomi-en.kaido-v13.2.apk",
+    "apk": "aniyomi-en.kaido-v13.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
