@@ -5,6 +5,7 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi.extractors.RapidrameExtractor
 import eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi.extractors.VidmolyExtractor
+import eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi.extractors.XBetExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -37,7 +38,7 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "HDFilmCehennemi"
 
-    override val baseUrl = "https://www.hdfilmcehennemi.life"
+    override val baseUrl = "https://www.hdfilmcehennemi.de"
 
     override val lang = "tr"
 
@@ -96,8 +97,6 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val headers = headersBuilder()
-            .add("Referer", "$baseUrl/")
-            .add("Origin", baseUrl)
             .add("X-Requested-With", "XMLHttpRequest")
             .build()
 
@@ -175,6 +174,7 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
     private val vidmolyExtractor by lazy { VidmolyExtractor(client, headers) }
     private val rapidrameExtractor by lazy { RapidrameExtractor(client, headers) }
+    private val xbetExtractor by lazy { XBetExtractor(client, headers, json) }
 
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.use { it.asJsoup() }
@@ -190,9 +190,10 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     when {
                         url.contains("vidmoly") -> vidmolyExtractor.videosFromUrl(url)
                         url.contains("$baseUrl/playerr") -> rapidrameExtractor.videosFromUrl(url)
-                        else -> emptyList<Video>()
+                        url.contains("trstx.org") -> xbetExtractor.videosFromUrl(url)
+                        else -> emptyList()
                     }
-                }.getOrNull() ?: emptyList<Video>()
+                }.getOrNull().orEmpty()
             }.flatten().ifEmpty { throw Exception("No videos available xD") }
     }
 
