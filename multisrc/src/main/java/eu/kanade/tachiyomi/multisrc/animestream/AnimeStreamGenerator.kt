@@ -22,7 +22,7 @@ class AnimeStreamGenerator : ThemeSourceGenerator {
         SingleLang("DonghuaStream", "https://donghuastream.co.in", "en", isNsfw = false, overrideVersionCode = 2),
         SingleLang("Hstream", "https://hstream.moe", "en", isNsfw = true, overrideVersionCode = 3),
         SingleLang("LMAnime", "https://lmanime.com", "all", isNsfw = false, overrideVersionCode = 4),
-        SingleLang("LuciferDonghua", "https://luciferdonghua.in", "en", isNsfw = false, overrideVersionCode = 2),
+        SingleLang("LuciferDonghua", "https://luciferdonghua.in", "en", isNsfw = false, overrideVersionCode = 3),
         SingleLang("MiniOppai", "https://minioppai.org", "id", isNsfw = true, overrideVersionCode = 3),
         SingleLang("RineCloud", "https://rine.cloud", "pt-BR", isNsfw = false, overrideVersionCode = 3),
         SingleLang("TRAnimeCI", "https://tranimeci.com", "tr", isNsfw = false),
