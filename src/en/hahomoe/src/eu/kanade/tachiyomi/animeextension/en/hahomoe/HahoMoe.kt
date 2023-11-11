@@ -1,5 +1,9 @@
 package eu.kanade.tachiyomi.animeextension.en.hahomoe
 
+import android.app.Application
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -11,12 +15,14 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.lang.Exception
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class HahoMoe : ParsedAnimeHttpSource() {
+class HahoMoe : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "haho.moe"
 
@@ -27,6 +33,10 @@ class HahoMoe : ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override val client = network.cloudflareClient
+
+    private val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/anime?s=vdy-d&page=$page")
@@ -143,11 +153,38 @@ class HahoMoe : ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+    }
+
     // ============================= Utilities ==============================
     private fun String.toDate(): Long {
         val fixedDate = trim().replace(DATE_REGEX, "").replace("'", "")
         return runCatching { DATE_FORMATTER.parse(fixedDate)?.time }
             .getOrNull() ?: 0L
+    }
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
     }
 
     companion object {
@@ -156,5 +193,11 @@ class HahoMoe : ParsedAnimeHttpSource() {
         }
 
         private val DATE_REGEX by lazy { Regex("(?<=\\d)(st|nd|rd|th)") }
+
+        private const val PREF_QUALITY_KEY = "pref_quality_key"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p")
+        private val PREF_QUALITY_VALUES = PREF_QUALITY_ENTRIES
     }
 }
