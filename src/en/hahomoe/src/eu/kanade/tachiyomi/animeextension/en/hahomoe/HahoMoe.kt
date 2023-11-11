@@ -11,6 +11,8 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Cookie
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -38,14 +40,22 @@ class HahoMoe : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    init {
+        // Save the cookie that enables thumbnails in results (popular, latest, search...)
+        val httpUrl = baseUrl.toHttpUrl()
+        val cookie = Cookie.parse(httpUrl, "loop-view=thumb")!!
+        client.cookieJar.saveFromResponse(httpUrl, listOf(cookie))
+    }
+
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/anime?s=vdy-d&page=$page")
 
-    override fun popularAnimeSelector() = "ul.anime-loop.loop li a"
+    override fun popularAnimeSelector() = "ul.anime-loop.loop > li > a"
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href") + "?s=srt-d")
         title = element.selectFirst("div.label > span, div span.thumb-title")!!.text()
+        thumbnail_url = element.selectFirst("img")?.absUrl("src")
     }
 
     override fun popularAnimeNextPageSelector() = "ul.pagination li.page-item a[rel=next]"
