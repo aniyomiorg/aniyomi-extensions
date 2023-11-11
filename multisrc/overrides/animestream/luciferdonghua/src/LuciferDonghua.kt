@@ -11,6 +11,9 @@ class LuciferDonghua : AnimeStream(
     "LuciferDonghua",
     "https://luciferdonghua.in",
 ) {
+    // ============================== Episodes ==============================
+    override fun episodeListSelector() = "div.eplister > ul > li a"
+
     // ============================ Video Links =============================
     private val okruExtractor by lazy { OkruExtractor(client) }
     private val dailymotionExtractor by lazy { DailymotionExtractor(client, headers) }
