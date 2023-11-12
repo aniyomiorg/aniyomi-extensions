@@ -99,7 +99,7 @@ class HahoMoe : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         setUrlWithoutDomain(document.location())
         thumbnail_url = document.selectFirst("img.cover-image.img-thumbnail")?.absUrl("src")
         title = document.selectFirst("li.breadcrumb-item.active")!!.text()
-        genre = document.select("li.genre span.value").joinToString { it.text() }
+        genre = document.select("li.genre span.value, div.genre-tree ul > li > a").joinToString { it.text() }
         description = document.selectFirst("div.card-body")?.text()
         author = document.select("li.production span.value").joinToString { it.text() }
         artist = document.selectFirst("li.group span.value")?.text()
