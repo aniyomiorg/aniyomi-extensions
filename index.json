@@ -1909,10 +1909,10 @@
   {
     "name": "Aniyomi: Aniwave",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.nineanime",
-    "apk": "aniyomi-en.nineanime-v13.57.apk",
+    "apk": "aniyomi-en.nineanime-v13.58.apk",
     "lang": "en",
-    "code": 57,
-    "version": "13.57",
+    "code": 58,
+    "version": "13.58",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
