@@ -99,7 +99,7 @@ class HahoMoe : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         setUrlWithoutDomain(document.location())
         thumbnail_url = document.selectFirst("img.cover-image.img-thumbnail")?.absUrl("src")
         title = document.selectFirst("li.breadcrumb-item.active")!!.text()
-        genre = document.select("li.genre span.value").joinToString { it.text() }
+        genre = document.select("li.genre span.value, div.genre-tree ul > li > a").joinToString { it.text() }
         description = document.selectFirst("div.card-body")?.text()
         author = document.select("li.production span.value").joinToString { it.text() }
         artist = document.selectFirst("li.group span.value")?.text()
@@ -115,7 +115,7 @@ class HahoMoe : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector() = "ul.episode-loop li a"
+    override fun episodeListSelector() = "ul.episode-loop > li > a"
 
     private fun episodeNextPageSelector() = popularAnimeNextPageSelector()
 
@@ -132,15 +132,21 @@ class HahoMoe : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     .map(::episodeFromElement)
                     .also(::addAll)
             } while (doc.selectFirst(episodeNextPageSelector()) != null)
+
+            sortByDescending { it.episode_number }
         }
     }
 
     override fun episodeFromElement(element: Element) = SEpisode.create().apply {
         setUrlWithoutDomain(element.attr("href"))
 
-        val episodeNumberString = element.selectFirst("div.episode-number")!!.text()
+        val episodeNumberString = element.selectFirst("div.episode-number, div.episode-slug")?.text() ?: "Episode"
         episode_number = episodeNumberString.removePrefix("Episode ").toFloatOrNull() ?: 1F
-        name = "$episodeNumberString: " + element.selectFirst("div.episode-label")?.text().orEmpty()
+        val title = element.selectFirst("div.episode-label, div.episode-title")?.text()
+            ?.takeUnless { it.equals("No Title", true) }
+            ?.let { ": $it" }
+            .orEmpty()
+        name = episodeNumberString + title
         date_upload = element.selectFirst("div.date")?.text().orEmpty().toDate()
     }
 
