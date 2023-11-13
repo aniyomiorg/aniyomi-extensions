@@ -1594,10 +1594,10 @@
   {
     "name": "Aniyomi: haho.moe",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.hahomoe",
-    "apk": "aniyomi-en.hahomoe-v13.9.apk",
+    "apk": "aniyomi-en.hahomoe-v13.10.apk",
     "lang": "en",
-    "code": 9,
-    "version": "13.9",
+    "code": 10,
+    "version": "13.10",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
