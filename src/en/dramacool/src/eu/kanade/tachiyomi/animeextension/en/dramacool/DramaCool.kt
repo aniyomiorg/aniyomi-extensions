@@ -133,47 +133,30 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-
-    override fun videoListRequest(episode: SEpisode): Request {
-        val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
-        val iframe = document.select("iframe").attr("abs:src")
-        return GET(iframe)
-    }
-
-    override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        return videosFromElement(document)
-    }
-
     override fun videoListSelector() = "ul.list-server-items li"
 
-    private fun videosFromElement(document: Document): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val elements = document.select(videoListSelector())
-        for (element in elements) {
-            val url = element.attr("data-video")
+    override fun videoListParse(response: Response): List<Video> {
+        val document = response.use { it.asJsoup() }
+        val iframeUrl = document.selectFirst("iframe")?.absUrl("src") ?: return emptyList()
+        val iframeDoc = client.newCall(GET(iframeUrl)).execute().use { it.asJsoup() }
+
+        return iframeDoc.select(videoListSelector()).flatMap(::videosFromElement)
+    }
+
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+
+    private fun videosFromElement(element: Element): List<Video> {
+        val url = element.attr("data-video")
+        return runCatching {
             when {
-                url.contains("dood") -> {
-                    val video = DoodExtractor(client).videoFromUrl(url)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-
-                url.contains("dwish") -> {
-                    val video = StreamWishExtractor(client, headers).videosFromUrl(url)
-                    videoList.addAll(video)
-                }
-
-                url.contains("streamtape") -> {
-                    val video = StreamTapeExtractor(client).videoFromUrl(url)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
+                url.contains("dood") -> doodExtractor.videosFromUrl(url)
+                url.contains("dwish") -> streamwishExtractor.videosFromUrl(url)
+                url.contains("streamtape") -> streamtapeExtractor.videosFromUrl(url)
+                else -> emptyList()
             }
-        }
-        return videoList
+        }.getOrElse { emptyList() }
     }
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
