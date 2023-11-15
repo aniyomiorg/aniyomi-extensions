@@ -1,5 +1,7 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
 
 ext {
     extName = 'DramaCool'
@@ -13,8 +15,6 @@ dependencies {
     implementation(project(':lib-streamwish-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-dood-extractor'))
-    implementation(project(':lib-playlist-utils'))
-    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 
 apply from: "$rootDir/common.gradle"
