@@ -109,7 +109,7 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     data class SearchResponse(val result: List<MovieDto>)
 
     @Serializable
-    data class MovieDto(val title: String, val poster: String, val slug: String)
+    data class MovieDto(val title: String, val poster: String, val slug: String, val slug_prefix: String)
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         val data = response.parseAs<SearchResponse>()
@@ -117,7 +117,7 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             SAnime.create().apply {
                 title = it.title
                 thumbnail_url = "$baseUrl/uploads/poster/" + it.poster
-                url = "/" + it.slug
+                url = "/" + it.slug_prefix + it.slug
             }
         }
 
