@@ -34,7 +34,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "WIT ANIME"
 
-    override val baseUrl = "https://witanime.rest"
+    override val baseUrl = "https://witanime.pics"
 
     override val lang = "ar"
 
@@ -56,8 +56,12 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/قائمة-الانمي/page/$page")
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
-        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
-        element.selectFirst("img")!!.let {
+        element.selectFirst("a")!!.run {
+            attr("href").takeUnless { it.contains("javascript:") }
+                ?: getEncodedUrl() // Get base64-encoded URLs
+        }.also { setUrlWithoutDomain(it) }
+
+        element.selectFirst("img")!!.also {
             title = it.attr("alt")
             thumbnail_url = it.attr("abs:src")
         }
@@ -126,10 +130,14 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         return document.select("ul#episode-servers li a")
             .distinctBy { it.text().substringBefore(" -") } // remove duplicates by server name
-            .parallelMap {
-                val url = it.getEncodedUrl()
-                runCatching { extractVideos(url) }.getOrElse { emptyList() }
-            }.flatten()
+            .parallelCatchingFlatMap {
+                val url = it.attr("data-url")
+                    .takeUnless(String::isBlank)
+                    ?.let { String(Base64.decode(it, Base64.DEFAULT)) }
+                    ?: it.getEncodedUrl()
+
+                extractVideos(url)
+            }
     }
 
     private val soraPlayExtractor by lazy { SoraPlayExtractor(client) }
@@ -229,9 +237,13 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
         runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+            map {
+                async(Dispatchers.Default) {
+                    runCatching { f(it) }.getOrElse { emptyList() }
+                }
+            }.awaitAll().flatten()
         }
 
     private fun getRealDoc(document: Document): Document {
