@@ -56,8 +56,12 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/قائمة-الانمي/page/$page")
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
-        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
-        element.selectFirst("img")!!.let {
+        element.selectFirst("a")!!.run {
+            attr("href").takeUnless { it.contains("javascript:") }
+                ?: getEncodedUrl() // Get base64-encoded URLs
+        }.also { setUrlWithoutDomain(it) }
+
+        element.selectFirst("img")!!.also {
             title = it.attr("alt")
             thumbnail_url = it.attr("abs:src")
         }
