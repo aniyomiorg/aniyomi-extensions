@@ -130,10 +130,14 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         return document.select("ul#episode-servers li a")
             .distinctBy { it.text().substringBefore(" -") } // remove duplicates by server name
-            .parallelMap {
-                val url = it.getEncodedUrl()
-                runCatching { extractVideos(url) }.getOrElse { emptyList() }
-            }.flatten()
+            .parallelCatchingFlatMap {
+                val url = it.attr("data-url")
+                    .takeUnless(String::isBlank)
+                    ?.let { String(Base64.decode(it, Base64.DEFAULT)) }
+                    ?: it.getEncodedUrl()
+
+                extractVideos(url)
+            }
     }
 
     private val soraPlayExtractor by lazy { SoraPlayExtractor(client) }
@@ -233,9 +237,13 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
         runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+            map {
+                async(Dispatchers.Default) {
+                    runCatching { f(it) }.getOrElse { emptyList() }
+                }
+            }.awaitAll().flatten()
         }
 
     private fun getRealDoc(document: Document): Document {
