@@ -25,7 +25,7 @@ import java.util.Locale
 class TRAnimeCI : AnimeStream(
     "tr",
     "TRAnimeCI",
-    "https://tranimeci.com",
+    "https://tranimaci.com",
 ) {
     override val client by lazy {
         network.client.newBuilder()
