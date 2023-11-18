@@ -95,6 +95,9 @@ data class ItemDto(val name: String)
 private fun List<ItemDto>.parseItems() = joinToString { it.name }.takeIf(String::isNotBlank)
 
 @Serializable
+data class AnimeEpisodes(val episodes: List<EpisodeDto>)
+
+@Serializable
 data class EpisodeDto(
     val url: String,
     val post: EpisodePostDto,

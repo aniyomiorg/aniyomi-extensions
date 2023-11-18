@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.EpisodeDto
+import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.AnimeEpisodes
 import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.FullAnimeDto
 import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.SearchRequestDto
 import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.SearchResponseDto
@@ -161,11 +161,16 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // =========================== Anime Details ============================
+    private inline fun <reified T> Response.parseBody(): T {
+        val body = use { it.body.string() }
+            .substringAfter("const anime = ")
+            .substringBefore("};") + "}"
+
+        return json.decodeFromString<T>(body)
+    }
+
     override fun animeDetailsParse(response: Response) = SAnime.create().apply {
-        val body = response.use { it.body.string() }
-            .substringAfter("var anime = ")
-            .substringBefore("}<") + "}"
-        val animeDto = json.decodeFromString<FullAnimeDto>(body)
+        val animeDto = response.parseBody<FullAnimeDto>()
 
         setUrlWithoutDomain(animeDto.url)
         thumbnail_url = animeDto.thumbnail
@@ -195,13 +200,9 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val body = response.use { it.body.string() }
-            .substringAfter("var episodes = ")
-            .substringBefore("];") + "]"
+        val episodes = response.parseBody<AnimeEpisodes>().episodes
 
-        val episodes = json.decodeFromString<List<EpisodeDto>>(body)
-
-        return episodes.reversed().map {
+        return episodes.map {
             SEpisode.create().apply {
                 setUrlWithoutDomain(it.url)
                 name = "Bölüm " + it.meta.number
