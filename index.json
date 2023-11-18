@@ -4246,10 +4246,10 @@
   {
     "name": "Aniyomi: Animeler",
     "pkg": "eu.kanade.tachiyomi.animeextension.tr.animeler",
-    "apk": "aniyomi-tr.animeler-v13.5.apk",
+    "apk": "aniyomi-tr.animeler-v13.6.apk",
     "lang": "tr",
-    "code": 5,
-    "version": "13.5",
+    "code": 6,
+    "version": "13.6",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -4267,10 +4267,10 @@
   {
     "name": "Aniyomi: Anizm",
     "pkg": "eu.kanade.tachiyomi.animeextension.tr.anizm",
-    "apk": "aniyomi-tr.anizm-v13.10.apk",
+    "apk": "aniyomi-tr.anizm-v13.11.apk",
     "lang": "tr",
-    "code": 10,
-    "version": "13.10",
+    "code": 11,
+    "version": "13.11",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -4281,7 +4281,7 @@
         "id": "3103642053214293691",
         "baseUrl": "https://anizm.net",
         "versionId": 1,
-        "hasCloudflare": 0
+        "hasCloudflare": 1
       }
     ]
   },
@@ -4309,10 +4309,10 @@
   {
     "name": "Aniyomi: HDFilmCehennemi",
     "pkg": "eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi",
-    "apk": "aniyomi-tr.hdfilmcehennemi-v13.5.apk",
+    "apk": "aniyomi-tr.hdfilmcehennemi-v13.6.apk",
     "lang": "tr",
-    "code": 5,
-    "version": "13.5",
+    "code": 6,
+    "version": "13.6",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -4351,10 +4351,10 @@
   {
     "name": "Aniyomi: TRAnimeCI",
     "pkg": "eu.kanade.tachiyomi.animeextension.tr.tranimeci",
-    "apk": "aniyomi-tr.tranimeci-v13.2.apk",
+    "apk": "aniyomi-tr.tranimeci-v13.3.apk",
     "lang": "tr",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -4363,7 +4363,7 @@
         "name": "TRAnimeCI",
         "lang": "tr",
         "id": "5869353240534047560",
-        "baseUrl": "https://tranimeci.com",
+        "baseUrl": "https://tranimaci.com",
         "versionId": 1,
         "hasCloudflare": 0
       }
