@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.tr.animeler.dto
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
 data class SearchResponseDto(
@@ -16,11 +17,18 @@ data class PostDto(
 )
 
 @Serializable
+data class ThumbnailDto(private val featured_url: JsonPrimitive) {
+    val url = if (featured_url.isString) featured_url.content else null
+}
+
+@Serializable
 data class SimpleAnimeDto(
     val url: String,
-    val image: String,
     val post: PostDto,
+    private val image: String = "",
+    private val images: ThumbnailDto? = null,
 ) {
+    val thumbnail = image.ifEmpty { images?.url }
     val title = post.post_title
 }
 
@@ -49,12 +57,13 @@ data class SingleDto(
 @Serializable
 data class FullAnimeDto(
     val url: String,
-    val image: String,
     val post: PostDto,
     val meta: MetaDto,
     private val taxonomies: TaxonomiesDto,
-
+    private val image: String = "",
+    private val images: ThumbnailDto? = null,
 ) {
+    val thumbnail = image.ifEmpty { images?.url }
     val title = post.post_title
 
     @Serializable

@@ -76,7 +76,7 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
         val animes = results.data.map {
             SAnime.create().apply {
                 setUrlWithoutDomain(it.url)
-                thumbnail_url = it.image
+                thumbnail_url = it.thumbnail
                 title = it.title
             }
         }
@@ -168,7 +168,7 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
         val animeDto = json.decodeFromString<FullAnimeDto>(body)
 
         setUrlWithoutDomain(animeDto.url)
-        thumbnail_url = animeDto.image
+        thumbnail_url = animeDto.thumbnail
         title = animeDto.title
         artist = animeDto.studios
         author = animeDto.producers
