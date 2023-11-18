@@ -25,6 +25,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
+import okhttp3.MultipartBody
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -81,6 +82,8 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
 
     // =============================== Search ===============================
+    override fun getFilterList() = HDFilmCehennemiFilters.FILTER_LIST
+
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val id = query.removePrefix(PREFIX_SEARCH)
@@ -102,9 +105,28 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .add("X-Requested-With", "XMLHttpRequest")
             .build()
 
-        val body = FormBody.Builder().add("query", query).build()
+        return when {
+            query.isNotBlank() -> {
+                val body = FormBody.Builder().add("query", query).build()
 
-        return POST("$baseUrl/search/", headers, body)
+                POST("$baseUrl/search/", headers, body)
+            }
+            else -> {
+                val params = HDFilmCehennemiFilters.getSearchParameters(filters)
+
+                val form = MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("kesfet[type]", params.type)
+                    .addFormDataPart("kesfet[genres]", params.genres)
+                    .addFormDataPart("kesfet[years]", params.years)
+                    .addFormDataPart("kesfet[imdb]", params.imdbScore)
+                    .addFormDataPart("kesfet[orderBy]", params.order)
+                    .addFormDataPart("page", page.toString())
+                    .build()
+
+                POST("$baseUrl/movies/load/", headers, form)
+            }
+        }
     }
 
     @Serializable
@@ -113,26 +135,39 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     @Serializable
     data class ItemDto(val title: String, val poster: String, val slug: String, val slug_prefix: String)
 
+    @Serializable
+    data class FilterSearchResponse(val html: String, val showMore: Boolean, val status: Int)
+
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val data = response.parseAs<SearchResponse>()
-        val items = data.result.map {
-            SAnime.create().apply {
-                title = it.title
-                thumbnail_url = "$baseUrl/uploads/poster/" + it.poster
-                url = "/" + it.slug_prefix + it.slug
+        return when {
+            response.request.url.toString().contains("/search/") -> { // Text search
+                val data = response.parseAs<SearchResponse>()
+                val items = data.result.map {
+                    SAnime.create().apply {
+                        title = it.title
+                        thumbnail_url = "$baseUrl/uploads/poster/" + it.poster
+                        url = "/" + it.slug_prefix + it.slug
+                    }
+                }
+
+                AnimesPage(items, false)
+            }
+
+            else -> { // Filter search
+                val data = response.parseAs<FilterSearchResponse>()
+                if (data.status != 1) return AnimesPage(emptyList(), false)
+
+                val doc = response.asJsoup(data.html)
+                val items = doc.select(searchAnimeSelector()).map(::searchAnimeFromElement)
+
+                AnimesPage(items, data.showMore)
             }
         }
-
-        return AnimesPage(items, false)
     }
 
-    override fun searchAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeSelector() = "div.poster > a"
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
     override fun searchAnimeNextPageSelector(): String? {
         throw UnsupportedOperationException("Not used.")
