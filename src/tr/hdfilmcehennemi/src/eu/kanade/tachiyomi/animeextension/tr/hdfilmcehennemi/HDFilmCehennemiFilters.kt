@@ -145,10 +145,10 @@ object HDFilmCehennemiFilters {
         )
 
         val ORDERS = arrayOf(
-            Pair("IMDb Puanına", "posts.imdb"), // asc | desc"),
-            Pair("Site Puanı", "avg"), // desc | asc"),
-            Pair("Yıla", "posts.year"), // "posts.year desc | asc"),
-            Pair("İzlenme", "views"), // desc"),
+            Pair("IMDb Puanına", "posts.imdb"),
+            Pair("Site Puanı", "avg"),
+            Pair("Yıla", "posts.year"),
+            Pair("İzlenme", "views"),
         )
     }
 }
