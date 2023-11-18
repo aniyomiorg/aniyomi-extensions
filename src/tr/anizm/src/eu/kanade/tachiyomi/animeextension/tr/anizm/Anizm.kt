@@ -19,7 +19,6 @@ import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
-import eu.kanade.tachiyomi.lib.mytvextractor.MytvExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
@@ -57,6 +56,8 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     override val lang = "tr"
 
     override val supportsLatest = true
+
+    override val client = network.cloudflareClient
 
     override fun headersBuilder() = super.headersBuilder()
         .add("Origin", baseUrl)
@@ -245,7 +246,6 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     private val filemoonExtractor by lazy { FilemoonExtractor(client) }
     private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
     private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
-    private val mytvExtractor by lazy { MytvExtractor(client) }
     private val okruExtractor by lazy { OkruExtractor(client) }
     private val sendvidExtractor by lazy { SendvidExtractor(client, headers) }
     private val sibnetExtractor by lazy { SibnetExtractor(client) }
@@ -264,7 +264,6 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             "sendvid.com" in url -> sendvidExtractor.videosFromUrl(url)
             "video.sibnet" in url -> sibnetExtractor.videosFromUrl(url)
             "mp4upload" in url -> mp4uploadExtractor.videosFromUrl(url, headers)
-            "myvi." in url -> mytvExtractor.videosFromUrl(url)
             "ok.ru" in url || "odnoklassniki.ru" in url -> okruExtractor.videosFromUrl(url)
             "yourupload" in url -> yourUploadExtractor.videoFromUrl(url, headers)
             "streamtape" in url -> streamtapeExtractor.videoFromUrl(url)?.let(::listOf)
@@ -460,8 +459,6 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             "FileMoon",
             "GDrive",
             "MP4Upload",
-            "MyviRU",
-            "Myvi.TV",
             "Odnoklassniki",
             "SendVid",
             "Sibnet",
