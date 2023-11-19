@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
@@ -129,7 +130,9 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "video#player > source"
 
     // Shall we add "archive", "archive-v2"? archive.org usually returns a beautiful 403 xD
-    private val supportedHosters = listOf("kuramadrive", "kuramadrive-v2")
+    private val supportedHosters = listOf("kuramadrive", "kuramadrive-v2", "streamtape")
+
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
 
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.use { it.asJsoup() }
@@ -155,9 +158,14 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val playerDoc = client.newCall(GET(newUrl.toString(), headers)).execute()
                     .use { it.asJsoup() }
 
-                playerDoc.select("video#player > source").map {
-                    val src = it.attr("src")
-                    Video(src, "${it.attr("size")}p - $serverName", src)
+                if (server == "streamtape") {
+                    val url = playerDoc.selectFirst("div.video-content iframe")!!.attr("src")
+                    streamtapeExtractor.videosFromUrl(url)
+                } else {
+                    playerDoc.select("video#player > source").map {
+                        val src = it.attr("src")
+                        Video(src, "${it.attr("size")}p - $serverName", src)
+                    }
                 }
             }.getOrElse { emptyList<Video>() }
         }
