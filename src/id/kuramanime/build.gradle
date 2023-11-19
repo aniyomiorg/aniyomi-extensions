@@ -1,12 +1,18 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
 
 ext {
     extName = 'Kuramanime'
     pkgNameSuffix = 'id.kuramanime'
     extClass = '.Kuramanime'
-    extVersionCode = 8
+    extVersionCode = 9
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(":lib-streamtape-extractor"))
 }
 
 apply from: "$rootDir/common.gradle"
