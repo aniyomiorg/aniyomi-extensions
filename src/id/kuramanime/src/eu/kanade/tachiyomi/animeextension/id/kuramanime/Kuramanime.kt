@@ -38,7 +38,7 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/anime")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/anime?page=$page")
 
     override fun popularAnimeSelector() = "div.product__item"
 
