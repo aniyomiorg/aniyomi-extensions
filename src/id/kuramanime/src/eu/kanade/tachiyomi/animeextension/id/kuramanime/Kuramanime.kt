@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.id.kuramanime
 
 import android.app.Application
+import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -11,12 +12,14 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Headers
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
+import java.net.URLEncoder
 
 class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val name = "Kuramanime"
@@ -125,24 +128,62 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
     override fun videoListSelector() = "video#player > source"
 
+    // Shall we add "archive", "archive-v2"? archive.org usually returns a beautiful 403 xD
+    private val supportedHosters = listOf("kuramadrive", "kuramadrive-v2")
+
     override fun videoListParse(response: Response): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val document = response.asJsoup()
+        val doc = response.use { it.asJsoup() }
 
-        document.select("select#changeServer > option").forEach {
-            videoList.addAll(
-                videosFromServer(response.request.url.toString(), it.attr("value"), it.text()),
-            )
+        val servers = doc.select("select#changeServer > option")
+            .map { it.attr("value") to it.text().substringBefore(" (") }
+            .filter { supportedHosters.contains(it.first) }
+
+        val episodeUrl = response.request.url
+
+        val headers = headersBuilder()
+            .set("Referer", episodeUrl.toString())
+            .set("X-Requested-With", "XMLHttpRequest")
+            .build()
+
+        return servers.flatMap { (server, serverName) ->
+            runCatching {
+                val newUrl = episodeUrl.newBuilder()
+                    .addQueryParameter("dfgRr1OagZvvxbzHNpyCy0FqJQ18mCnb", getRequestHash(headers))
+                    .addQueryParameter("twEvZlbZbYRWBdKKwxkOnwYF0VWoGGVg", server)
+                    .build()
+
+                val playerDoc = client.newCall(GET(newUrl.toString(), headers)).execute()
+                    .use { it.asJsoup() }
+
+                playerDoc.select("video#player > source").map {
+                    val src = it.attr("src")
+                    Video(src, "${it.attr("size")}p - $serverName", src)
+                }
+            }.getOrElse { emptyList<Video>() }
         }
-
-        return videoList.sort()
     }
 
-    private fun videosFromServer(episodeUrl: String, server: String, name: String): List<Video> {
-        val document = client.newCall(
-            GET("$episodeUrl?activate_stream=1&stream_server=$server", headers = headers),
-        ).execute().asJsoup()
-        return document.select(videoListSelector()).map { videoFromElement(it, name, episodeUrl) }
+    private fun getRequestHash(headers: Headers): String {
+        val auth = "kuramanime:FDWUjAg6FXZpcbyTAkWrsgS8qAJNDDXKts:${System.currentTimeMillis()}"
+            .let { Base64.encode(it.toByteArray(), Base64.NO_WRAP) }
+            .let { Base64.encodeToString(it, Base64.NO_WRAP) }
+            .let { URLEncoder.encode(it, "UTF-8") }
+
+        val newHeaders = headers.newBuilder()
+            .set("Authorization", "Bearer $auth")
+            .set("X-Request-ID", getRandomString())
+            .build()
+
+        return client.newCall(GET("$baseUrl/misc/post/EVhcpMNbO77acNZcHr2XVjaG8WAdNC1u", newHeaders)).execute()
+            .use { it.body.string() }
+            .trim('"')
+    }
+
+    private fun getRandomString(length: Int = 8): String {
+        val allowedChars = ('a'..'z') + ('0'..'9')
+        return (1..length)
+            .map { allowedChars.random() }
+            .joinToString("")
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -154,24 +195,6 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
-
-    private fun videoFromElement(element: Element, name: String, episodeUrl: String): Video {
-        var url = element.attr("src")
-        if (!url.startsWith("http")) {
-            url = episodeUrl + url
-        }
-
-        val quality = with(element.attr("size")) {
-            when {
-                contains("1080") -> "1080p"
-                contains("720") -> "720p"
-                contains("480") -> "480p"
-                contains("360") -> "360p"
-                else -> "Default"
-            }
-        } + " - $name"
-        return Video(url, quality, url)
-    }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
