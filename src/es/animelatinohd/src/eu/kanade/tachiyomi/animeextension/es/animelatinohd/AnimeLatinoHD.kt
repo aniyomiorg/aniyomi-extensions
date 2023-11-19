@@ -79,35 +79,21 @@ class AnimeLatinoHD : ConfigurableAnimeSource, AnimeHttpSource() {
         val animeList = mutableListOf<SAnime>()
         val url = response.request.url.toString().lowercase()
         val hasNextPage = document.select("#__next > main > div > div[class*=\"Animes_paginate\"] a:last-child svg").any()
-        document.select("script").forEach { script ->
-            if (script.data().contains("{\"props\":{\"pageProps\":")) {
-                val jObject = json.decodeFromString<JsonObject>(script.data())
-                val props = jObject["props"]!!.jsonObject
-                val pageProps = props["pageProps"]!!.jsonObject
-                val data = pageProps["data"]!!.jsonObject
-                if (url.contains("status=1")) {
-                    val latestData = data["data"]!!.jsonArray
-                    latestData.forEach { item ->
-                        val animeItem = item!!.jsonObject
-                        val anime = SAnime.create()
-                        anime.setUrlWithoutDomain(externalOrInternalImg("anime/${animeItem["slug"]!!.jsonPrimitive!!.content}"))
-                        anime.thumbnail_url = "https://image.tmdb.org/t/p/w200${animeItem["poster"]!!.jsonPrimitive!!.content}"
-                        anime.title = animeItem["name"]!!.jsonPrimitive!!.content
-                        animeList.add(anime)
-                    }
-                } else {
-                    val popularToday = data["popular_today"]!!.jsonArray
-                    popularToday.forEach { item ->
-                        val animeItem = item!!.jsonObject
-                        val anime = SAnime.create()
-                        anime.setUrlWithoutDomain(externalOrInternalImg("anime/${animeItem["slug"]!!.jsonPrimitive!!.content}"))
-                        anime.thumbnail_url = "https://image.tmdb.org/t/p/w200${animeItem["poster"]!!.jsonPrimitive!!.content}"
-                        anime.title = animeItem["name"]!!.jsonPrimitive!!.content
-                        animeList.add(anime)
-                    }
-                }
-            }
+
+        document.select("div.list-animes > div.animeCard").forEach { animeCard ->
+            val cover = animeCard.selectFirst("div.cover")
+            val titleElement = animeCard.selectFirst("div.info h3 a span")
+            val yearElement = animeCard.selectFirst("div.info p.year")
+            val scoreElement = animeCard.selectFirst("span.score")
+
+            val anime = SAnime.create()
+            anime.title = titleElement?.text().orEmpty()
+            anime.setUrlWithoutDomain(cover?.selectFirst("a")?.attr("href").orEmpty())
+            anime.thumbnail_url = cover?.selectFirst("img")?.attr("src").orEmpty()
+
+            animeList.add(anime)
         }
+
         return AnimesPage(animeList, hasNextPage)
     }
 
@@ -118,44 +104,56 @@ class AnimeLatinoHD : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun animeDetailsParse(response: Response): SAnime {
         val document = response.asJsoup()
         val newAnime = SAnime.create()
-        document.select("script").forEach { script ->
-            if (script.data().contains("{\"props\":{\"pageProps\":")) {
-                val jObject = json.decodeFromString<JsonObject>(script.data())
-                val props = jObject["props"]!!.jsonObject
-                val pageProps = props["pageProps"]!!.jsonObject
-                val data = pageProps["data"]!!.jsonObject
 
-                newAnime.title = data["name"]!!.jsonPrimitive!!.content
-                newAnime.genre = data["genres"]!!.jsonPrimitive!!.content.split(",").joinToString()
-                newAnime.description = data["overview"]!!.jsonPrimitive!!.content
-                newAnime.status = parseStatus(data["status"]!!.jsonPrimitive!!.content)
-                newAnime.thumbnail_url = "https://image.tmdb.org/t/p/w600_and_h900_bestv2${data["poster"]!!.jsonPrimitive!!.content}"
-                newAnime.setUrlWithoutDomain(externalOrInternalImg("anime/${data["slug"]!!.jsonPrimitive!!.content}"))
+        document.select("div.animePage").firstOrNull()?.let { animePage ->
+            // Extracción de información del banner
+            val banner = animePage.selectFirst("div.banner")
+            if (banner != null) {
+                newAnime.thumbnail_url = banner.attr("style").substringAfter("background-image: url(").substringBeforeLast(")")
             }
+
+            // Extracción de información de la columna
+            val column = animePage.selectFirst("div.column")
+            if (column != null) {
+                newAnime.title = column.selectFirst("h1")?.text() ?: ""
+            }
+            if (column != null) {
+                newAnime.genre = column.select("div.genres a.genre").joinToString(",") { it.text() }
+            }
+
+            // Extracción de información detallada
+            val detailed = animePage.selectFirst("div.detailed")
+            if (detailed != null) {
+                newAnime.status = parseStatus(
+                    detailed.selectFirst("div.item:contains(Estado) span")
+                        ?.text() ?: "",
+                )
+            }
+            newAnime.description = animePage.selectFirst("div.overview p")?.text()
         }
+
         return newAnime
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
-        document.select("script").forEach { script ->
-            if (script.data().contains("{\"props\":{\"pageProps\":")) {
-                val jObject = json.decodeFromString<JsonObject>(script.data())
-                val props = jObject["props"]!!.jsonObject
-                val pageProps = props["pageProps"]!!.jsonObject
-                val data = pageProps["data"]!!.jsonObject
-                val arrEpisode = data["episodes"]!!.jsonArray
-                arrEpisode.forEach { item ->
-                    val animeItem = item!!.jsonObject
-                    val episode = SEpisode.create()
-                    episode.setUrlWithoutDomain(externalOrInternalImg("ver/${data["slug"]!!.jsonPrimitive!!.content}/${animeItem["number"]!!.jsonPrimitive!!.content!!.toFloat()}"))
-                    episode.episode_number = animeItem["number"]!!.jsonPrimitive!!.content!!.toFloat()
-                    episode.name = "Episodio ${animeItem["number"]!!.jsonPrimitive!!.content!!.toFloat()}"
-                    episodeList.add(episode)
-                }
+
+        document.select("div.listEpisodes a.episodeContainer").forEach { episodeContainer ->
+            val episodeNumber =
+                episodeContainer.selectFirst("div.episodeInfoContainer span.episodeNumber")?.text()
+            val episodeUrl = episodeContainer.attr("href")
+
+            val episode = SEpisode.create()
+            if (episodeNumber != null) {
+                episode.episode_number = episodeNumber.toFloatOrNull() ?: 0f
             }
+            episode.setUrlWithoutDomain(externalOrInternalImg(episodeUrl))
+            episode.name = "Episodio $episodeNumber"
+
+            episodeList.add(episode)
         }
+
         return episodeList
     }
 
@@ -174,67 +172,71 @@ class AnimeLatinoHD : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        document.select("script").forEach { script ->
-            if (script.data().contains("{\"props\":{\"pageProps\":")) {
-                val jObject = json.decodeFromString<JsonObject>(script.data())
-                val props = jObject["props"]!!.jsonObject
-                val pageProps = props["pageProps"]!!.jsonObject
-                val data = pageProps["data"]!!.jsonObject
-                val playersElement = data["players"]
-                val players = if (playersElement !is JsonArray) JsonArray(parseJsonArray(playersElement)) else playersElement!!.jsonArray
-                players.forEach { player ->
-                    val servers = player!!.jsonArray
-                    servers.forEach { server ->
-                        val item = server!!.jsonObject
-                        val request = client.newCall(
-                            GET(
-                                url = "https://api.animelatinohd.com/stream/${item["id"]!!.jsonPrimitive.content}",
-                                headers = headers.newBuilder()
-                                    .add("Referer", "https://www.animelatinohd.com/")
-                                    .add("authority", "api.animelatinohd.com")
-                                    .add("upgrade-insecure-requests", "1")
-                                    .build(),
-                            ),
-                        ).execute()
-                        val locationsDdh = request!!.networkResponse.toString()
+
+        // Buscar el script que contiene la información necesaria
+        val scriptWithProps = document.selectFirst("script:containsData({\"props\":{\"pageProps\":)")
+            ?: return videoList
+
+        // Extraer el token del script
+        val tokenMatch = Regex(""""_token":"(.*?)"""").find(scriptWithProps.data())
+        val token = tokenMatch?.groups?.get(1)?.value
+
+        if (token != null) {
+            // Obtener información de los videos usando el token
+            val playersElement = document.selectFirst("div[id=selectServer]")!!.attr("data-playerdata")
+            val players = json.decodeFromString<JsonObject>(playersElement)["1"]?.jsonArray
+
+            players?.forEach { player ->
+                val servers = player!!.jsonArray
+                servers.forEach { server ->
+                    val item = server!!.jsonObject
+                    val videoUrl = "https://animelatinohd.com/video/${item["id"]!!.jsonPrimitive!!.content}/$token"
+                    val request = client.newCall(
+                        GET(
+                            url = videoUrl,
+                            headers = headers.newBuilder()
+                                .add("Referer", "https://www.animelatinohd.com/")
+                                .add("authority", "animelatinohd.com")
+                                .add("upgrade-insecure-requests", "1")
+                                .build(),
+                        ),
+                    ).execute()
+
+                    if (request.isSuccessful) {
+                        val locationsDdh = request.networkResponse.toString()
                         fetchUrls(locationsDdh).map { url ->
                             val language = if (item["languaje"]!!.jsonPrimitive!!.content == "1") "[LAT]" else "[SUB]"
                             val embedUrl = url.lowercase()
-                            if (embedUrl.contains("filemoon")) {
-                                val vidHeaders = headers.newBuilder()
-                                    .add("Origin", "https://${url.toHttpUrl().host}")
-                                    .add("Referer", "https://${url.toHttpUrl().host}/")
-                                    .build()
-                                FilemoonExtractor(client).videosFromUrl(url, prefix = "$language Filemoon:", headers = vidHeaders).also(videoList::addAll)
-                            }
-                            if (embedUrl.contains("filelions") || embedUrl.contains("lion")) {
-                                StreamWishExtractor(client, headers).videosFromUrl(url, videoNameGen = { "$language FileLions:$it" }).also(videoList::addAll)
-                            }
-                            if (embedUrl.contains("streamtape")) {
-                                StreamTapeExtractor(client).videoFromUrl(url, "$language Streamtape")?.let { videoList.add(it) }
-                            }
-                            if (embedUrl.contains("dood")) {
-                                DoodExtractor(client).videoFromUrl(url, "$language DoodStream")?.let { videoList.add(it) }
-                            }
-                            if (embedUrl.contains("okru") || embedUrl.contains("ok.ru")) {
-                                OkruExtractor(client).videosFromUrl(url, language).also(videoList::addAll)
-                            }
-                            if (embedUrl.contains("solidfiles")) {
-                                SolidFilesExtractor(client).videosFromUrl(url, language).also(videoList::addAll)
-                            }
-                            if (embedUrl.contains("od.lk")) {
-                                videoList.add(Video(url, language + "Od.lk", url))
-                            }
-                            if (embedUrl.contains("cldup.com")) {
-                                videoList.add(Video(url, language + "CldUp", url))
+                            when {
+                                embedUrl.contains("Delta") -> {
+                                    val vidHeaders = headers.newBuilder()
+                                        .add("Origin", "https://${url.toHttpUrl().host}")
+                                        .add("Referer", "https://${url.toHttpUrl().host}/")
+                                        .build()
+                                    FilemoonExtractor(client).videosFromUrl(url, prefix = "$language Filemoon:", headers = vidHeaders).also(videoList::addAll)
+                                }
+                                embedUrl.contains("filelions") || embedUrl.contains("lion") -> {
+                                    StreamWishExtractor(client, headers).videosFromUrl(url, videoNameGen = { "$language FileLions:$it" }).also(videoList::addAll)
+                                }
+                                embedUrl.contains("streamtape") -> {
+
+                                    StreamTapeExtractor(client).videoFromUrl(url, "$language Streamtape")?.let { videoList.add(it) }
+                                }
+                                // Añadir más casos según sea necesario para otros extractores
+                                else -> {
+
+                                }
+
                             }
                         }
                     }
                 }
             }
         }
+
         return videoList
     }
+
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
