@@ -38,7 +38,7 @@ class EnNovelas : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "EnNovelas"
 
-    override val baseUrl = "https://f.ennovelas.net"
+    override val baseUrl = "https://u.ennovelas.net"
 
     override val lang = "es"
 
@@ -52,7 +52,7 @@ class EnNovelas : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = ".block-post"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/novelas/page/$page")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/telenovelas/page/$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
