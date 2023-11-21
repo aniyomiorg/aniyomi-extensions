@@ -1,56 +1,18 @@
 package eu.kanade.tachiyomi.animeextension.en.nineanime
 
 import android.util.Base64
-import eu.kanade.tachiyomi.AppInfo
-import eu.kanade.tachiyomi.animeextension.BuildConfig
-import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
-import kotlinx.serialization.json.Json
-import okhttp3.FormBody
-import okhttp3.Headers
-import okhttp3.OkHttpClient
-import okhttp3.Response
-import uy.kohesive.injekt.injectLazy
 import java.net.URLDecoder
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 
-class AniwaveUtils(private val client: OkHttpClient, private val headers: Headers) {
+class AniwaveUtils {
 
-    val json: Json by injectLazy()
-
-    private val userAgent = Headers.headersOf(
-        "User-Agent",
-        "Aniyomi/${AppInfo.getVersionName()} (AniWave; ${BuildConfig.VERSION_CODE})",
-    )
-
-    fun callEnimax(query: String, action: String): String {
-        return if (action in listOf("rawVizcloud", "rawMcloud")) {
-            val referer = if (action == "rawVizcloud") "https://vidstream.pro/" else "https://mcloud.to/"
-            val futoken = client.newCall(
-                GET(referer + "futoken", headers),
-            ).execute().use { it.body.string() }
-            val formBody = FormBody.Builder()
-                .add("query", query)
-                .add("futoken", futoken)
-                .build()
-            client.newCall(
-                POST(
-                    url = "https://9anime.eltik.net/$action?apikey=aniyomi",
-                    body = formBody,
-                    headers = userAgent,
-                ),
-            ).execute().parseAs<RawResponse>().rawURL
-        } else if (action == "decrypt") {
+    fun getVrf(query: String, action: String): String {
+        return if (action == "decrypt") {
             vrfDecrypt(query)
         } else {
             "vrf=${java.net.URLEncoder.encode(vrfEncrypt(query), "utf-8")}"
         }
-    }
-
-    private inline fun <reified T> Response.parseAs(): T {
-        val responseBody = use { it.body.string() }
-        return json.decodeFromString(responseBody)
     }
 
     private fun vrfEncrypt(input: String): String {
