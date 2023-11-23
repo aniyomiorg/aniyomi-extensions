@@ -231,7 +231,7 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     private val vidmolyExtractor by lazy { VidmolyExtractor(client, headers) }
-    private val rapidrameExtractor by lazy { RapidrameExtractor(client, headers) }
+    private val rapidrameExtractor by lazy { RapidrameExtractor(client, headers, json) }
     private val xbetExtractor by lazy { XBetExtractor(client, headers, json) }
 
     override fun videoListParse(response: Response): List<Video> {
