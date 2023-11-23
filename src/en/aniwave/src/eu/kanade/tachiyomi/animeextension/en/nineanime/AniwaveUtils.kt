@@ -7,15 +7,7 @@ import javax.crypto.spec.SecretKeySpec
 
 class AniwaveUtils {
 
-    fun getVrf(query: String, action: String): String {
-        return if (action == "decrypt") {
-            vrfDecrypt(query)
-        } else {
-            "vrf=${java.net.URLEncoder.encode(vrfEncrypt(query), "utf-8")}"
-        }
-    }
-
-    private fun vrfEncrypt(input: String): String {
+    fun vrfEncrypt(input: String): String {
         val rc4Key = SecretKeySpec("ysJhV6U27FVIjjuk".toByteArray(), "RC4")
         val cipher = Cipher.getInstance("RC4")
         cipher.init(Cipher.DECRYPT_MODE, rc4Key, cipher.parameters)
@@ -26,11 +18,11 @@ class AniwaveUtils {
         vrf = vrfShift(vrf)
         vrf = Base64.encode(vrf, Base64.DEFAULT)
         vrf = rot13(vrf)
-
-        return vrf.toString(Charsets.UTF_8)
+        val stringVrf = vrf.toString(Charsets.UTF_8)
+        return "vrf=${java.net.URLEncoder.encode(stringVrf, "utf-8")}"
     }
 
-    private fun vrfDecrypt(input: String): String {
+    fun vrfDecrypt(input: String): String {
         var vrf = input.toByteArray()
         vrf = Base64.decode(vrf, Base64.URL_SAFE)
 

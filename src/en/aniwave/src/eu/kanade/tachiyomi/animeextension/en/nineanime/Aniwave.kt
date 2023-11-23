@@ -97,7 +97,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filters = AniwaveFilters.getSearchParameters(filters)
 
-        val vrf = if (query.isNotBlank()) utils.getVrf(query, "vrf") else ""
+        val vrf = if (query.isNotBlank()) utils.vrfEncrypt(query) else ""
         var url = "$baseUrl/filter?keyword=$query"
 
         if (filters.genre.isNotBlank()) url += filters.genre
@@ -147,7 +147,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListRequest(anime: SAnime): Request {
         val id = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
             .selectFirst("div[data-id]")!!.attr("data-id")
-        val vrf = utils.getVrf(id, "vrf")
+        val vrf = utils.vrfEncrypt(id)
 
         val listHeaders = headers.newBuilder().apply {
             add("Accept", "application/json, text/javascript, */*; q=0.01")
@@ -203,7 +203,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListRequest(episode: SEpisode): Request {
         val ids = episode.url.substringBefore("&")
-        val vrf = utils.getVrf(ids, "vrf")
+        val vrf = utils.vrfEncrypt(ids)
         val url = "/ajax/server/list/$ids?$vrf"
         val epurl = episode.url.substringAfter("epurl=")
 
@@ -257,7 +257,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
 
     private fun extractVideo(server: VideoData, epUrl: String): List<Video> {
-        val vrf = utils.getVrf(server.serverId, "rawVrf")
+        val vrf = utils.vrfEncrypt(server.serverId)
 
         val listHeaders = headers.newBuilder().apply {
             add("Accept", "application/json, text/javascript, */*; q=0.01")
@@ -272,7 +272,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return runCatching {
             val parsed = response.parseAs<ServerResponse>()
-            val embedLink = utils.getVrf(parsed.result.url, "decrypt")
+            val embedLink = utils.vrfDecrypt(parsed.result.url)
             when (server.serverName) {
                 "vidplay", "mycloud" -> vidsrcExtractor.videosFromUrl(embedLink, server.serverName, server.type)
                 "filemoon" -> filemoonExtractor.videosFromUrl(embedLink, "Filemoon - ${server.type} - ")
