@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.nineanime.extractors
 
 import android.util.Base64
-import android.util.Log
 import app.cash.quickjs.QuickJs
 import eu.kanade.tachiyomi.animeextension.en.nineanime.MediaResponseBody
 import eu.kanade.tachiyomi.animesource.model.Track
