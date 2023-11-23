@@ -15,9 +15,7 @@ class Tiodonghua : AnimeStream(
     "Tiodonghua.com",
     "https://anime.tiodonghua.com",
 ) {
-    override val animeListUrl = "$baseUrl/anime"
 
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/anime/?status=&type=&sub=&order=update", headers)
 
     // ============================ Video Links =============================
     private val okruExtractor by lazy { OkruExtractor(client) }
@@ -38,48 +36,4 @@ class Tiodonghua : AnimeStream(
     override val fetchFilters: Boolean
         get() = false
 
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        super.setupPreferenceScreen(screen) // Quality preference
-
-        val langPref = ListPreference(screen.context).apply {
-            key = PREF_LANG_KEY
-            title = PREF_LANG_TITLE
-            entries = PREF_LANG_ENTRIES
-            entryValues = PREF_LANG_VALUES
-            setDefaultValue(PREF_LANG_DEFAULT)
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        screen.addPreference(langPref)
-    }
-
-    // ============================= Utilities ==============================
-
-    override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(prefQualityKey, prefQualityDefault)!!
-        val lang = preferences.getString(PREF_LANG_KEY, PREF_LANG_DEFAULT)!!
-        return sortedWith(
-            compareBy(
-                { it.quality.contains(lang) },
-                { it.quality.contains(quality) },
-            ),
-        ).reversed()
-    }
-
-    override val prefQualityValues = arrayOf("480p", "720p", "1080p")
-    override val prefQualityEntries = prefQualityValues
-
-    companion object {
-        private const val PREF_LANG_KEY = "preferred_lang"
-        private const val PREF_LANG_TITLE = "Preferred language"
-        private const val PREF_LANG_DEFAULT = "SUB"
-        private val PREF_LANG_ENTRIES = arrayOf("SUB", "All", "ES", "LAT")
-        private val PREF_LANG_VALUES = arrayOf("SUB", "", "ES", "LAT")
-    }
 }
