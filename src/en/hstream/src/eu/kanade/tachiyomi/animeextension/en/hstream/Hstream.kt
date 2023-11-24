@@ -4,15 +4,23 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.injectLazy
+import java.net.URLDecoder
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -25,6 +33,8 @@ class Hstream : ParsedAnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
+
+    private val json: Json by injectLazy()
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/search?order=view-count&page=$page")
@@ -114,8 +124,54 @@ class Hstream : ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        throw UnsupportedOperationException("Not used.")
+        val doc = response.use { it.asJsoup() }
+
+        val token = client.cookieJar.loadForRequest(response.request.url)
+            .first { it.name.equals("XSRF-TOKEN") }
+            .value
+
+        val episodeId = doc.selectFirst("input#e_id")!!.attr("value")
+
+        val newHeaders = headersBuilder().apply {
+            set("Referer", doc.location())
+            set("Origin", baseUrl)
+            set("X-Requested-With", "XMLHttpRequest")
+            set("X-XSRF-TOKEN", URLDecoder.decode(token, "utf-8"))
+        }.build()
+
+        val body = """{"episode_id": "$episodeId"}""".toRequestBody("application/json".toMediaType())
+        val data = client.newCall(POST("$baseUrl/player/api", newHeaders, body)).execute()
+            .parseAs<PlayerApiResponse>()
+
+        val urlBase = data.stream_domains.random() + "/" + data.stream_url
+        val subtitleList = listOf(Track(urlBase, "English"))
+
+        val resolutions = listOfNotNull("720", "1080", if (data.resolution == "4k") "2160" else null)
+        return resolutions.map { resolution ->
+            val url = urlBase + getVideoUrlPath(data.legacy != 0, resolution)
+            Video(url, "${resolution}p", url, subtitleTracks = subtitleList)
+        }
     }
+
+    private fun getVideoUrlPath(isLegacy: Boolean, resolution: String): String {
+        return if (isLegacy) {
+            if (resolution.equals("720")) {
+                "/x264.720p.mp4"
+            } else {
+                "/av1.$resolution.webm"
+            }
+        } else {
+            "/$resolution/manifest.mpd"
+        }
+    }
+
+    @Serializable
+    data class PlayerApiResponse(
+        val legacy: Int = 0,
+        val resolution: String = "4k",
+        val stream_url: String,
+        val stream_domains: List<String>,
+    )
 
     override fun videoListSelector(): String {
         throw UnsupportedOperationException("Not used.")
@@ -133,6 +189,10 @@ class Hstream : ParsedAnimeHttpSource() {
     private fun String?.toDate(): Long {
         return runCatching { DATE_FORMATTER.parse(orEmpty().trim(' ', '|'))?.time }
             .getOrNull() ?: 0L
+    }
+
+    private inline fun <reified T> Response.parseAs(): T {
+        return use { it.body.string() }.let(json::decodeFromString)
     }
 
     companion object {
