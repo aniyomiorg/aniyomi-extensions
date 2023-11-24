@@ -44,6 +44,10 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
+    // URLs from the old extension are invalid now, so we're bumping this to
+    // make aniyomi interpret it as a new source, forcing old users to migrate.
+    override val versionId = 2
+
     private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
