@@ -4309,10 +4309,10 @@
   {
     "name": "Aniyomi: HDFilmCehennemi",
     "pkg": "eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi",
-    "apk": "aniyomi-tr.hdfilmcehennemi-v13.6.apk",
+    "apk": "aniyomi-tr.hdfilmcehennemi-v13.7.apk",
     "lang": "tr",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
