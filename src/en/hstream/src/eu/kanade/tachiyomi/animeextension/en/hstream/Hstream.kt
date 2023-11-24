@@ -13,6 +13,8 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class Hstream : ParsedAnimeHttpSource() {
 
@@ -89,6 +91,19 @@ class Hstream : ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val doc = response.use { it.asJsoup() }
+        val episode = SEpisode.create().apply {
+            date_upload = doc.selectFirst("a:has(i.fa-upload)")?.ownText().toDate()
+            setUrlWithoutDomain(doc.location())
+            val num = url.substringAfterLast("-").substringBefore("/")
+            episode_number = num.toFloatOrNull() ?: 1F
+            name = "Episode $num"
+        }
+
+        return listOf(episode)
+    }
+
     override fun episodeListSelector(): String {
         throw UnsupportedOperationException("Not used.")
     }
@@ -114,7 +129,17 @@ class Hstream : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
+    // ============================= Utilities ==============================
+    private fun String?.toDate(): Long {
+        return runCatching { DATE_FORMATTER.parse(orEmpty().trim(' ', '|'))?.time }
+            .getOrNull() ?: 0L
+    }
+
     companion object {
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
+        }
+
         const val PREFIX_SEARCH = "id:"
     }
 }
