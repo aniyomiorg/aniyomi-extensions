@@ -1,57 +1,91 @@
 package eu.kanade.tachiyomi.animeextension.en.hstream
 
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter.TriState
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
-import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamFilters.CheckBoxFilterList
-import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamFilters.QueryPartFilter
 
 object HstreamFilters {
-    private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return (getFirst<R>() as QueryPartFilter).toQueryPart()
+
+    open class QueryPartFilter(
+        displayName: String,
+        val vals: Array<Pair<String, String>>,
+    ) : AnimeFilter.Select<String>(
+        displayName,
+        vals.map { it.first }.toTypedArray(),
+    ) {
+        fun toQueryPart() = vals[state].second
     }
 
-    private inline fun <reified R> AnimeFilterList.getFirst(): R {
-        return first { it is R } as R
+    open class CheckBoxFilterList(name: String, val pairs: Array<Pair<String, String>>) :
+        AnimeFilter.Group<AnimeFilter.CheckBox>(name, pairs.map { CheckBoxVal(it.first, false) })
+
+    private class CheckBoxVal(name: String, state: Boolean = false) : AnimeFilter.CheckBox(name, state)
+
+    open class TriStateFilterList(name: String, values: List<TriFilterVal>) : AnimeFilter.Group<TriState>(name, values)
+    class TriFilterVal(name: String) : TriState(name)
+
+    private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
+        return (first { it is R } as QueryPartFilter).toQueryPart()
     }
 
     private inline fun <reified R> AnimeFilterList.parseCheckbox(
         options: Array<Pair<String, String>>,
-        name: String,
-    ): String {
-        return (getFirst<R>() as CheckBoxFilterList).state
+    ): List<String> {
+        return (first { it is R } as CheckBoxFilterList).state
+            .asSequence()
             .filter { it.state }
             .map { checkbox -> options.find { it.first == checkbox.name }!!.second }
             .filter(String::isNotBlank)
-            .joinToString("&") { "$name[]=$it" }
+            .toList()
     }
 
-    class TagsFilter : CheckBoxFilterList("Tags", HstreamFiltersData.TAGS_LIST)
-    class StudiosFilter : CheckBoxFilterList("Studios", HstreamFiltersData.STUDIOS_LIST)
-    class OrderFilter : QueryPartFilter("Order by", HstreamFiltersData.ORDER_LIST)
+    private inline fun <reified R> AnimeFilterList.parseTriFilter(
+        options: Array<Pair<String, String>>,
+    ): List<List<String>> {
+        return (first { it is R } as TriStateFilterList).state
+            .filterNot { it.isIgnored() }
+            .map { filter -> filter.state to options.find { it.first == filter.name }!!.second }
+            .groupBy { it.first } // group by state
+            .let { dict ->
+                val included = dict.get(TriState.STATE_INCLUDE)?.map { it.second }.orEmpty()
+                val excluded = dict.get(TriState.STATE_EXCLUDE)?.map { it.second }.orEmpty()
+                listOf(included, excluded)
+            }
+    }
+
+    class GenresFilter : TriStateFilterList("Genres", HstreamFiltersData.GENRES.map { TriFilterVal(it.first) })
+    class StudiosFilter : CheckBoxFilterList("Studios", HstreamFiltersData.STUDIOS)
+
+    class OrderFilter : QueryPartFilter("Order by", HstreamFiltersData.ORDERS)
 
     val FILTER_LIST get() = AnimeFilterList(
-        TagsFilter(),
-        StudiosFilter(),
         OrderFilter(),
+        GenresFilter(),
+        StudiosFilter(),
     )
 
     data class FilterSearchParams(
-        val tags: String = "",
-        val studios: String = "",
-        val order: String = "",
+        val genres: List<String> = emptyList(),
+        val blacklisted: List<String> = emptyList(),
+        val studios: List<String> = emptyList(),
+        val order: String = "view-count",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
         if (filters.isEmpty()) return FilterSearchParams()
 
+        val (added, blacklisted) = filters.parseTriFilter<GenresFilter>(HstreamFiltersData.GENRES)
+
         return FilterSearchParams(
-            filters.parseCheckbox<TagsFilter>(HstreamFiltersData.TAGS_LIST, "tags"),
-            filters.parseCheckbox<StudiosFilter>(HstreamFiltersData.STUDIOS_LIST, "studios"),
+            added,
+            blacklisted,
+            filters.parseCheckbox<StudiosFilter>(HstreamFiltersData.STUDIOS),
             filters.asQueryPart<OrderFilter>(),
         )
     }
 
     private object HstreamFiltersData {
-        val TAGS_LIST = arrayOf(
+        val GENRES = arrayOf(
             Pair("3D", "3d"),
             Pair("4K", "4k"),
             Pair("Ahegao", "ahegao"),
@@ -66,6 +100,7 @@ object HstreamFilters {
             Pair("Cosplay", "cosplay"),
             Pair("Creampie", "creampie"),
             Pair("Dark Skin", "dark-skin"),
+            Pair("Elf", "elf"),
             Pair("Facial", "facial"),
             Pair("Fantasy", "fantasy"),
             Pair("Filmed", "filmed"),
@@ -99,6 +134,7 @@ object HstreamFilters {
             Pair("Scat", "scat"),
             Pair("School Girl", "school-girl"),
             Pair("Shota", "shota"),
+            Pair("Small Boobs", "small-boobs"),
             Pair("Succubus", "succubus"),
             Pair("Swim Suit", "swim-suit"),
             Pair("Teacher", "teacher"),
@@ -115,7 +151,7 @@ object HstreamFilters {
             Pair("Yuri", "yuri"),
         )
 
-        val STUDIOS_LIST = arrayOf(
+        val STUDIOS = arrayOf(
             Pair("BOMB! CUTE! BOMB!", "bomb-cute-bomb"),
             Pair("BreakBottle", "breakbottle"),
             Pair("ChiChinoya", "chichinoya"),
@@ -128,6 +164,8 @@ object HstreamFilters {
             Pair("Gold Bear", "gold-bear"),
             Pair("Green Bunny", "green-bunny"),
             Pair("Himajin Planning", "himajin-planning"),
+            Pair("King Bee", "king-bee"),
+            Pair("L.", "l"),
             Pair("Lune Pictures", "lune-pictures"),
             Pair("MS Pictures", "ms-pictures"),
             Pair("Majin", "majin"),
@@ -144,7 +182,9 @@ object HstreamFilters {
             Pair("Pixy", "pixy"),
             Pair("PoRO", "poro"),
             Pair("Queen Bee", "queen-bee"),
+            Pair("Rabbit Gate", "rabbit-gate"),
             Pair("SELFISH", "selfish"),
+            Pair("Seven", "seven"),
             Pair("Showten", "showten"),
             Pair("Studio 1st", "studio-1st"),
             Pair("Studio Eromatick", "studio-eromatick"),
@@ -154,14 +194,19 @@ object HstreamFilters {
             Pair("T-Rex", "t-rex"),
             Pair("Toranoana", "toranoana"),
             Pair("Union Cho", "union-cho"),
+            Pair("Valkyria", "valkyria"),
             Pair("White Bear", "white-bear"),
             Pair("ZIZ", "ziz"),
         )
 
-        val ORDER_LIST = arrayOf(
-            Pair("A-Z", "title"),
-            Pair("Latest Added", "latest"),
-            Pair("Z-A", "titledesc"),
+        val ORDERS = arrayOf(
+            Pair("View Count", "view-count"), // the only reason I'm not using a sort filter
+            Pair("A-Z", "az"),
+            Pair("Z-A", "za"),
+            Pair("Recently Uploaded", "recently-uploaded"),
+            Pair("Recently Released", "recently-released"),
+            Pair("Oldest Uploads", "oldest-uploads"),
+            Pair("Oldest Releases", "oldest-releases"),
         )
     }
 }
