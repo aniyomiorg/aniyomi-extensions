@@ -17,7 +17,9 @@ import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -70,6 +72,8 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
 
     // =============================== Search ===============================
+    override fun getFilterList() = HstreamFilters.FILTER_LIST
+
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val id = query.removePrefix(PREFIX_SEARCH)
@@ -86,9 +90,20 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(listOf(details), false)
     }
 
-    // TODO: Implement search filters
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) =
-        GET("$baseUrl/search?s=$query&order=view-count&page=$page")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val params = HstreamFilters.getSearchParameters(filters)
+
+        val url = "$baseUrl/search".toHttpUrl().newBuilder().apply {
+            if (query.isNotBlank()) addQueryParameter("s", query)
+            addQueryParameter("page", page.toString())
+            addQueryParameter("order", params.order)
+            params.genres.forEach { addQueryParameter("tags[]", it) }
+            params.blacklisted.forEach { addQueryParameter("blacklist[]", it) }
+            params.studios.forEach { addQueryParameter("studios[]", it) }
+        }.build()
+
+        return GET(url.toString())
+    }
 
     override fun searchAnimeSelector() = popularAnimeSelector()
 
