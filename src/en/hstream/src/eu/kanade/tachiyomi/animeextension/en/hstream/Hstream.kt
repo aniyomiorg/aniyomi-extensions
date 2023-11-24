@@ -1,5 +1,9 @@
 package eu.kanade.tachiyomi.animeextension.en.hstream
 
+import android.app.Application
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -19,12 +23,14 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.net.URLDecoder
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class Hstream : ParsedAnimeHttpSource() {
+class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Hstream"
 
@@ -35,6 +41,10 @@ class Hstream : ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     private val json: Json by injectLazy()
+
+    private val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/search?order=view-count&page=$page")
@@ -185,6 +195,25 @@ class Hstream : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+    }
+
     // ============================= Utilities ==============================
     private fun String?.toDate(): Long {
         return runCatching { DATE_FORMATTER.parse(orEmpty().trim(' ', '|'))?.time }
@@ -195,11 +224,25 @@ class Hstream : ParsedAnimeHttpSource() {
         return use { it.body.string() }.let(json::decodeFromString)
     }
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
+    }
+
     companion object {
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
         }
 
         const val PREFIX_SEARCH = "id:"
+
+        private const val PREF_QUALITY_KEY = "pref_quality_key"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("720p (HD)", "1080p (FULLHD)", "2160p (4K)")
+        private val PREF_QUALITY_VALUES = arrayOf("720p", "1080p", "2160p")
     }
 }
