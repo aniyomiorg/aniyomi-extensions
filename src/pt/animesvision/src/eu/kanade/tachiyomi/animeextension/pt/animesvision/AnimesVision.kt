@@ -45,7 +45,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimesVision"
 
-    override val baseUrl = "https://tanoshi.digital"
+    override val baseUrl = "https://animes.vision"
 
     override val lang = "pt-BR"
 

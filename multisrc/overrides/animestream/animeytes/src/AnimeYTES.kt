@@ -27,8 +27,4 @@ class AnimeYTES : AnimeStream(
             else -> emptyList()
         }
     }
-
-    // ============================ Latest Updates =============================
-
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/anime", headers)
 }
