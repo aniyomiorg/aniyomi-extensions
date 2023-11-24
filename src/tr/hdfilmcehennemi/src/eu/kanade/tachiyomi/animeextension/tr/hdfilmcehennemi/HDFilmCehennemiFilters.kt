@@ -40,7 +40,7 @@ object HDFilmCehennemiFilters {
     class IMDBScoreFilter : CheckBoxFilterList("IMDb Puanı", HDFilmCehennemiFiltersData.SCORES)
 
     class SortFilter : AnimeFilter.Sort(
-        "Tarafından sipariş",
+        "Sıralama Türü",
         HDFilmCehennemiFiltersData.ORDERS.map { it.first }.toTypedArray(),
         Selection(0, false),
     )

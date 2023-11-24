@@ -22,7 +22,6 @@ class AnimeStreamGenerator : ThemeSourceGenerator {
         SingleLang("ChineseAnime", "https://chineseanime.top", "all", isNsfw = false, overrideVersionCode = 3),
         SingleLang("desu-online", "https://desu-online.pl", "pl", className = "DesuOnline", isNsfw = false, overrideVersionCode = 3),
         SingleLang("DonghuaStream", "https://donghuastream.co.in", "en", isNsfw = false, overrideVersionCode = 2),
-        SingleLang("Hstream", "https://hstream.moe", "en", isNsfw = true, overrideVersionCode = 3),
         SingleLang("LMAnime", "https://lmanime.com", "all", isNsfw = false, overrideVersionCode = 4),
         SingleLang("LuciferDonghua", "https://luciferdonghua.in", "en", isNsfw = false, overrideVersionCode = 3),
         SingleLang("MiniOppai", "https://minioppai.org", "id", isNsfw = true, overrideVersionCode = 3),

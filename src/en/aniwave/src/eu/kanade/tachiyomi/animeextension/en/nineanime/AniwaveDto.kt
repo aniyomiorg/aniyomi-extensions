@@ -16,17 +16,6 @@ data class ServerResponse(
 }
 
 @Serializable
-data class VrfResponse(
-    val url: String,
-    val vrfQuery: String? = null,
-)
-
-@Serializable
-data class RawResponse(
-    val rawURL: String,
-)
-
-@Serializable
 data class MediaResponseBody(
     val status: Int,
     val result: Result,
