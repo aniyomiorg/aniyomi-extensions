@@ -1,0 +1,15 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+ext {
+    extName = 'Hstream'
+    pkgNameSuffix = 'en.hstream'
+    extClass = '.Hstream'
+    extVersionCode = 6
+    libVersion = '13'
+    containsNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"
