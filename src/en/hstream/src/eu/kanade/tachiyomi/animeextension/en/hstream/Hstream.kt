@@ -32,10 +32,9 @@ class Hstream : ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
-        with(element.selectFirst("img")!!) {
-            thumbnail_url = absUrl("src")
-            title = attr("alt")
-        }
+        title = element.selectFirst("img")!!.attr("alt")
+        val episode = url.substringAfterLast("-").substringBefore("/")
+        thumbnail_url = "$baseUrl/images${url.substringBeforeLast("-")}/cover-ep-$episode.webp"
     }
 
     override fun popularAnimeNextPageSelector() = "span[aria-current] + a"
