@@ -1657,10 +1657,10 @@
   {
     "name": "Aniyomi: Hstream",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.hstream",
-    "apk": "aniyomi-en.hstream-v13.6.apk",
+    "apk": "aniyomi-en.hstream-v13.7.apk",
     "lang": "en",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2390,6 +2390,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimeYT.es",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.animeytes",
+    "apk": "aniyomi-es.animeytes-v13.2.apk",
+    "lang": "es",
+    "code": 2,
+    "version": "13.2",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeYT.es",
+        "lang": "es",
+        "id": "4742118265598399159",
+        "baseUrl": "https://animeyt.es",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AsiaLiveAction",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.asialiveaction",
     "apk": "aniyomi-es.asialiveaction-v13.23.apk",
@@ -2484,10 +2505,10 @@
   {
     "name": "Aniyomi: EnNovelas",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.ennovelas",
-    "apk": "aniyomi-es.ennovelas-v13.6.apk",
+    "apk": "aniyomi-es.ennovelas-v13.7.apk",
     "lang": "es",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2496,7 +2517,7 @@
         "name": "EnNovelas",
         "lang": "es",
         "id": "6683521813386506618",
-        "baseUrl": "https://f.ennovelas.net",
+        "baseUrl": "https://u.ennovelas.net",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -2865,6 +2886,27 @@
         "lang": "es",
         "id": "754333127542778562",
         "baseUrl": "https://tiohentai.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: Tiodonghua.com",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.tiodonghua",
+    "apk": "aniyomi-es.tiodonghua-v13.2.apk",
+    "lang": "es",
+    "code": 2,
+    "version": "13.2",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Tiodonghua.com",
+        "lang": "es",
+        "id": "6830054141432094072",
+        "baseUrl": "https://anime.tiodonghua.com",
         "versionId": 1,
         "hasCloudflare": 1
       }
