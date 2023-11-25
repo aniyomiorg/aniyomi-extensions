@@ -168,7 +168,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 ?: return@parallelCatchingFlatMap emptyList()
 
             getHosterVideos(className, serverUrl)
-        }.sort().ifEmpty { throw Exception("Failed to extract videos") }
+        }.sort()
     }
 
     private fun getHosterVideos(className: String, serverUrl: String): List<Video> {
