@@ -193,7 +193,9 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================= Utilities ==============================
     private fun Document.getInfo(text: String): String? {
         val base = selectFirst("p.type:has(span:containsOwn($text))") ?: return null
-        return base.select("a").eachText().joinToString("").ifBlank { base.ownText() }
+        return base.select("a").eachText().joinToString("")
+            .ifBlank { base.ownText() }
+            .takeUnless(String::isBlank)
     }
 
     override fun List<Video>.sort(): List<Video> {
