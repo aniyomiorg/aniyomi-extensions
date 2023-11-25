@@ -45,6 +45,10 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client = network.cloudflareClient
 
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Origin", baseUrl)
+        .add("Referer", "$baseUrl/")
+
     private val json: Json by injectLazy()
 
     private val preferences by lazy {
@@ -65,14 +69,16 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector(): String = "ul.pagination-list li:last-child:not(.selected)"
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/?page=$page", headers)
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/home.html?page=$page", headers)
 
     override fun latestUpdatesSelector(): String = "div.img a"
 
     override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
         thumbnail_url = element.selectFirst("img")?.attr("src")
         title = element.attr("title")
-        val slug = element.attr("href").substringAfter(baseUrl).substringBefore("-episode-")
+        val slug = element.attr("href").substringAfter(baseUrl)
+            .trimStart('/')
+            .substringBefore("-episode-")
         setUrlWithoutDomain("/category/$slug")
     }
 
