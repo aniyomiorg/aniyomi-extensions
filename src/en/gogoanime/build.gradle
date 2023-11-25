@@ -7,7 +7,7 @@ ext {
     extName = 'Gogoanime'
     pkgNameSuffix = 'en.gogoanime'
     extClass = '.GogoAnime'
-    extVersionCode = 76
+    extVersionCode = 77
     libVersion = '13'
 }
 
@@ -15,8 +15,7 @@ dependencies {
     implementation(project(':lib-streamwish-extractor'))
     implementation(project(':lib-mp4upload-extractor'))
     implementation(project(':lib-dood-extractor'))
-    implementation(project(':lib-playlist-utils'))
-    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+    implementation(project(':lib-gogostream-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"
