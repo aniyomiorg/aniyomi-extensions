@@ -268,7 +268,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         private val PREF_DOMAIN_KEY = "preferred_domain_name_v${BuildConfig.VERSION_CODE}"
         private const val PREF_DOMAIN_TITLE = "Override BaseUrl"
-        private const val PREF_DOMAIN_DEFAULT = "https://gogoanimehd.io"
+        private const val PREF_DOMAIN_DEFAULT = "https://anitaku.to"
         private const val PREF_DOMAIN_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
