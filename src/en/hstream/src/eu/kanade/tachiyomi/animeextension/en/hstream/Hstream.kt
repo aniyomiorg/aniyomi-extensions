@@ -173,7 +173,7 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .parseAs<PlayerApiResponse>()
 
         val urlBase = data.stream_domains.random() + "/" + data.stream_url
-        val subtitleList = listOf(Track(urlBase, "English"))
+        val subtitleList = listOf(Track("$urlBase/eng.ass", "English"))
 
         val resolutions = listOfNotNull("720", "1080", if (data.resolution == "4k") "2160" else null)
         return resolutions.map { resolution ->
