@@ -7,7 +7,7 @@ ext {
     extName = 'Gogoanime'
     pkgNameSuffix = 'en.gogoanime'
     extClass = '.GogoAnime'
-    extVersionCode = 77
+    extVersionCode = 78
     libVersion = '13'
 }
 
