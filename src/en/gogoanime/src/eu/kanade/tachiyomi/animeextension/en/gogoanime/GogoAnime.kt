@@ -35,7 +35,10 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Gogoanime"
 
-    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
+    override val baseUrl by lazy {
+        preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT).orEmpty()
+            .trim().ifBlank { PREF_DOMAIN_DEFAULT }
+    }
 
     override val lang = "en"
 
@@ -281,7 +284,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             setOnPreferenceChangeListener { _, newValue ->
                 runCatching {
-                    val value = (newValue as String).trim().ifEmpty { PREF_DOMAIN_DEFAULT }
+                    val value = (newValue as String).trim().ifBlank { PREF_DOMAIN_DEFAULT }
                     Toast.makeText(screen.context, "Restart Aniyomi to apply new setting.", Toast.LENGTH_LONG).show()
                     preferences.edit().putString(key, value).commit()
                 }.getOrDefault(false)
