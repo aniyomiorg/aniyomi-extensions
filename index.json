@@ -1130,6 +1130,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AllAnimeChi",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.allanimechi",
+    "apk": "aniyomi-en.allanimechi-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AllAnimeChi",
+        "lang": "en",
+        "id": "7202244334005086123",
+        "baseUrl": "https://acapi.allanime.day",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AllMovies",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.allmovies",
     "apk": "aniyomi-en.allmovies-v13.12.apk",
