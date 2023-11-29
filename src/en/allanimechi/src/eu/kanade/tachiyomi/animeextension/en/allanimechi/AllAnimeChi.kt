@@ -38,6 +38,7 @@ import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -46,6 +47,7 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.util.Locale
 
 class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -252,8 +254,9 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
         return GET(url, apiHeaders)
     }
 
+    // TODO: replace with getAnimeUrl when new ext-lib is available
     override fun animeDetailsRequest(anime: SAnime): Request {
-        return GET("data:text/plain,This%20extension%20does%20not%20exist%20as%20a%20website%21")
+        return GET("data:text/plain,This%20extension%20does%20not%20have%20a%20website.")
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
@@ -308,7 +311,7 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    private val internalExtractor by lazy { InternalExtractor(client, apiHeaders) }
+    private val internalExtractor by lazy { InternalExtractor(client, apiHeaders, headers) }
 
     override fun videoListRequest(episode: SEpisode): Request {
         val variables = episode.url
@@ -334,6 +337,7 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
 
         val hosterBlackList = preferences.getHosterBlacklist
         val altHosterBlackList = preferences.getAltHosterBlacklist
+        val useHosterNames = preferences.useHosterName
 
         val serverList = videoJson.data.episode.sourceUrls.mapNotNull { video ->
             when {
@@ -359,26 +363,32 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         return prioritySort(
-            serverList.parallelCatchingFlatMap(::getVideoFromServer),
+            serverList.parallelCatchingFlatMap { getVideoFromServer(it, useHosterNames) },
         )
     }
 
-    private fun getVideoFromServer(server: Server): List<Pair<Video, Float>> {
+    private fun getVideoFromServer(server: Server, useHosterName: Boolean): List<Pair<Video, Float>> {
         return when (server.type) {
-            "player" -> getFromPlayer(server)
-            "internal" -> internalExtractor.videosFromServer(server, removeRaw = preferences.removeRaw)
-            "external" -> getFromExternal(server)
+            "player" -> getFromPlayer(server, useHosterName)
+            "internal" -> internalExtractor.videosFromServer(server, useHosterName, removeRaw = preferences.removeRaw)
+            "external" -> getFromExternal(server, useHosterName)
             else -> emptyList()
         }
     }
 
-    private fun getFromPlayer(server: Server): List<Pair<Video, Float>> {
+    private fun getFromPlayer(server: Server, useHosterName: Boolean): List<Pair<Video, Float>> {
+        val name = if (useHosterName) {
+            getHostName(server.sourceUrl, server.sourceName)
+        } else {
+            server.sourceName
+        }
+
         val videoHeaders = headers.newBuilder().apply {
             add("origin", siteUrl)
             add("referer", "$siteUrl/")
         }.build()
 
-        val video = Video(server.sourceUrl, server.sourceName, server.sourceUrl, headers = videoHeaders)
+        val video = Video(server.sourceUrl, name, server.sourceUrl, headers = videoHeaders)
         return listOf(
             Pair(video, server.priority),
         )
@@ -392,9 +402,14 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
     private val allanimeExtractor by lazy { AllAnimeExtractor(client, headers) }
     private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }
 
-    private fun getFromExternal(server: Server): List<Pair<Video, Float>> {
+    private fun getFromExternal(server: Server, useHosterName: Boolean): List<Pair<Video, Float>> {
         val url = server.sourceUrl.replace(Regex("""^//"""), "https://")
-        val prefix = "${server.sourceName} - "
+        val prefix = if (useHosterName) {
+            "${getHostName(url, server.sourceName)} - "
+        } else {
+            "${server.sourceName} - "
+        }
+
         val videoList = when {
             url.startsWith("https://ok") -> okruExtractor.videosFromUrl(url, prefix = prefix)
             url.startsWith("https://filemoon") -> filemoonExtractor.videosFromUrl(url, prefix = prefix)
@@ -410,6 +425,14 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
+
+    private fun getHostName(host: String, fallback: String): String {
+        return host.toHttpUrlOrNull()?.host?.split(".")?.let {
+            it.getOrNull(it.size - 2)?.replaceFirstChar { c ->
+                if (c.isLowerCase()) c.titlecase(Locale.ROOT) else c.toString()
+            }
+        } ?: fallback
+    }
 
     private fun String.decodeBase64(): String {
         return String(Base64.decode(this, Base64.DEFAULT))
@@ -468,6 +491,8 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     companion object {
+        private const val PAGE_SIZE = 30 // number of items to retrieve when calling API
+
         private const val POPULAR_HASH = "31a117653812a2547fd981632e8c99fa8bf8a75c4ef1a77a1567ef1741a7ab9c"
         private const val LATEST_HASH = "e42a4466d984b2c0a2cecae5dd13aa68867f634b16ee0f17b380047d14482406"
         private const val DETAILS_HASH = "bb263f91e5bdd048c1c978f324613aeccdfe2cbc694a419466a31edb58c0cc0b"
@@ -491,8 +516,6 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
             "Vid-mp4 (Vidstreaming)",
             "Yt-mp4",
         )
-
-        private const val PAGE_SIZE = 30 // number of items to retrieve when calling API
 
         private const val PREF_HOSTER_BLACKLIST_KEY = "pref_hoster_blacklist"
         private val PREF_HOSTER_BLACKLIST_ENTRY_VALUES = INTERNAL_HOSTER_NAMES.map {
@@ -542,6 +565,9 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
 
         private const val PREF_SUB_KEY = "preferred_sub"
         private const val PREF_SUB_DEFAULT = "sub"
+
+        private const val PREF_USE_HOSTER_NAMES_KEY = "use_host_prefix"
+        private const val PREF_USE_HOSTER_NAMES_DEFAULT = false
     }
 
     // ============================== Settings ==============================
@@ -585,17 +611,6 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
-            }
-        }.also(screen::addPreference)
-
-        SwitchPreferenceCompat(screen.context).apply {
-            key = PREF_REMOVE_RAW_KEY
-            title = "Attempt to filter out raw"
-            setDefaultValue(PREF_REMOVE_RAW_DEFAULT)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val new = newValue as Boolean
-                preferences.edit().putBoolean(key, new).commit()
             }
         }.also(screen::addPreference)
 
@@ -646,6 +661,28 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }.also(screen::addPreference)
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_REMOVE_RAW_KEY
+            title = "Attempt to filter out raw"
+            setDefaultValue(PREF_REMOVE_RAW_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val new = newValue as Boolean
+                preferences.edit().putBoolean(key, new).commit()
+            }
+        }.also(screen::addPreference)
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_USE_HOSTER_NAMES_KEY
+            title = "Use names of video hoster"
+            setDefaultValue(PREF_USE_HOSTER_NAMES_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val new = newValue as Boolean
+                preferences.edit().putBoolean(key, new).commit()
+            }
+        }.also(screen::addPreference)
     }
 
     private val SharedPreferences.subPref
@@ -668,4 +705,7 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private val SharedPreferences.removeRaw
         get() = getBoolean(PREF_REMOVE_RAW_KEY, PREF_REMOVE_RAW_DEFAULT)
+
+    private val SharedPreferences.useHosterName
+        get() = getBoolean(PREF_USE_HOSTER_NAMES_KEY, PREF_USE_HOSTER_NAMES_DEFAULT)
 }
