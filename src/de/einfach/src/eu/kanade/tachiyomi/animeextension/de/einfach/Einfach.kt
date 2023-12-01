@@ -9,7 +9,6 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -35,7 +34,9 @@ class Einfach : ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
         title = element.attr("title")
-        thumbnail_url = element.selectFirst("img")?.absUrl("data-lazy-src")
+        thumbnail_url = element.selectFirst("img")?.run {
+            absUrl("data-lazy-src").ifEmpty { absUrl("src") }
+        }
     }
 
     override fun popularAnimeNextPageSelector() = "div.pagination > a.next"
@@ -66,21 +67,14 @@ class Einfach : ParsedAnimeHttpSource() {
         return AnimesPage(listOf(details), false)
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) =
+        GET("$baseUrl/page/$page/?s=$query")
 
-    override fun searchAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeSelector() = popularAnimeSelector()
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
