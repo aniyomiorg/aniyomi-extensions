@@ -77,8 +77,27 @@ class Einfach : ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        val info = document.selectFirst("article div > div.infl")!!
+        title = info.selectFirst("h1.entry-title")!!.text()
+        thumbnail_url = info.selectFirst("img")?.run {
+            absUrl("data-lazy-src").ifEmpty { absUrl("src") }
+        }
+
+        artist = info.getInfo("Stars:")
+        genre = info.getInfo("Genre:")
+        author = info.getInfo("Network:")
+        status = parseStatus(info.getInfo("Status:").orEmpty())
+
+        description = info.selectFirst("div.entry-content > p")?.ownText()
+    }
+
+    private fun Element.getInfo(label: String) =
+        selectFirst("li:has(b:contains($label)) > span.colspan")?.text()?.trim()
+
+    private fun parseStatus(status: String) = when (status) {
+        "Ongoing" -> SAnime.ONGOING
+        else -> SAnime.COMPLETED
     }
 
     // ============================== Episodes ==============================
