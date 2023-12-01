@@ -26,7 +26,6 @@ import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.googledriveextractor.GoogleDriveExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
-import eu.kanade.tachiyomi.lib.mytvextractor.MytvExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
@@ -286,9 +285,6 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "MP4UPLOAD" -> {
                     Mp4uploadExtractor(client).videosFromUrl(hosterLink, headers, prefix = "$subber: ")
                 }
-                "MYVI" -> {
-                    MytvExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: ")
-                }
                 "MVIDOO" -> {
                     MVidooExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: ")
                 }
@@ -426,7 +422,6 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "GDRIVE",
             "MAIL",
             "MP4UPLOAD",
-            "MYVI",
             "MVIDOO",
             "ODNOKLASSNIKI",
             "SENDVID",

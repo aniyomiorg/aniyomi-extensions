@@ -15,7 +15,6 @@ dependencies {
     implementation(project(":lib-filemoon-extractor"))
     implementation(project(":lib-mixdrop-extractor"))
     implementation(project(":lib-mp4upload-extractor"))
-    implementation(project(":lib-mytv-extractor"))
     implementation(project(":lib-okru-extractor"))
     implementation(project(":lib-sendvid-extractor"))
     implementation(project(":lib-sibnet-extractor"))

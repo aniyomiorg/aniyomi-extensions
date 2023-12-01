@@ -12,7 +12,6 @@ ext {
 dependencies {
     implementation(project(':lib-vudeo-extractor'))
     implementation(project(':lib-dood-extractor'))
-    implementation(project(':lib-mytv-extractor'))
     implementation(project(':lib-okru-extractor'))
 }
 
