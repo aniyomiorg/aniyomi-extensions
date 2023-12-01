@@ -1,17 +1,28 @@
 package eu.kanade.tachiyomi.animeextension.de.einfach
 
 import android.util.Base64
+import eu.kanade.tachiyomi.animeextension.de.einfach.extractors.MyStreamExtractor
+import eu.kanade.tachiyomi.animeextension.de.einfach.extractors.UnpackerExtractor
+import eu.kanade.tachiyomi.animeextension.de.einfach.extractors.VidozaExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
+import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -145,27 +156,45 @@ class Einfach : ParsedAnimeHttpSource() {
                 }.getOrNull()
             }
 
-            html?.let(Jsoup::parse)
+            val url = html?.let(Jsoup::parseBodyFragment)
                 ?.selectFirst("iframe")
                 ?.attr("src")
+                ?: return@mapNotNull null
+
+            val fixedUrl = url.takeIf { it.startsWith("https:") } ?: "https:$url"
+
+            element.text().lowercase() to fixedUrl
         }
 
-        return links.flatMap { link ->
-            runCatching {
-                getVideosFromUrl(link)
-            }.getOrElse { emptyList() }
+        return links.parallelCatchingFlatMap { (name, link) ->
+            getVideosFromUrl(name, link)
         }
     }
 
     override fun videoListSelector() = "div.lserv > ul > li > a"
 
-    private val voeExtractor by lazy { VoeExtractor(client) }
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val filemoonExtractor by lazy { FilemoonExtractor(client) }
+    private val lulustreamExtractor by lazy { UnpackerExtractor(client, headers) }
+    private val mixdropExtractor by lazy { MixDropExtractor(client) }
     private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val vidozaExtractor by lazy { VidozaExtractor(client) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+    private val mystreamExtractor by lazy { MyStreamExtractor(client, headers) }
 
-    private fun getVideosFromUrl(url: String): List<Video> {
-        return when {
-            url.contains("voe.sx") -> voeExtractor.videosFromUrl(url)
-            url.contains("streamtape") -> streamtapeExtractor.videosFromUrl(url)
+    private fun getVideosFromUrl(name: String, url: String): List<Video> {
+        return when (name) {
+            "doodstream" -> doodExtractor.videosFromUrl(url)
+            "filelions" -> streamwishExtractor.videosFromUrl(url, videoNameGen = { "FileLions - $it" })
+            "filemoon" -> filemoonExtractor.videosFromUrl(url)
+            "lulustream" -> lulustreamExtractor.videosFromUrl(url, "LuLuStream")
+            "mixdrop" -> mixdropExtractor.videosFromUrl(url)
+            "streamtape" -> streamtapeExtractor.videosFromUrl(url)
+            "streamwish" -> streamwishExtractor.videosFromUrl(url)
+            "vidoza" -> vidozaExtractor.videosFromUrl(url)
+            "voe" -> voeExtractor.videosFromUrl(url)
+            "stream in hd" -> mystreamExtractor.videosFromUrl(url)
             else -> emptyList()
         }
     }
@@ -183,6 +212,15 @@ class Einfach : ParsedAnimeHttpSource() {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }
             .getOrNull() ?: 0L
     }
+
+    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
+        runBlocking {
+            map {
+                async(Dispatchers.Default) {
+                    runCatching { f(it) }.getOrElse { emptyList() }
+                }
+            }.awaitAll().flatten()
+        }
 
     companion object {
         const val PREFIX_SEARCH = "path:"
