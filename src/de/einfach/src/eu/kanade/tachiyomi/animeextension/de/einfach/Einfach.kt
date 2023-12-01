@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.de.einfach
 import android.app.Application
 import android.util.Base64
 import androidx.preference.ListPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.einfach.extractors.MyStreamExtractor
 import eu.kanade.tachiyomi.animeextension.de.einfach.extractors.UnpackerExtractor
@@ -159,22 +160,26 @@ class Einfach : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.use { it.asJsoup() }
 
-        val links = doc.select(videoListSelector()).mapNotNull { element ->
-            val html = element.attr("data-em").let { b64encoded ->
-                runCatching {
-                    String(Base64.decode(b64encoded, Base64.DEFAULT))
-                }.getOrNull()
-            }
+        val selection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
 
-            val url = html?.let(Jsoup::parseBodyFragment)
-                ?.selectFirst("iframe")
-                ?.attr("src")
-                ?: return@mapNotNull null
+        val links = doc.select(videoListSelector()).asSequence()
+            .filter { it.text().lowercase() in selection }
+            .mapNotNull { element ->
+                val html = element.attr("data-em").let { b64encoded ->
+                    runCatching {
+                        String(Base64.decode(b64encoded, Base64.DEFAULT))
+                    }.getOrNull()
+                }
 
-            val fixedUrl = url.takeIf { it.startsWith("https:") } ?: "https:$url"
+                val url = html?.let(Jsoup::parseBodyFragment)
+                    ?.selectFirst("iframe")
+                    ?.attr("src")
+                    ?: return@mapNotNull null
 
-            element.text().lowercase() to fixedUrl
-        }
+                val fixedUrl = url.takeIf { it.startsWith("https:") } ?: "https:$url"
+
+                element.text().lowercase() to fixedUrl
+            }.toList()
 
         return links.parallelCatchingFlatMap { (name, link) ->
             getVideosFromUrl(name, link)
@@ -234,6 +239,19 @@ class Einfach : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_HOSTER_SELECTION_KEY
+            title = PREF_HOSTER_SELECTION_TITLE
+            entries = PREF_HOSTER_SELECTION_ENTRIES
+            entryValues = PREF_HOSTER_SELECTION_VALUES
+            setDefaultValue(PREF_HOSTER_SELECTION_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }.also(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
@@ -271,5 +289,22 @@ class Einfach : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_QUALITY_DEFAULT = "720p"
         private val PREF_QUALITY_ENTRIES = arrayOf("240p", "360p", "480p", "720p", "1080p")
         private val PREF_QUALITY_VALUES = PREF_QUALITY_ENTRIES
+
+        private const val PREF_HOSTER_SELECTION_KEY = "pref_hoster_selection"
+        private const val PREF_HOSTER_SELECTION_TITLE = "Enable/Disable video hosters"
+        private val PREF_HOSTER_SELECTION_ENTRIES = arrayOf(
+            "DoodStream",
+            "FileLions",
+            "Filemoon",
+            "LuLuStream",
+            "MixDrop",
+            "Streamtape",
+            "StreamWish",
+            "Vidoza",
+            "VOE",
+            "Stream in HD",
+        )
+        private val PREF_HOSTER_SELECTION_VALUES by lazy { PREF_HOSTER_SELECTION_ENTRIES.map(String::lowercase).toTypedArray() }
+        private val PREF_HOSTER_SELECTION_DEFAULT by lazy { PREF_HOSTER_SELECTION_VALUES.toSet() }
     }
 }
