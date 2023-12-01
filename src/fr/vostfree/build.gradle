@@ -5,7 +5,7 @@ ext {
     extName = 'Vostfree'
     pkgNameSuffix = 'fr.vostfree'
     extClass = '.Vostfree'
-    extVersionCode = 17
+    extVersionCode = 18
     libVersion = '13'
 }
 

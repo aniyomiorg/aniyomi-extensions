@@ -18,7 +18,7 @@ class AnimeStreamGenerator : ThemeSourceGenerator {
         SingleLang("AnimeXin", "https://animexin.vip", "all", isNsfw = false, overrideVersionCode = 7),
         SingleLang("AnimeYT.es", "https://animeyt.es", "es", isNsfw = false, className = "AnimeYTES", pkgName = "animeytes"),
         SingleLang("Tiodonghua.com", "https://anime.tiodonghua.com", "es", isNsfw = false, className = "Tiodonghua", pkgName = "tiodonghua"),
-        SingleLang("AsyaAnimeleri", "https://asyaanimeleri.com", "tr", isNsfw = false, overrideVersionCode = 1),
+        SingleLang("AsyaAnimeleri", "https://asyaanimeleri.com", "tr", isNsfw = false, overrideVersionCode = 2),
         SingleLang("ChineseAnime", "https://chineseanime.top", "all", isNsfw = false, overrideVersionCode = 3),
         SingleLang("desu-online", "https://desu-online.pl", "pl", className = "DesuOnline", isNsfw = false, overrideVersionCode = 3),
         SingleLang("DonghuaStream", "https://donghuastream.co.in", "en", isNsfw = false, overrideVersionCode = 2),
