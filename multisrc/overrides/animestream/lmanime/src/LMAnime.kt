@@ -5,7 +5,8 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
-import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Response
@@ -33,14 +34,17 @@ class LMAnime : AnimeStream(
             }.flatten().ifEmpty { throw Exception("Empty video list!") }
     }
 
-    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }
     private val dailyExtractor by lazy { DailymotionExtractor(client, headers) }
+    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
 
     override fun getVideoList(url: String, name: String): List<Video> {
-        val prefix = "$name -"
+        val prefix = "($name) - "
         return when {
-            "ok.ru" in url -> okruExtractor.videosFromUrl(url, prefix)
-            "dailymotion.com" in url -> dailyExtractor.videosFromUrl(url, "Dailymotion ($name)")
+            "dailymotion" in url -> dailyExtractor.videosFromUrl(url, "Dailymotion ($name)")
+            "mp4upload" in url -> mp4uploadExtractor.videosFromUrl(url, headers, "$prefix")
+            "filelions" in url -> streamwishExtractor.videosFromUrl(url, "StreamWish ($name)")
+
             else -> emptyList()
         }
     }
