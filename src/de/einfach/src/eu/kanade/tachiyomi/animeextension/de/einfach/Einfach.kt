@@ -1,9 +1,13 @@
 package eu.kanade.tachiyomi.animeextension.de.einfach
 
+import android.app.Application
 import android.util.Base64
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.einfach.extractors.MyStreamExtractor
 import eu.kanade.tachiyomi.animeextension.de.einfach.extractors.UnpackerExtractor
 import eu.kanade.tachiyomi.animeextension.de.einfach.extractors.VidozaExtractor
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -28,10 +32,12 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class Einfach : ParsedAnimeHttpSource() {
+class Einfach : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Einfach"
 
@@ -40,6 +46,10 @@ class Einfach : ParsedAnimeHttpSource() {
     override val lang = "de"
 
     override val supportsLatest = true
+
+    private val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     // ============================== Popular ===============================
     // Actually the source doesn't provide a popular entries page, and the
@@ -177,11 +187,11 @@ class Einfach : ParsedAnimeHttpSource() {
     private val filemoonExtractor by lazy { FilemoonExtractor(client) }
     private val lulustreamExtractor by lazy { UnpackerExtractor(client, headers) }
     private val mixdropExtractor by lazy { MixDropExtractor(client) }
+    private val mystreamExtractor by lazy { MyStreamExtractor(client, headers) }
     private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
     private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }
     private val vidozaExtractor by lazy { VidozaExtractor(client) }
     private val voeExtractor by lazy { VoeExtractor(client) }
-    private val mystreamExtractor by lazy { MyStreamExtractor(client, headers) }
 
     private fun getVideosFromUrl(name: String, url: String): List<Video> {
         return when (name) {
@@ -207,6 +217,25 @@ class Einfach : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+    }
+
     // ============================= Utilities ==============================
     private fun String.toDate(): Long {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }
@@ -222,11 +251,25 @@ class Einfach : ParsedAnimeHttpSource() {
             }.awaitAll().flatten()
         }
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
+    }
+
     companion object {
         const val PREFIX_SEARCH = "path:"
 
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH)
         }
+
+        private const val PREF_QUALITY_KEY = "pref_quality_key"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("240p", "360p", "480p", "720p", "1080p")
+        private val PREF_QUALITY_VALUES = PREF_QUALITY_ENTRIES
     }
 }
