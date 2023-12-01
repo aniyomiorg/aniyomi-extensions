@@ -27,12 +27,12 @@ body:
     id: reproduce-steps
     attributes:
       label: Steps to reproduce
-      description: Provide an example of the issue.
+      description: Provide an example of the issue. Be as specific as possible.
       placeholder: |
         Example:
-          1. First step
-          2. Second step
-          3. Issue here
+          1. First step (e.g. "Open Mahouka Koukou No Rettousei (first season)")
+          2. Second step (e.g. "Try to watch episode 15")
+          3. Issue here (e.g. "It shows a HTTP 403 error toast")
     validations:
       required: true
 
@@ -63,7 +63,7 @@ body:
       description: |
         You can find your Aniyomi version in **More → About**.
       placeholder: |
-        Example: "0.12.3.10" or "Preview r6151"
+        Example: "0.12.3.10" or "Preview r6691"
     validations:
       required: true
 

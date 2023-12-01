@@ -14,8 +14,9 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: dessant/lock-threads@v4
+      - uses: dessant/lock-threads@v5
         with:
           github-token: ${{ github.token }}
           issue-inactive-days: '2'
           pr-inactive-days: '2'
+          process-only: 'issues, prs'
