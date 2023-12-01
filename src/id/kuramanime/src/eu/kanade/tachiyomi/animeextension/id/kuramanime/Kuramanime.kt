@@ -171,8 +171,15 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
+    private val scriptToken by lazy {
+        client.newCall(GET("$baseUrl/assets/js/arc-signal.min.js")).execute()
+            .use { it.body.string() }
+            .substringAfter("kuramanime:\"+\"")
+            .substringBefore('"')
+    }
+
     private fun getRequestHash(headers: Headers): String {
-        val auth = "kuramanime:FDWUjAg6FXZpcbyTAkWrsgS8qAJNDDXKts:${System.currentTimeMillis()}"
+        val auth = "kuramanime:${scriptToken}ts:${System.currentTimeMillis()}"
             .let { Base64.encode(it.toByteArray(), Base64.NO_WRAP) }
             .let { Base64.encodeToString(it, Base64.NO_WRAP) }
             .let { URLEncoder.encode(it, "UTF-8") }
