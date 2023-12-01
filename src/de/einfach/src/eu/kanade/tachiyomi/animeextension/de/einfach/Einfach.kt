@@ -13,6 +13,8 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class Einfach : ParsedAnimeHttpSource() {
 
@@ -101,12 +103,31 @@ class Einfach : ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
+    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+        if (anime.url.contains("/filme/")) {
+            val episode = SEpisode.create().apply {
+                url = anime.url
+                name = "Movie - ${anime.title}"
+                episode_number = 1F
+            }
+            return Observable.just(listOf(episode))
+        }
+
+        return super.fetchEpisodeList(anime)
     }
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        throw UnsupportedOperationException("Not used.")
+    override fun episodeListParse(response: Response) =
+        super.episodeListParse(response).reversed()
+
+    override fun episodeListSelector() = "div.epsdlist > ul > li > a"
+
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        val eplnum = element.selectFirst(".epl-num")?.text().orEmpty().trim()
+        episode_number = eplnum.substringAfterLast(" ").toFloatOrNull() ?: 1F
+
+        name = eplnum.ifBlank { "S1 EP 1" } + " - " + element.selectFirst(".epl-title")?.text().orEmpty()
+        date_upload = element.selectFirst(".epl-date")?.text().orEmpty().toDate()
     }
 
     // ============================ Video Links =============================
@@ -126,7 +147,17 @@ class Einfach : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
+    // ============================= Utilities ==============================
+    private fun String.toDate(): Long {
+        return runCatching { DATE_FORMATTER.parse(trim())?.time }
+            .getOrNull() ?: 0L
+    }
+
     companion object {
         const val PREFIX_SEARCH = "path:"
+
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH)
+        }
     }
 }
