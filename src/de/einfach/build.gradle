@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-
 }
 
 ext {
@@ -10,6 +9,11 @@ ext {
     extClass = '.Einfach'
     extVersionCode = 1
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(":lib-streamtape-extractor"))
+    implementation(project(":lib-voe-extractor"))
 }
 
 apply from: "$rootDir/common.gradle"

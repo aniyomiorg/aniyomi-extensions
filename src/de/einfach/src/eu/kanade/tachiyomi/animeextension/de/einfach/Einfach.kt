@@ -1,15 +1,19 @@
 package eu.kanade.tachiyomi.animeextension.de.einfach
 
+import android.util.Base64
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
@@ -132,11 +136,38 @@ class Einfach : ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        throw UnsupportedOperationException("Not used.")
+        val doc = response.use { it.asJsoup() }
+
+        val links = doc.select(videoListSelector()).mapNotNull { element ->
+            val html = element.attr("data-em").let { b64encoded ->
+                runCatching {
+                    String(Base64.decode(b64encoded, Base64.DEFAULT))
+                }.getOrNull()
+            }
+
+            html?.let(Jsoup::parse)
+                ?.selectFirst("iframe")
+                ?.attr("src")
+        }
+
+        return links.flatMap { link ->
+            runCatching {
+                getVideosFromUrl(link)
+            }.getOrElse { emptyList() }
+        }
     }
 
-    override fun videoListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
+    override fun videoListSelector() = "div.lserv > ul > li > a"
+
+    private val voeExtractor by lazy { VoeExtractor(client) }
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+
+    private fun getVideosFromUrl(url: String): List<Video> {
+        return when {
+            url.contains("voe.sx") -> voeExtractor.videosFromUrl(url)
+            url.contains("streamtape") -> streamtapeExtractor.videosFromUrl(url)
+            else -> emptyList()
+        }
     }
 
     override fun videoFromElement(element: Element): Video {
