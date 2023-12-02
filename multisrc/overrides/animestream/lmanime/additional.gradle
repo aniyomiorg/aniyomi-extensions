@@ -1,4 +1,5 @@
 dependencies {
     implementation(project(":lib-dailymotion-extractor"))
-    implementation(project(":lib-okru-extractor"))
+    implementation(project(":lib-mp4upload-extractor"))
+    implementation(project(":lib-streamwish-extractor"))
 }
