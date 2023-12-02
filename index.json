@@ -271,10 +271,10 @@
   {
     "name": "Aniyomi: LMAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.lmanime",
-    "apk": "aniyomi-all.lmanime-v13.6.apk",
+    "apk": "aniyomi-all.lmanime-v13.7.apk",
     "lang": "all",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -899,6 +899,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Einfach",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.einfach",
+    "apk": "aniyomi-de.einfach-v13.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Einfach",
+        "lang": "de",
+        "id": "7375242378918108704",
+        "baseUrl": "https://einfach.to",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: FilmPalast",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.filmpalast",
     "apk": "aniyomi-de.filmpalast-v13.13.apk",
@@ -914,27 +935,6 @@
         "lang": "de",
         "id": "3592180368623395225",
         "baseUrl": "https://filmpalast.to",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: HDFilme",
-    "pkg": "eu.kanade.tachiyomi.animeextension.de.hdfilme",
-    "apk": "aniyomi-de.hdfilme-v13.3.apk",
-    "lang": "de",
-    "code": 3,
-    "version": "13.3",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "HDFilme",
-        "lang": "de",
-        "id": "7018512005482925234",
-        "baseUrl": "https://www.hdfilme.fun",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -958,27 +958,6 @@
         "baseUrl": "https://kinoking.cc",
         "versionId": 1,
         "hasCloudflare": 1
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: Kiste",
-    "pkg": "eu.kanade.tachiyomi.animeextension.de.kiste",
-    "apk": "aniyomi-de.kiste-v13.4.apk",
-    "lang": "de",
-    "code": 4,
-    "version": "13.4",
-    "nsfw": 1,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "Kiste",
-        "lang": "de",
-        "id": "7853074400168594",
-        "baseUrl": "https://kiste.to",
-        "versionId": 1,
-        "hasCloudflare": 0
       }
     ]
   },
@@ -1250,27 +1229,6 @@
         "lang": "en",
         "id": "2900367084614267279",
         "baseUrl": "https://animension.to/",
-        "versionId": 1,
-        "hasCloudflare": 0
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: AnimeOnline360",
-    "pkg": "eu.kanade.tachiyomi.animeextension.en.animeonline360",
-    "apk": "aniyomi-en.animeonline360-v13.1.apk",
-    "lang": "en",
-    "code": 1,
-    "version": "13.1",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "AnimeOnline360",
-        "lang": "en",
-        "id": "503935250348346192",
-        "baseUrl": "https://animeonline360.me",
         "versionId": 1,
         "hasCloudflare": 0
       }
@@ -1943,27 +1901,6 @@
         "lang": "en",
         "id": "98855593379717478",
         "baseUrl": "https://aniwave.to",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: NollyVerse",
-    "pkg": "eu.kanade.tachiyomi.animeextension.en.nollyverse",
-    "apk": "aniyomi-en.nollyverse-v13.2.apk",
-    "lang": "en",
-    "code": 2,
-    "version": "13.2",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "NollyVerse",
-        "lang": "en",
-        "id": "2737010507830123625",
-        "baseUrl": "https://www.nollyverse.com",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -3104,10 +3041,10 @@
   {
     "name": "Aniyomi: Vostfree",
     "pkg": "eu.kanade.tachiyomi.animeextension.fr.vostfree",
-    "apk": "aniyomi-fr.vostfree-v13.17.apk",
+    "apk": "aniyomi-fr.vostfree-v13.18.apk",
     "lang": "fr",
-    "code": 17,
-    "version": "13.17",
+    "code": 18,
+    "version": "13.18",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3371,27 +3308,6 @@
         "baseUrl": "https://samehadaku.mom",
         "versionId": 1,
         "hasCloudflare": 0
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: AnimeLove",
-    "pkg": "eu.kanade.tachiyomi.animeextension.it.animelove",
-    "apk": "aniyomi-it.animelove-v13.2.apk",
-    "lang": "it",
-    "code": 2,
-    "version": "13.2",
-    "nsfw": 1,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "AnimeLove",
-        "lang": "it",
-        "id": "5377344835942349737",
-        "baseUrl": "https://www.animelove.tv",
-        "versionId": 1,
-        "hasCloudflare": 1
       }
     ]
   },
@@ -4351,10 +4267,10 @@
   {
     "name": "Aniyomi: AsyaAnimeleri",
     "pkg": "eu.kanade.tachiyomi.animeextension.tr.asyaanimeleri",
-    "apk": "aniyomi-tr.asyaanimeleri-v13.3.apk",
+    "apk": "aniyomi-tr.asyaanimeleri-v13.4.apk",
     "lang": "tr",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -4435,10 +4351,10 @@
   {
     "name": "Aniyomi: TR Anime Izle",
     "pkg": "eu.kanade.tachiyomi.animeextension.tr.tranimeizle",
-    "apk": "aniyomi-tr.tranimeizle-v13.10.apk",
+    "apk": "aniyomi-tr.tranimeizle-v13.11.apk",
     "lang": "tr",
-    "code": 10,
-    "version": "13.10",
+    "code": 11,
+    "version": "13.11",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -4456,10 +4372,10 @@
   {
     "name": "Aniyomi: Türk Anime TV",
     "pkg": "eu.kanade.tachiyomi.animeextension.tr.turkanime",
-    "apk": "aniyomi-tr.turkanime-v13.17.apk",
+    "apk": "aniyomi-tr.turkanime-v13.18.apk",
     "lang": "tr",
-    "code": 17,
-    "version": "13.17",
+    "code": 18,
+    "version": "13.18",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
