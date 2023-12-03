@@ -121,92 +121,51 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
-        val resp = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
-        val episodeList = mutableListOf<SEpisode>()
-        val episodeElements = resp.select("p:has(a[href*=?sid=],a[href*=r?key=]):has(a[class*=maxbutton])[style*=center]")
+    private fun Regex.firstValue(text: String) =
+        find(text)?.groupValues?.get(1)?.let { Pair(text, it) }
+
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val doc = response.use { it.asJsoup() }
+        val episodeElements = doc.select(episodeListSelector())
+            .asSequence()
+
         val qualityRegex = "\\d{3,4}p".toRegex(RegexOption.IGNORE_CASE)
-        val firstText = episodeElements.first()?.text() ?: ""
-        if (firstText.contains("Episode", true) ||
-            firstText.contains("Zip", true) ||
-            firstText.contains("Pack", true)
-        ) {
-            episodeElements.map { row ->
-                val prevP = row.previousElementSibling()!!
-                val seasonRegex = "[ .]?S(?:eason)?[ .]?(\\d{1,2})[ .]?".toRegex(RegexOption.IGNORE_CASE)
-                val partRegex = "Part ?(\\d{1,2})".toRegex(RegexOption.IGNORE_CASE)
-                val result = seasonRegex.find(prevP.text())
-                var part = ""
-                val season = (
-                    result?.groups?.get(1)?.value?.also {
-                        part = partRegex.find(prevP.text())?.groups?.get(1)?.value ?: ""
-                    } ?: let {
-                        val prevPre = row.previousElementSiblings().prev("pre,div.mks_separator")
-                        val preResult = seasonRegex.find(prevPre.first()?.text() ?: "")
-                        preResult?.groups?.get(1)?.value?.also {
-                            part = partRegex.find(prevPre.first()?.text() ?: "")?.groups?.get(1)?.value ?: ""
-                        } ?: let {
-                            val title = resp.select("h1.entry-title")
-                            val titleResult = "[ .\\[(]?S(?:eason)?[ .]?(\\d{1,2})[ .\\])]?"
-                                .toRegex(RegexOption.IGNORE_CASE)
-                                .find(title.text())
-                            titleResult?.groups?.get(1)?.value?.also {
-                                part = partRegex.find(title.text())?.groups?.get(1)?.value ?: ""
-                            } ?: "-1"
-                        }
-                    }
-                    ).replaceFirst("^0+(?!$)".toRegex(), "")
+        val seasonRegex = "[ .]?S(?:eason)?[ .]?(\\d{1,2})[ .]?".toRegex(RegexOption.IGNORE_CASE)
+        val seasonTitleRegex = "[ .\\[(]?S(?:eason)?[ .]?(\\d{1,2})[ .\\])]?".toRegex(RegexOption.IGNORE_CASE)
+        val partRegex = "Part ?(\\d{1,2})".toRegex(RegexOption.IGNORE_CASE)
 
-                val qualityMatch = qualityRegex.find(prevP.text())
-                val quality = qualityMatch?.value ?: let {
-                    val qualityMatchOwn = qualityRegex.find(row.text())
-                    qualityMatchOwn?.value ?: "HD"
-                }
+        val isSerie = doc.selectFirst(episodeListSelector())?.text().orEmpty().run {
+            contains("Episode", true) ||
+                contains("Zip", true) ||
+                contains("Pack", true)
+        }
 
-                row.select("a").filter { it ->
-                    !it.text().contains("Zip", true) &&
-                        !it.text().contains("Pack", true) &&
-                        !it.text().contains("Volume ", true)
-                }.mapIndexed { index, linkElement ->
-                    val episode = linkElement?.text()
-                        ?.replace("Episode", "", true)
-                        ?.trim()?.toIntOrNull() ?: index + 1
-                    Triple(
-                        season + "_$episode" + "_$part",
-                        linkElement?.attr("href") ?: return@mapIndexed null,
-                        quality,
-                    )
-                }.filterNotNull()
-            }.flatten().groupBy { it.first }.map { group ->
-                val (season, episode, part) = group.key.split("_")
-                val partText = if (part.isBlank()) "" else " Pt $part"
-                episodeList.add(
-                    SEpisode.create().apply {
-                        url = EpLinks(
-                            urls = group.value.map {
-                                EpUrl(url = it.second, quality = it.third)
-                            },
-                        ).toJson()
-                        name = "Season $season$partText Ep $episode"
-                        episode_number = episode.toFloat()
-                    },
-                )
+        val episodeList = episodeElements.map { row ->
+            val prevP = row.previousElementSibling()!!.text()
+            val qualityMatch = qualityRegex.find(prevP)
+            val quality = qualityMatch?.value ?: let {
+                val qualityMatchOwn = qualityRegex.find(row.text())
+                qualityMatchOwn?.value ?: "HD"
             }
-        } else {
-            var collectionIdx = 0F
-            episodeElements.asSequence().filter {
-                !it.text().contains("Zip", true) &&
-                    !it.text().contains("Pack", true) &&
-                    !it.text().contains("Volume ", true)
-            }.map { row ->
-                val prevP = row.previousElementSibling()!!
-                val qualityMatch = qualityRegex.find(prevP.text())
-                val quality = qualityMatch?.value ?: let {
-                    val qualityMatchOwn = qualityRegex.find(row.text())
-                    qualityMatchOwn?.value ?: "HD"
-                }
 
-                val collectionName = row.previousElementSiblings().let { prevElem ->
+            val defaultName = if (isSerie) {
+                val (source, seasonNumber) = seasonRegex.firstValue(prevP) ?: run {
+                    val prevPre = row.previousElementSiblings().prev("pre,div.mks_separator").first()
+                        ?.text()
+                        .orEmpty()
+                    seasonRegex.firstValue(prevPre)
+                } ?: run {
+                    val title = doc.selectFirst("h1.entry-title")?.text().orEmpty()
+                    seasonTitleRegex.firstValue(title)
+                } ?: "" to "1"
+
+                val part = partRegex.find(source)?.groupValues?.get(1)
+                    ?.let { " Pt $it" }
+                    .orEmpty()
+
+                "Season ${seasonNumber.toIntOrNull() ?: 1 }$part"
+            } else {
+                row.previousElementSiblings().let { prevElem ->
                     (prevElem.prev("h1,h2,h3,pre:not(:contains(plot))").first()?.text() ?: "Movie - $quality")
                         .replace("Download", "", true).trim().let {
                             if (it.contains("Collection", true)) {
@@ -216,30 +175,46 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             }
                         }
                 }
-
-                row.select("a").map { linkElement ->
-                    Triple(linkElement.attr("href"), quality, collectionName)
-                }
-            }.flatten().groupBy { it.third }.map { group ->
-                collectionIdx++
-                episodeList.add(
-                    SEpisode.create().apply {
-                        url = EpLinks(
-                            urls = group.value.map {
-                                EpUrl(url = it.first, quality = it.second)
-                            },
-                        ).toJson()
-                        name = group.key
-                        episode_number = collectionIdx
-                    },
-                )
             }
-            if (episodeList.isEmpty()) throw Exception("Only Zip Pack Available")
+
+            row.select("a").asSequence()
+                .filter { el -> el.classNames().none { it.endsWith("-zip") } }
+                .mapIndexedNotNull { index, linkElement ->
+                    val episode = linkElement.text()
+                        .replace("Episode", "", true)
+                        .trim()
+                        .toIntOrNull() ?: index + 1
+
+                    val url = linkElement.attr("href").takeUnless(String::isBlank)
+                        ?: return@mapIndexedNotNull null
+
+                    Triple(
+                        Pair(defaultName, episode),
+                        url,
+                        quality,
+                    )
+                }
+        }.flatten().groupBy { it.first }.values.mapIndexed { index, items ->
+            val (itemName, episodeNum) = items.first().first
+
+            SEpisode.create().apply {
+                url = EpLinks(
+                    urls = items.map { triple ->
+                        EpUrl(url = triple.second, quality = triple.third)
+                    },
+                ).toJson()
+
+                name = if (isSerie) "$itemName Ep $episodeNum" else itemName
+
+                episode_number = if (isSerie) episodeNum.toFloat() else (index + 1).toFloat()
+            }
         }
-        return Observable.just(episodeList.reversed())
+
+        if (episodeList.isEmpty()) throw Exception("Only Zip Pack Available")
+        return episodeList.reversed()
     }
 
-    override fun episodeListSelector(): String = throw Exception("Not Used")
+    override fun episodeListSelector(): String = "p:has(a[href*=?sid=],a[href*=r?key=]):has(a[class*=maxbutton])[style*=center]"
 
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not Used")
 
