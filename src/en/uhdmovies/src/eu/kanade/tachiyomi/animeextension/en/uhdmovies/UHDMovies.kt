@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.uhdmovies
 
 import android.app.Application
-import android.content.SharedPreferences
 import android.util.Base64
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
@@ -20,13 +19,11 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
@@ -37,7 +34,6 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 
-@ExperimentalSerializationApi
 class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "UHD Movies"
@@ -48,11 +44,11 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = false
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
     private val json: Json by injectLazy()
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -62,7 +58,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 client.newBuilder()
                     .followRedirects(false)
                     .build()
-                    .newCall(GET("$baseUrl/")).execute().let { resp ->
+                    .newCall(GET("$baseUrl/")).execute().use { resp ->
                         when (resp.code) {
                             301 -> {
                                 (resp.headers["location"]?.substringBeforeLast("/") ?: baseUrl).also {
@@ -77,13 +73,9 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
-
     override fun popularAnimeRequest(page: Int): Request = GET("$currentBaseUrl/page/$page/")
 
     override fun popularAnimeSelector(): String = "div#content  div.gridlove-posts > div.layout-masonry"
-
-    override fun popularAnimeNextPageSelector(): String =
-        "div#content  > nav.gridlove-pagination > a.next"
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         return SAnime.create().apply {
@@ -94,18 +86,19 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    // =============================== Latest ===============================
+    override fun popularAnimeNextPageSelector(): String =
+        "div#content  > nav.gridlove-pagination > a.next"
 
+    // =============================== Latest ===============================
     override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not Used")
 
     override fun latestUpdatesSelector(): String = throw Exception("Not Used")
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not Used")
-
     override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not Used")
 
-    // =============================== Search ===============================
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not Used")
 
+    // =============================== Search ===============================
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val cleanQuery = query.replace(" ", "+").lowercase()
         return GET("$currentBaseUrl/page/$page/?s=$cleanQuery")
@@ -113,12 +106,11 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
-    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
-
     override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
-    // =========================== Anime Details ============================
+    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
+    // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
         return SAnime.create().apply {
             initialized = true
@@ -130,11 +122,10 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
         val resp = client.newCall(GET(currentBaseUrl + anime.url)).execute().asJsoup()
         val episodeList = mutableListOf<SEpisode>()
-        val episodeElements = resp.select("p:has(a[href*=?id=],a[href*=r?key=]):has(a[class*=maxbutton])[style*=center]")
+        val episodeElements = resp.select("p:has(a[href*=?sid=],a[href*=r?key=]):has(a[class*=maxbutton])[style*=center]")
         val qualityRegex = "\\d{3,4}p".toRegex(RegexOption.IGNORE_CASE)
         val firstText = episodeElements.first()?.text() ?: ""
         if (firstText.contains("Episode", true) ||
@@ -254,7 +245,6 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not Used")
 
     // ============================ Video Links =============================
-
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val urlJson = json.decodeFromString<EpLinks>(episode.url)
         val failedMediaUrl = mutableListOf<Pair<String, String>>()
@@ -290,8 +280,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
 
-// ============================= Utilities ==============================
-
+    // ============================= Utilities ==============================
     private fun extractVideo(epUrl: EpUrl): Pair<List<Video>, String> {
         val noRedirectClient = client.newBuilder().followRedirects(false).build()
         val mediaResponse = if (epUrl.url.contains("?id=")) {
@@ -533,14 +522,13 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return json.encodeToString(this)
     }
 
-    // From Dopebox
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
 
     companion object {
         const val PREF_DOMAIN_KEY = "pref_domain_new"
-        const val PREF_DEFAULT_DOMAIN = "https://uhdmovies.life"
+        const val PREF_DEFAULT_DOMAIN = "https://uhdmovies.zip"
     }
 }
