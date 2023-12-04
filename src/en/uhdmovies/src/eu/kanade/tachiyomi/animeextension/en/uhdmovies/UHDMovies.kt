@@ -38,24 +38,29 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val name = "UHD Movies"
 
     override val baseUrl by lazy {
-        val url = preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!!
-        runBlocking {
-            withContext(Dispatchers.Default) {
-                client.newBuilder()
-                    .followRedirects(false)
-                    .build()
-                    .newCall(GET("$url/")).execute().use { resp ->
-                        when (resp.code) {
-                            301 -> {
-                                (resp.headers["location"]?.substringBeforeLast("/") ?: url).also {
-                                    preferences.edit().putString(PREF_DOMAIN_KEY, it).apply()
+        preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!!
+    }
+
+    private val currentBaseUrl by lazy {
+        runCatching {
+            runBlocking {
+                withContext(Dispatchers.Default) {
+                    client.newBuilder()
+                        .followRedirects(false)
+                        .build()
+                        .newCall(GET("$baseUrl/")).execute().use { resp ->
+                            when (resp.code) {
+                                301 -> {
+                                    (resp.headers["location"]?.substringBeforeLast("/") ?: baseUrl).also {
+                                        preferences.edit().putString(PREF_DOMAIN_KEY, it).apply()
+                                    }
                                 }
+                                else -> baseUrl
                             }
-                            else -> url
                         }
-                    }
+                }
             }
-        }
+        }.getOrDefault(baseUrl)
     }
 
     override val lang = "en"
@@ -71,7 +76,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/page/$page/")
+    override fun popularAnimeRequest(page: Int): Request = GET("$currentBaseUrl/page/$page/")
 
     override fun popularAnimeSelector(): String = "div#content  div.gridlove-posts > div.layout-masonry"
 
@@ -97,7 +102,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =============================== Search ===============================
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val cleanQuery = query.replace(" ", "+").lowercase()
-        return GET("$baseUrl/page/$page/?s=$cleanQuery")
+        return GET("$currentBaseUrl/page/$page/?s=$cleanQuery")
     }
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
@@ -116,6 +121,8 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
+    override fun episodeListRequest(anime: SAnime) = GET(currentBaseUrl + anime.url, headers)
+
     private fun Regex.firstValue(text: String) =
         find(text)?.groupValues?.get(1)?.let { Pair(text, it) }
 
