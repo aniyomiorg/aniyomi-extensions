@@ -22,11 +22,10 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import okhttp3.FormBody
-import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MultipartBody
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
@@ -221,29 +220,22 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val urlJson = json.decodeFromString<EpLinks>(episode.url)
-        val failedMediaUrl = mutableListOf<Pair<String, String>>()
-        val videoList = mutableListOf<Video>()
-        videoList.addAll(
-            urlJson.urls.parallelMap { url ->
-                runCatching {
-                    val (videos, mediaUrl) = extractVideo(url)
-                    if (videos.isEmpty() && mediaUrl.isNotBlank()) failedMediaUrl.add(Pair(mediaUrl, url.quality))
-                    return@runCatching videos
-                }.getOrNull()
+
+        val videoList = urlJson.urls.parallelCatchingFlatMap { eplink ->
+            val quality = eplink.quality
+            val url = getMediaUrl(eplink) ?: return@parallelCatchingFlatMap emptyList()
+            val videos = extractVideo(url, quality)
+            when {
+                videos.isEmpty() -> {
+                    extractGDriveLink(url, quality).ifEmpty {
+                        getDirectLink(url, "instant", "/mfile/")?.let {
+                            listOf(Video(it, "${quality}p - GDrive Instant link", it))
+                        } ?: emptyList()
+                    }
+                }
+                else -> videos
             }
-                .filterNotNull()
-                .flatten(),
-        )
-
-        videoList.addAll(
-            failedMediaUrl.mapNotNull { (url, quality) ->
-                runCatching {
-                    extractGDriveLink(url, quality)
-                }.getOrNull()
-            }.flatten(),
-        )
-
-        if (videoList.isEmpty()) throw Exception("No working links found")
+        }
 
         return Observable.just(videoList.sort())
     }
@@ -255,143 +247,86 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
 
     // ============================= Utilities ==============================
-    private fun extractVideo(epUrl: EpUrl): Pair<List<Video>, String> {
-        val noRedirectClient = client.newBuilder().followRedirects(false).build()
-        val mediaResponse = if (epUrl.url.contains("?id=")) {
-            val postLink = epUrl.url.substringBefore("?id=").substringAfter("/?")
-            val initailUrl = epUrl.url.substringAfter("/?http").let {
-                if (it.startsWith("http")) {
-                    it
-                } else {
-                    "http$it"
-                }
-            }
-            val initialResp = noRedirectClient.newCall(GET(initailUrl)).execute().asJsoup()
-            val (tokenUrl, tokenCookie) = if (initialResp.selectFirst("form#landing input[name=_wp_http_c]") != null) {
-                val formData = FormBody.Builder().add("_wp_http_c", epUrl.url.substringAfter("?id=")).build()
-                val response = client.newCall(POST(postLink, body = formData)).execute().body.string()
-                val (longC, catC, _) = getCookiesDetail(response)
-                val cookieHeader = Headers.headersOf("Cookie", "$longC; $catC")
-                val parsedSoup = Jsoup.parse(response)
-                val link = parsedSoup.selectFirst("center > a")!!.attr("href")
+    private val redirectBypasser by lazy { RedirectorBypasser(client, headers) }
 
-                val response2 = client.newCall(GET(link, cookieHeader)).execute().body.string()
-                val (longC2, _, postC) = getCookiesDetail(response2)
-                val cookieHeader2 = Headers.headersOf("Cookie", "$catC; $longC2; $postC")
-                val parsedSoup2 = Jsoup.parse(response2)
-                val link2 = parsedSoup2.selectFirst("center > a")!!.attr("href")
-                val tokenResp = client.newCall(GET(link2, cookieHeader2)).execute().body.string()
-                val goToken = tokenResp.substringAfter("?go=").substringBefore("\"")
-                val tokenUrl = "$postLink?go=$goToken"
-                val newLongC = "$goToken=" + longC2.substringAfter("=")
-                val tokenCookie = Headers.headersOf("Cookie", "$catC; rdst_post=; $newLongC")
-                Pair(tokenUrl, tokenCookie)
-            } else {
-                val secondResp = initialResp.getNextResp().asJsoup()
-                val thirdResp = secondResp.getNextResp().body.string()
-                val goToken = thirdResp.substringAfter("?go=").substringBefore("\"")
-                val tokenUrl = "$postLink?go=$goToken"
-                val cookie = secondResp.selectFirst("form#landing input[name=_wp_http2]")?.attr("value")
-                val tokenCookie = Headers.headersOf("Cookie", "$goToken=$cookie")
-                Pair(tokenUrl, tokenCookie)
-            }
+    private fun getMediaUrl(epUrl: EpUrl): String? {
+        val url = epUrl.url
+        val mediaResponse = if (url.contains("?sid=")) {
+            /* redirector bs */
+            val finalUrl = redirectBypasser.bypass(url) ?: return null
+            client.newCall(GET(finalUrl)).execute()
+        } else if (url.contains("r?key=")) {
+            /* everything under control */
+            client.newCall(GET(url)).execute()
+        } else { return null }
 
-            val tokenResponse = noRedirectClient.newCall(GET(tokenUrl, tokenCookie)).execute().asJsoup()
-            val redirectUrl = tokenResponse.select("meta[http-equiv=refresh]").attr("content")
-                .substringAfter("url=").substringBefore("\"")
-            noRedirectClient.newCall(GET(redirectUrl)).execute()
-        } else if (epUrl.url.contains("r?key=")) {
-            client.newCall(GET(epUrl.url)).execute()
-        } else { throw Exception("Something went wrong") }
+        val path = mediaResponse.use { it.body.string() }.substringAfter("replace(\"").substringBefore("\"")
 
-        val path = mediaResponse.body.string().substringAfter("replace(\"").substringBefore("\"")
-        if (path == "/404") return Pair(emptyList(), "")
-        val mediaUrl = "https://" + mediaResponse.request.url.host + path
-        val videoList = mutableListOf<Video>()
+        if (path == "/404") return null
 
-        for (type in 1..3) {
-            videoList.addAll(
-                extractWorkerLinks(mediaUrl, epUrl.quality, type),
-            )
+        return "https://" + mediaResponse.request.url.host + path
+    }
+
+    private fun extractVideo(url: String, quality: String): List<Video> {
+        return (1..3).toList().flatMap { type ->
+            extractWorkerLinks(url, quality, type)
         }
-        return Pair(videoList, mediaUrl)
     }
-
-    private fun Document.getNextResp(): Response {
-        val form = this.selectFirst("form#landing") ?: throw Exception("Failed to find form")
-        val postLink = form.attr("action")
-        val formData = FormBody.Builder().let { fd ->
-            form.select("input").map {
-                fd.add(it.attr("name"), it.attr("value"))
-            }
-            fd.build()
-        }
-
-        return client.newCall(POST(postLink, body = formData)).execute()
-    }
-
-    private fun getCookiesDetail(page: String): Triple<String, String, String> {
-        val cat = "rdst_cat"
-        val post = "rdst_post"
-        val longC = page.substringAfter(".setTime")
-            .substringAfter("document.cookie = \"")
-            .substringBefore("\"")
-            .substringBefore(";")
-        val catC = if (page.contains("$cat=")) {
-            page.substringAfterLast("$cat=")
-                .substringBefore(";").let {
-                    "$cat=$it"
-                }
-        } else { "" }
-
-        val postC = if (page.contains("$post=")) {
-            page.substringAfterLast("$post=")
-                .substringBefore(";").let {
-                    "$post=$it"
-                }
-        } else { "" }
-
-        return Triple(longC, catC, postC)
-    }
-
-    private val sizeRegex = "\\[((?:.(?!\\[))+)] *\$".toRegex(RegexOption.IGNORE_CASE)
 
     private fun extractWorkerLinks(mediaUrl: String, quality: String, type: Int): List<Video> {
         val reqLink = mediaUrl.replace("/file/", "/wfile/") + "?type=$type"
-        val resp = client.newCall(GET(reqLink)).execute().asJsoup()
-        val sizeMatch = sizeRegex.find(resp.select("div.card-header").text().trim())
+        val resp = client.newCall(GET(reqLink)).execute().use { it.asJsoup() }
+        val sizeMatch = SIZE_REGEX.find(resp.select("div.card-header").text().trim())
         val size = sizeMatch?.groups?.get(1)?.value?.let { " - $it" } ?: ""
-        return try {
-            resp.select("div.card-body div.mb-4 > a").mapIndexed { index, linkElement ->
-                val link = linkElement.attr("href")
-                val decodedLink = if (link.contains("workers.dev")) {
-                    link
-                } else {
-                    String(Base64.decode(link.substringAfter("download?url="), Base64.DEFAULT))
-                }
-
-                Video(
-                    url = decodedLink,
-                    quality = "$quality - CF $type Worker ${index + 1}$size",
-                    videoUrl = decodedLink,
-                )
+        return resp.select("div.card-body div.mb-4 > a").mapIndexed { index, linkElement ->
+            val link = linkElement.attr("href")
+            val decodedLink = if (link.contains("workers.dev")) {
+                link
+            } else {
+                String(Base64.decode(link.substringAfter("download?url="), Base64.DEFAULT))
             }
-        } catch (_: Exception) {
-            emptyList()
+
+            Video(
+                url = decodedLink,
+                quality = "${quality}p - CF $type Worker ${index + 1}$size",
+                videoUrl = decodedLink,
+            )
         }
     }
 
+    private fun getDirectLink(url: String, action: String = "direct", newPath: String = "/file/"): String? {
+        val doc = client.newCall(GET(url, headers)).execute().use { it.asJsoup() }
+        val script = doc.selectFirst("script:containsData(async function taskaction)")
+            ?.data()
+            ?: return url
+
+        val key = script.substringAfter("key\", \"").substringBefore('"')
+        val form = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("action", action)
+            .addFormDataPart("key", key)
+            .addFormDataPart("action_token", "")
+            .build()
+
+        val headers = headersBuilder().set("x-token", url.toHttpUrl().host).build()
+
+        val req = client.newCall(POST(url.replace("/file/", newPath), headers, form)).execute()
+        return runCatching {
+            json.decodeFromString<DriveLeechDirect>(req.use { it.body.string() }).url
+        }.getOrNull()
+    }
+
     private fun extractGDriveLink(mediaUrl: String, quality: String): List<Video> {
-        val tokenClient = client.newBuilder().addInterceptor(TokenInterceptor()).build()
-        val response = tokenClient.newCall(GET(mediaUrl)).execute().asJsoup()
+        val neoUrl = getDirectLink(mediaUrl) ?: mediaUrl
+        val response = client.newCall(GET(neoUrl)).execute().use { it.asJsoup() }
         val gdBtn = response.selectFirst("div.card-body a.btn")!!
         val gdLink = gdBtn.attr("href")
-        val sizeMatch = sizeRegex.find(gdBtn.text())
+        val sizeMatch = SIZE_REGEX.find(gdBtn.text())
         val size = sizeMatch?.groups?.get(1)?.value?.let { " - $it" } ?: ""
-        val gdResponse = client.newCall(GET(gdLink)).execute().asJsoup()
+        val gdResponse = client.newCall(GET(gdLink)).execute().use { it.asJsoup() }
         val link = gdResponse.select("form#download-form")
-        return if (link.isEmpty()) {
-            listOf()
+        return if (link.isNullOrEmpty()) {
+            emptyList()
         } else {
             val realLink = link.attr("action")
             listOf(Video(realLink, "$quality - Gdrive$size", realLink))
@@ -416,10 +351,10 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val size = this.substringAfterLast("-").trim()
         return if (size.contains("GB", true)) {
             size.replace("GB", "", true)
-                .toFloat() * 1000
+                .toFloatOrNull()?.let { it * 1000 } ?: 1F
         } else {
             size.replace("MB", "", true)
-                .toFloat()
+                .toFloatOrNull() ?: 1F
         }
     }
 
@@ -492,16 +427,25 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val url: String,
     )
 
+    @Serializable
+    data class DriveLeechDirect(val url: String? = null)
+
     private fun EpLinks.toJson(): String {
         return json.encodeToString(this)
     }
 
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
         runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+            map {
+                async(Dispatchers.Default) {
+                    runCatching { f(it) }.getOrElse { emptyList() }
+                }
+            }.awaitAll().flatten()
         }
 
     companion object {
+        private val SIZE_REGEX = "\\[((?:.(?!\\[))+)][ ]*\$".toRegex(RegexOption.IGNORE_CASE)
+
         const val PREF_DOMAIN_KEY = "pref_domain_new"
         const val PREF_DEFAULT_DOMAIN = "https://uhdmovies.zip"
     }
