@@ -338,7 +338,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
         private const val PREF_DOMAIN_KEY = "preferred_domain"
-        private const val PREF_DOMAIN_DEFAULT = "https://aniwave.vc"
+        private const val PREF_DOMAIN_DEFAULT = "https://aniwave.to"
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_DEFAULT = "1080"
@@ -380,8 +380,8 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ListPreference(screen.context).apply {
             key = PREF_DOMAIN_KEY
             title = "Preferred domain"
-            entries = arrayOf("aniwave.vc", "aniwave.bz", "aniwave.ws")
-            entryValues = arrayOf("https://aniwave.vc", "https://aniwave.bz", "https://aniwave.ws")
+            entries = arrayOf("aniwave.to", "aniwave.bz", "aniwave.ws", "aniwave.vc")
+            entryValues = arrayOf("https://aniwave.to", "https://aniwave.bz", "https://aniwave.ws", "https://aniwave.vc")
             setDefaultValue(PREF_DOMAIN_DEFAULT)
             summary = "%s"
 
