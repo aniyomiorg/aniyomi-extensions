@@ -242,8 +242,11 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         "Category Filter ",
         arrayOf(
             Pair("All", ""),
+            Pair("Straight", "2109"),
             Pair("Futa", "15"),
             Pair("Gay", "192"),
+            Pair("Music", "4747"),
+            Pair("Iwara", "1821"),
         ),
     )
 

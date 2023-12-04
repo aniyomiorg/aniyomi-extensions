@@ -13,7 +13,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
-import eu.kanade.tachiyomi.lib.mytvextractor.MytvExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.lib.vkextractor.VkExtractor
@@ -108,7 +107,6 @@ class AsyaAnimeleri : AnimeStream(
     private val sibnetExtractor by lazy { SibnetExtractor(client) }
     private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
     private val doodExtractor by lazy { DoodExtractor(client) }
-    private val mytvExtractor by lazy { MytvExtractor(client) }
     // private val dailyExtractor by lazy { DailymotionExtractor(client, headers) }
 
     override fun getVideoList(url: String, name: String): List<Video> {
@@ -117,7 +115,6 @@ class AsyaAnimeleri : AnimeStream(
             "ok.ru" -> okruExtractor.videosFromUrl(url)
             "sibnet" -> sibnetExtractor.videosFromUrl(url)
             // "daily" -> dailyExtractor.videosFromUrl(url)
-            "myvi", "mytv" -> mytvExtractor.videosFromUrl(url)
             "dood", "doodstream" -> doodExtractor.videoFromUrl(url)?.let(::listOf) ?: emptyList()
             "gdrive" -> {
                 val newUrl = "https://gdriveplayer.to/embed2.php?link=$url"
