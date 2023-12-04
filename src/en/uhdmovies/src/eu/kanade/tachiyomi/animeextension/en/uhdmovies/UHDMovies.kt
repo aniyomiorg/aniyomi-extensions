@@ -38,7 +38,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val name = "UHD Movies"
 
     override val baseUrl by lazy {
-        val url = preferences.getString(PREF_DOMAIN_KEY, PREF_DEFAULT_DOMAIN)!!
+        val url = preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!!
         runBlocking {
             withContext(Dispatchers.Default) {
                 client.newBuilder()
@@ -75,13 +75,11 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div#content  div.gridlove-posts > div.layout-masonry"
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            setUrlWithoutDomain(element.select("div.entry-image > a").attr("abs:href"))
-            thumbnail_url = element.select("div.entry-image > a > img").attr("abs:src")
-            title = element.select("div.entry-image > a").attr("title")
-                .replace("Download", "").trim()
-        }
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.select("div.entry-image > a").attr("abs:href"))
+        thumbnail_url = element.select("div.entry-image > a > img").attr("abs:src")
+        title = element.select("div.entry-image > a").attr("title")
+            .replace("Download", "").trim()
     }
 
     override fun popularAnimeNextPageSelector(): String =
@@ -109,14 +107,12 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        return SAnime.create().apply {
-            initialized = true
-            title = document.selectFirst(".entry-title")?.text()
-                ?.replace("Download", "", true)?.trim() ?: "Movie"
-            status = SAnime.COMPLETED
-            description = document.selectFirst("pre:contains(plot)")?.text()
-        }
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        initialized = true
+        title = document.selectFirst(".entry-title")?.text()
+            ?.replace("Download", "", true)?.trim() ?: "Movie"
+        status = SAnime.COMPLETED
+        description = document.selectFirst("pre:contains(plot)")?.text()
     }
 
     // ============================== Episodes ==============================
@@ -334,8 +330,8 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")!!
-        val ascSort = preferences.getString("preferred_size_sort", "asc")!! == "asc"
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val ascSort = preferences.getString(PREF_SIZE_SORT_KEY, PREF_SIZE_SORT_DEFAULT)!! == "asc"
 
         val comparator = compareByDescending<Video> { it.quality.contains(quality) }.let { cmp ->
             if (ascSort) {
@@ -344,11 +340,11 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 cmp.thenByDescending { it.quality.fixQuality() }
             }
         }
-        return this.sortedWith(comparator)
+        return sortedWith(comparator)
     }
 
     private fun String.fixQuality(): Float {
-        val size = this.substringAfterLast("-").trim()
+        val size = substringAfterLast("-").trim()
         return if (size.contains("GB", true)) {
             size.replace("GB", "", true)
                 .toFloatOrNull()?.let { it * 1000 } ?: 1F
@@ -359,12 +355,12 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("2160p", "1080p", "720p", "480p")
-            entryValues = arrayOf("2160", "1080", "720", "480")
-            setDefaultValue("1080")
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -373,16 +369,15 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        val sizeSortPref = ListPreference(screen.context).apply {
-            key = "preferred_size_sort"
-            title = "Preferred Size Sort"
-            entries = arrayOf("Ascending", "Descending")
-            entryValues = arrayOf("asc", "dec")
-            setDefaultValue("asc")
-            summary = """%s
-                |Sort order to be used after the videos are sorted by their quality.
-            """.trimMargin()
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_SIZE_SORT_KEY
+            title = PREF_SIZE_SORT_TITLE
+            entries = PREF_SIZE_SORT_ENTRIES
+            entryValues = PREF_SIZE_SORT_VALUES
+            setDefaultValue(PREF_SIZE_SORT_DEFAULT)
+            summary = PREF_SIZE_SORT_SUMMARY
 
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -390,30 +385,24 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        val domainPref = EditTextPreference(screen.context).apply {
+        }.also(screen::addPreference)
+
+        EditTextPreference(screen.context).apply {
             key = PREF_DOMAIN_KEY
-            title = "Currently used domain"
-            dialogTitle = title
-            setDefaultValue(PREF_DEFAULT_DOMAIN)
-            val tempText = preferences.getString(key, PREF_DEFAULT_DOMAIN)
-            summary = """$tempText
-                |For any change to be applied App restart is required.
-            """.trimMargin()
+            title = PREF_DOMAIN_TITLE
+            dialogTitle = PREF_DOMAIN_DIALOG_TITLE
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
+            summary = getDomainPrefSummary()
 
             setOnPreferenceChangeListener { _, newValue ->
-                val newValueString = newValue as String
-                preferences.edit().putString(key, newValueString.trim()).commit().also {
-                    summary = """$newValueString
-                        |For any change to be applied App restart is required.
-                    """.trimMargin()
-                }
+                runCatching {
+                    val value = (newValue as String).ifEmpty { PREF_DOMAIN_DEFAULT }
+                    preferences.edit().putString(key, value).commit().also {
+                        summary = getDomainPrefSummary()
+                    }
+                }.getOrDefault(false)
             }
-        }
-
-        screen.addPreference(videoQualityPref)
-        screen.addPreference(sizeSortPref)
-        screen.addPreference(domainPref)
+        }.also(screen::addPreference)
     }
 
     @Serializable
@@ -443,10 +432,33 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }.awaitAll().flatten()
         }
 
-    companion object {
-        private val SIZE_REGEX = "\\[((?:.(?!\\[))+)][ ]*\$".toRegex(RegexOption.IGNORE_CASE)
+    private fun getDomainPrefSummary(): String =
+        preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!!.let {
+            """$it
+                |For any change to be applied App restart is required.
+            """.trimMargin()
+        }
 
-        const val PREF_DOMAIN_KEY = "pref_domain_new"
-        const val PREF_DEFAULT_DOMAIN = "https://uhdmovies.zip"
+    companion object {
+        private val SIZE_REGEX = "\\[((?:.(?!\\[))+)][ ]*\\$".toRegex(RegexOption.IGNORE_CASE)
+
+        private const val PREF_DOMAIN_KEY = "pref_domain_new"
+        private const val PREF_DOMAIN_TITLE = "Currently used domain"
+        private const val PREF_DOMAIN_DEFAULT = "https://uhdmovies.vip"
+        private const val PREF_DOMAIN_DIALOG_TITLE = PREF_DOMAIN_TITLE
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Prefferred quality"
+        private const val PREF_QUALITY_DEFAULT = "1080p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("2160p", "1080p", "720p", "480p")
+
+        private const val PREF_SIZE_SORT_KEY = "preferred_size_sort"
+        private const val PREF_SIZE_SORT_TITLE = "Preferred Size Sort"
+        private const val PREF_SIZE_SORT_DEFAULT = "asc"
+        private val PREF_SIZE_SORT_SUMMARY = """%s
+            |Sort order to be used after the videos are sorted by their quality.
+        """.trimMargin()
+        private val PREF_SIZE_SORT_ENTRIES = arrayOf("Ascending", "Descending")
+        private val PREF_SIZE_SORT_VALUES = arrayOf("asc", "desc")
     }
 }
