@@ -225,7 +225,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 videos.isEmpty() -> {
                     extractGDriveLink(url, quality).ifEmpty {
                         getDirectLink(url, "instant", "/mfile/")?.let {
-                            listOf(Video(it, "${quality}p - GDrive Instant link", it))
+                            listOf(Video(it, "$quality - GDrive Instant link", it))
                         } ?: emptyList()
                     }
                 }
@@ -284,7 +284,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             Video(
                 url = decodedLink,
-                quality = "${quality}p - CF $type Worker ${index + 1}$size",
+                quality = "$quality - CF $type Worker ${index + 1}$size",
                 videoUrl = decodedLink,
             )
         }
