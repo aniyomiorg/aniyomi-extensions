@@ -2098,10 +2098,10 @@
   {
     "name": "Aniyomi: UHD Movies",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.uhdmovies",
-    "apk": "aniyomi-en.uhdmovies-v13.17.apk",
+    "apk": "aniyomi-en.uhdmovies-v13.18.apk",
     "lang": "en",
-    "code": 17,
-    "version": "13.17",
+    "code": 18,
+    "version": "13.18",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2110,7 +2110,7 @@
         "name": "UHD Movies",
         "lang": "en",
         "id": "582068848290425167",
-        "baseUrl": "https://uhdmovies.life",
+        "baseUrl": "https://uhdmovies.zip",
         "versionId": 1,
         "hasCloudflare": 1
       }
