@@ -33,6 +33,8 @@ class AnimesHouse : DooPlay(
     override fun latestUpdatesNextPageSelector(): String = "div.resppages > a > span.icon-chevron-right"
 
     // ============================ Video Links =============================
+    private val redplayBypasser by lazy { RedplayBypasser(client, headers) }
+
     private fun getPlayerUrl(player: Element): String {
         val body = FormBody.Builder()
             .add("action", "doo_player_ajax")
@@ -45,8 +47,10 @@ class AnimesHouse : DooPlay(
             .use { it.asJsoup().selectFirst("iframe")!!.attr("src") }
             .let {
                 when {
-                    it.startsWith("/redplay") ->
-                        RedplayBypasser(client, headers).fromUrl(baseUrl + it)
+                    it.contains("/redplay") -> {
+                        val url = if (it.startsWith("/")) baseUrl + it else it
+                        redplayBypasser.fromUrl(url)
+                    }
                     else -> it
                 }
             }
