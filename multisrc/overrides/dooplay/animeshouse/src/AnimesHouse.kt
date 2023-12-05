@@ -81,9 +81,20 @@ class AnimesHouse : DooPlay(
         return when {
             "embed.php?" in url -> embedExtractor.getVideoList(url, iframeBody)
             "edifier" in url -> edifierExtractor.getVideoList(url)
-            "mp4doo" in url -> mp4dooExtractor.getVideoList(unpackedBody)
+            "mp4doo" in url || "doomp4" in url -> mp4dooExtractor.getVideoList(unpackedBody)
             "clp-new" in url || "gcloud" in url -> genericExtractor.getVideoList(url, unpackedBody)
             "mcp_comm" in unpackedBody -> mcpExtractor.getVideoList(unpackedBody)
+            "cloudg" in url -> {
+                unpackedBody.substringAfter("sources:[").substringBefore(']')
+                    .split('{')
+                    .drop(1)
+                    .mapNotNull {
+                        val videoUrl = it.substringAfter("\"file\":\"").substringBefore('"')
+                            .takeUnless(String::isBlank) ?: return@mapNotNull null
+                        val label = it.substringAfter("\"label\":\"").substringBefore('"')
+                        Video(videoUrl, "CloudG - $label", videoUrl, headers)
+                    }
+            }
             else -> emptyList()
         }
     }
