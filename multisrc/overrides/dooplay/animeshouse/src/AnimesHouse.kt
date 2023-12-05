@@ -66,6 +66,12 @@ class AnimesHouse : DooPlay(
         }
     }
 
+    private val embedExtractor by lazy { EmbedExtractor(headers) }
+    private val edifierExtractor by lazy { EdifierExtractor(client, headers) }
+    private val mp4dooExtractor by lazy { MpFourDooExtractor(client, headers) }
+    private val genericExtractor by lazy { GenericExtractor(client, headers) }
+    private val mcpExtractor by lazy { McpExtractor(client, headers) }
+
     private fun getPlayerVideos(url: String): List<Video> {
         val iframeBody = client.newCall(GET(url, headers)).execute()
             .use { it.body.string() }
@@ -73,17 +79,12 @@ class AnimesHouse : DooPlay(
         val unpackedBody = JsUnpacker.unpack(iframeBody)
 
         return when {
-            "embed.php?" in url ->
-                EmbedExtractor(headers).getVideoList(url, iframeBody)
-            "edifier" in url ->
-                EdifierExtractor(client, headers).getVideoList(url)
-            "mp4doo" in url ->
-                MpFourDooExtractor(client, headers).getVideoList(unpackedBody)
-            "clp-new" in url || "gcloud" in url ->
-                GenericExtractor(client, headers).getVideoList(url, unpackedBody)
-            "mcp_comm" in unpackedBody ->
-                McpExtractor(client, headers).getVideoList(unpackedBody)
-            else -> emptyList<Video>()
+            "embed.php?" in url -> embedExtractor.getVideoList(url, iframeBody)
+            "edifier" in url -> edifierExtractor.getVideoList(url)
+            "mp4doo" in url -> mp4dooExtractor.getVideoList(unpackedBody)
+            "clp-new" in url || "gcloud" in url -> genericExtractor.getVideoList(url, unpackedBody)
+            "mcp_comm" in unpackedBody -> mcpExtractor.getVideoList(unpackedBody)
+            else -> emptyList()
         }
     }
 
