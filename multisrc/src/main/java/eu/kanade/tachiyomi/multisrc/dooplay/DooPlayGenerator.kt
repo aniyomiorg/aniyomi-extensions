@@ -24,7 +24,7 @@ class DooPlayGenerator : ThemeSourceGenerator {
         SingleLang("Kinoking", "https://kinoking.cc", "de", isNsfw = false, overrideVersionCode = 19),
         SingleLang("Multimovies", "https://multimovies.live", "en", isNsfw = false, overrideVersionCode = 13),
         SingleLang("Pi Fansubs", "https://pifansubs.org", "pt-BR", isNsfw = true, overrideVersionCode = 17),
-        SingleLang("Pobreflix", "https://pobreflix.biz", "pt-BR", isNsfw = true, overrideVersionCode = 2),
+        SingleLang("Pobreflix", "https://pobreflix.biz", "pt-BR", isNsfw = true, overrideVersionCode = 3),
         SingleLang("UniqueStream", "https://uniquestream.net", "en", isNsfw = false, overrideVersionCode = 2),
     )
 
