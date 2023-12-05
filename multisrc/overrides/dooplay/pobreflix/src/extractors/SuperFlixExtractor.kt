@@ -4,6 +4,10 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
@@ -22,7 +26,7 @@ class SuperFlixExtractor(
     fun videosFromUrl(url: String): List<Video> {
         val links = linksFromUrl(url)
 
-        val fixedLinks = links.flatMap {
+        val fixedLinks = links.parallelCatchingFlatMap {
             val (language, linkUrl) = it
             when {
                 linkUrl.contains("?vid=") -> linksFromPlayer(linkUrl, language)
@@ -30,7 +34,7 @@ class SuperFlixExtractor(
             }
         }
 
-        return fixedLinks.flatMap { genericExtractor(it.second, it.first) }
+        return fixedLinks.parallelCatchingFlatMap { genericExtractor(it.second, it.first) }
     }
 
     private fun linksFromPlayer(url: String, language: String): List<Pair<String, String>> {
@@ -121,6 +125,15 @@ class SuperFlixExtractor(
 
     @Serializable
     data class DataDto(val video_url: String? = null)
+
+    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
+        runBlocking {
+            map {
+                async(Dispatchers.Default) {
+                    runCatching { f(it) }.getOrElse { emptyList() }
+                }
+            }.awaitAll().flatten()
+        }
 }
 
 private const val API_DOMAIN = "https://superflixapi.top"
