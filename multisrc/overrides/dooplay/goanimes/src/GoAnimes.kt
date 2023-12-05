@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.animeextension.pt.goanimes.extractors.LinkfunBypasser
 import eu.kanade.tachiyomi.animeextension.pt.goanimes.extractors.PlaylistExtractor
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.bloggerextractor.BloggerExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -69,22 +70,46 @@ class GoAnimes : DooPlay(
     override val prefQualityEntries = prefQualityValues
 
     private val goanimesExtractor by lazy { GoAnimesExtractor(client, headers) }
+    private val bloggerExtractor by lazy { BloggerExtractor(client) }
     private val linkfunBypasser by lazy { LinkfunBypasser(client) }
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.use { it.asJsoup() }
         val players = document.select("ul#playeroptionsul li")
-        return players.parallelMap {
-            runCatching {
-                getPlayerVideos(it)
-            }.getOrElse { emptyList() }
-        }.flatten().ifEmpty { throw Exception("Nenhum vídeo encontrado.") }
+        return players.parallelCatchingFlatMap(::getPlayerVideos)
     }
 
     private fun getPlayerVideos(player: Element): List<Video> {
         val url = getPlayerUrl(player)
         return when {
             "player5.goanimes.net" in url -> goanimesExtractor.videosFromUrl(url)
+            "https://gojopoolt" in url -> {
+                val headers = headers.newBuilder()
+                    .set("referer", url)
+                    .build()
+
+                val script = client.newCall(GET(url, headers)).execute()
+                    .use { it.body.string() }
+                    .let { JsDecoder.decodeScript(it, false) }
+
+                script.substringAfter("sources: [")
+                    .substringBefore(']')
+                    .split('{')
+                    .drop(1)
+                    .mapNotNull {
+                        val videoUrl = it.substringAfter("file: ")
+                            .substringBefore(", ")
+                            .trim('"', '\'', ' ')
+                            .ifBlank { return@mapNotNull null }
+
+                        val resolution = it.substringAfter("label: ", "")
+                            .substringAfter('"')
+                            .substringBefore('"')
+                            .ifBlank { "Default" }
+
+                        Video(videoUrl, "Gojopoolt - $resolution", videoUrl, headers)
+                    }
+            }
             listOf("/bloggerjwplayer", "/m3u8", "/multivideo").any { it in url } -> {
                 val script = client.newCall(GET(url)).execute()
                     .use { it.body.string() }
@@ -102,6 +127,7 @@ class GoAnimes : DooPlay(
                     else -> emptyList<Video>()
                 }
             }
+            "www.blogger.com" in url -> bloggerExtractor.videosFromUrl(url, headers)
             else -> emptyList<Video>()
         }
     }
@@ -131,8 +157,12 @@ class GoAnimes : DooPlay(
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
         runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+            map {
+                async(Dispatchers.Default) {
+                    runCatching { f(it) }.getOrElse { emptyList() }
+                }
+            }.awaitAll().flatten()
         }
 }
