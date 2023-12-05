@@ -5,7 +5,6 @@ import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
-import eu.kanade.tachiyomi.network.GET
 
 class AnimeYTES : AnimeStream(
     "es",
