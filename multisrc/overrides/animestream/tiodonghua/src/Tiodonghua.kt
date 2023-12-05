@@ -1,21 +1,17 @@
 package eu.kanade.tachiyomi.animeextension.es.tiodonghua
 
-import androidx.preference.ListPreference
-import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
-import eu.kanade.tachiyomi.network.GET
 
 class Tiodonghua : AnimeStream(
     "es",
     "Tiodonghua.com",
     "https://anime.tiodonghua.com",
 ) {
-
 
     // ============================ Video Links =============================
     private val okruExtractor by lazy { OkruExtractor(client) }
@@ -35,5 +31,4 @@ class Tiodonghua : AnimeStream(
 
     override val fetchFilters: Boolean
         get() = false
-
 }
