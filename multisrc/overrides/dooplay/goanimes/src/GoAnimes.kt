@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.animeextension.pt.goanimes.extractors.LinkfunBypasser
 import eu.kanade.tachiyomi.animeextension.pt.goanimes.extractors.PlaylistExtractor
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.bloggerextractor.BloggerExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -69,6 +70,7 @@ class GoAnimes : DooPlay(
     override val prefQualityEntries = prefQualityValues
 
     private val goanimesExtractor by lazy { GoAnimesExtractor(client, headers) }
+    private val bloggerExtractor by lazy { BloggerExtractor(client) }
     private val linkfunBypasser by lazy { LinkfunBypasser(client) }
 
     override fun videoListParse(response: Response): List<Video> {
@@ -85,6 +87,33 @@ class GoAnimes : DooPlay(
         val url = getPlayerUrl(player)
         return when {
             "player5.goanimes.net" in url -> goanimesExtractor.videosFromUrl(url)
+            "https://gojopoolt" in url -> {
+                val headers = headers.newBuilder()
+                    .set("referer", url)
+                    .build()
+
+                val script = client.newCall(GET(url, headers)).execute()
+                    .use { it.body.string() }
+                    .let { JsDecoder.decodeScript(it, false) }
+
+                script.substringAfter("sources: [")
+                    .substringBefore(']')
+                    .split('{')
+                    .drop(1)
+                    .mapNotNull {
+                        val videoUrl = it.substringAfter("file: ")
+                            .substringBefore(", ")
+                            .trim('"', '\'', ' ')
+                            .ifBlank { return@mapNotNull null }
+
+                        val resolution = it.substringAfter("label: ", "")
+                            .substringAfter('"')
+                            .substringBefore('"')
+                            .ifBlank { "Default" }
+
+                        Video(videoUrl, "Gojopoolt - $resolution", videoUrl, headers)
+                    }
+            }
             listOf("/bloggerjwplayer", "/m3u8", "/multivideo").any { it in url } -> {
                 val script = client.newCall(GET(url)).execute()
                     .use { it.body.string() }
@@ -102,6 +131,7 @@ class GoAnimes : DooPlay(
                     else -> emptyList<Video>()
                 }
             }
+            "www.blogger.com" in url -> bloggerExtractor.videosFromUrl(url, headers)
             else -> emptyList<Video>()
         }
     }
