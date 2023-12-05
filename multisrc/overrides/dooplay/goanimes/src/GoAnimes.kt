@@ -76,11 +76,7 @@ class GoAnimes : DooPlay(
     override fun videoListParse(response: Response): List<Video> {
         val document = response.use { it.asJsoup() }
         val players = document.select("ul#playeroptionsul li")
-        return players.parallelMap {
-            runCatching {
-                getPlayerVideos(it)
-            }.getOrElse { emptyList() }
-        }.flatten().ifEmpty { throw Exception("Nenhum vídeo encontrado.") }
+        return players.parallelCatchingFlatMap(::getPlayerVideos)
     }
 
     private fun getPlayerVideos(player: Element): List<Video> {
@@ -161,8 +157,12 @@ class GoAnimes : DooPlay(
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
         runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+            map {
+                async(Dispatchers.Default) {
+                    runCatching { f(it) }.getOrElse { emptyList() }
+                }
+            }.awaitAll().flatten()
         }
 }
