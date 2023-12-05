@@ -3,7 +3,7 @@ package eu.kanade.tachiyomi.animeextension.pt.pobreflix
 import android.util.Base64
 import eu.kanade.tachiyomi.animeextension.pt.pobreflix.extractors.EplayerExtractor
 import eu.kanade.tachiyomi.animeextension.pt.pobreflix.extractors.MyStreamExtractor
-import eu.kanade.tachiyomi.animeextension.pt.pobreflix.extractors.PainelfxExtractor
+import eu.kanade.tachiyomi.animeextension.pt.pobreflix.extractors.SuperFlixExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
@@ -24,7 +24,7 @@ class Pobreflix : DooPlay(
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/series/page/$page/", headers)
 
     // ============================ Video Links =============================
-    private val painelfxExtractor by lazy { PainelfxExtractor(client, headers, ::genericExtractor) }
+    private val superflixExtractor by lazy { SuperFlixExtractor(client, headers, ::genericExtractor) }
     private val eplayerExtractor by lazy { EplayerExtractor(client) }
     private val filemoonExtractor by lazy { FilemoonExtractor(client) }
     private val mystreamExtractor by lazy { MyStreamExtractor(client, headers) }
@@ -39,8 +39,8 @@ class Pobreflix : DooPlay(
                     ?: return@flatMap emptyList()
                 val url = data.replace("\\", "").substringAfter("url\":\"").substringBefore('"')
                 when {
-                    url.contains("painelfx") ->
-                        painelfxExtractor.videosFromUrl(url)
+                    url.contains("superflix") ->
+                        superflixExtractor.videosFromUrl(url)
                     else -> genericExtractor(url)
                 }
             }.getOrElse { emptyList() }
