@@ -1,0 +1,15 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+ext {
+    extName = 'SupJav'
+    pkgNameSuffix = 'all.supjav'
+    extClass = '.SupJavFactory'
+    extVersionCode = 1
+    libVersion = '13'
+    containsNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"
