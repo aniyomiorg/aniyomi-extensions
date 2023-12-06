@@ -13,6 +13,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.select.Elements
 import rx.Observable
 
 class SupJav(override val lang: String = "en") : ParsedAnimeHttpSource() {
@@ -90,9 +91,20 @@ class SupJav(override val lang: String = "en") : ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        val content = document.selectFirst("div.content > div.post-meta")!!
+        title = content.selectFirst("h2")!!.text()
+        thumbnail_url = content.selectFirst("img")?.absUrl("src")
+
+        content.selectFirst("div.cats")?.run {
+            author = select("p:contains(Maker :) > a").textsOrNull()
+            artist = select("p:contains(Cast :) > a").textsOrNull()
+        }
+        genre = content.select("div.tags > a").textsOrNull()
+        status = SAnime.COMPLETED
     }
+
+    private fun Elements.textsOrNull() = eachText().joinToString().takeUnless(String::isEmpty)
 
     // ============================== Episodes ==============================
     override fun episodeListSelector(): String {
