@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.animesource.AnimeSourceFactory
 class SupJavFactory : AnimeSourceFactory {
     override fun createSources() = listOf(
         SupJav("en"),
-        SupJav("jp"),
+        SupJav("ja"),
         SupJav("zh"),
     )
 }
