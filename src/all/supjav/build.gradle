@@ -1,0 +1,22 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+ext {
+    extName = 'SupJav'
+    pkgNameSuffix = 'all.supjav'
+    extClass = '.SupJavFactory'
+    extVersionCode = 1
+    libVersion = '13'
+    containsNsfw = true
+}
+
+dependencies {
+    implementation(project(":lib-streamtape-extractor"))
+    implementation(project(":lib-streamwish-extractor"))
+    implementation(project(":lib-voe-extractor"))
+    implementation(project(":lib-playlist-utils"))
+}
+
+apply from: "$rootDir/common.gradle"
