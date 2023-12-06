@@ -311,6 +311,43 @@
     ]
   },
   {
+    "name": "Aniyomi: SupJav",
+    "pkg": "eu.kanade.tachiyomi.animeextension.all.supjav",
+    "apk": "aniyomi-all.supjav-v13.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "SupJav",
+        "lang": "en",
+        "id": "4473019365642465410",
+        "baseUrl": "https://supjav.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      },
+      {
+        "name": "SupJav",
+        "lang": "ja",
+        "id": "3152122063691493374",
+        "baseUrl": "https://supjav.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      },
+      {
+        "name": "SupJav",
+        "lang": "zh",
+        "id": "2689098384082963484",
+        "baseUrl": "https://supjav.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: أكوام",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.akwam",
     "apk": "aniyomi-ar.akwam-v13.8.apk",
