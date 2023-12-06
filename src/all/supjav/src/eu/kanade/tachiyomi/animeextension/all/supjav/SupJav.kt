@@ -1,5 +1,9 @@
 package eu.kanade.tachiyomi.animeextension.all.supjav
 
+import android.app.Application
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -23,8 +27,10 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
-class SupJav(override val lang: String = "en") : ParsedAnimeHttpSource() {
+class SupJav(override val lang: String = "en") : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "SupJav"
 
@@ -41,6 +47,10 @@ class SupJav(override val lang: String = "en") : ParsedAnimeHttpSource() {
     private val langPath = when (lang) {
         "en" -> ""
         else -> "/$lang"
+    }
+
+    private val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
     // ============================== Popular ===============================
@@ -197,6 +207,25 @@ class SupJav(override val lang: String = "en") : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+    }
+
     // ============================= Utilities ==============================
     private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
         runBlocking {
@@ -207,11 +236,24 @@ class SupJav(override val lang: String = "en") : ParsedAnimeHttpSource() {
             }.awaitAll().flatten()
         }
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
+    }
+
     companion object {
         const val PREFIX_SEARCH = "id:"
 
         private const val PROTECTOR_URL = "https://lk1.supremejav.com/supjav.php"
 
         private val SUPPORTED_PLAYERS = setOf("TV", "FST", "VOE", "ST")
+
+        private const val PREF_QUALITY_KEY = "pref_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred video quality"
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p")
     }
 }
