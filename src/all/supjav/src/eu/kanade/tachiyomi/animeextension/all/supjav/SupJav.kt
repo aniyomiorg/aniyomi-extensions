@@ -23,22 +23,28 @@ class SupJav(override val lang: String = "en") : ParsedAnimeHttpSource() {
 
     override val supportsLatest = false
 
+    override val client = network.cloudflareClient
+
+    private val langPath = when (lang) {
+        "en" -> ""
+        else -> "/$lang"
+    }
+
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl$langPath/popular/page/$page", headers)
+
+    override fun popularAnimeSelector() = "div.posts > div.post > a"
+
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+
+        element.selectFirst("img")!!.run {
+            title = attr("alt")
+            thumbnail_url = absUrl("data-original").ifBlank { absUrl("src") }
+        }
     }
 
-    override fun popularAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun popularAnimeNextPageSelector() = "div.pagination li.active:not(:nth-last-child(2))"
 
     // =============================== Latest ===============================
     override fun latestUpdatesRequest(page: Int): Request {
