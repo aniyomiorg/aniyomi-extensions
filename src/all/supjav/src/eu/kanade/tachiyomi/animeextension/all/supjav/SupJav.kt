@@ -107,6 +107,16 @@ class SupJav(override val lang: String = "en") : ParsedAnimeHttpSource() {
     private fun Elements.textsOrNull() = eachText().joinToString().takeUnless(String::isEmpty)
 
     // ============================== Episodes ==============================
+    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+        val episode = SEpisode.create().apply {
+            name = "JAV"
+            episode_number = 1F
+            url = anime.url
+        }
+
+        return Observable.just(listOf(episode))
+    }
+
     override fun episodeListSelector(): String {
         throw UnsupportedOperationException("Not used.")
     }
