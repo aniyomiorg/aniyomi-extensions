@@ -12,4 +12,11 @@ ext {
     containsNsfw = true
 }
 
+dependencies {
+    implementation(project(":lib-streamtape-extractor"))
+    implementation(project(":lib-streamwish-extractor"))
+    implementation(project(":lib-voe-extractor"))
+    implementation(project(":lib-playlist-utils"))
+}
+
 apply from: "$rootDir/common.gradle"

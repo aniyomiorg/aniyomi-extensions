@@ -6,9 +6,17 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -25,6 +33,10 @@ class SupJav(override val lang: String = "en") : ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     override val client = network.cloudflareClient
+
+    override fun headersBuilder() = super.headersBuilder()
+        .set("Referer", "$baseUrl/")
+        .set("Origin", baseUrl)
 
     private val langPath = when (lang) {
         "en" -> ""
@@ -127,7 +139,50 @@ class SupJav(override val lang: String = "en") : ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        throw UnsupportedOperationException("Not used.")
+        val doc = response.use { it.asJsoup() }
+
+        val players = doc.select("div.btnst > a").toList()
+            .filter { it.text() in SUPPORTED_PLAYERS }
+            .map { it.text() to it.attr("data-link").reversed() }
+
+        return players.parallelCatchingFlatMap(::videosFromPlayer)
+    }
+
+    private val playlistUtils by lazy { PlaylistUtils(client, headers) }
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+
+    private val protectorHeaders by lazy {
+        super.headersBuilder().set("referer", "$PROTECTOR_URL/").build()
+    }
+
+    private val noRedirectClient by lazy {
+        client.newBuilder().followRedirects(false).build()
+    }
+
+    private fun videosFromPlayer(player: Pair<String, String>): List<Video> {
+        val (hoster, id) = player
+        val url = noRedirectClient.newCall(GET("$PROTECTOR_URL/supjav.php?c=$id", protectorHeaders)).execute()
+            .use { it.headers["location"] }
+            ?: return emptyList()
+
+        return when (hoster) {
+            "ST" -> streamtapeExtractor.videosFromUrl(url)
+            "VOE" -> voeExtractor.videosFromUrl(url)
+            "FST" -> streamwishExtractor.videosFromUrl(url)
+            "TV" -> {
+                val body = client.newCall(GET(url)).execute().use { it.body.string() }
+                val playlistUrl = body.substringAfter("var urlPlay = '", "")
+                    .substringBefore("';")
+                    .takeUnless(String::isEmpty)
+                    ?: return emptyList()
+
+                playlistUtils.extractFromHls(playlistUrl, url, videoNameGen = { "TV - $it" })
+                    .distinctBy { it.videoUrl }
+            }
+            else -> emptyList()
+        }
     }
 
     override fun videoListSelector(): String {
@@ -142,7 +197,21 @@ class SupJav(override val lang: String = "en") : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
+    // ============================= Utilities ==============================
+    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
+        runBlocking {
+            map {
+                async(Dispatchers.Default) {
+                    runCatching { f(it) }.getOrElse { emptyList() }
+                }
+            }.awaitAll().flatten()
+        }
+
     companion object {
         const val PREFIX_SEARCH = "id:"
+
+        private const val PROTECTOR_URL = "https://lk1.supremejav.com/supjav.php"
+
+        private val SUPPORTED_PLAYERS = setOf("TV", "FST", "VOE", "ST")
     }
 }
