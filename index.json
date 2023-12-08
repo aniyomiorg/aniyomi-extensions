@@ -896,10 +896,10 @@
   {
     "name": "Aniyomi: CineClix",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.cineclix",
-    "apk": "aniyomi-de.cineclix-v13.6.apk",
+    "apk": "aniyomi-de.cineclix-v13.7.apk",
     "lang": "de",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3330,10 +3330,10 @@
   {
     "name": "Aniyomi: Samehadaku",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.samehadaku",
-    "apk": "aniyomi-id.samehadaku-v13.3.apk",
+    "apk": "aniyomi-id.samehadaku-v13.4.apk",
     "lang": "id",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3342,7 +3342,7 @@
         "name": "Samehadaku",
         "lang": "id",
         "id": "7446063017613536202",
-        "baseUrl": "https://samehadaku.mom",
+        "baseUrl": "https://samehadaku.guru",
         "versionId": 1,
         "hasCloudflare": 0
       }
