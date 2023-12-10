@@ -1,6 +1,13 @@
 package eu.kanade.tachiyomi.animeextension.sr.animebalkan
 
+import android.util.Log
+import eu.kanade.tachiyomi.animeextension.sr.animebalkan.extractors.MailRuExtractor
+import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
+import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.util.asJsoup
+import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -14,4 +21,35 @@ class AnimeBalkan : AnimeStream(
     override val dateFormatter by lazy {
         SimpleDateFormat("MMMM d, yyyy", Locale("bs")) // YES, Bosnian
     }
+
+    // ============================ Video Links =============================
+    override fun getHosterUrl(element: Element): String {
+        if (element.text().contains("Server AB")) {
+            return element.attr("value")
+        }
+
+        return super.getHosterUrl(element)
+    }
+
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val mailruExtractor by lazy { MailRuExtractor(client, headers) }
+
+    override fun getVideoList(url: String, name: String): List<Video> {
+        Log.i(name, "getVideoList -> URL => $url || Name => $name")
+
+        return when {
+            "Server OK" in name || "ok.ru" in url -> okruExtractor.videosFromUrl(url)
+            "Server Ru" in name || "mail.ru" in url -> mailruExtractor.videosFromUrl(url)
+            "Server AB" in name && baseUrl in url -> {
+                val doc = client.newCall(GET(url)).execute().use { it.asJsoup() }
+                val videoUrl = doc.selectFirst("source")?.attr("src")
+                    ?: return emptyList()
+                listOf(Video(videoUrl, "Server AB - Default", videoUrl))
+            }
+            else -> emptyList()
+        }
+    }
+
+    override val prefQualityValues = arrayOf("1080p", "720p", "480p", "360p", "240p")
+    override val prefQualityEntries = prefQualityValues
 }
