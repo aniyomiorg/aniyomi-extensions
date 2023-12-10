@@ -1,3 +1,4 @@
 dependencies {
     implementation(project(":lib-okru-extractor"))
+    implementation(project(":lib-googledrive-extractor"))
 }
