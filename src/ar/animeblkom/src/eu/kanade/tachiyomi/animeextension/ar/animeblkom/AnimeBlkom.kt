@@ -246,7 +246,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_DOMAIN_KEY = "pref_domain_key"
         private const val PREF_DOMAIN_TITLE = "Preferred domain"
         private const val PREF_DOMAIN_DEFAULT = "https://animeblkom.net"
-        private val PREF_DOMAIN_ENTRIES = arrayOf("animeblkom.net", "blkom.com")
+        private val PREF_DOMAIN_ENTRIES = arrayOf("animeblkom.net", "animeblkom.tv", "blkom.com")
         private val PREF_DOMAIN_VALUES by lazy {
             PREF_DOMAIN_ENTRIES.map { "https://$it" }.toTypedArray()
         }
