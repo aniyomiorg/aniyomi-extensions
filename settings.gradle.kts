@@ -26,7 +26,7 @@ File(rootDir, "lib").eachDir {
 // Fix deprecation warnings with Gradle 8.5+.
 // See https://docs.gradle.org/8.5/userguide/upgrading_version_8.html#deprecated_missing_project_directory
 listOf(
-    ":extensions" to rootDir,
+    ":extensions" to "$rootDir/gradle", // Temporary workaround.
     ":extensions:individual" to "$rootDir/src",
     ":extensions:multisrc" to "$rootDir/generated-src",
 ).forEach { (name, path) ->
