@@ -4239,6 +4239,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimeBalkan",
+    "pkg": "eu.kanade.tachiyomi.animeextension.sr.animebalkan",
+    "apk": "aniyomi-sr.animebalkan-v13.2.apk",
+    "lang": "sr",
+    "code": 2,
+    "version": "13.2",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeBalkan",
+        "lang": "sr",
+        "id": "1322485891319274755",
+        "baseUrl": "https://animebalkan.org",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Anime Srbija",
     "pkg": "eu.kanade.tachiyomi.animeextension.sr.animesrbija",
     "apk": "aniyomi-sr.animesrbija-v13.6.apk",
