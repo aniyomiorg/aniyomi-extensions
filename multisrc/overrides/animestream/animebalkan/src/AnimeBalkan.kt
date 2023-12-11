@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.sr.animebalkan
 
-import android.util.Log
 import eu.kanade.tachiyomi.animeextension.sr.animebalkan.extractors.MailRuExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.googledriveextractor.GoogleDriveExtractor
@@ -37,8 +36,6 @@ class AnimeBalkan : AnimeStream(
     private val okruExtractor by lazy { OkruExtractor(client) }
 
     override fun getVideoList(url: String, name: String): List<Video> {
-        Log.i(name, "getVideoList -> URL => $url || Name => $name")
-
         return when {
             "Server OK" in name || "ok.ru" in url -> okruExtractor.videosFromUrl(url)
             "Server Ru" in name || "mail.ru" in url -> mailruExtractor.videosFromUrl(url)
