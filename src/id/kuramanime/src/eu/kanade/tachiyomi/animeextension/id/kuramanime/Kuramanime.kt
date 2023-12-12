@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.id.kuramanime
 
 import android.app.Application
-import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -13,14 +12,16 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
-import java.net.URLEncoder
 
 class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val name = "Kuramanime"
@@ -36,6 +37,8 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
+
+    private val json: Json by injectLazy()
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/anime?page=$page")
@@ -137,6 +140,14 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.use { it.asJsoup() }
 
+        val scriptData = doc.selectFirst("[data-js]")?.attr("data-js")
+            ?.let(::getScriptData)
+            ?: return emptyList()
+
+        val csrfToken = doc.selectFirst("meta[name=csrf-token]")
+            ?.attr("csrf-token")
+            ?: return emptyList()
+
         val servers = doc.select("select#changeServer > option")
             .map { it.attr("value") to it.text().substringBefore(" (") }
             .filter { supportedHosters.contains(it.first) }
@@ -150,9 +161,20 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return servers.flatMap { (server, serverName) ->
             runCatching {
+                val newHeaders = headers.newBuilder()
+                    .set("X-CSRF-TOKEN", csrfToken)
+                    .set("X-Fuck-ID", scriptData.tokenId)
+                    .set("X-Request-ID", getRandomString())
+                    .set("X-Request-Index", "0")
+                    .build()
+
+                val hash = client.newCall(GET("$baseUrl/" + scriptData.authPath, newHeaders)).execute()
+                    .use { it.body.string() }
+                    .trim('"')
+
                 val newUrl = episodeUrl.newBuilder()
-                    .addQueryParameter("dfgRr1OagZvvxbzHNpyCy0FqJQ18mCnb", getRequestHash(headers))
-                    .addQueryParameter("twEvZlbZbYRWBdKKwxkOnwYF0VWoGGVg", server)
+                    .addQueryParameter(scriptData.tokenParam, hash)
+                    .addQueryParameter(scriptData.serverParam, server)
                     .build()
 
                 val playerDoc = client.newCall(GET(newUrl.toString(), headers)).execute()
@@ -171,27 +193,41 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    private val scriptToken by lazy {
-        client.newCall(GET("$baseUrl/assets/js/arc-signal.min.js")).execute()
+    private fun getScriptData(scriptName: String): ScriptDataDto? {
+        val scriptUrl = "$baseUrl/assets/js/$scriptName.js"
+        val scriptCode = client.newCall(GET(scriptUrl, headers)).execute()
             .use { it.body.string() }
-            .substringAfter("kuramanime:\"+\"")
-            .substringBefore('"')
+
+        // Trust me, I hate this too.
+        val scriptJson = scriptCode.lines()
+            .filter { it.contains(": '") || it.contains(": \"") }
+            .map {
+                val (key, value) = it.split(":", limit = 2).map(String::trim)
+                val fixedValue = value.replace("'", "\"").substringBeforeLast(',')
+                "\"$key\": $fixedValue"
+            }.joinToString(prefix = "{", postfix = "}")
+
+        return runCatching {
+            json.decodeFromString<ScriptDataDto>(scriptJson)
+        }.onFailure { it.printStackTrace() }.getOrNull()
     }
 
-    private fun getRequestHash(headers: Headers): String {
-        val auth = "kuramanime:${scriptToken}ts:${System.currentTimeMillis()}"
-            .let { Base64.encode(it.toByteArray(), Base64.NO_WRAP) }
-            .let { Base64.encodeToString(it, Base64.NO_WRAP) }
-            .let { URLEncoder.encode(it, "UTF-8") }
+    @Serializable
+    internal data class ScriptDataDto(
+        @SerialName("MIX_PREFIX_AUTH_ROUTE_PARAM")
+        private val authPathPrefix: String,
 
-        val newHeaders = headers.newBuilder()
-            .set("Authorization", "Bearer $auth")
-            .set("X-Request-ID", getRandomString())
-            .build()
+        @SerialName("MIX_AUTH_ROUTE_PARAM")
+        private val authPathSuffix: String,
 
-        return client.newCall(GET("$baseUrl/misc/post/EVhcpMNbO77acNZcHr2XVjaG8WAdNC1u", newHeaders)).execute()
-            .use { it.body.string() }
-            .trim('"')
+        @SerialName("MIX_AUTH_KEY") private val authKey: String,
+        @SerialName("MIX_AUTH_TOKEN") private val authToken: String,
+
+        @SerialName("MIX_PAGE_TOKEN_KEY") val tokenParam: String,
+        @SerialName("MIX_STREAM_SERVER_KEY") val serverParam: String,
+    ) {
+        val authPath = authPathPrefix + authPathSuffix
+        val tokenId = "$authKey:$authToken"
     }
 
     private fun getRandomString(length: Int = 8): String {
