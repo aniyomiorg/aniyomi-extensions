@@ -14,4 +14,8 @@ class VoirCartoon : DooPlay(
     override fun popularAnimeSelector() = latestUpdatesSelector()
 
     override fun popularAnimeNextPageSelector() = "div.pagination a.arrow_pag > i#nextpagination"
+
+    // =============================== Latest ===============================
+    override val supportsLatest = false
+
 }
