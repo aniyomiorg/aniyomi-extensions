@@ -115,10 +115,31 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val newDoc = response.asJsoup(html)
 
-        return newDoc.select("a")
-            .filterNot { it.attr("href").contains("batch") }
-            .map(::episodeFromElement)
-            .reversed()
+        val limits = newDoc.select("a.btn-secondary")
+
+        return when {
+            limits.isEmpty() -> { // 12 episodes or less
+                newDoc.select("a")
+                    .filterNot { it.attr("href").contains("batch") }
+                    .map(::episodeFromElement)
+                    .reversed()
+            }
+            else -> { // More than 12 episodes
+                val (start, end) = limits.eachText().take(2).map {
+                    it.filter(Char::isDigit).toInt()
+                }
+
+                val location = document.location()
+
+                (end downTo start).map { episodeNumber ->
+                    SEpisode.create().apply {
+                        name = "Ep $episodeNumber"
+                        episode_number = episodeNumber.toFloat()
+                        setUrlWithoutDomain("$location/episode/$episodeNumber")
+                    }
+                }
+            }
+        }
     }
 
     override fun episodeListSelector() = "a#episodeLists"
