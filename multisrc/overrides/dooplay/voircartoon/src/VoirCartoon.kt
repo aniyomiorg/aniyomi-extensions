@@ -1,7 +1,9 @@
 package eu.kanade.tachiyomi.animeextension.fr.voircartoon
 
+import eu.kanade.tachiyomi.animeextension.fr.voircartoon.extractors.ComedyShowExtractor
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -70,5 +72,31 @@ class VoirCartoon : DooPlay(
         episode_number = epNum.toFloatOrNull() ?: 0F
         name = "Saison" + episodeName.substringAfterLast("Saison")
         setUrlWithoutDomain(href.attr("href"))
+    }
+
+    // ============================ Video Links =============================
+    private val comedyshowExtractor by lazy { ComedyShowExtractor(client) }
+
+    override fun videoListParse(response: Response): List<Video> {
+        val doc = response.use { it.asJsoup() }
+        val id = doc.selectFirst("input[name=idpost]")?.attr("value") ?: return emptyList()
+
+        val players = doc.select("nav.player select > option").toList()
+            .filterNot { it.text().contains("Hydrax") } // Fuck hydrax
+            .map { it.attr("value") }
+
+        val urls = players.map {
+            client.newCall(GET("$baseUrl/ajax-get-link-stream/?server=$it&filmId=$id", headers)).execute()
+                .use { it.body.string() }
+        }.distinct()
+
+        return urls.flatMap { url ->
+            runCatching {
+                when {
+                    url.contains("comedy") -> comedyshowExtractor.videosFromUrl(url)
+                    else -> emptyList()
+                }
+            }.onFailure { it.printStackTrace() }.getOrElse { emptyList() }
+        }
     }
 }
