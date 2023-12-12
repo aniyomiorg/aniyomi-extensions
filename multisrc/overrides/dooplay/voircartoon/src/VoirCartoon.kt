@@ -18,4 +18,6 @@ class VoirCartoon : DooPlay(
     // =============================== Latest ===============================
     override val supportsLatest = false
 
+    // =============================== Search ===============================
+    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
 }
