@@ -26,6 +26,7 @@ class DooPlayGenerator : ThemeSourceGenerator {
         SingleLang("Pi Fansubs", "https://pifansubs.org", "pt-BR", isNsfw = true, overrideVersionCode = 17),
         SingleLang("Pobreflix", "https://pobreflix.biz", "pt-BR", isNsfw = true, overrideVersionCode = 3),
         SingleLang("UniqueStream", "https://uniquestream.net", "en", isNsfw = false, overrideVersionCode = 2),
+        SingleLang("VoirCartoon", "https://voircartoon.com", "fr", isNsfw = false),
     )
 
     companion object {
