@@ -3076,6 +3076,27 @@
     ]
   },
   {
+    "name": "Aniyomi: VoirCartoon",
+    "pkg": "eu.kanade.tachiyomi.animeextension.fr.voircartoon",
+    "apk": "aniyomi-fr.voircartoon-v13.1.apk",
+    "lang": "fr",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "VoirCartoon",
+        "lang": "fr",
+        "id": "6593176551595101740",
+        "baseUrl": "https://voircartoon.com",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Vostfree",
     "pkg": "eu.kanade.tachiyomi.animeextension.fr.vostfree",
     "apk": "aniyomi-fr.vostfree-v13.18.apk",
@@ -3183,10 +3204,10 @@
   {
     "name": "Aniyomi: Kuramanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.kuramanime",
-    "apk": "aniyomi-id.kuramanime-v13.10.apk",
+    "apk": "aniyomi-id.kuramanime-v13.11.apk",
     "lang": "id",
-    "code": 10,
-    "version": "13.10",
+    "code": 11,
+    "version": "13.11",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
