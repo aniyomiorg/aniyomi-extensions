@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.UpStreamExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -16,6 +17,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
@@ -135,6 +137,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
     // ============================ video links ============================
+    private val playlistUtils by lazy { PlaylistUtils(client, headers) }
 
     override fun videoListRequest(episode: SEpisode): Request {
         val refererHeaders = headers.newBuilder().apply {
@@ -164,17 +167,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
                 val data = request.selectFirst("script:containsData(m3u8)")!!.data()
                 val masterUrl = data.substringAfter("sources: [{").substringAfter("file:\"").substringBefore("\"}")
-                val m3u8PrimeLink = masterUrl.substringBefore("master.m3u8")
-                val masterPlaylist = client.newCall(
-                    GET(masterUrl, headers),
-                ).execute().body.string()
-                val separator = "#EXT-X-STREAM-INF:"
-                masterPlaylist.substringAfter(separator).split(separator).forEach {
-                    val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p "
-                    val videoUrl = m3u8PrimeLink + it.substringAfter("\n").substringBefore("\n")
-                    videoList.add(Video(videoUrl, quality, videoUrl, headers))
-                }
-                return videoList
+                PlaylistUtils(client, headers).extractFromHls(masterUrl)
             }
             url.contains("ok") -> {
                 OkruExtractor(client).videosFromUrl(url)
@@ -317,7 +310,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // preferred quality settings
     private fun getPrefHostUrl(preferences: SharedPreferences): String = preferences.getString(
-        "default_domain",
+        "default_domain_v${BuildConfig.VERSION_CODE}",
         "https://w38.tuktukcinema1.buzz/",
     )!!.trim()
 
