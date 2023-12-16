@@ -136,6 +136,14 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ video links ============================
 
+    override fun videoListRequest(episode: SEpisode): Request {
+        val refererHeaders = headers.newBuilder().apply {
+            add("Referer", "$baseUrl/")
+        }.build()
+
+        return GET("$baseUrl/${episode.url}", headers = refererHeaders)
+    }
+
     override fun videoListSelector() = "div.watch--servers--list ul li.server--item"
 
     override fun videoListParse(response: Response): List<Video> {
@@ -151,6 +159,23 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun extractVideos(url: String): List<Video> {
         return when {
+            url.contains("egtpgrvh") -> {
+                val videoList = mutableListOf<Video>()
+                val request = client.newCall(GET(url, headers)).execute().asJsoup()
+                val data = request.selectFirst("script:containsData(m3u8)")!!.data()
+                val masterUrl = data.substringAfter("sources: [{").substringAfter("file:\"").substringBefore("\"}")
+                val m3u8PrimeLink = masterUrl.substringBefore("master.m3u8")
+                val masterPlaylist = client.newCall(
+                    GET(masterUrl, headers),
+                ).execute().body.string()
+                val separator = "#EXT-X-STREAM-INF:"
+                masterPlaylist.substringAfter(separator).split(separator).forEach {
+                    val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p "
+                    val videoUrl = m3u8PrimeLink + it.substringAfter("\n").substringBefore("\n")
+                    videoList.add(Video(videoUrl, quality, videoUrl, headers))
+                }
+                return videoList
+            }
             url.contains("ok") -> {
                 OkruExtractor(client).videosFromUrl(url)
             }
@@ -293,7 +318,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // preferred quality settings
     private fun getPrefHostUrl(preferences: SharedPreferences): String = preferences.getString(
         "default_domain",
-        "https://w.tuktukcinema.tv/",
+        "https://w38.tuktukcinema1.buzz/",
     )!!.trim()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -337,6 +362,6 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
     companion object {
         private val VIDBOM_REGEX = Regex("(?:v[aie]d[bp][aoe]?m|myvii?d|govad|segavid|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+).html")
-        private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)")
+        private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|ds|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)")
     }
 }

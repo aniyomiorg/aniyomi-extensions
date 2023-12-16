@@ -319,7 +319,7 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun getPrefHostUrl(preferences: SharedPreferences): String = preferences.getString(
         "default_domain",
-        "https://w9.egydead.live/",
+        "https://egydead.space/",
     )!!.trim()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -365,7 +365,7 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // like|kharabnahk
     companion object {
         private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)")
-        private val STREAMWISH_REGEX = Regex("ajmidyad|alhayabambi|atabknh[ks]|file")
+        private val STREAMWISH_REGEX = Regex("ajmidyad|alhayabambi|atabknh[ks]|file|egtpgrvh")
         private val SOURCE_URL_REGEX = Regex("sources:\\s*\\[\\{\\s*\\t*file:\\s*[\"']([^\"']+)")
         private val QUALITIES_REGEX = Regex("(.*)_,(.*),\\.urlset/master(.*)")
     }
