@@ -167,7 +167,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
                 val data = request.selectFirst("script:containsData(m3u8)")!!.data()
                 val masterUrl = data.substringAfter("sources: [{").substringAfter("file:\"").substringBefore("\"}")
-                PlaylistUtils(client, headers).extractFromHls(masterUrl)
+                playlistUtils.extractFromHls(masterUrl)
             }
             url.contains("ok") -> {
                 OkruExtractor(client).videosFromUrl(url)

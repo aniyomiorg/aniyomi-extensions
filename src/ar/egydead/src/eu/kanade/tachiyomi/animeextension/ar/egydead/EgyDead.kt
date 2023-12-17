@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.BuildConfig
 import dev.datlag.jsunpacker.JsUnpacker
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -318,7 +319,7 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ================================== preferences ==================================
 
     private fun getPrefHostUrl(preferences: SharedPreferences): String = preferences.getString(
-        "default_domain",
+        "default_domain_v${BuildConfig.VERSION_CODE}",
         "https://egydead.space/",
     )!!.trim()
 
