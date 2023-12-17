@@ -560,10 +560,10 @@
   {
     "name": "Aniyomi: Egy Dead",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.egydead",
-    "apk": "aniyomi-ar.egydead-v13.7.apk",
+    "apk": "aniyomi-ar.egydead-v13.8.apk",
     "lang": "ar",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -665,10 +665,10 @@
   {
     "name": "Aniyomi: توك توك سينما",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.tuktukcinema",
-    "apk": "aniyomi-ar.tuktukcinema-v13.11.apk",
+    "apk": "aniyomi-ar.tuktukcinema-v13.12.apk",
     "lang": "ar",
-    "code": 11,
-    "version": "13.11",
+    "code": 12,
+    "version": "13.12",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -677,7 +677,7 @@
         "name": "توك توك سينما",
         "lang": "ar",
         "id": "7363299109912773155",
-        "baseUrl": "https://w38.tuktukcinema1.buzz/",
+        "baseUrl": "https://ww.tuktukcima.com/",
         "versionId": 1,
         "hasCloudflare": 1
       }
