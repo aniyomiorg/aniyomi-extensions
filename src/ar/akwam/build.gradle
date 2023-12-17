@@ -5,7 +5,7 @@ ext {
     extName = 'أكوام'
     pkgNameSuffix = 'ar.akwam'
     extClass = '.Akwam'
-    extVersionCode = 8
+    extVersionCode = 9
     libVersion = '13'
 }
 
