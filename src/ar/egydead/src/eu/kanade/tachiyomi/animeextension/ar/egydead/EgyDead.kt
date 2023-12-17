@@ -7,7 +7,6 @@ import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.BuildConfig
-import dev.datlag.jsunpacker.JsUnpacker
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -17,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -130,6 +130,7 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ================================== video urls ==================================
+    private val playlistUtils by lazy { PlaylistUtils(client, headers) }
     override fun videoListParse(response: Response): List<Video> {
         val requestBody = FormBody.Builder().add("View", "1").build()
         val document = client.newCall(POST(response.request.url.toString(), body = requestBody)).execute().asJsoup()
@@ -148,7 +149,7 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             DOOD_REGEX.containsMatchIn(url) -> {
                 DoodExtractor(client).videoFromUrl(url, "Dood mirror")?.let(::listOf)
             }
-            url.contains("mixdrop") -> {
+            url.contains("mdbekjwqa") -> {
                 MixDropExtractor(client).videoFromUrl(url)
             }
             url.contains("ahvsh") -> {
@@ -160,23 +161,9 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             STREAMWISH_REGEX.containsMatchIn(url) -> {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
-                val data = JsUnpacker.unpackAndCombine(request.selectFirst("script:containsData(sources)")!!.data())!!
-                val m3u8 = SOURCE_URL_REGEX.find(data)!!.groupValues[1]
-                if (QUALITIES_REGEX.containsMatchIn(m3u8)) {
-                    val streamLink = QUALITIES_REGEX.find(m3u8)!!
-                    val streamQuality = streamLink.groupValues[2].split(",").reversed()
-                    val qualities = data.substringAfter("qualityLabels").substringBefore("}")
-                    val qRegex = Regex("\".*?\":\\s*\"(.*?)\"").findAll(qualities)
-                    qRegex.mapIndexed { index, matchResult ->
-                        val src = streamLink.groupValues[1] + "_" + streamQuality[index] + "/index-v1-a1" + streamLink.groupValues[3]
-                        val quality = "StreamWish: " + matchResult.groupValues[1]
-                        Video(src, quality, src, headers)
-                    }.toList()
-                } else {
-                    val qualities = data.substringAfter("qualityLabels").substringBefore("}")
-                    val qRegex = Regex("\".*?\"\\s*:\\s*\"(.*?)\"").find(qualities)!!
-                    Video(m3u8, qRegex.groupValues[1], m3u8).let(::listOf)
-                }
+                val data = request.selectFirst("script:containsData(m3u8)")!!.data()
+                val masterUrl = data.substringAfter("sources: [{").substringAfter("file:\"").substringBefore("\"}")
+                playlistUtils.extractFromHls(masterUrl)
             }
             url.contains("fanakishtuna") -> {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
@@ -365,9 +352,7 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // like|kharabnahk
     companion object {
-        private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)")
+        private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)|ds2play")
         private val STREAMWISH_REGEX = Regex("ajmidyad|alhayabambi|atabknh[ks]|file|egtpgrvh")
-        private val SOURCE_URL_REGEX = Regex("sources:\\s*\\[\\{\\s*\\t*file:\\s*[\"']([^\"']+)")
-        private val QUALITIES_REGEX = Regex("(.*)_,(.*),\\.urlset/master(.*)")
     }
 }

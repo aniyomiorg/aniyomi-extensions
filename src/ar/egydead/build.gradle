@@ -5,14 +5,14 @@ ext {
     extName = 'Egy Dead'
     pkgNameSuffix = 'ar.egydead'
     extClass = '.EgyDead'
-    extVersionCode = 7
+    extVersionCode = 8
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-mixdrop-extractor'))
-    implementation('dev.datlag.jsunpacker:jsunpacker:1.0.1')
+    implementation(project(':lib-playlist-utils'))
 }
 
 apply from: "$rootDir/common.gradle"
