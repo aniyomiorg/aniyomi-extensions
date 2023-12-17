@@ -16,7 +16,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
-import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -130,7 +130,8 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ================================== video urls ==================================
-    private val playlistUtils by lazy { PlaylistUtils(client, headers) }
+    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
+
     override fun videoListParse(response: Response): List<Video> {
         val requestBody = FormBody.Builder().add("View", "1").build()
         val document = client.newCall(POST(response.request.url.toString(), body = requestBody)).execute().asJsoup()
@@ -160,10 +161,7 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 Video(streamLink, "StreamHide: $quality", streamLink).let(::listOf)
             }
             STREAMWISH_REGEX.containsMatchIn(url) -> {
-                val request = client.newCall(GET(url, headers)).execute().asJsoup()
-                val data = request.selectFirst("script:containsData(m3u8)")!!.data()
-                val masterUrl = data.substringAfter("sources: [{").substringAfter("file:\"").substringBefore("\"}")
-                playlistUtils.extractFromHls(masterUrl)
+                streamWishExtractor.videosFromUrl(url)
             }
             url.contains("fanakishtuna") -> {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
