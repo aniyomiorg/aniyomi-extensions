@@ -351,6 +351,6 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // like|kharabnahk
     companion object {
         private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)|ds2play")
-        private val STREAMWISH_REGEX = Regex("ajmidyad|alhayabambi|atabknh[ks]|file|egtpgrvh")
+        private val STREAMWISH_REGEX = Regex("ajmidyad|alhayabambi|atabknh[ks]|file|eg.*\.[A-Za-z]+")
     }
 }
