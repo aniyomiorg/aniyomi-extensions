@@ -31,7 +31,7 @@ class VidsrcExtractor(private val client: OkHttpClient, private val headers: Hea
 
     private val keys by lazy {
         noCacheClient.newCall(
-            GET("https://raw.githubusercontent.com/Claudemirovsky/worstsource-keys/keys/keys.json", cache = cacheControl),
+            GET("https://raw.githubusercontent.com/J4zzyB1te7s/keys/keys/keys.json", cache = cacheControl),
         ).execute().parseAs<List<String>>()
     }
 
