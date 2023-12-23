@@ -2668,10 +2668,10 @@
   {
     "name": "Aniyomi: LegionAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.legionanime",
-    "apk": "aniyomi-es.legionanime-v13.28.apk",
+    "apk": "aniyomi-es.legionanime-v13.29.apk",
     "lang": "es",
-    "code": 28,
-    "version": "13.28",
+    "code": 29,
+    "version": "13.29",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2773,10 +2773,10 @@
   {
     "name": "Aniyomi: Pelisflix",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.pelisflix",
-    "apk": "aniyomi-es.pelisflix-v13.12.apk",
+    "apk": "aniyomi-es.pelisflix-v13.13.apk",
     "lang": "es",
-    "code": 12,
-    "version": "13.12",
+    "code": 13,
+    "version": "13.13",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2785,7 +2785,7 @@
         "name": "Pelisflix",
         "lang": "es",
         "id": "6496020228013664423",
-        "baseUrl": "https://pelisflix.gratis",
+        "baseUrl": "https://pelisflix2.green",
         "versionId": 1,
         "hasCloudflare": 1
       },
@@ -3225,10 +3225,10 @@
   {
     "name": "Aniyomi: Kuronime",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.kuronime",
-    "apk": "aniyomi-id.kuronime-v13.7.apk",
+    "apk": "aniyomi-id.kuronime-v13.8.apk",
     "lang": "id",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3237,7 +3237,7 @@
         "name": "Kuronime",
         "lang": "id",
         "id": "2083695115646974607",
-        "baseUrl": "https://45.12.2.26",
+        "baseUrl": "https://tv1.kuronime.vip",
         "versionId": 1,
         "hasCloudflare": 0
       }
@@ -3267,10 +3267,10 @@
   {
     "name": "Aniyomi: NeoNime",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.neonime",
-    "apk": "aniyomi-id.neonime-v13.12.apk",
+    "apk": "aniyomi-id.neonime-v13.13.apk",
     "lang": "id",
-    "code": 12,
-    "version": "13.12",
+    "code": 13,
+    "version": "13.13",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3279,7 +3279,7 @@
         "name": "NeoNime",
         "lang": "id",
         "id": "6698339357657312694",
-        "baseUrl": "https://neonime.fun",
+        "baseUrl": "https://neonime.ink",
         "versionId": 1,
         "hasCloudflare": 1
       }
