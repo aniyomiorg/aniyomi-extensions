@@ -14,7 +14,7 @@ class JkanimeExtractor(
     private val client: OkHttpClient,
 ) {
 
-    fun getNozomiFromUrl(url: String): Video {
+    fun getNozomiFromUrl(url: String, prefix: String = ""): Video? {
         val dataKeyHeaders = Headers.Builder().add("Referer", url).build()
         val doc = client.newCall(GET(url, dataKeyHeaders)).execute().asJsoup()
         val dataKey = doc.select("form input[value]").attr("value")
@@ -25,19 +25,22 @@ class JkanimeExtractor(
         val postKey = location.substringAfter("player.html#")
 
         val nozomiBody = "v=$postKey".toRequestBody("application/x-www-form-urlencoded".toMediaTypeOrNull())
-        val nozomiResponse = client.newCall(POST("https://jkanime.net/gsplay/api.php", body = nozomiBody)).execute().body.string()
-
-        val nozomiUrl = JSONObject(nozomiResponse).getString("file")
-
-        return Video(nozomiUrl, "Nozomi", nozomiUrl)
+        val nozomiResponse = client.newCall(POST("https://jkanime.net/gsplay/api.php", body = nozomiBody)).execute()
+        val nozomiUrl = JSONObject(nozomiResponse.body.string()).getString("file")
+        if (nozomiResponse.isSuccessful && nozomiUrl.isNotBlank()) {
+            return Video(nozomiUrl, "${prefix}Nozomi", nozomiUrl)
+        }
+        return null
     }
 
-    fun getDesuFromUrl(url: String): Video {
-        val headers = Headers.Builder().add("Referer", "https://jkanime.net/").build()
-        val document = client.newCall(GET(url, headers)).execute().asJsoup()
-        val script = document.selectFirst("script:containsData(var parts = {)")!!.data()
+    fun getDesuFromUrl(url: String, prefix: String = ""): Video? {
+        val document = client.newCall(GET(url)).execute()
+        val script = document.asJsoup().selectFirst("script:containsData(var parts = {)")!!.data()
         val streamUrl = script.substringAfter("url: '").substringBefore("'")
-        return Video(streamUrl, "Desu", streamUrl)
+        if (document.isSuccessful && streamUrl.isNotBlank()) {
+            return Video(streamUrl, "${prefix}Desu", streamUrl)
+        }
+        return null
     }
 
     fun amazonExtractor(url: String): String {
