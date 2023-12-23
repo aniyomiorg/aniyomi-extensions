@@ -352,6 +352,6 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     companion object {
         private val VIDBOM_REGEX = Regex("(?:v[aie]d[bp][aoe]?m|myvii?d|govad|segavid|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+).html")
         private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)|ds2play")
-        private val STREAMWISH_REGEX = Regex("ajmidyad|alhayabambi|atabknh[ks]|file|eg.*\\.[A-Za-z]+")
+        private val STREAMWISH_REGEX = Regex("ajmidyad|alhayabambi|atabknh[ks]|https://.*\\.sbs/e/")
     }
 }
