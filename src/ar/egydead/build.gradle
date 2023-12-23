@@ -5,7 +5,7 @@ ext {
     extName = 'Egy Dead'
     pkgNameSuffix = 'ar.egydead'
     extClass = '.EgyDead'
-    extVersionCode = 9
+    extVersionCode = 10
     libVersion = '13'
 }
 
