@@ -43,7 +43,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Serienstream"
 
-    override val baseUrl = "https://s.to"
+    override val baseUrl = "http://186.2.175.5"
 
     private val baseLogin by lazy { SConstants.getPrefBaseLogin(preferences) }
     private val basePassword by lazy { SConstants.getPrefBasePassword(preferences) }
@@ -56,11 +56,11 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override val client: OkHttpClient = network.client.newBuilder()
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .addInterceptor(DdosGuardInterceptor(network.client))
         .build()
 
-    private val authClient = network.client.newBuilder()
+    private val authClient = network.cloudflareClient.newBuilder()
         .addInterceptor(SerienstreamInterceptor(client, preferences))
         .build()
 
@@ -107,7 +107,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val headers = Headers.Builder()
-            .add("Referer", "https://s.to/search")
+            .add("Referer", "http://186.2.175.5/search")
             .add("origin", baseUrl)
             .add("connection", "keep-alive")
             .add("user-agent", "Mozilla/5.0 (Linux; Android 12; Pixel 5 Build/SP2A.220405.004; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Safari/537.36")
@@ -226,8 +226,6 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val redirectlink = document.select("ul.row li")
         val videoList = mutableListOf<Video>()
         val hosterSelection = preferences.getStringSet(SConstants.HOSTER_SELECTION, null)
-        val redirectInterceptor = client.newBuilder().addInterceptor(RedirectInterceptor()).build()
-        val jsInterceptor = client.newBuilder().addInterceptor(JsInterceptor()).build()
         redirectlink.forEach {
             val langkey = it.attr("data-lang-key")
             val language = getlanguage(langkey)
@@ -237,10 +235,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 when {
                     hoster.contains("VOE") && hosterSelection.contains(SConstants.NAME_VOE) -> {
                         val quality = "Voe $language"
-                        var url = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
-                        if (url.contains("payload") || url.contains(redirectgs)) {
-                            url = recapbypass(jsInterceptor, redirectgs)
-                        }
+                        val url = client.newCall(GET(redirectgs)).execute().request.url.toString()
                         val video = VoeExtractor(client).videoFromUrl(url, quality)
                         if (video != null) {
                             videoList.add(video)
@@ -249,10 +244,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                     hoster.contains("Doodstream") && hosterSelection.contains(SConstants.NAME_DOOD) -> {
                         val quality = "Doodstream $language"
-                        var url = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
-                        if (url.contains("payload") || url.contains(redirectgs)) {
-                            url = recapbypass(jsInterceptor, redirectgs)
-                        }
+                        val url = client.newCall(GET(redirectgs)).execute().request.url.toString()
                         val video = DoodExtractor(client).videoFromUrl(url, quality)
                         if (video != null) {
                             videoList.add(video)
@@ -261,10 +253,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                     hoster.contains("Streamtape") && hosterSelection.contains(SConstants.NAME_STAPE) -> {
                         val quality = "Streamtape $language"
-                        var url = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
-                        if (url.contains("payload") || url.contains(redirectgs)) {
-                            url = recapbypass(jsInterceptor, redirectgs)
-                        }
+                        val url = client.newCall(GET(redirectgs)).execute().request.url.toString()
                         val video = StreamTapeExtractor(client).videoFromUrl(url, quality)
                         if (video != null) {
                             videoList.add(video)
@@ -274,12 +263,6 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         return videoList
-    }
-
-    private fun recapbypass(jsInterceptor: OkHttpClient, redirectgs: String): String {
-        val token = jsInterceptor.newCall(GET(redirectgs)).execute().request.header("url").toString()
-        val url = client.newCall(GET("$redirectgs?token=$token&original=")).execute().request.url.toString()
-        return url
     }
 
     private fun getlanguage(langkey: String): String? {

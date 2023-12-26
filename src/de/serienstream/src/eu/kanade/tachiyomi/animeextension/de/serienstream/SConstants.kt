@@ -33,7 +33,7 @@ object SConstants {
     const val PASSWORD_TITLE = "Passwort"
     const val PASSWORD_DEFAULT = ""
 
-    const val LOGIN_URL = "https://s.to/login"
+    const val LOGIN_URL = "http://186.2.175.5/login"
 
     fun getPrefBaseLogin(preferences: SharedPreferences): String = preferences.getString(LOGIN_TITLE, LOGIN_DEFAULT)!!
     fun getPrefBasePassword(preferences: SharedPreferences): String = preferences.getString(PASSWORD_TITLE, PASSWORD_DEFAULT)!!
