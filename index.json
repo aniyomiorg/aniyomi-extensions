@@ -1085,10 +1085,10 @@
   {
     "name": "Aniyomi: Serienstream",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.serienstream",
-    "apk": "aniyomi-de.serienstream-v13.13.apk",
+    "apk": "aniyomi-de.serienstream-v13.14.apk",
     "lang": "de",
-    "code": 13,
-    "version": "13.13",
+    "code": 14,
+    "version": "13.14",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1097,9 +1097,9 @@
         "name": "Serienstream",
         "lang": "de",
         "id": "5798377917298605009",
-        "baseUrl": "https://s.to",
+        "baseUrl": "http://186.2.175.5",
         "versionId": 1,
-        "hasCloudflare": 0
+        "hasCloudflare": 1
       }
     ]
   },
