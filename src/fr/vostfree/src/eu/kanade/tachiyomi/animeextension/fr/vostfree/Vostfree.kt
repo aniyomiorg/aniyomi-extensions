@@ -13,7 +13,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.mytvextractor.MytvExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.vudeoextractor.VudeoExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -122,12 +121,6 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 if (video != null) {
                     videoList.add(video)
                 }
-            }
-            if (server.lowercase() == "mytv" || server.lowercase() == "stream") {
-                val playerId = it.attr("id")
-                val url = "https://www.myvi.tv/embed/" + document.select("div#player-tabs div.tab-blocks div.tab-content div div#content_$playerId").text()
-                val video = MytvExtractor(client).videosFromUrl(url)
-                videoList.addAll(video)
             }
         }
 
@@ -271,8 +264,8 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("Vudeo", "Mytv", "Doodstream")
-            entryValues = arrayOf("Vudeo", "Mytv", "Doodstream")
+            entries = arrayOf("Vudeo", "Doodstream")
+            entryValues = arrayOf("Vudeo", "Doodstream")
             setDefaultValue("Vudeo")
             summary = "%s"
 

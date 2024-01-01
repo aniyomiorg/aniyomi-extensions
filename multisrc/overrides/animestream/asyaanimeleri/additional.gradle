@@ -4,6 +4,5 @@ dependencies {
     implementation(project(":lib-sibnet-extractor"))
     implementation(project(":lib-gdriveplayer-extractor"))
     implementation(project(":lib-dood-extractor"))
-    implementation(project(":lib-mytv-extractor"))
     // implementation(project(":lib-dailymotion-extractor"))
 }

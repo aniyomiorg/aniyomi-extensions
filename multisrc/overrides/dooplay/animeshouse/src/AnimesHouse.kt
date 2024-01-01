@@ -33,6 +33,8 @@ class AnimesHouse : DooPlay(
     override fun latestUpdatesNextPageSelector(): String = "div.resppages > a > span.icon-chevron-right"
 
     // ============================ Video Links =============================
+    private val redplayBypasser by lazy { RedplayBypasser(client, headers) }
+
     private fun getPlayerUrl(player: Element): String {
         val body = FormBody.Builder()
             .add("action", "doo_player_ajax")
@@ -45,8 +47,10 @@ class AnimesHouse : DooPlay(
             .use { it.asJsoup().selectFirst("iframe")!!.attr("src") }
             .let {
                 when {
-                    it.startsWith("/redplay") ->
-                        RedplayBypasser(client, headers).fromUrl(baseUrl + it)
+                    it.contains("/redplay") -> {
+                        val url = if (it.startsWith("/")) baseUrl + it else it
+                        redplayBypasser.fromUrl(url)
+                    }
                     else -> it
                 }
             }
@@ -62,6 +66,12 @@ class AnimesHouse : DooPlay(
         }
     }
 
+    private val embedExtractor by lazy { EmbedExtractor(headers) }
+    private val edifierExtractor by lazy { EdifierExtractor(client, headers) }
+    private val mp4dooExtractor by lazy { MpFourDooExtractor(client, headers) }
+    private val genericExtractor by lazy { GenericExtractor(client, headers) }
+    private val mcpExtractor by lazy { McpExtractor(client, headers) }
+
     private fun getPlayerVideos(url: String): List<Video> {
         val iframeBody = client.newCall(GET(url, headers)).execute()
             .use { it.body.string() }
@@ -69,17 +79,23 @@ class AnimesHouse : DooPlay(
         val unpackedBody = JsUnpacker.unpack(iframeBody)
 
         return when {
-            "embed.php?" in url ->
-                EmbedExtractor(headers).getVideoList(url, iframeBody)
-            "edifier" in url ->
-                EdifierExtractor(client, headers).getVideoList(url)
-            "mp4doo" in url ->
-                MpFourDooExtractor(client, headers).getVideoList(unpackedBody)
-            "clp-new" in url || "gcloud" in url ->
-                GenericExtractor(client, headers).getVideoList(url, unpackedBody)
-            "mcp_comm" in unpackedBody ->
-                McpExtractor(client, headers).getVideoList(unpackedBody)
-            else -> emptyList<Video>()
+            "embed.php?" in url -> embedExtractor.getVideoList(url, iframeBody)
+            "edifier" in url -> edifierExtractor.getVideoList(url)
+            "mp4doo" in url || "doomp4" in url -> mp4dooExtractor.getVideoList(unpackedBody)
+            "clp-new" in url || "gcloud" in url -> genericExtractor.getVideoList(url, unpackedBody)
+            "mcp_comm" in unpackedBody -> mcpExtractor.getVideoList(unpackedBody)
+            "cloudg" in url -> {
+                unpackedBody.substringAfter("sources:[").substringBefore(']')
+                    .split('{')
+                    .drop(1)
+                    .mapNotNull {
+                        val videoUrl = it.substringAfter("\"file\":\"").substringBefore('"')
+                            .takeUnless(String::isBlank) ?: return@mapNotNull null
+                        val label = it.substringAfter("\"label\":\"").substringBefore('"')
+                        Video(videoUrl, "CloudG - $label", videoUrl, headers)
+                    }
+            }
+            else -> emptyList()
         }
     }
 

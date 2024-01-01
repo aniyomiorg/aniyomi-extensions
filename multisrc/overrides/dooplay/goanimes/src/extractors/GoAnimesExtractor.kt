@@ -1,10 +1,12 @@
 package eu.kanade.tachiyomi.animeextension.pt.goanimes.extractors
 
+import android.util.Base64
 import dev.datlag.jsunpacker.JsUnpacker
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 
 class GoAnimesExtractor(private val client: OkHttpClient, private val headers: Headers) {
@@ -32,7 +34,16 @@ class GoAnimesExtractor(private val client: OkHttpClient, private val headers: H
                     .substringBefore("'", "")
                     .takeIf(String::isNotEmpty)
                     ?: return emptyList()
-                playlistUtils.extractFromHls(playlistUrl, url, videoNameGen = { "$PLAYER_NAME - $it" })
+
+                val fixedUrl = if (playlistUrl.contains("/aHR0")) {
+                    val encoded = playlistUrl.substringAfterLast("/").substringBefore(".")
+                    String(Base64.decode(encoded, Base64.DEFAULT))
+                } else {
+                    playlistUrl
+                }
+
+                val referer = url.toHttpUrl().queryParameter("url") ?: url
+                playlistUtils.extractFromHls(fixedUrl, referer, videoNameGen = { "$PLAYER_NAME - $it" })
             }
             else -> emptyList()
         }

@@ -68,8 +68,8 @@ class CineClix : ConfigurableAnimeSource, AnimeHttpSource() {
         val jsonData = jsonLine ?: return AnimesPage(emptyList(), false)
         val jObject = json.decodeFromString<JsonObject>(jsonData)
         val jO = jObject.jsonObject["pagination"]!!.jsonObject
-        val nextPage = jO.jsonObject["next_page_url"]!!.jsonPrimitive.content
-            .substringAfter("page=").toInt()
+        val nextPage = jO.jsonObject["next_page"]!!.jsonPrimitive.int
+        // .substringAfter("page=").toInt()
         val page = jO.jsonObject["current_page"]!!.jsonPrimitive.int
         val hasNextPage = page < nextPage
         val array = jO["data"]!!.jsonArray
