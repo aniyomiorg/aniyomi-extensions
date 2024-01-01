@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -54,6 +55,8 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_SERVER_DEFAULT = "Nozomi"
         private val SERVER_LIST = arrayOf(
             "Okru",
+            "Mixdrop",
+            "StreamWish",
             "Xtreme S",
             "HentaiJk",
             "Nozomi",
@@ -125,13 +128,15 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val url = scriptServers.data().substringAfter("video[$serverId] = '<iframe class=\"player_conte\" src=\"")
                 .substringBefore("\"")
                 .replace("/jkokru.php?u=", "http://ok.ru/videoembed/")
-                .replace("/jkvmixdrop.php?u=", "https://mixdrop.co/e/")
+                .replace("/jkvmixdrop.php?u=", "https://mixdrop.ag/e/")
+                .replace("/jksw.php?u=", "https://sfastwish.com/e/")
                 .replace("/jk.php?u=", "$baseUrl/")
 
             try {
                 when {
                     "ok" in url -> OkruExtractor(client).videosFromUrl(url, "$lang ").forEach { videos.add(it) }
                     "mixdrop" in url -> MixDropExtractor(client).videosFromUrl(url, prefix = "$lang ").forEach { videos.add(it) }
+                    "sfastwish" in url -> StreamWishExtractor(client, headers).videosFromUrl(url, prefix = "$lang StreamWish").forEach { videos.add(it) }
                     "stream/jkmedia" in url -> videos.add(Video(url, "$lang Xtreme S", url))
                     "um2.php" in url -> JkanimeExtractor(client).getNozomiFromUrl(baseUrl + url, "$lang ").let { if (it != null) videos.add(it) }
                     "um.php" in url -> JkanimeExtractor(client).getDesuFromUrl(baseUrl + url, "$lang ").let { if (it != null) videos.add(it) }
