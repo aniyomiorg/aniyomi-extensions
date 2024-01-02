@@ -3372,10 +3372,10 @@
   {
     "name": "Aniyomi: Anime Saturn",
     "pkg": "eu.kanade.tachiyomi.animeextension.it.animesaturn",
-    "apk": "aniyomi-it.animesaturn-v13.7.apk",
+    "apk": "aniyomi-it.animesaturn-v13.8.apk",
     "lang": "it",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
