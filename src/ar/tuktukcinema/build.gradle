@@ -13,10 +13,8 @@ dependencies {
     implementation(project(':lib-uqload-extractor'))
     implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-dood-extractor'))
-    implementation(project(':lib-upstream-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-vidbom-extractor'))
-    implementation(project(':lib-streamwish-extractor'))
     implementation(project(':lib-playlist-utils'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
