@@ -137,8 +137,6 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
     // ============================ video links ============================
-    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
-
     override fun videoListRequest(episode: SEpisode): Request {
         val refererHeaders = headers.newBuilder().apply {
             add("Referer", "$baseUrl/")
