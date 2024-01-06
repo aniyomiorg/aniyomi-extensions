@@ -30,7 +30,7 @@ import java.util.Locale
 
 class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
     override val name: String = "Oploverz"
-    override val baseUrl: String = "https://oploverz.red"
+    override val baseUrl: String = "https://oploverz.life"
     override val lang: String = "id"
     override val supportsLatest: Boolean = true
 

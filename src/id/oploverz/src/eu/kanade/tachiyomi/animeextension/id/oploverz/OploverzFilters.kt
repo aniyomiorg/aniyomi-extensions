@@ -226,6 +226,7 @@ object OploverzFilters {
             Pair("Winter 2021", "winter-2021"),
             Pair("Winter 2022", "winter-2022"),
             Pair("Winter 2023", "winter-2023"),
+            Pair("Winter 2024", "winter-2024"),
         )
 
         val STUDIO = arrayOf(
