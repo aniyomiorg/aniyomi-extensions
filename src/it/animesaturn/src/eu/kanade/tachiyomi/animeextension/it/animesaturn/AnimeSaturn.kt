@@ -348,6 +348,8 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Year("2020"),
         Year("2021"),
         Year("2022"),
+        Year("2023"),
+        Year("2024"),
     )
 
     internal class State(val id: String, name: String) : AnimeFilter.CheckBox(name)

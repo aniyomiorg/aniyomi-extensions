@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.JkanimeExtractor
+import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.MediaFireExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,10 +15,10 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -271,6 +272,15 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun parseExtractors(url: String, server: String): List<Video> {
         return when {
+            url.contains("streamwish") -> StreamWishExtractor(client, headers).videosFromUrl(url, prefix = "StreamWish")
+            url.contains("mediafire") -> {
+                val video = MediaFireExtractor(client).getVideoFromUrl(url, server)
+                if (video != null) {
+                    listOf(video)
+                } else {
+                    emptyList()
+                }
+            }
             url.contains("streamtape") -> {
                 val video = StreamTapeExtractor(client).videoFromUrl(url, server)
                 if (video != null) {
@@ -280,9 +290,10 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
             url.contains("jkanime") -> {
-                try {
-                    listOf(JkanimeExtractor(client).getDesuFromUrl(url))
-                } catch (_: Exception) {
+                val video = JkanimeExtractor(client).getDesuFromUrl(url)
+                if (video != null) {
+                    listOf(video)
+                } else {
                     emptyList()
                 }
             }
@@ -318,14 +329,6 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             url.contains("ok.ru") -> {
                 OkruExtractor(client).videosFromUrl(url)
-            }
-            url.contains("drive.google") -> {
-                try {
-                    val newUrl = "http://gdriveplayer.to/embed2.php?link=" + url.replace("preview", "view").replace("u/2/", "")
-                    GdrivePlayerExtractor(client).videosFromUrl(newUrl, "Gdrive", headers)
-                } catch (_: Exception) {
-                    emptyList()
-                }
             }
             url.contains("flvvideo") && (url.endsWith(".m3u8") || url.endsWith(".mp4")) -> {
                 if (url.contains("http")) {

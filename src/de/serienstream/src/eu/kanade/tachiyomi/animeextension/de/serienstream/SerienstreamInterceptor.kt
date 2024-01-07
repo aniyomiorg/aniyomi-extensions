@@ -69,7 +69,7 @@ class SerienstreamInterceptor(private val client: OkHttpClient, private val pref
             .build()
         val headers = Headers.Builder()
             .add("Upgrade-Insecure-Requests", "1")
-            .add("Referer", "https://s.to")
+            .add("Referer", "http://186.2.175.5")
             // .add("user-agent", "Mozilla/5.0 (Linux; Android 12; Pixel 5 Build/SP2A.220405.004; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Safari/537.36")
             .build()
         return client.newCall(POST(SConstants.LOGIN_URL, body = payload, headers = headers)).execute().header("set-cookie")?.let {

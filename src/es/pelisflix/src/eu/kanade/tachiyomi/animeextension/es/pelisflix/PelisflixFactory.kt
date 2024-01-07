@@ -29,7 +29,7 @@ class PelisflixFactory : AnimeSourceFactory {
     override fun createSources(): List<AnimeSource> = listOf(PelisflixClass(), SeriesflixClass())
 }
 
-class PelisflixClass : Pelisflix("Pelisflix", "https://pelisflix.gratis")
+class PelisflixClass : Pelisflix("Pelisflix", "https://pelisflix2.green")
 
 class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/ver-series-online/page/$page")

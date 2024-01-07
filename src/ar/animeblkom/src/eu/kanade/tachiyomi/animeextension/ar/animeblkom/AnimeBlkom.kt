@@ -146,16 +146,19 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
+
     private fun extractVideos(element: Element): List<Video> {
         val url = element.attr("data-src").replace("http://", "https://")
         return when {
-            "new.vid4up" in url -> {
-                val urlResponse = client.newCall(GET(url, headers))
-                    .execute().asJsoup()
-                urlResponse.select(videoListSelector()).map(::videoFromElement)
+            ".vid4up" in url || "Blkom" in element.text() -> {
+                val videoDoc = client.newCall(GET(url, headers)).execute()
+                    .use { it.asJsoup() }
+                videoDoc.select(videoListSelector()).map(::videoFromElement)
             }
-            "ok.ru" in url -> OkruExtractor(client).videosFromUrl(url)
-            "mp4upload" in url -> Mp4uploadExtractor(client).videosFromUrl(url, headers)
+            "ok.ru" in url -> okruExtractor.videosFromUrl(url)
+            "mp4upload" in url -> mp4uploadExtractor.videosFromUrl(url, headers)
             else -> emptyList()
         }
     }
@@ -164,7 +167,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoFromElement(element: Element): Video {
         val videoUrl = element.attr("src")
-        return Video(videoUrl, "Blkbom - " + element.attr("label"), videoUrl, headers = headers)
+        return Video(videoUrl, "Blkom - " + element.attr("label"), videoUrl, headers)
     }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
@@ -243,7 +246,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_DOMAIN_KEY = "pref_domain_key"
         private const val PREF_DOMAIN_TITLE = "Preferred domain"
         private const val PREF_DOMAIN_DEFAULT = "https://animeblkom.net"
-        private val PREF_DOMAIN_ENTRIES = arrayOf("animeblkom.net", "blkom.com")
+        private val PREF_DOMAIN_ENTRIES = arrayOf("animeblkom.net", "animeblkom.tv", "blkom.com")
         private val PREF_DOMAIN_VALUES by lazy {
             PREF_DOMAIN_ENTRIES.map { "https://$it" }.toTypedArray()
         }

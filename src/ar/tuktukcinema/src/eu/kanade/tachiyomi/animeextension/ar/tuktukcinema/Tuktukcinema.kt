@@ -6,7 +6,7 @@ import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.UpStreamExtractor
+import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -19,6 +19,8 @@ import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
+import dev.datlag.jsunpacker.JsUnpacker
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
@@ -106,7 +108,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val document = response.asJsoup()
             val url = response.request.url.toString()
             if (document.select(seasonsNextPageSelector()).isNullOrEmpty()) {
-                addEpisodeNew(url, "مشاهدة")
+                addEpisodeNew("$url/watch/", "مشاهدة")
             } else {
                 document.select(seasonsNextPageSelector()).reversed().forEach { season ->
                     val seasonNum = season.select("h3").text()
@@ -135,13 +137,20 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
     // ============================ video links ============================
+    override fun videoListRequest(episode: SEpisode): Request {
+        val refererHeaders = headers.newBuilder().apply {
+            add("Referer", "$baseUrl/")
+        }.build()
+
+        return GET("$baseUrl/${episode.url}", headers = refererHeaders)
+    }
 
     override fun videoListSelector() = "div.watch--servers--list ul li.server--item"
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         return document.select(videoListSelector()).parallelMap {
-            runCatching { extractVideos(it.attr("data-link")) }.getOrElse { emptyList() }
+            runCatching { extractVideos(it) }.getOrElse { emptyList() }
         }.flatten()
     }
     private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
@@ -149,18 +158,21 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
 
-    private fun extractVideos(url: String): List<Video> {
+    private fun extractVideos(element: Element): List<Video> {
+        val url = element.attr("data-link")
+        val txt = element.text()
         return when {
+            "Main" in txt -> { 
+                videosFromMain(url)
+            }
             url.contains("ok") -> {
                 OkruExtractor(client).videosFromUrl(url)
             }
-            VIDBOM_REGEX.containsMatchIn(url) -> {
-                val finalUrl = VIDBOM_REGEX.find(url)!!.groupValues[0]
-                VidBomExtractor(client).videosFromUrl("https://www.$finalUrl")
+            "Vidbom" in txt || "Vidshare" in txt || "Govid" in txt -> {
+                VidBomExtractor(client).videosFromUrl(url)
             }
-            DOOD_REGEX.containsMatchIn(url) -> {
-                val finalUrl = DOOD_REGEX.find(url)!!.groupValues[0]
-                DoodExtractor(client).videoFromUrl("https://www.$finalUrl", "Dood mirror", false)?.let(::listOf)
+            "Doodstream" in txt -> {
+                DoodExtractor(client).videoFromUrl(url, "Dood mirror")?.let(::listOf)
             }
             url.contains("uqload") -> {
                 UqloadExtractor(client).videosFromUrl(url, "mirror")
@@ -168,35 +180,36 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             url.contains("tape") -> {
                 StreamTapeExtractor(client).videoFromUrl(url)?.let(::listOf)
             }
-            url.contains("upstream", ignoreCase = true) -> {
-                UpStreamExtractor(client).videoFromUrl(url.replace("//", "//www."))
+            "Upstream" in txt || "Streamruby" in txt || "Streamwish" in txt -> {
+                videosFromOthers(url, txt)
             }
             else -> null
         } ?: emptyList()
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString("preferred_quality", null)!!
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
     }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
+    private fun videosFromMain(url: String): List<Video> {
+        val jsE = client.newCall(GET(url)).execute().asJsoup().selectFirst("script:containsData(player)")!!.data()
+        val fileLinks = JsUnpacker.unpackAndCombine(jsE)!!.substringAfter("file").substringBefore("\",")
+        return Regex("\\[(.*?)\\](.*?mp4)").findAll(fileLinks).map {
+            Video(it.groupValues[2], "Main: " + it.groupValues[1], it.groupValues[2])
+        }.toList()
+    }
+    private fun videosFromOthers(url: String, prefix: String): List<Video> {
+        val jsE = client.newCall(GET(url)).execute().asJsoup().selectFirst("script:containsData(source)")!!.data()
+        val masterUrl = JsUnpacker.unpackAndCombine(jsE)!!.substringAfter("file").substringAfter("\"").substringBefore("\"")
+        return PlaylistUtils(client).extractFromHls(masterUrl, url, videoNameGen = { "$prefix - $it" } )
+    }
     // ============================ search ============================
 
     override fun searchAnimeSelector(): String = "div.Block--Item"
@@ -292,8 +305,8 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // preferred quality settings
     private fun getPrefHostUrl(preferences: SharedPreferences): String = preferences.getString(
-        "default_domain",
-        "https://w.tuktukcinema.tv/",
+        "default_domain_v${BuildConfig.VERSION_CODE}",
+        "https://ww.tuktukcima.com/",
     )!!.trim()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -320,8 +333,8 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p", "240p", "DoodStream", "Uqload")
-            entryValues = arrayOf("1080", "720", "480", "360", "240", "Dood", "Uqload")
+            entries = arrayOf("720p", "480p", "Low", "Normal", "HD", "UHD", "DoodStream", "Uqload")
+            entryValues = arrayOf("720", "480", "Low", "Normal", "HD", "UHD", "Dood", "Uqload")
             setDefaultValue("1080")
             summary = "%s"
 
@@ -334,9 +347,5 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         screen.addPreference(defaultDomain)
         screen.addPreference(videoQualityPref)
-    }
-    companion object {
-        private val VIDBOM_REGEX = Regex("(?:v[aie]d[bp][aoe]?m|myvii?d|govad|segavid|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+).html")
-        private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)")
     }
 }
