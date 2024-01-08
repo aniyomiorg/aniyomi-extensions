@@ -203,7 +203,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
         // Get cover
 
         val coverResponse = client.newCall(
-            createPost(driveDocument, folderId, searchReqWithType(folderId, "cover", IMAGE_MIMETYPE)),
+            createPost(driveDocument, folderId, nextPageToken, searchReqWithType(folderId, "cover", IMAGE_MIMETYPE)),
         ).execute().parseAs<PostResponse> { JSON_REGEX.find(it)!!.groupValues[1] }
 
         coverResponse.items?.firstOrNull()?.let {
@@ -213,7 +213,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
         // Get details
 
         val detailsResponse = client.newCall(
-            createPost(driveDocument, folderId, searchReqWithType(folderId, "details.json", "")),
+            createPost(driveDocument, folderId, nextPageToken, searchReqWithType(folderId, "details.json", "")),
         ).execute().parseAs<PostResponse> { JSON_REGEX.find(it)!!.groupValues[1] }
 
         detailsResponse.items?.firstOrNull()?.let {
@@ -302,7 +302,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
 
             while (pageToken != null) {
                 val response = client.newCall(
-                    createPost(driveDocument, folderId),
+                    createPost(driveDocument, folderId, pageToken),
                 ).execute()
 
                 val parsed = response.parseAs<PostResponse> {
@@ -386,6 +386,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun createPost(
         document: Document,
         folderId: String,
+        pageToken: String?,
         getMultiFormPath: (String, String, String) -> String = { folderIdStr, nextPageTokenStr, keyStr ->
             defaultGetRequest(folderIdStr, nextPageTokenStr, keyStr)
         },
@@ -404,7 +405,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
                 it.name == "SAPISID" || it.name == "__Secure-3PAPISID"
             }?.value ?: ""
 
-        val requestUrl = getMultiFormPath(folderId, nextPageToken ?: "", key)
+        val requestUrl = getMultiFormPath(folderId, pageToken ?: "", key)
         val body = """--$BOUNDARY
                     |content-type: application/http
                     |content-transfer-encoding: binary
@@ -455,11 +456,12 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
 
         if (page == 1) nextPageToken = ""
         val post = if (genMultiFormReq == null) {
-            createPost(driveDocument, folderId)
+            createPost(driveDocument, folderId, nextPageToken)
         } else {
             createPost(
                 driveDocument,
                 folderId,
+                nextPageToken,
                 genMultiFormReq,
             )
         }
