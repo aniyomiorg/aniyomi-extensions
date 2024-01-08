@@ -44,7 +44,7 @@ class MegaCloudExtractor(private val client: OkHttpClient, private val headers: 
 
     private fun getIndexPairs(type: String) = runLocked {
         INDEX_PAIRS_MAP[type].orEmpty().ifEmpty {
-            noCacheClient.newCall(GET("https://raw.githubusercontent.com/Claudemirovsky/keys/e$type/key", cache = cacheControl))
+            noCacheClient.newCall(GET("https://raw.githubusercontent.com/theonlymo/keys/e$type/key", cache = cacheControl))
                 .execute()
                 .use { it.body.string() }
                 .let { json.decodeFromString<List<List<Int>>>(it) }
