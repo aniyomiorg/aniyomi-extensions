@@ -6,7 +6,7 @@ ext {
     extName = 'MetroSeries'
     pkgNameSuffix = 'es.metroseries'
     extClass = '.MetroSeries'
-    extVersionCode = 3
+    extVersionCode = 5
     libVersion = '13'
 }
 

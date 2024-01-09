@@ -5,7 +5,7 @@ ext {
     extName = 'AsiaLiveAction'
     pkgNameSuffix = 'es.asialiveaction'
     extClass = '.AsiaLiveAction'
-    extVersionCode = 23
+    extVersionCode = 24
     libVersion = '13'
 }
 
