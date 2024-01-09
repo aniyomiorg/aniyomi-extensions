@@ -30,6 +30,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
@@ -80,7 +81,8 @@ class MetroSeries : ConfigurableAnimeSource, AnimeHttpSource() {
             SAnime.create().apply {
                 setUrlWithoutDomain(element.selectFirst(".lnk-blk")?.attr("abs:href") ?: "")
                 title = element.selectFirst(".entry-header .entry-title")?.text() ?: ""
-                thumbnail_url = element.selectFirst(".post-thumbnail figure img")?.attr("abs:src") ?: ""
+                description = element.select(".entry-content p").text() ?: ""
+                thumbnail_url = element.selectFirst(".post-thumbnail figure img")?.let { getImageUrl(it) }
             }
         }
         return AnimesPage(animeList, nextPage)
@@ -99,9 +101,17 @@ class MetroSeries : ConfigurableAnimeSource, AnimeHttpSource() {
         return SAnime.create().apply {
             title = document.selectFirst("main .entry-header .entry-title")?.text() ?: ""
             description = document.select("main .entry-content p").joinToString { it.text() }
-            thumbnail_url = document.selectFirst("main .post-thumbnail img")?.attr("abs:src")
+            thumbnail_url = document.selectFirst("main .post-thumbnail img")?.let { getImageUrl(it) }
             genre = document.select("main .entry-content .tagcloud a").joinToString { it.text() }
             status = SAnime.UNKNOWN
+        }
+    }
+
+    private fun getImageUrl(element: Element): String? {
+        return when {
+            element.hasAttr("data-src") -> element.attr("abs:data-src")
+            element.hasAttr("src") -> element.attr("abs:src")
+            else -> null
         }
     }
 
@@ -218,7 +228,7 @@ class MetroSeries : ConfigurableAnimeSource, AnimeHttpSource() {
                             val key = src.split("/").last()
                             src = "https://fastream.to/embed-$key.html"
                         }
-                        FastreamExtractor(client, headers).videosFromUrl(src).also(videoList::addAll)
+                        FastreamExtractor(client, headers).videosFromUrl(src, needsSleep = false).also(videoList::addAll)
                     }
 
                     if (src.contains("upstream")) {

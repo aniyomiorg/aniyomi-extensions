@@ -25,18 +25,20 @@ class FastreamExtractor(private val client: OkHttpClient, private val headers: H
         return runCatching {
             val firstDoc = client.newCall(GET(url, videoHeaders)).execute().use { it.asJsoup() }
 
-            val form = FormBody.Builder().apply {
-                firstDoc.select("input[name]").forEach {
-                    add(it.attr("name"), it.attr("value"))
-                }
-            }.build()
-
             if (needsSleep) Thread.sleep(5100L) // 5s is the minimum
-            val doc = client.newCall(POST(url, videoHeaders, body = form)).execute()
-                .use { it.asJsoup() }
 
-            val scriptElement = doc.selectFirst("script:containsData(jwplayer):containsData(vplayer)")
-                ?: return emptyList()
+            val scriptElement = if (firstDoc.select("input[name]").any()) {
+                val form = FormBody.Builder().apply {
+                    firstDoc.select("input[name]").forEach {
+                        add(it.attr("name"), it.attr("value"))
+                    }
+                }.build()
+                val doc = client.newCall(POST(url, videoHeaders, body = form)).execute().use { it.asJsoup() }
+                doc.selectFirst("script:containsData(jwplayer):containsData(vplayer)") ?: return emptyList()
+            }
+            else {
+                firstDoc.selectFirst("script:containsData(jwplayer):containsData(vplayer)") ?: return emptyList()
+            }
 
             val scriptData = scriptElement.data().let {
                 when {
@@ -45,10 +47,7 @@ class FastreamExtractor(private val client: OkHttpClient, private val headers: H
                 }
             } ?: return emptyList()
 
-            val videoUrl = scriptData.substringAfter("file:")
-                .substringBefore('}')
-                .substringBefore(',')
-                .trim('"', '\'', ' ')
+            val videoUrl = scriptData.substringAfter("file:\"").substringBefore("\"").trim()
 
             return when {
                 videoUrl.contains(".m3u8") -> {
