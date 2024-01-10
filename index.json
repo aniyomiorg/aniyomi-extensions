@@ -3897,10 +3897,10 @@
   {
     "name": "Aniyomi: Anitube",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.anitube",
-    "apk": "aniyomi-pt.anitube-v13.12.apk",
+    "apk": "aniyomi-pt.anitube-v13.13.apk",
     "lang": "pt-BR",
-    "code": 12,
-    "version": "13.12",
+    "code": 13,
+    "version": "13.13",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
