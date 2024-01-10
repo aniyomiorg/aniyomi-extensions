@@ -30,7 +30,7 @@ for APK in ${APKS[@]}; do
     LANG=$(echo $APK | grep -Po "aniyomi-\K[^\.]+")
 
     ICON=$(echo "$BADGING" | grep -Po "application-icon-320.*'\K[^']+")
-    unzip -p $APK $ICON > icon/${FILENAME%.*}.png
+    unzip -p $APK $ICON > icon/${PKGNAME}.png
 
     SOURCE_INFO=$(jq ".[\"$PKGNAME\"]" < ../output.json)
 
@@ -61,6 +61,6 @@ for APK in ${APKS[@]}; do
 done | jq -sr '[.[]]' > index.json
 
 # Alternate minified copy
-jq -c '.' < index.json > index.min.json
+jq -c 'map(del(.hasReadme, .hasChangelog, .sources[]["versionId", "hasCloudflare"]))' < index.json > index.min.json
 
 cat index.json
