@@ -35,7 +35,7 @@ object AnitubeFilters {
     data class FilterSearchParams(
         val genre: String = "",
         val season: String = "",
-        val year: String = "2023",
+        val year: String = "2024",
         val initialChar: String = "todos",
     )
 
@@ -62,7 +62,7 @@ object AnitubeFilters {
             Pair("Verão", "verao"),
         )
 
-        val YEARS = (2023 downTo 1979).map {
+        val YEARS = (2024 downTo 1979).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
