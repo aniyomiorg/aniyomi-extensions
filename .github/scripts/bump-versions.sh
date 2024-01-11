@@ -43,7 +43,7 @@ bumpMultisrcVersion() {
         local generator=$(echo $themePath/*Generator.kt)
         bumpedFiles+="$generator " # Needed to commit the changes
 
-        local sourceLine=$(grep -i $sourceName $generator)
+        local sourceLine=$(grep "Lang(" $generator | grep -i $sourceName)
         local oldVersion=$(echo $sourceLine | getVersion $generator)
         local newVersionStr="$multisrcVersionStr $((oldVersion + 1))"
 
