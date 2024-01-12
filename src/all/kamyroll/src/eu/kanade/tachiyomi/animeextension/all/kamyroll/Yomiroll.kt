@@ -513,11 +513,9 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                     setOnPreferenceChangeListener { _, newValue ->
                         val new = newValue as Boolean
                         preferences.edit().putBoolean(key, new).commit().also {
-                            Thread {
-                                summary = runBlocking {
-                                    withContext(Dispatchers.IO) { getTokenDetail(true) }
-                                }
-                            }.start()
+                            summary = runBlocking {
+                                withContext(Dispatchers.IO) { getTokenDetail(true) }
+                            }
                         }
                     }
                 }
