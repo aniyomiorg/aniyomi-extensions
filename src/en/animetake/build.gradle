@@ -5,7 +5,7 @@ ext {
     extName = 'AnimeTake'
     pkgNameSuffix = 'en.animetake'
     extClass = '.AnimeTake'
-    extVersionCode = 2
+    extVersionCode = 3
     containsNsfw = false
 }
 
