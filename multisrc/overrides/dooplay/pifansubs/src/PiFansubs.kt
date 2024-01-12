@@ -67,5 +67,5 @@ class PiFansubs : DooPlay(
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/episodes/page/$page", headers)
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/episodios/page/$page", headers)
 }
