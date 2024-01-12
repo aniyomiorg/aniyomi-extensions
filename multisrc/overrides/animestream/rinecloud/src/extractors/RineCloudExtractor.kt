@@ -14,20 +14,23 @@ class RineCloudExtractor(private val client: OkHttpClient, private val headers: 
 
     fun videosFromUrl(url: String): List<Video> {
         val playerDoc = client.newCall(GET(url, headers)).execute().asJsoup()
-        val scriptData = playerDoc.selectFirst("script:containsData(JuicyCodes.Run)")
+        val encodedScript = playerDoc.selectFirst("script:containsData(JuicyCodes.Run)")
             ?.data()
-            ?: return emptyList()
 
-        val decodedData = scriptData.substringAfter("(").substringBefore(")")
-            .split("+\"")
-            .joinToString("") { it.replace("\"", "") }
-            .let { Base64.decode(it, Base64.DEFAULT) }
-            .let(::String)
+        val script = if (encodedScript != null) {
+            val decodedData = encodedScript.substringAfter("(").substringBefore(")")
+                .split("+\"")
+                .joinToString("") { it.replace("\"", "") }
+                .let { Base64.decode(it, Base64.DEFAULT) }
+                .let(::String)
+            Unpacker.unpack(decodedData).ifEmpty { return emptyList() }
+        } else {
+            playerDoc.selectFirst("script:containsData(const player)")?.data()
+                ?: return emptyList()
+        }
 
-        val unpackedJs = Unpacker.unpack(decodedData).ifEmpty { return emptyList() }
-
-        return if ("googlevideo" in unpackedJs) {
-            unpackedJs.substringAfter("sources:").substringBefore("]")
+        return if ("googlevideo" in script) {
+            script.substringAfter("sources:").substringBefore("]")
                 .split("{")
                 .drop(1)
                 .map {
@@ -36,7 +39,7 @@ class RineCloudExtractor(private val client: OkHttpClient, private val headers: 
                     Video(videoUrl, "Rinecloud - $quality", videoUrl, headers)
                 }
         } else {
-            val masterPlaylistUrl = unpackedJs.substringAfter("sources:")
+            val masterPlaylistUrl = script.substringAfter("sources:")
                 .substringAfter("file\":\"")
                 .substringBefore('"')
 
