@@ -23,7 +23,11 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
+import okhttp3.FormBody
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
@@ -125,6 +129,52 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
+    // Function to fetch anime status using AniList GraphQL API ispired by OppaiStream.kt
+    private fun fetchStatusByTitle(title: String): Int {
+        val client = OkHttpClient()
+
+        val query = """
+            query {
+            	Media(search: "$title", isAdult: false,	type: ANIME) {
+                id
+                idMal
+                title {
+                    romaji
+                    native
+                    english
+                    }
+                status
+                }
+            }
+        """.trimIndent()
+
+        val requestBody = FormBody.Builder()
+            .add("query", query)
+            .build()
+
+        val request = Request.Builder()
+            .url("https://graphql.anilist.co")
+            .post(requestBody)
+            .build()
+
+        val response = client.newCall(request).execute()
+        val responseString = response.body.string()
+
+        val responseJson = Json.parseToJsonElement(responseString) as? JsonObject ?: return SAnime.UNKNOWN
+        val data = responseJson["data"] as? JsonObject ?: return SAnime.UNKNOWN
+        val media = data["Media"] as? JsonObject ?: return SAnime.UNKNOWN
+        val status = media["status"] as? JsonPrimitive ?: return SAnime.UNKNOWN
+
+        return when (status.content) {
+            "FINISHED" -> SAnime.COMPLETED
+            "RELEASING" -> SAnime.ONGOING
+            "NOT_YET_RELEASED" -> SAnime.LICENSED
+            "CANCELLED" -> SAnime.CANCELLED
+            "HIATUS" -> SAnime.ON_HIATUS
+            else -> SAnime.UNKNOWN
+        }
+    }
+
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
         val mediaId = json.decodeFromString<LinkData>(anime.url)
         val resp = client.newCall(
@@ -138,7 +188,12 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         return Observable.just(
             anime.apply {
                 author = info.data.first().content_provider
-                status = SAnime.COMPLETED
+                if (mediaId.media_type == "series") {
+                    status = fetchStatusByTitle(info.data.first().title)
+                } else {
+                    status = SAnime.COMPLETED
+                }
+
                 if (genre.isNullOrBlank()) {
                     genre =
                         info.data.first().genres?.joinToString { gen -> gen.replaceFirstChar { it.uppercase() } }
@@ -365,7 +420,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             url = LinkData(id, type!!).toJsonString()
             genre = series_metadata?.genres?.joinToString()
                 ?: movie_metadata?.genres?.joinToString() ?: ""
-            status = SAnime.COMPLETED
+            status = fetchStatusByTitle(this@toSAnime.title)
             var desc = this@toSAnime.description + "\n"
             desc += "\nLanguage:" +
                 (
