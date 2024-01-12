@@ -11,10 +11,14 @@ import okhttp3.Response
 class LinkfunBypasser(private val client: OkHttpClient) {
     fun getIframeUrl(response: Response): String {
         return response.use { page ->
-            val document = page.asJsoup(decodeAtob(page.body.string()))
+            val docString = page.body.string()
+            val document = if (docString.startsWith("<script")) {
+                page.asJsoup(decodeAtob(docString))
+            } else { page.asJsoup(docString) }
+
             val newHeaders = Headers.headersOf("Referer", document.location())
 
-            val iframe = document.selectFirst("iframe")
+            val iframe = document.selectFirst("iframe[src]")
 
             if (iframe != null) {
                 iframe.attr("src")
