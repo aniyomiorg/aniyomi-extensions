@@ -1,10 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.pt.animestc
 
-import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.AnimeDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
-import eu.kanade.tachiyomi.animesource.model.AnimeFilter.TriState
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
-import eu.kanade.tachiyomi.animesource.model.SAnime
 
 object ATCFilters {
     open class QueryPartFilter(
@@ -17,172 +14,161 @@ object ATCFilters {
         fun toQueryPart() = vals[state].second
     }
 
-    open class TriStateFilterList(name: String, values: List<TriState>) : AnimeFilter.Group<TriState>(name, values)
-    private class TriStateVal(name: String) : TriState(name)
-
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
         return (first { it is R } as QueryPartFilter).toQueryPart()
     }
 
-    private inline fun <reified R> AnimeFilterList.parseTriFilter(): List<List<String>> {
-        return (first { it is R } as TriStateFilterList).state
-            .filterNot { it.isIgnored() }
-            .map { filter -> filter.state to filter.name }
-            .groupBy { it.first } // group by state
-            .let { dict ->
-                val included = dict.get(TriState.STATE_INCLUDE)?.map { it.second }.orEmpty()
-                val excluded = dict.get(TriState.STATE_EXCLUDE)?.map { it.second }.orEmpty()
-                listOf(included, excluded)
-            }
-    }
-
-    class InitialLetterFilter : QueryPartFilter("Primeira letra", ATCFiltersData.INITIAL_LETTER)
+    class TypeFilter : QueryPartFilter("Tipo", ATCFiltersData.TYPES)
+    class YearFilter : QueryPartFilter("Ano", ATCFiltersData.YEARS)
+    class GenreFilter : QueryPartFilter("Gênero", ATCFiltersData.GENRES)
     class StatusFilter : QueryPartFilter("Status", ATCFiltersData.STATUS)
 
-    class SortFilter : AnimeFilter.Sort(
-        "Ordenar",
-        ATCFiltersData.ORDERS.map { it.first }.toTypedArray(),
-        Selection(0, true),
-    )
-
-    class GenresFilter : TriStateFilterList(
-        "Gêneros",
-        ATCFiltersData.GENRES.map(::TriStateVal),
-    )
-
     val FILTER_LIST get() = AnimeFilterList(
-        InitialLetterFilter(),
+        TypeFilter(),
+        YearFilter(),
+        GenreFilter(),
         StatusFilter(),
-        SortFilter(),
-
-        AnimeFilter.Separator(),
-        GenresFilter(),
     )
 
     data class FilterSearchParams(
-        val initialLetter: String = "",
+        val type: String = "series",
+        val year: String = "",
+        val genre: String = "",
         val status: String = "",
-        val orderAscending: Boolean = true,
-        val sortBy: String = "",
-        val blackListedGenres: List<String> = emptyList(),
-        val includedGenres: List<String> = emptyList(),
-        var animeName: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
         if (filters.isEmpty()) return FilterSearchParams()
-        val (includedGenres, excludedGenres) = filters.parseTriFilter<GenresFilter>()
-
-        val sortFilter = filters.firstOrNull { it is SortFilter } as? SortFilter
-        val (orderBy, ascending) = sortFilter?.state?.run {
-            val order = ATCFiltersData.ORDERS[index].second
-            val orderAscending = ascending
-            Pair(order, orderAscending)
-        } ?: Pair("", true)
 
         return FilterSearchParams(
-            filters.asQueryPart<InitialLetterFilter>(),
+            filters.asQueryPart<TypeFilter>(),
+            filters.asQueryPart<YearFilter>(),
+            filters.asQueryPart<GenreFilter>(),
             filters.asQueryPart<StatusFilter>(),
-            ascending,
-            orderBy,
-            includedGenres,
-            excludedGenres,
         )
-    }
-
-    private fun mustRemove(anime: AnimeDto, params: FilterSearchParams): Boolean {
-        return when {
-            params.animeName != "" && !anime.title.contains(params.animeName, true) -> true
-            params.initialLetter != "" && !anime.title.lowercase().startsWith(params.initialLetter) -> true
-            params.blackListedGenres.size > 0 && params.blackListedGenres.any {
-                anime.genres.contains(it, true)
-            } -> true
-            params.includedGenres.size > 0 && params.includedGenres.any {
-                !anime.genres.contains(it, true)
-            } -> true
-            params.status != "" && anime.status != SAnime.UNKNOWN && anime.status != params.status.toInt() -> true
-            else -> false
-        }
-    }
-
-    private inline fun <T, R : Comparable<R>> List<T>.sortedByIf(
-        isAscending: Boolean,
-        crossinline selector: (T) -> R,
-    ): List<T> {
-        return when {
-            isAscending -> sortedBy(selector)
-            else -> sortedByDescending(selector)
-        }
-    }
-
-    fun List<AnimeDto>.applyFilterParams(params: FilterSearchParams): List<AnimeDto> {
-        return filterNot { mustRemove(it, params) }.let { results ->
-            when (params.sortBy) {
-                "A-Z" -> results.sortedByIf(params.orderAscending) { it.title.lowercase() }
-                "year" -> results.sortedByIf(params.orderAscending) { it.year ?: 0 }
-                else -> results
-            }
-        }
     }
 
     private object ATCFiltersData {
-
-        val ORDERS = arrayOf(
-            Pair("Alfabeticamente", "A-Z"),
-            Pair("Por ano", "year"),
+        val TYPES = arrayOf(
+            Pair("Anime", "series"),
+            Pair("Filme", "movie"),
+            Pair("OVA", "ova"),
         )
+
+        val SELECT = Pair("Selecione", "")
 
         val STATUS = arrayOf(
-            Pair("Selecione", ""),
-            Pair("Completo", SAnime.COMPLETED.toString()),
-            Pair("Em Lançamento", SAnime.ONGOING.toString()),
+            SELECT,
+            Pair("Cancelado", "canceled"),
+            Pair("Completo", "complete"),
+            Pair("Em Lançamento", "airing"),
+            Pair("Pausado", "onhold"),
         )
 
-        val INITIAL_LETTER = arrayOf(Pair("Selecione", "")) + ('A'..'Z').map {
-            Pair(it.toString(), it.toString().lowercase())
+        val YEARS = arrayOf(SELECT) + (1997..2024).map {
+            Pair(it.toString(), it.toString())
         }.toTypedArray()
 
         val GENRES = arrayOf(
-            "Ação",
-            "Action",
-            "Adventure",
-            "Artes Marciais",
-            "Aventura",
-            "Carros",
-            "Comédia",
-            "Comédia Romântica",
-            "Demônios",
-            "Drama",
-            "Ecchi",
-            "Escolar",
-            "Esporte",
-            "Fantasia",
-            "Historical",
-            "Histórico",
-            "Horror",
-            "Jogos",
-            "Kids",
-            "Live Action",
-            "Magia",
-            "Mecha",
-            "Militar",
-            "Mistério",
-            "Psicológico",
-            "Romance",
-            "Samurai",
-            "School Life",
-            "Sci-Fi", // Yeah
-            "SciFi",
-            "Seinen",
-            "Shoujo",
-            "Shounen",
-            "Sobrenatural",
-            "Super Poder",
-            "Supernatural",
-            "Terror",
-            "Tragédia",
-            "Vampiro",
-            "Vida Escolar",
+            SELECT,
+            Pair("Ação", "acao"),
+            Pair("Action", "action"),
+            Pair("Adventure", "adventure"),
+            Pair("Artes Marciais", "artes-marciais"),
+            Pair("Artes Marcial", "artes-marcial"),
+            Pair("Aventura", "aventura"),
+            Pair("Beisebol", "beisebol"),
+            Pair("Boys Love", "boys-love"),
+            Pair("Comédia", "comedia"),
+            Pair("Comédia Romântica", "comedia-romantica"),
+            Pair("Comedy", "comedy"),
+            Pair("Crianças", "criancas"),
+            Pair("Culinária", "culinaria"),
+            Pair("Cyberpunk", "cyberpunk"),
+            Pair("Demônios", "demonios"),
+            Pair("Distopia", "distopia"),
+            Pair("Documentário", "documentario"),
+            Pair("Drama", "drama"),
+            Pair("Ecchi", "ecchi"),
+            Pair("Escola", "escola"),
+            Pair("Escolar", "escolar"),
+            Pair("Espaço", "espaco"),
+            Pair("Esporte", "esporte"),
+            Pair("Esportes", "esportes"),
+            Pair("Fantasia", "fantasia"),
+            Pair("Ficção Científica", "ficcao-cientifica"),
+            Pair("Futebol", "futebol"),
+            Pair("Game", "game"),
+            Pair("Girl battleships", "girl-battleships"),
+            Pair("Gourmet", "gourmet"),
+            Pair("Gundam", "gundam"),
+            Pair("Harém", "harem"),
+            Pair("Hentai", "hentai"),
+            Pair("Historia", "historia"),
+            Pair("Historial", "historial"),
+            Pair("Historical", "historical"),
+            Pair("Histórico", "historico"),
+            Pair("Horror", "horror"),
+            Pair("Humor Negro", "humor-negro"),
+            Pair("Ídolo", "idolo"),
+            Pair("Infantis", "infantis"),
+            Pair("Investigação", "investigacao"),
+            Pair("Isekai", "isekai"),
+            Pair("Jogo", "jogo"),
+            Pair("Jogos", "jogos"),
+            Pair("Josei", "josei"),
+            Pair("Kids", "kids"),
+            Pair("Luta", "luta"),
+            Pair("Maduro", "maduro"),
+            Pair("Máfia", "mafia"),
+            Pair("Magia", "magia"),
+            Pair("Mágica", "magica"),
+            Pair("Mecha", "mecha"),
+            Pair("Militar", "militar"),
+            Pair("Militares", "militares"),
+            Pair("Mistério", "misterio"),
+            Pair("Música", "musica"),
+            Pair("Musical", "musical"),
+            Pair("Não Informado!", "nao-informado"),
+            Pair("Paródia", "parodia"),
+            Pair("Piratas", "piratas"),
+            Pair("Polícia", "policia"),
+            Pair("Policial", "policial"),
+            Pair("Político", "politico"),
+            Pair("Pós-Apocalíptico", "pos-apocaliptico"),
+            Pair("Psico", "psico"),
+            Pair("Psicológico", "psicologico"),
+            Pair("Romance", "romance"),
+            Pair("Samurai", "samurai"),
+            Pair("Samurais", "samurais"),
+            Pair("Sátiro", "satiro"),
+            Pair("School Life", "school-life"),
+            Pair("SciFi", "scifi"),
+            Pair("Sci-Fi", "sci-fi"),
+            Pair("Seinen", "seinen"),
+            Pair("Shotacon", "shotacon"),
+            Pair("Shoujo", "shoujo"),
+            Pair("Shoujo Ai", "shoujo-ai"),
+            Pair("Shounem", "shounem"),
+            Pair("Shounen", "shounen"),
+            Pair("Shounen-ai", "shounen-ai"),
+            Pair("Slice of Life", "slice-of-life"),
+            Pair("Sobrenatural", "sobrenatural"),
+            Pair("Space", "space"),
+            Pair("Supernatural", "supernatural"),
+            Pair("Super Poder", "super-poder"),
+            Pair("Super-Poderes", "super-poderes"),
+            Pair("Suspense", "suspense"),
+            Pair("tear-studio", "tear-studio"),
+            Pair("Terror", "terror"),
+            Pair("Thriller", "thriller"),
+            Pair("Tragédia", "tragedia"),
+            Pair("Vampiro", "vampiro"),
+            Pair("Vampiros", "vampiros"),
+            Pair("Vida Escolar", "vida-escolar"),
+            Pair("Yaoi", "yaoi"),
+            Pair("Yuri", "yuri"),
+            Pair("Zombie", "zombie"),
         )
     }
 }
