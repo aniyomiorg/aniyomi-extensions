@@ -71,9 +71,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         super.client.newBuilder().addInterceptor(tokenInterceptor).build()
     }
 
-    private val noTokenClient by lazy {
-        super.client.newBuilder().build()
-    }
+    private val noTokenClient = super.client
 
     // ============================== Popular ===============================
 
