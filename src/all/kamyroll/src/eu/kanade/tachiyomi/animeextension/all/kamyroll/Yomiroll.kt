@@ -137,15 +137,22 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun fetchStatusByTitle(title: String): Int {
         val query = """
             query {
-            	Media(search: "$title", isAdult: false, sort: UPDATED_AT, type: ANIME) {
-                id
-                idMal
-                title {
+            	Media(
+                  search: "$title",
+                  sort: STATUS_DESC,
+                  status_not_in: [NOT_YET_RELEASED],
+                  format_not_in: [SPECIAL, MOVIE],
+                  isAdult: false,
+                  type: ANIME
+                ) {
+                  id
+                  idMal
+                  title {
                     romaji
                     native
                     english
-                    }
-                status
+                  }
+                  status
                 }
             }
         """.trimIndent()
@@ -163,7 +170,6 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         return when (responseParsed.data.media?.status) {
             "FINISHED" -> SAnime.COMPLETED
             "RELEASING" -> SAnime.ONGOING
-            "NOT_YET_RELEASED" -> SAnime.LICENSED
             "CANCELLED" -> SAnime.CANCELLED
             "HIATUS" -> SAnime.ON_HIATUS
             else -> SAnime.UNKNOWN
@@ -411,7 +417,11 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             url = anime?.url ?: LinkData(id, type!!).toJsonString()
             genre = anime?.genre ?: (series_metadata?.genres ?: movie_metadata?.genres ?: genres)
                 ?.joinToString { gen -> gen.replaceFirstChar { it.uppercase() } }
-            status = if (anime != null) fetchStatusByTitle(this@toSAnime.title) else SAnime.UNKNOWN
+            status = anime?.let {
+                val media = json.decodeFromString<LinkData>(anime.url)
+                if (media.media_type == "series") fetchStatusByTitle(this@toSAnime.title)
+                else SAnime.COMPLETED
+            } ?: SAnime.UNKNOWN
             author = content_provider
             description = anime?.description ?: StringBuilder().apply {
                 appendLine(this@toSAnime.description)
