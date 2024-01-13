@@ -3958,27 +3958,6 @@
     ]
   },
   {
-    "name": "Aniyomi: DonghuaX",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.donghuax",
-    "apk": "aniyomi-pt.donghuax-v13.2.apk",
-    "lang": "pt-BR",
-    "code": 2,
-    "version": "13.2",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "DonghuaX",
-        "lang": "pt-BR",
-        "id": "4766292642740176896",
-        "baseUrl": "https://donghuax.com",
-        "versionId": 1,
-        "hasCloudflare": 0
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: Flixei",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.flixei",
     "apk": "aniyomi-pt.flixei-v13.4.apk",
@@ -4099,27 +4078,6 @@
         "lang": "pt-BR",
         "id": "1129545692275462313",
         "baseUrl": "https://megaflix.co",
-        "versionId": 1,
-        "hasCloudflare": 0
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: Meus Animes",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.meusanimes",
-    "apk": "aniyomi-pt.meusanimes-v13.2.apk",
-    "lang": "pt-BR",
-    "code": 2,
-    "version": "13.2",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "Meus Animes",
-        "lang": "pt-BR",
-        "id": "8394381853778573358",
-        "baseUrl": "https://meusanimes.org",
         "versionId": 1,
         "hasCloudflare": 0
       }
