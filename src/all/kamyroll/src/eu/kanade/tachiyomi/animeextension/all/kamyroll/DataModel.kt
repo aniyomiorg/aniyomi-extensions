@@ -59,27 +59,23 @@ data class Anime(
     val genres: ArrayList<String>? = null,
     val series_metadata: Metadata? = null,
     @SerialName("movie_listing_metadata")
-    val movie_metadata: MovieMeta? = null,
+    val movie_metadata: Metadata? = null,
     val content_provider: String? = null,
+    val audio_locale: String? = null,
+    val audio_locales: ArrayList<String>? = null,
+    val subtitle_locales: ArrayList<String>? = null,
+    val maturity_ratings: ArrayList<String>? = null,
+    val is_dubbed: Boolean? = null,
+    val is_subbed: Boolean? = null,
 ) {
     @Serializable
     data class Metadata(
         val maturity_ratings: ArrayList<String>,
-        val is_simulcast: Boolean,
-        val audio_locales: ArrayList<String>,
+        val is_simulcast: Boolean? = null,
+        val audio_locales: ArrayList<String>? = null,
         val subtitle_locales: ArrayList<String>,
         val is_dubbed: Boolean,
         val is_subbed: Boolean,
-        @SerialName("tenant_categories")
-        val genres: ArrayList<String>? = null,
-    )
-
-    @Serializable
-    data class MovieMeta(
-        val is_dubbed: Boolean,
-        val is_subbed: Boolean,
-        val maturity_ratings: ArrayList<String>,
-        val subtitle_locales: ArrayList<String>,
         @SerialName("tenant_categories")
         val genres: ArrayList<String>? = null,
     )
