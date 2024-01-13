@@ -8,11 +8,11 @@ import okhttp3.OkHttpClient
 class AnonFilesExtractor(private val client: OkHttpClient) {
     private val playerName = "AnonFiles"
 
-    fun videoFromUrl(url: String, quality: String): Video? {
+    fun videosFromUrl(url: String, quality: String): List<Video> {
         val doc = client.newCall(GET(url)).execute().asJsoup()
         val downloadUrl = doc.selectFirst("a#download-url")?.attr("href")
         return downloadUrl?.let {
-            Video(it, "$playerName - $quality", it)
-        }
+            listOf(Video(it, "$playerName - $quality", it))
+        }.orEmpty()
     }
 }

@@ -177,32 +177,43 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================ Video Links =============================
     private val anonFilesExtractor by lazy { AnonFilesExtractor(client) }
     private val sendcmExtractor by lazy { SendcmExtractor(client) }
+    private val linkBypasser by lazy { LinkBypasser(client, json) }
 
+    private val supportedPlayers = listOf("anonfiles", "send")
     override fun videoListParse(response: Response): List<Video> {
         val videoDto = response.parseAs<ResponseDto<VideoDto>>().items.first()
         val links = videoDto.links
+
         val allLinks = listOf(links.low, links.medium, links.high).flatten()
-        val supportedPlayers = listOf("anonfiles", "send")
+            .filter { it.name in supportedPlayers }
+
         val online = links.online?.run {
             filterNot { "mega" in it }.map {
                 Video(it, "Player ATC", it, headers)
             }
         }.orEmpty()
-        return online + allLinks.filter { it.name in supportedPlayers }.parallelMap {
-            val playerUrl = LinkBypasser(client, json).bypass(it, videoDto.id)
-                ?: return@parallelMap null
-            val quality = when (it.quality) {
-                "low" -> "SD"
-                "medium" -> "HD"
-                "high" -> "FULLHD"
-                else -> "SD"
-            }
-            when (it.name) {
-                "anonfiles" -> anonFilesExtractor.videoFromUrl(playerUrl, quality)
-                "send" -> sendcmExtractor.videoFromUrl(playerUrl, quality)
-                else -> null
-            }
-        }.filterNotNull()
+
+        val videoId = videoDto.id
+
+        return online + allLinks.parallelCatchingFlatMap { extractVideosFromLink(it, videoId) }
+    }
+
+    private fun extractVideosFromLink(video: VideoDto.VideoLink, videoId: Int): List<Video> {
+        val playerUrl = linkBypasser.bypass(video, videoId)
+            ?: return emptyList()
+
+        val quality = when (video.quality) {
+            "low" -> "SD"
+            "medium" -> "HD"
+            "high" -> "FULLHD"
+            else -> "SD"
+        }
+
+        return when (video.name) {
+            "anonfiles" -> anonFilesExtractor.videosFromUrl(playerUrl, quality)
+            "send" -> sendcmExtractor.videosFromUrl(playerUrl, quality)
+            else -> emptyList()
+        }
     }
 
     // ============================== Settings ==============================
@@ -241,9 +252,13 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
         runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+            map {
+                async(Dispatchers.Default) {
+                    runCatching { f(it) }.getOrElse { emptyList() }
+                }
+            }.awaitAll().flatten()
         }
 
     private fun Response.getAnimeDto(): AnimeDto {
