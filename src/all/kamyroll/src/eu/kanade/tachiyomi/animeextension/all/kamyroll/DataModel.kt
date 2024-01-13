@@ -58,7 +58,6 @@ data class Anime(
     @SerialName("keywords")
     val genres: ArrayList<String>? = null,
     val series_metadata: Metadata? = null,
-    val is_simulcast: Boolean? = null,
     @SerialName("movie_listing_metadata")
     val movie_metadata: MovieMeta? = null,
     val content_provider: String? = null,
@@ -172,6 +171,22 @@ data class Subtitle(
     val locale: String,
     val url: String,
 )
+
+@Serializable
+data class AnilistResult(
+    val data: AniData,
+) {
+    @Serializable
+    data class AniData(
+        @SerialName("Media")
+        val media: Media? = null,
+    )
+
+    @Serializable
+    data class Media(
+        val status: String,
+    )
+}
 
 fun <T> List<T>.thirdLast(): T? {
     if (size < 3) return null

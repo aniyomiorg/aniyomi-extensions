@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -23,11 +24,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import okhttp3.FormBody
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
@@ -131,8 +129,6 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // Function to fetch anime status using AniList GraphQL API ispired by OppaiStream.kt
     private fun fetchStatusByTitle(title: String): Int {
-        val client = OkHttpClient()
-
         val query = """
             query {
             	Media(search: "$title", isAdult: false,	type: ANIME) {
@@ -152,20 +148,13 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             .add("query", query)
             .build()
 
-        val request = Request.Builder()
-            .url("https://graphql.anilist.co")
-            .post(requestBody)
-            .build()
+        val response = client.newCall(
+            POST("https://graphql.anilist.co", body = requestBody)
+        ).execute().use { it.body.string() }
 
-        val response = client.newCall(request).execute()
-        val responseString = response.body.string()
+        val responseParsed = json.decodeFromString<AnilistResult>(response)
 
-        val responseJson = Json.parseToJsonElement(responseString) as? JsonObject ?: return SAnime.UNKNOWN
-        val data = responseJson["data"] as? JsonObject ?: return SAnime.UNKNOWN
-        val media = data["Media"] as? JsonObject ?: return SAnime.UNKNOWN
-        val status = media["status"] as? JsonPrimitive ?: return SAnime.UNKNOWN
-
-        return when (status.content) {
+        return when (responseParsed.data.media?.status) {
             "FINISHED" -> SAnime.COMPLETED
             "RELEASING" -> SAnime.ONGOING
             "NOT_YET_RELEASED" -> SAnime.LICENSED
@@ -188,11 +177,6 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         return Observable.just(
             anime.apply {
                 author = info.data.first().content_provider
-                if (mediaId.media_type == "series") {
-                    status = fetchStatusByTitle(info.data.first().title)
-                } else {
-                    status = SAnime.COMPLETED
-                }
 
                 if (genre.isNullOrBlank()) {
                     genre =
