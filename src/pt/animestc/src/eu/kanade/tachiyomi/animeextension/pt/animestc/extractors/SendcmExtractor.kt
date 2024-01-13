@@ -9,12 +9,12 @@ import okhttp3.OkHttpClient
 class SendcmExtractor(private val client: OkHttpClient) {
     private val playerName = "Sendcm"
 
-    fun videoFromUrl(url: String, quality: String): Video? {
-        val doc = client.newCall(GET(url)).execute().asJsoup()
+    fun videosFromUrl(url: String, quality: String): List<Video> {
+        val doc = client.newCall(GET(url)).execute().use { it.asJsoup() }
         val videoUrl = doc.selectFirst("video#vjsplayer > source")?.attr("src")
         return videoUrl?.let {
             val headers = Headers.headersOf("Referer", url)
-            Video(it, "$playerName - $quality", it, headers = headers)
-        }
+            listOf(Video(it, "$playerName - $quality", it, headers = headers))
+        }.orEmpty()
     }
 }
