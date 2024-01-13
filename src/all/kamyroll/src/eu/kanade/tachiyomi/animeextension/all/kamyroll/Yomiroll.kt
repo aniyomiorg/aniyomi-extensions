@@ -137,7 +137,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun fetchStatusByTitle(title: String): Int {
         val query = """
             query {
-            	Media(search: "$title", isAdult: false,	type: ANIME) {
+            	Media(search: "$title", isAdult: false, sort: UPDATED_AT, type: ANIME) {
                 id
                 idMal
                 title {
