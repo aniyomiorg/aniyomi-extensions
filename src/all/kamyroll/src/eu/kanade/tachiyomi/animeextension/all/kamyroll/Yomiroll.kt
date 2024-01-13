@@ -71,6 +71,10 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         super.client.newBuilder().addInterceptor(tokenInterceptor).build()
     }
 
+    private val noTokenClient by lazy {
+        super.client.newBuilder().build()
+    }
+
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request {
@@ -152,8 +156,8 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             .add("query", query)
             .build()
 
-        val response = client.newCall(
-            POST("https://graphql.anilist.co", body = requestBody)
+        val response = noTokenClient.newCall(
+            POST("https://graphql.anilist.co", body = requestBody),
         ).execute().use { it.body.string() }
 
         val responseParsed = json.decodeFromString<AnilistResult>(response)
@@ -409,7 +413,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             url = anime?.url ?: LinkData(id, type!!).toJsonString()
             genre = anime?.genre ?: (series_metadata?.genres ?: movie_metadata?.genres ?: genres)
                 ?.joinToString { gen -> gen.replaceFirstChar { it.uppercase() } }
-            status = SAnime.COMPLETED
+            status = if (anime != null) fetchStatusByTitle(this@toSAnime.title) else SAnime.UNKNOWN
             author = content_provider
             description = anime?.description ?: StringBuilder().apply {
                 appendLine(this@toSAnime.description)
