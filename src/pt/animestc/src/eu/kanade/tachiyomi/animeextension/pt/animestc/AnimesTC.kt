@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.animeextension.pt.animestc
 import android.app.Application
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.pt.animestc.ATCFilters.applyFilterParams
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.EpisodeDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.ResponseDto
@@ -26,7 +25,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
-import okhttp3.CacheControl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
@@ -35,7 +34,6 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.concurrent.TimeUnit.DAYS
 
 class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -87,11 +85,24 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =============================== Search ===============================
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        TODO("Not yet implemented")
+        val params = ATCFilters.getSearchParameters(filters)
+        val url = "$baseUrl/series?order=title&direction=asc&page=$page".toHttpUrl()
+            .newBuilder()
+            .addQueryParameter("type", params.type)
+            .addQueryParameter("search", query)
+            .addQueryParameter("year", params.year)
+            .addQueryParameter("releaseStatus", params.status)
+            .addQueryParameter("tag", params.genre)
+            .build()
+
+        return GET(url.toString(), headers)
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        TODO("Not yet implemented")
+        val data = response.parseAs<ResponseDto<AnimeDto>>()
+        val animes = data.items.map(::searchAnimeFromObject)
+        val hasNextPage = data.lastPage > data.page
+        return AnimesPage(animes, hasNextPage)
     }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
@@ -101,35 +112,11 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
                 .asObservableSuccess()
                 .map(::searchAnimeBySlugParse)
         } else {
-            return Observable.just(searchAnime(page, query, filters))
+            return super.fetchSearchAnime(page, query, filters)
         }
-    }
-
-    private val allAnimesList by lazy {
-        val cache = CacheControl.Builder().maxAge(1, DAYS).build()
-        listOf("movie", "ova", "series").map { type ->
-            val url = "$baseUrl/series?order=title&direction=asc&page=1&full=true&type=$type"
-            val response = client.newCall(GET(url, cache = cache)).execute()
-            response.parseAs<ResponseDto<AnimeDto>>().items
-        }.flatten()
     }
 
     override fun getFilterList(): AnimeFilterList = ATCFilters.FILTER_LIST
-
-    private fun searchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
-        val params = ATCFilters.getSearchParameters(filters).apply {
-            animeName = query
-        }
-        val filtered = allAnimesList.applyFilterParams(params)
-        val results = filtered.chunked(30)
-        val hasNextPage = results.size > page
-        val currentPage = if (results.size == 0) {
-            emptyList<SAnime>()
-        } else {
-            results.get(page - 1).map(::searchAnimeFromObject)
-        }
-        return AnimesPage(currentPage, hasNextPage)
-    }
 
     private fun searchAnimeFromObject(anime: AnimeDto) = SAnime.create().apply {
         thumbnail_url = anime.cover.url
@@ -190,32 +177,43 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================ Video Links =============================
     private val anonFilesExtractor by lazy { AnonFilesExtractor(client) }
     private val sendcmExtractor by lazy { SendcmExtractor(client) }
+    private val linkBypasser by lazy { LinkBypasser(client, json) }
 
+    private val supportedPlayers = listOf("anonfiles", "send")
     override fun videoListParse(response: Response): List<Video> {
         val videoDto = response.parseAs<ResponseDto<VideoDto>>().items.first()
         val links = videoDto.links
+
         val allLinks = listOf(links.low, links.medium, links.high).flatten()
-        val supportedPlayers = listOf("anonfiles", "send")
+            .filter { it.name in supportedPlayers }
+
         val online = links.online?.run {
             filterNot { "mega" in it }.map {
                 Video(it, "Player ATC", it, headers)
             }
         }.orEmpty()
-        return online + allLinks.filter { it.name in supportedPlayers }.parallelMap {
-            val playerUrl = LinkBypasser(client, json).bypass(it, videoDto.id)
-                ?: return@parallelMap null
-            val quality = when (it.quality) {
-                "low" -> "SD"
-                "medium" -> "HD"
-                "high" -> "FULLHD"
-                else -> "SD"
-            }
-            when (it.name) {
-                "anonfiles" -> anonFilesExtractor.videoFromUrl(playerUrl, quality)
-                "send" -> sendcmExtractor.videoFromUrl(playerUrl, quality)
-                else -> null
-            }
-        }.filterNotNull()
+
+        val videoId = videoDto.id
+
+        return online + allLinks.parallelCatchingFlatMap { extractVideosFromLink(it, videoId) }
+    }
+
+    private fun extractVideosFromLink(video: VideoDto.VideoLink, videoId: Int): List<Video> {
+        val playerUrl = linkBypasser.bypass(video, videoId)
+            ?: return emptyList()
+
+        val quality = when (video.quality) {
+            "low" -> "SD"
+            "medium" -> "HD"
+            "high" -> "FULLHD"
+            else -> "SD"
+        }
+
+        return when (video.name) {
+            "anonfiles" -> anonFilesExtractor.videosFromUrl(playerUrl, quality)
+            "send" -> sendcmExtractor.videosFromUrl(playerUrl, quality)
+            else -> emptyList()
+        }
     }
 
     // ============================== Settings ==============================
@@ -254,9 +252,13 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
         runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+            map {
+                async(Dispatchers.Default) {
+                    runCatching { f(it) }.getOrElse { emptyList() }
+                }
+            }.awaitAll().flatten()
         }
 
     private fun Response.getAnimeDto(): AnimeDto {

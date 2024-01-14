@@ -8,7 +8,7 @@ ext {
     extName = 'Yomiroll'
     pkgNameSuffix = 'all.kamyroll'
     extClass = '.Yomiroll'
-    extVersionCode = 25
+    extVersionCode = 28
     libVersion = '13'
 }
 
