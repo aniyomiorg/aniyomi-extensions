@@ -3183,10 +3183,10 @@
   {
     "name": "Aniyomi: AnimeIndo",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.animeindo",
-    "apk": "aniyomi-id.animeindo-v13.8.apk",
+    "apk": "aniyomi-id.animeindo-v13.9.apk",
     "lang": "id",
-    "code": 8,
-    "version": "13.8",
+    "code": 9,
+    "version": "13.9",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3195,7 +3195,7 @@
         "name": "AnimeIndo",
         "lang": "id",
         "id": "2019695674801188380",
-        "baseUrl": "https://animeindo.quest",
+        "baseUrl": "https://animeindo.skin",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -3330,10 +3330,10 @@
   {
     "name": "Aniyomi: OtakuDesu",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.otakudesu",
-    "apk": "aniyomi-id.otakudesu-v13.22.apk",
+    "apk": "aniyomi-id.otakudesu-v13.23.apk",
     "lang": "id",
-    "code": 22,
-    "version": "13.22",
+    "code": 23,
+    "version": "13.23",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3342,7 +3342,7 @@
         "name": "OtakuDesu",
         "lang": "id",
         "id": "3428487071093013526",
-        "baseUrl": "https://otakudesu.cam",
+        "baseUrl": "https://otakudesu.media",
         "versionId": 1,
         "hasCloudflare": 1
       }
