@@ -6,7 +6,7 @@ ext {
     extName = 'Cuevana'
     pkgNameSuffix = 'es.cuevana'
     extClass = '.CuevanaFactory'
-    extVersionCode = 25
+    extVersionCode = 26
     libVersion = '13'
 }
 

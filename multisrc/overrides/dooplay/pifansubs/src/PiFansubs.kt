@@ -1,10 +1,8 @@
 package eu.kanade.tachiyomi.animeextension.pt.pifansubs
 
-import android.net.Uri
-import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.AdoroDoramasExtractor
-import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.JMVStreamExtractor
+import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.BlembedExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
-import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
+import eu.kanade.tachiyomi.lib.streamhidevidextractor.StreamHideVidExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -43,18 +41,13 @@ class PiFansubs : DooPlay(
         }
     }
 
+    private val streamHideVidExtractor by lazy { StreamHideVidExtractor(client) }
+    private val blembedExtractor by lazy { BlembedExtractor(client, headers) }
+
     private fun getPlayerVideos(url: String): List<Video> {
         return when {
-            "player.jmvstream" in url ->
-                JMVStreamExtractor(client).videosFromUrl(url)
-            "gdriveplayer." in url ->
-                GdrivePlayerExtractor(client).videosFromUrl(url, "GdrivePlayer", headers)
-            "https://adorodoramas.com" in url ->
-                AdoroDoramasExtractor(client).videosFromUrl(url)
-            "/jwplayer/?source" in url -> {
-                val videoUrl = Uri.parse(url).getQueryParameter("source")!!
-                listOf(Video(videoUrl, "JWPlayer", videoUrl, headers))
-            }
+            "https://vidhide" in url -> streamHideVidExtractor.videosFromUrl(url)
+            "https://blembed" in url -> blembedExtractor.videosFromUrl(url)
             else -> emptyList<Video>()
         }
     }
@@ -67,5 +60,5 @@ class PiFansubs : DooPlay(
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/episodes/page/$page", headers)
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/episodios/page/$page", headers)
 }

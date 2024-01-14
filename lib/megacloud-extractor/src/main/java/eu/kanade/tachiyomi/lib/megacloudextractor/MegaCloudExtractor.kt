@@ -34,6 +34,9 @@ class MegaCloudExtractor(private val client: OkHttpClient, private val headers: 
         private val SOURCES_URL = arrayOf("/embed-2/ajax/e-1/getSources?id=", "/ajax/embed-6-v2/getSources?id=")
         private val SOURCES_SPLITTER = arrayOf("/e-1/", "/embed-6-v2/")
         private val SOURCES_KEY = arrayOf("1", "6")
+        private const val E1_SCRIPT_URL = "https://megacloud.tv/js/player/a/prod/e1-player.min.js"
+        private const val E6_SCRIPT_URL = "https://rapid-cloud.co/js/player/prod/e6-player-v2.min.js"
+        private const val E4_SCRIPT_URL = "https://rabbitstream.net/js/player/prod/e4-player.min.js"
         private val INDEX_PAIRS_MAP = mutableMapOf("1" to emptyList<List<Int>>(), "6" to emptyList<List<Int>>())
         private val MUTEX = Mutex()
 
@@ -44,11 +47,40 @@ class MegaCloudExtractor(private val client: OkHttpClient, private val headers: 
 
     private fun getIndexPairs(type: String) = runLocked {
         INDEX_PAIRS_MAP[type].orEmpty().ifEmpty {
-            noCacheClient.newCall(GET("https://raw.githubusercontent.com/Claudemirovsky/keys/e$type/key", cache = cacheControl))
+            val scriptUrl = when (type) {
+                "1" -> E1_SCRIPT_URL
+                "6" -> E6_SCRIPT_URL
+                "4" -> E4_SCRIPT_URL
+                else -> throw Exception("Unknown key type")
+            }
+            val script = noCacheClient.newCall(GET(scriptUrl, cache = cacheControl))
                 .execute()
                 .use { it.body.string() }
-                .let { json.decodeFromString<List<List<Int>>>(it) }
-                .also { INDEX_PAIRS_MAP[type] = it }
+            val regex =
+                Regex("case\\s*0x[0-9a-f]+:(?![^;]*=partKey)\\s*\\w+\\s*=\\s*(\\w+)\\s*,\\s*\\w+\\s*=\\s*(\\w+);")
+            val matches = regex.findAll(script).toList()
+            val indexPairs = matches.map { match ->
+                val var1 = match.groupValues[1]
+                val var2 = match.groupValues[2]
+
+                val regexVar1 = Regex(",${var1}=((?:0x)?([0-9a-fA-F]+))")
+                val regexVar2 = Regex(",${var2}=((?:0x)?([0-9a-fA-F]+))")
+
+                val matchVar1 = regexVar1.find(script)?.groupValues?.get(1)?.removePrefix("0x")
+                val matchVar2 = regexVar2.find(script)?.groupValues?.get(1)?.removePrefix("0x")
+
+                if (matchVar1 != null && matchVar2 != null) {
+                    try {
+                        listOf(matchVar1.toInt(16), matchVar2.toInt(16))
+                    } catch (e: NumberFormatException) {
+                        emptyList()
+                    }
+                } else {
+                    emptyList()
+                }
+            }.filter { it.isNotEmpty() }
+            INDEX_PAIRS_MAP[type] = indexPairs
+            indexPairs
         }
     }
 

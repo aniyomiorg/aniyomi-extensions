@@ -8,7 +8,7 @@ ext {
     extName = 'AnimesTC'
     pkgNameSuffix = 'pt.animestc'
     extClass = '.AnimesTC'
-    extVersionCode = 3
+    extVersionCode = 4
     libVersion = '13'
 }
 
