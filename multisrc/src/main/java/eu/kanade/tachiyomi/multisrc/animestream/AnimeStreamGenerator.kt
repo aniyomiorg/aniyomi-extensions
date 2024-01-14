@@ -12,7 +12,7 @@ class AnimeStreamGenerator : ThemeSourceGenerator {
 
     override val sources = listOf(
         SingleLang("AnimeBalkan", "https://animebalkan.org", "sr", isNsfw = false),
-        SingleLang("AnimeIndo", "https://animeindo.quest", "id", isNsfw = false, overrideVersionCode = 6),
+        SingleLang("AnimeIndo", "https://animeindo.skin", "id", isNsfw = false, overrideVersionCode = 7),
         SingleLang("AnimeKhor", "https://animekhor.xyz", "en", isNsfw = false, overrideVersionCode = 2),
         SingleLang("Animenosub", "https://animenosub.com", "en", isNsfw = true, overrideVersionCode = 3),
         SingleLang("AnimeTitans", "https://animetitans.com", "ar", isNsfw = false, overrideVersionCode = 13),
