@@ -15,8 +15,7 @@
         "lang": "all",
         "id": "8542735178285060053",
         "baseUrl": "https://animeonsen.xyz",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -36,72 +35,63 @@
         "lang": "all",
         "id": "2012957501886720048",
         "baseUrl": "https://anime-world.in",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       },
       {
         "name": "AnimeWorld India",
         "lang": "bn",
         "id": "1553651966725515829",
         "baseUrl": "https://anime-world.in",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       },
       {
         "name": "AnimeWorld India",
         "lang": "en",
         "id": "8052146309028882026",
         "baseUrl": "https://anime-world.in",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       },
       {
         "name": "AnimeWorld India",
         "lang": "hi",
         "id": "7823261278652377392",
         "baseUrl": "https://anime-world.in",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       },
       {
         "name": "AnimeWorld India",
         "lang": "ja",
         "id": "2355355781711866618",
         "baseUrl": "https://anime-world.in",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       },
       {
         "name": "AnimeWorld India",
         "lang": "ml",
         "id": "2763344039098801472",
         "baseUrl": "https://anime-world.in",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       },
       {
         "name": "AnimeWorld India",
         "lang": "mr",
         "id": "7406666490782122257",
         "baseUrl": "https://anime-world.in",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       },
       {
         "name": "AnimeWorld India",
         "lang": "ta",
         "id": "9003594241787941843",
         "baseUrl": "https://anime-world.in",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       },
       {
         "name": "AnimeWorld India",
         "lang": "te",
         "id": "8757775099454174589",
         "baseUrl": "https://anime-world.in",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -121,8 +111,7 @@
         "lang": "all",
         "id": "4620219025406449669",
         "baseUrl": "https://animexin.vip",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -142,8 +131,7 @@
         "lang": "all",
         "id": "8639880285552928628",
         "baseUrl": "https://chineseanime.top",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -163,8 +151,7 @@
         "lang": "all",
         "id": "4222017068256633289",
         "baseUrl": "https://drive.google.com",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -184,8 +171,7 @@
         "lang": "all",
         "id": "7558489246571085102",
         "baseUrl": "",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -205,8 +191,7 @@
         "lang": "all",
         "id": "8546813608934181796",
         "baseUrl": "https://jav.guru",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -226,24 +211,21 @@
         "lang": "all",
         "id": "1100359934660540567",
         "baseUrl": "http://127.0.0.1:8096",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       },
       {
         "name": "Jellyfin (2)",
         "lang": "all",
         "id": "5716273013801838310",
         "baseUrl": "http://127.0.0.1:8096",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       },
       {
         "name": "Jellyfin (3)",
         "lang": "all",
         "id": "7066619062139039107",
         "baseUrl": "http://127.0.0.1:8096",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -263,8 +245,7 @@
         "lang": "all",
         "id": "7463514907068706782",
         "baseUrl": "https://crunchyroll.com",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -284,18 +265,17 @@
         "lang": "all",
         "id": "7296222662412524790",
         "baseUrl": "https://lmanime.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
   {
     "name": "Aniyomi: MissAV",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.missav",
-    "apk": "aniyomi-all.missav-v13.5.apk",
+    "apk": "aniyomi-all.missav-v14.5.apk",
     "lang": "all",
     "code": 5,
-    "version": "13.5",
+    "version": "14.5",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -305,8 +285,7 @@
         "lang": "all",
         "id": "168969881246615628",
         "baseUrl": "https://missav.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -326,24 +305,21 @@
         "lang": "en",
         "id": "4473019365642465410",
         "baseUrl": "https://supjav.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       },
       {
         "name": "SupJav",
         "lang": "ja",
         "id": "3152122063691493374",
         "baseUrl": "https://supjav.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       },
       {
         "name": "SupJav",
         "lang": "zh",
         "id": "2689098384082963484",
         "baseUrl": "https://supjav.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -363,8 +339,7 @@
         "lang": "ar",
         "id": "6646772607405198196",
         "baseUrl": "https://akw-cdn1.link",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -384,8 +359,7 @@
         "lang": "ar",
         "id": "528782559387795213",
         "baseUrl": "https://anime4up.cam",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -405,8 +379,7 @@
         "lang": "ar",
         "id": "5743347900850233900",
         "baseUrl": "https://animeblkom.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -426,8 +399,7 @@
         "lang": "ar",
         "id": "7117595939095792520",
         "baseUrl": "https://api.animeiat.co/v1",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -447,8 +419,7 @@
         "lang": "ar",
         "id": "735529755877348598",
         "baseUrl": "https://animelek.me",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -468,8 +439,7 @@
         "lang": "ar",
         "id": "4435835034990361158",
         "baseUrl": "https://animerco.org",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -489,8 +459,7 @@
         "lang": "ar",
         "id": "7993025151940830545",
         "baseUrl": "https://animetitans.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -510,8 +479,7 @@
         "lang": "ar",
         "id": "7694781769943581537",
         "baseUrl": "https://www.arabanime.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -531,8 +499,7 @@
         "lang": "ar",
         "id": "4544379135186887077",
         "baseUrl": "https://m95.arabseed.show",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -552,8 +519,7 @@
         "lang": "ar",
         "id": "2083042094654392493",
         "baseUrl": "https://ww1.asia2tv.pw",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -573,8 +539,7 @@
         "lang": "ar",
         "id": "8402300441936118056",
         "baseUrl": "https://egydead.space/",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -594,8 +559,7 @@
         "lang": "ar",
         "id": "1378291029586884571",
         "baseUrl": "https://www.faselhd.pro",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -615,8 +579,7 @@
         "lang": "ar",
         "id": "2018276156457227484",
         "baseUrl": "https://movies4u.cam",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -636,8 +599,7 @@
         "lang": "ar",
         "id": "6019880483003007296",
         "baseUrl": "https://cdn3.wecima.watch",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -657,8 +619,7 @@
         "lang": "ar",
         "id": "2275740574829569178",
         "baseUrl": "https://www.okanime.xyz",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -678,8 +639,7 @@
         "lang": "ar",
         "id": "7363299109912773155",
         "baseUrl": "https://ww.tuktukcima.com/",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -699,8 +659,7 @@
         "lang": "ar",
         "id": "8940958730943730988",
         "baseUrl": "https://witanime.pics",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -720,8 +679,7 @@
         "lang": "ar",
         "id": "5844063884304507859",
         "baseUrl": "https://ww.xsanime.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -741,8 +699,7 @@
         "lang": "ar",
         "id": "2131745357897078208",
         "baseUrl": "https://ww.xsanime.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -762,8 +719,7 @@
         "lang": "de",
         "id": "181189338172528209",
         "baseUrl": "https://aniflix.cc",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -783,8 +739,7 @@
         "lang": "de",
         "id": "6849853030287708310",
         "baseUrl": "https://aniking.cc",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -804,8 +759,7 @@
         "lang": "de",
         "id": "891780646468545269",
         "baseUrl": "https://anime-base.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -825,8 +779,7 @@
         "lang": "de",
         "id": "655155856096",
         "baseUrl": "https://www.anime-loads.org",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -846,8 +799,7 @@
         "lang": "de",
         "id": "314593699490737069",
         "baseUrl": "https://anime-stream.to",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -867,8 +819,7 @@
         "lang": "de",
         "id": "2386616842414617638",
         "baseUrl": "https://www.animetoast.cc",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -888,8 +839,7 @@
         "lang": "de",
         "id": "8286900189409315836",
         "baseUrl": "https://aniworld.to",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -909,8 +859,7 @@
         "lang": "de",
         "id": "6770891719469124348",
         "baseUrl": "https://cineclix.de",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -930,8 +879,7 @@
         "lang": "de",
         "id": "7043232988624273316",
         "baseUrl": "https://cinemathek.net",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -951,8 +899,7 @@
         "lang": "de",
         "id": "7375242378918108704",
         "baseUrl": "https://einfach.to",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -972,8 +919,7 @@
         "lang": "de",
         "id": "3592180368623395225",
         "baseUrl": "https://filmpalast.to",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -993,8 +939,7 @@
         "lang": "de",
         "id": "996816978236636598",
         "baseUrl": "https://kinoking.cc",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1014,8 +959,7 @@
         "lang": "de",
         "id": "5602415922350710914",
         "baseUrl": "https://www.kool.to",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -1035,8 +979,7 @@
         "lang": "de",
         "id": "6760309784631443658",
         "baseUrl": "https://moflix-stream.xyz",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1056,8 +999,7 @@
         "lang": "de",
         "id": "7903273888239611491",
         "baseUrl": "https://movie2k.skin",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1077,8 +1019,7 @@
         "lang": "de",
         "id": "4846722280190238047",
         "baseUrl": "https://movie4k.stream",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -1098,8 +1039,7 @@
         "lang": "de",
         "id": "5798377917298605009",
         "baseUrl": "http://186.2.175.5",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1119,8 +1059,7 @@
         "lang": "de",
         "id": "727762114402589181",
         "baseUrl": "https://streamcloud.movie",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1140,8 +1079,7 @@
         "lang": "en",
         "id": "4709139914729853090",
         "baseUrl": "https://api.allanime.day",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1161,8 +1099,7 @@
         "lang": "en",
         "id": "7202244334005086123",
         "baseUrl": "https://acapi.allanime.day",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1182,8 +1119,7 @@
         "lang": "en",
         "id": "1135341941497249155",
         "baseUrl": "https://allmoviesforyou.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1203,8 +1139,7 @@
         "lang": "en",
         "id": "7035893907447463920",
         "baseUrl": "https://animeflix.mobi",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1224,8 +1159,7 @@
         "lang": "en",
         "id": "2156984402743841841",
         "baseUrl": "https://animekhor.xyz",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1245,8 +1179,7 @@
         "lang": "en",
         "id": "6722573244246256733",
         "baseUrl": "https://animenosub.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1266,8 +1199,7 @@
         "lang": "en",
         "id": "2900367084614267279",
         "baseUrl": "https://animension.to/",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -1287,8 +1219,7 @@
         "lang": "en",
         "id": "6489797158672074908",
         "baseUrl": "https://anime-owl.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1308,8 +1239,7 @@
         "lang": "en",
         "id": "9163675745699695675",
         "baseUrl": "https://animepahe.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1329,18 +1259,17 @@
         "lang": "en",
         "id": "3319373396687010408",
         "baseUrl": "https://www.animeparadise.moe",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
   {
     "name": "Aniyomi: AnimeTake",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animetake",
-    "apk": "aniyomi-en.animetake-v13.3.apk",
+    "apk": "aniyomi-en.animetake-v14.3.apk",
     "lang": "en",
     "code": 3,
-    "version": "13.3",
+    "version": "14.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1350,8 +1279,7 @@
         "lang": "en",
         "id": "7460925030423755739",
         "baseUrl": "https://animetake.tv",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1371,18 +1299,17 @@
         "lang": "en",
         "id": "7372747480486811746",
         "baseUrl": "https://animeui.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
   {
     "name": "Aniyomi: AsiaFlix",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.asiaflix",
-    "apk": "aniyomi-en.asiaflix-v13.5.apk",
+    "apk": "aniyomi-en.asiaflix-v14.5.apk",
     "lang": "en",
     "code": 5,
-    "version": "13.5",
+    "version": "14.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1392,8 +1319,7 @@
         "lang": "en",
         "id": "5831315710159126556",
         "baseUrl": "https://asiaflix.app",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1413,8 +1339,7 @@
         "lang": "en",
         "id": "2063258341485460293",
         "baseUrl": "https://asianhd1.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1434,8 +1359,7 @@
         "lang": "en",
         "id": "7599907565344643468",
         "baseUrl": "https://ask4movie.li",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1455,8 +1379,7 @@
         "lang": "en",
         "id": "2378107952091013853",
         "baseUrl": "https://bestdubbedanime.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1476,8 +1399,7 @@
         "lang": "en",
         "id": "5750955808412743706",
         "baseUrl": "https://donghuastream.co.in",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1497,8 +1419,7 @@
         "lang": "en",
         "id": "787491081765201367",
         "baseUrl": "https://dopebox.to",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1518,8 +1439,7 @@
         "lang": "en",
         "id": "76017545488916387",
         "baseUrl": "https://dramacool.pa",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1539,8 +1459,7 @@
         "lang": "en",
         "id": "5011565488977897786",
         "baseUrl": "https://edytjedhgmdhm.abfhaqrhbnf.workers.dev",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1560,8 +1479,7 @@
         "lang": "en",
         "id": "539447480475024818",
         "baseUrl": "https://fmoviesz.to",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1581,8 +1499,7 @@
         "lang": "en",
         "id": "7551506196408269736",
         "baseUrl": "https://www.genoanime.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1602,8 +1519,7 @@
         "lang": "en",
         "id": "7055547649318749672",
         "baseUrl": "https://anitaku.to",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1623,8 +1539,7 @@
         "lang": "en",
         "id": "3727306173180829340",
         "baseUrl": "https://haho.moe",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1644,8 +1559,7 @@
         "lang": "en",
         "id": "2649711761599612719",
         "baseUrl": "https://hanime.tv",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -1665,8 +1579,7 @@
         "lang": "en",
         "id": "8058423919997530503",
         "baseUrl": "https://hentaimama.io",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1686,8 +1599,7 @@
         "lang": "en",
         "id": "8733115911403916257",
         "baseUrl": "https://hstream.moe",
-        "versionId": 2,
-        "hasCloudflare": 0
+        "versionId": 2
       }
     ]
   },
@@ -1707,8 +1619,7 @@
         "lang": "en",
         "id": "346809923577876481",
         "baseUrl": "https://kaido.to",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1728,8 +1639,7 @@
         "lang": "en",
         "id": "8687457505451844609",
         "baseUrl": "https://kawaiifu.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1749,8 +1659,7 @@
         "lang": "en",
         "id": "203922289858257167",
         "baseUrl": "https://kayoanime.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1770,8 +1679,7 @@
         "lang": "en",
         "id": "2081771513481539599",
         "baseUrl": "https://kickassanime.am",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -1791,8 +1699,7 @@
         "lang": "en",
         "id": "6358473316829302267",
         "baseUrl": "https://kimoitv.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1812,8 +1719,7 @@
         "lang": "en",
         "id": "7306944860534104910",
         "baseUrl": "https://kissanime.com.ru",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1833,8 +1739,7 @@
         "lang": "en",
         "id": "2434089544252410046",
         "baseUrl": "https://kisskh.co",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -1854,8 +1759,7 @@
         "lang": "en",
         "id": "1480485712825107891",
         "baseUrl": "https://luciferdonghua.in",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1875,8 +1779,7 @@
         "lang": "en",
         "id": "2268620798063111053",
         "baseUrl": "https://multimovies.live",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1896,8 +1799,7 @@
         "lang": "en",
         "id": "4364465995809265087",
         "baseUrl": "https://myanime.live",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1917,8 +1819,7 @@
         "lang": "en",
         "id": "6399273548157311628",
         "baseUrl": "https://www.myrunningman.com",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -1938,8 +1839,7 @@
         "lang": "en",
         "id": "98855593379717478",
         "baseUrl": "https://aniwave.to",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1959,8 +1859,7 @@
         "lang": "en",
         "id": "5343978110335507456",
         "baseUrl": "https://noobftp1.noobsubs.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -1980,8 +1879,7 @@
         "lang": "en",
         "id": "1938195875614354298",
         "baseUrl": "https://oppai.stream",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2001,8 +1899,7 @@
         "lang": "en",
         "id": "2129864039842084686",
         "baseUrl": "https://putlocker.vip",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2022,8 +1919,7 @@
         "lang": "en",
         "id": "623659475482363776",
         "baseUrl": "https://ripcrabbyanimes.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2043,8 +1939,7 @@
         "lang": "en",
         "id": "9212790518101043860",
         "baseUrl": "https://rule34video.com",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -2064,8 +1959,7 @@
         "lang": "en",
         "id": "6154521416469165967",
         "baseUrl": "https://seez.su",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2085,8 +1979,7 @@
         "lang": "en",
         "id": "8615824918772726940",
         "baseUrl": "https://sflix.to",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2106,8 +1999,7 @@
         "lang": "en",
         "id": "4654371105831183338",
         "baseUrl": "https://showbox.shegu.net/api/api_client/index/",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2127,8 +2019,7 @@
         "lang": "en",
         "id": "525433677388000141",
         "baseUrl": "https://tokuzilla.net",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -2148,8 +2039,7 @@
         "lang": "en",
         "id": "582068848290425167",
         "baseUrl": "https://uhdmovies.vip",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2169,8 +2059,7 @@
         "lang": "en",
         "id": "1915898919039572670",
         "baseUrl": "https://uniquestream.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2190,8 +2079,7 @@
         "lang": "en",
         "id": "1677488626877212634",
         "baseUrl": "https://www.wcofun.tv",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2211,8 +2099,7 @@
         "lang": "en",
         "id": "4144024127778211557",
         "baseUrl": "https://www.wcostream.org",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2232,8 +2119,7 @@
         "lang": "en",
         "id": "6706411382606718900",
         "baseUrl": "https://aniwatch.to",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2253,8 +2139,7 @@
         "lang": "es",
         "id": "1901838936011764172",
         "baseUrl": "https://www.animefenix.tv",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2274,8 +2159,7 @@
         "lang": "es",
         "id": "93702975723668971",
         "baseUrl": "https://www3.animeflv.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2295,8 +2179,7 @@
         "lang": "es",
         "id": "3757015232925755985",
         "baseUrl": "https://www.animeid.tv/",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2316,8 +2199,7 @@
         "lang": "es",
         "id": "5412136569974245348",
         "baseUrl": "https://www.animelatinohd.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2337,8 +2219,7 @@
         "lang": "es",
         "id": "3892773447316414021",
         "baseUrl": "https://animemeow.xyz",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2358,8 +2239,7 @@
         "lang": "es",
         "id": "2765997893095141044",
         "baseUrl": "https://ww3.animeonline.ninja",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2379,8 +2259,7 @@
         "lang": "es",
         "id": "3945696494710013768",
         "baseUrl": "https://ytanime.tv",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2400,8 +2279,7 @@
         "lang": "es",
         "id": "4742118265598399159",
         "baseUrl": "https://animeyt.es",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2421,8 +2299,7 @@
         "lang": "es",
         "id": "5750872840863097496",
         "baseUrl": "https://asialiveaction.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2442,16 +2319,14 @@
         "lang": "es",
         "id": "8064568253800947423",
         "baseUrl": "https://ww1.cuevana3.ch",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       },
       {
         "name": "Cuevana3Eu",
         "lang": "es",
         "id": "1487248605713977697",
         "baseUrl": "https://www.cuevana3.eu",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2471,8 +2346,7 @@
         "lang": "es",
         "id": "1955566742338181506",
         "baseUrl": "https://doramasflix.in",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -2492,8 +2366,7 @@
         "lang": "es",
         "id": "885919523581666049",
         "baseUrl": "https://doramasyt.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2513,8 +2386,7 @@
         "lang": "es",
         "id": "6683521813386506618",
         "baseUrl": "https://u.ennovelas.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2534,8 +2406,7 @@
         "lang": "es",
         "id": "1270541458457028378",
         "baseUrl": "https://fanpelis.la",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2555,8 +2426,7 @@
         "lang": "es",
         "id": "6896649241746590059",
         "baseUrl": "https://gnula.life",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2576,8 +2446,7 @@
         "lang": "es",
         "id": "4616479108300191837",
         "baseUrl": "https://hentaijk.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2597,8 +2466,7 @@
         "lang": "es",
         "id": "6447194598203666818",
         "baseUrl": "https://www4.hentaila.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2618,8 +2486,7 @@
         "lang": "es",
         "id": "6007374093317538838",
         "baseUrl": "https://jkanime.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2639,8 +2506,7 @@
         "lang": "es",
         "id": "5893372327521334179",
         "baseUrl": "https://www.jkhentai.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2660,8 +2526,7 @@
         "lang": "es",
         "id": "7257892387451890645",
         "baseUrl": "https://latanime.org",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2681,8 +2546,7 @@
         "lang": "es",
         "id": "508651506167756898",
         "baseUrl": "https://legionanime.club/api",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2702,8 +2566,7 @@
         "lang": "es",
         "id": "7685749277599065785",
         "baseUrl": "https://www.locopelis.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2723,8 +2586,7 @@
         "lang": "es",
         "id": "302544302370133084",
         "baseUrl": "https://metroseries.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2744,8 +2606,7 @@
         "lang": "es",
         "id": "6957694006954649296",
         "baseUrl": "https://monoschinos2.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2765,8 +2626,7 @@
         "lang": "es",
         "id": "4356029013369426954",
         "baseUrl": "https://www.mundodonghua.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2786,16 +2646,14 @@
         "lang": "es",
         "id": "6496020228013664423",
         "baseUrl": "https://pelisflix2.green",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       },
       {
         "name": "Seriesflix",
         "lang": "es",
         "id": "6401983263686414416",
         "baseUrl": "https://seriesflix.video",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2815,8 +2673,7 @@
         "lang": "es",
         "id": "4419048029031752703",
         "baseUrl": "https://pelisforte.nu",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2836,24 +2693,21 @@
         "lang": "es",
         "id": "1400819034564144238",
         "baseUrl": "https://ww1.pelisplushd.nu",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       },
       {
         "name": "PelisPlusTo",
         "lang": "es",
         "id": "1705636111422561130",
         "baseUrl": "https://ww3.pelisplus.to",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       },
       {
         "name": "PelisPlusPh",
         "lang": "es",
         "id": "4917265654298497443",
         "baseUrl": "https://www.pelisplushd.ph",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2873,16 +2727,14 @@
         "lang": "es",
         "id": "3109175441268108091",
         "baseUrl": "https://tioanime.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       },
       {
         "name": "TioHentai",
         "lang": "es",
         "id": "754333127542778562",
         "baseUrl": "https://tiohentai.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2902,8 +2754,7 @@
         "lang": "es",
         "id": "6830054141432094072",
         "baseUrl": "https://anime.tiodonghua.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2923,8 +2774,7 @@
         "lang": "fr",
         "id": "6170936930338275444",
         "baseUrl": "https://anime-sama.fr",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2944,8 +2794,7 @@
         "lang": "fr",
         "id": "5563793683192822639",
         "baseUrl": "https://animevostfr.tv",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2965,8 +2814,7 @@
         "lang": "fr",
         "id": "1449801594109278557",
         "baseUrl": "https://empire-stream.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -2986,8 +2834,7 @@
         "lang": "fr",
         "id": "3074980924810171824",
         "baseUrl": "https://franime.fr",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3007,8 +2854,7 @@
         "lang": "fr",
         "id": "8142032927870763721",
         "baseUrl": "https://french-anime.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3028,8 +2874,7 @@
         "lang": "fr",
         "id": "8914615515692839881",
         "baseUrl": "https://ssl.jetanimes.com",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3049,8 +2894,7 @@
         "lang": "fr",
         "id": "5658174401067457058",
         "baseUrl": "https://animecat.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3070,8 +2914,7 @@
         "lang": "fr",
         "id": "1844040902149745273",
         "baseUrl": "https://otakufr.co",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3091,8 +2934,7 @@
         "lang": "fr",
         "id": "6593176551595101740",
         "baseUrl": "https://voircartoon.com",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3112,8 +2954,7 @@
         "lang": "fr",
         "id": "8596049504378147571",
         "baseUrl": "https://vostfree.ws",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3133,8 +2974,7 @@
         "lang": "fr",
         "id": "7149332646839704216",
         "baseUrl": "https://wiflix.voto",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3154,8 +2994,7 @@
         "lang": "hi",
         "id": "3168615925539503340",
         "baseUrl": "https://www.animesaga.in",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3175,8 +3014,7 @@
         "lang": "hi",
         "id": "2486904751081872151",
         "baseUrl": "https://yomovies.support",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3196,8 +3034,7 @@
         "lang": "id",
         "id": "2019695674801188380",
         "baseUrl": "https://animeindo.skin",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3217,8 +3054,7 @@
         "lang": "id",
         "id": "4677878836897500878",
         "baseUrl": "https://kuramanime.pro",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3238,8 +3074,7 @@
         "lang": "id",
         "id": "2083695115646974607",
         "baseUrl": "https://tv1.kuronime.vip",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3259,8 +3094,7 @@
         "lang": "id",
         "id": "3422641844834047610",
         "baseUrl": "https://minioppai.org",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3280,8 +3114,7 @@
         "lang": "id",
         "id": "6698339357657312694",
         "baseUrl": "https://neonime.ink",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3301,8 +3134,7 @@
         "lang": "id",
         "id": "3947801646056600641",
         "baseUrl": "https://nimegami.id",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3322,8 +3154,7 @@
         "lang": "id",
         "id": "2573103800968432770",
         "baseUrl": "https://oploverz.win",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3343,8 +3174,7 @@
         "lang": "id",
         "id": "3428487071093013526",
         "baseUrl": "https://otakudesu.media",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3364,8 +3194,7 @@
         "lang": "id",
         "id": "7446063017613536202",
         "baseUrl": "https://samehadaku.guru",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3385,8 +3214,7 @@
         "lang": "it",
         "id": "1863212142777957799",
         "baseUrl": "https://animesaturn.in",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3406,8 +3234,7 @@
         "lang": "it",
         "id": "7762808921754601430",
         "baseUrl": "https://www.animeunity.to",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3427,8 +3254,7 @@
         "lang": "it",
         "id": "6601315231151625432",
         "baseUrl": "https://www.animeworld.so",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3448,8 +3274,7 @@
         "lang": "it",
         "id": "9017321674111133535",
         "baseUrl": "https://aniplay.co",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3469,8 +3294,7 @@
         "lang": "it",
         "id": "5832452298268268088",
         "baseUrl": "https://www.hentaisaturn.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3490,8 +3314,7 @@
         "lang": "it",
         "id": "8092251957420885335",
         "baseUrl": "https://streamingcommunity.at",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3511,8 +3334,7 @@
         "lang": "it",
         "id": "8903679906651673401",
         "baseUrl": "https://toonitalia.green",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3532,8 +3354,7 @@
         "lang": "it",
         "id": "8309061778249307518",
         "baseUrl": "https://www.vvvvid.it",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3553,8 +3374,7 @@
         "lang": "ko",
         "id": "4565983297271071094",
         "baseUrl": "https://aniweek.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3574,8 +3394,7 @@
         "lang": "pl",
         "id": "5996410160070658951",
         "baseUrl": "https://desu-online.pl",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3595,8 +3414,7 @@
         "lang": "pl",
         "id": "3333993424729096948",
         "baseUrl": "https://wbijam.pl",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3616,8 +3434,7 @@
         "lang": "pt-BR",
         "id": "7378153581200508732",
         "baseUrl": "https://anidong.net",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3637,8 +3454,7 @@
         "lang": "pt-BR",
         "id": "2914332399101546717",
         "baseUrl": "https://animefire.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3658,8 +3474,7 @@
         "lang": "pt-BR",
         "id": "6456382572881676651",
         "baseUrl": "https://animeplayer.com.br",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3679,8 +3494,7 @@
         "lang": "pt-BR",
         "id": "8951719129981752769",
         "baseUrl": "https://animesaria.com",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3700,8 +3514,7 @@
         "lang": "pt-BR",
         "id": "4877286181768246205",
         "baseUrl": "https://animesdigital.org",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3721,8 +3534,7 @@
         "lang": "pt-BR",
         "id": "6518280198965195589",
         "baseUrl": "https://animesfox.net",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3742,8 +3554,7 @@
         "lang": "pt-BR",
         "id": "6519826467833124450",
         "baseUrl": "https://animesgames.cc",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3763,8 +3574,7 @@
         "lang": "pt-BR",
         "id": "2969482460524685571",
         "baseUrl": "https://animesonline.nz",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3784,8 +3594,7 @@
         "lang": "pt-BR",
         "id": "5203260454758079991",
         "baseUrl": "https://animeshouse.net",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3805,8 +3614,7 @@
         "lang": "pt-BR",
         "id": "4313643398856661317",
         "baseUrl": "https://animesorion.com",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3826,8 +3634,7 @@
         "lang": "pt-BR",
         "id": "1328689310980517070",
         "baseUrl": "https://www.anroll.net",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3847,8 +3654,7 @@
         "lang": "pt-BR",
         "id": "3010449287201563287",
         "baseUrl": "https://api2.animestc.com",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3868,8 +3674,7 @@
         "lang": "pt-BR",
         "id": "7211886220891821251",
         "baseUrl": "https://animes.vision",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3889,8 +3694,7 @@
         "lang": "pt-BR",
         "id": "7465937896816422886",
         "baseUrl": "https://animeszone.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3910,8 +3714,7 @@
         "lang": "pt-BR",
         "id": "9152952750171112510",
         "baseUrl": "https://www.anitube.vip",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3931,8 +3734,7 @@
         "lang": "pt-BR",
         "id": "4877901824203895720",
         "baseUrl": "https://betteranime.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3952,8 +3754,7 @@
         "lang": "pt-BR",
         "id": "1190488322033769414",
         "baseUrl": "https://donghuanosekai.com",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -3973,8 +3774,7 @@
         "lang": "pt-BR",
         "id": "1017446964244457164",
         "baseUrl": "https://flixei.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -3994,8 +3794,7 @@
         "lang": "pt-BR",
         "id": "6911038002626470519",
         "baseUrl": "https://goanimes.net",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -4015,8 +3814,7 @@
         "lang": "pt-BR",
         "id": "5035104637271805422",
         "baseUrl": "https://www.hentaistube.com",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -4036,8 +3834,7 @@
         "lang": "pt-BR",
         "id": "3650793989950779171",
         "baseUrl": "https://www.hinatasoul.com",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -4057,8 +3854,7 @@
         "lang": "pt-BR",
         "id": "4848980350254771341",
         "baseUrl": "https://www.listadeanimes.com",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -4078,8 +3874,7 @@
         "lang": "pt-BR",
         "id": "1129545692275462313",
         "baseUrl": "https://megaflix.co",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -4099,8 +3894,7 @@
         "lang": "pt-BR",
         "id": "1062606379654091909",
         "baseUrl": "https://www.muitohentai.com",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -4120,8 +3914,7 @@
         "lang": "pt-BR",
         "id": "2457282111412357647",
         "baseUrl": "https://pifansubs.club",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -4141,8 +3934,7 @@
         "lang": "pt-BR",
         "id": "5761016601933875772",
         "baseUrl": "https://pobreflix.biz",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -4162,8 +3954,7 @@
         "lang": "pt-BR",
         "id": "9212086076543778498",
         "baseUrl": "https://rine.cloud",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -4183,8 +3974,7 @@
         "lang": "pt-BR",
         "id": "6953989216416223241",
         "baseUrl": "https://vizer.tv",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -4204,16 +3994,14 @@
         "lang": "ru",
         "id": "6632887527758140506",
         "baseUrl": "https://animevost.org",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       },
       {
         "name": "Animevost Mirror",
         "lang": "ru",
         "id": "6851436110983735038",
         "baseUrl": "https://v2.vost.pw",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -4233,8 +4021,7 @@
         "lang": "sr",
         "id": "1322485891319274755",
         "baseUrl": "https://animebalkan.org",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -4254,8 +4041,7 @@
         "lang": "sr",
         "id": "789279548118486310",
         "baseUrl": "https://www.animesrbija.com",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -4275,8 +4061,7 @@
         "lang": "tr",
         "id": "6594370763071208431",
         "baseUrl": "https://animeler.me",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -4296,8 +4081,7 @@
         "lang": "tr",
         "id": "3103642053214293691",
         "baseUrl": "https://anizm.net",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -4317,8 +4101,7 @@
         "lang": "tr",
         "id": "2012826325126448867",
         "baseUrl": "https://asyaanimeleri.com",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -4338,8 +4121,7 @@
         "lang": "tr",
         "id": "7053678650145882822",
         "baseUrl": "https://www.hdfilmcehennemi.de",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -4359,8 +4141,7 @@
         "lang": "tr",
         "id": "9058842310298227429",
         "baseUrl": "https://www.hentaizm.fun",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -4380,8 +4161,7 @@
         "lang": "tr",
         "id": "5869353240534047560",
         "baseUrl": "https://tranimaci.com",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -4401,8 +4181,7 @@
         "lang": "tr",
         "id": "2607995207802293539",
         "baseUrl": "https://www.tranimeizle.co",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -4422,8 +4201,7 @@
         "lang": "tr",
         "id": "1539162878022626585",
         "baseUrl": "https://www.turkanime.co",
-        "versionId": 1,
-        "hasCloudflare": 1
+        "versionId": 1
       }
     ]
   },
@@ -4443,8 +4221,7 @@
         "lang": "uk",
         "id": "2256494309842770890",
         "baseUrl": "https://uakino.club",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   },
@@ -4464,8 +4241,7 @@
         "lang": "uk",
         "id": "4077428168272340843",
         "baseUrl": "https://ufdub.com/anime",
-        "versionId": 1,
-        "hasCloudflare": 0
+        "versionId": 1
       }
     ]
   }
