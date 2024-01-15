@@ -48,7 +48,7 @@ abstract class AnimeStream(
 
     override val supportsLatest = true
 
-    override val client = network.cloudflareClient
+    
 
     protected open val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)

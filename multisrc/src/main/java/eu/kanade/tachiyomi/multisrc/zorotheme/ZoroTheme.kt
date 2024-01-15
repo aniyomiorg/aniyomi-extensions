@@ -41,7 +41,7 @@ abstract class ZoroTheme(
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    
 
     private val json: Json by injectLazy()
 

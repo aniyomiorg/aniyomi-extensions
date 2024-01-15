@@ -48,8 +48,6 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
 
     override val supportsLatest = true
 
-    override val client = network.cloudflareClient
-
     private val noRedirectClient = client.newBuilder()
         .followRedirects(false)
         .build()

@@ -43,11 +43,9 @@ class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val supportsLatest = false
 
-    private val cfClient = network.cloudflareClient
-
     override val client by lazy {
         network.client.newBuilder()
-            .addInterceptor(AOAPIInterceptor(cfClient))
+            .addInterceptor(AOAPIInterceptor(network.client))
             .build()
     }
 

@@ -59,8 +59,6 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
 
     private val json: Json by injectLazy()
 
-    override val client = network.cloudflareClient
-
     private val apiHeaders by lazy {
         headersBuilder()
             .set("Accept", "application/json, text/plain, */*")

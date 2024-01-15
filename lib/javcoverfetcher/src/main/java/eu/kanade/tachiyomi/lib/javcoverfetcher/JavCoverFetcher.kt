@@ -19,7 +19,7 @@ import androidx.preference.SwitchPreferenceCompat
 object JavCoverFetcher {
 
     private val CLIENT by lazy {
-        Injekt.get<NetworkHelper>().cloudflareClient.newBuilder()
+        Injekt.get<NetworkHelper>().client.newBuilder()
             .addInterceptor(::amazonAgeVerifyIntercept)
             .build()
     }

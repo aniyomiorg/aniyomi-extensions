@@ -35,7 +35,7 @@ class Kinoking : DooPlay(
     override val videoSortPrefKey = PREF_HOSTER_KEY
     override val videoSortPrefDefault = PREF_HOSTER_DEFAULT
 
-    override val client = network.cloudflareClient
+    
 
     // ============================== Popular ===============================
     override fun popularAnimeSelector(): String = "div#featured-titles div.poster"

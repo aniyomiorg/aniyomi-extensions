@@ -24,7 +24,7 @@ class UniqueStream : DooPlay(
     "UniqueStream",
     "https://uniquestream.net",
 ) {
-    override val client = network.cloudflareClient
+    
 
     private val json: Json by injectLazy()
 

@@ -23,7 +23,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
@@ -52,8 +51,6 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     private val json = Json {
         ignoreUnknownKeys = true
     }
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     // =========================== Anime Details ============================
     /**

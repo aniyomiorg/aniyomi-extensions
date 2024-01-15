@@ -34,8 +34,6 @@ class AnimeWorldIndia(
 
     override val supportsLatest = true
 
-    override val client = network.cloudflareClient
-
     private val json: Json by injectLazy()
 
     private val preferences by lazy {

@@ -27,7 +27,6 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
@@ -44,8 +43,6 @@ class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
     override val lang = "de"
 
     override val supportsLatest = false
-
-    override val client: OkHttpClient = network.client
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)

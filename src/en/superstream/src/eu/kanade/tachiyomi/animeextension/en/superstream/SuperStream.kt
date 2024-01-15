@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
 import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.Injekt
@@ -36,8 +35,6 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
     private val superStreamAPI = SuperStreamAPI(json)
 
     override val baseUrl = superStreamAPI.apiUrl
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)

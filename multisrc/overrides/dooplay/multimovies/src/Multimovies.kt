@@ -30,7 +30,7 @@ class Multimovies : DooPlay(
     "Multimovies",
     "https://multimovies.live",
 ) {
-    override val client = network.cloudflareClient
+    
 
     private val defaultBaseUrl = "https://multimovies.live"
 

@@ -28,7 +28,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -49,10 +48,6 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "fr"
 
     override val supportsLatest = true
-
-    override val client = network.cloudflareClient
-
-    private val vclient: OkHttpClient = network.client
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -180,8 +175,8 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .substringBefore('"')
 
         return when (hoster) {
-            "doodstream" -> DoodExtractor(vclient).videosFromUrl(url)
-            "voe" -> VoeExtractor(vclient).videoFromUrl(url)?.let(::listOf)
+            "doodstream" -> DoodExtractor(client).videosFromUrl(url)
+            "voe" -> VoeExtractor(client).videoFromUrl(url)?.let(::listOf)
             "Eplayer" -> EplayerExtractor(client).videosFromUrl(url)
             else -> null
         } ?: emptyList()

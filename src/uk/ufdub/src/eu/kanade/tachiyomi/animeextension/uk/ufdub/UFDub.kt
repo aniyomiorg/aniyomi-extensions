@@ -11,7 +11,6 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.FormBody
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -28,8 +27,6 @@ class UFDub : ParsedAnimeHttpSource() {
 
     override val baseUrl = "https://ufdub.com/anime"
     private val baseUrlWithoutAnime = "https://ufdub.com"
-
-    override val client: OkHttpClient = network.client
 
     // =========================== Anime Details ============================
 

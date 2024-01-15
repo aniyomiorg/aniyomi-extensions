@@ -38,7 +38,7 @@ abstract class DataLifeEngine(
 
     override val supportsLatest = false
 
-    override val client: OkHttpClient = network.cloudflareClient
+    
 
     private val preferences by lazy { Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000) }
 

@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONObject
@@ -35,8 +34,6 @@ class UAKino : ParsedAnimeHttpSource() {
     private val popularUrl = "/f/c.year=1921,2023/sort=rating;desc"
 
     private val episodesAPI = "https://uakino.club/engine/ajax/playlists.php?news_id=%s&xfield=playlist" // %s - ID title
-
-    override val client: OkHttpClient = network.client
 
     // =========================== Anime Details ============================
 

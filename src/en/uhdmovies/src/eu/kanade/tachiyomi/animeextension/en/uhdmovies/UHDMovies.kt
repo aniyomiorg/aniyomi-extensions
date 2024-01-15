@@ -67,8 +67,6 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = false
 
-    override val client = network.cloudflareClient
-
     private val json: Json by injectLazy()
 
     private val preferences by lazy {

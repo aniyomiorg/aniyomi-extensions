@@ -29,7 +29,6 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -45,8 +44,6 @@ class Kool : ConfigurableAnimeSource, AnimeHttpSource() {
     override val lang = "de"
 
     override val supportsLatest = false
-
-    override val client: OkHttpClient = network.client
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)

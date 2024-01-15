@@ -38,8 +38,6 @@ class SupJav(override val lang: String = "en") : ConfigurableAnimeSource, Parsed
 
     override val supportsLatest = false
 
-    override val client = network.cloudflareClient
-
     override fun headersBuilder() = super.headersBuilder()
         .set("Referer", "$baseUrl/")
         .set("Origin", baseUrl)

@@ -57,8 +57,6 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     override val supportsLatest = true
 
-    override val client = network.cloudflareClient
-
     override fun headersBuilder() = super.headersBuilder()
         .add("Origin", baseUrl)
         .add("Referer", "$baseUrl/")

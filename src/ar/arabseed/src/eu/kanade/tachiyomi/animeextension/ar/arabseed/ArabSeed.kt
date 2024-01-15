@@ -42,8 +42,6 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = false
 
-    override val client = network.cloudflareClient
-
     override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
     private val preferences by lazy {

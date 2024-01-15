@@ -40,8 +40,6 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client = network.cloudflareClient
-
     override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
     private val preferences by lazy {

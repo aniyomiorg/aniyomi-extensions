@@ -39,7 +39,7 @@ abstract class DooPlay(
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.client
+    
 
     override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
