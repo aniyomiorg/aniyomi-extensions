@@ -419,8 +419,9 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 ?.joinToString { gen -> gen.replaceFirstChar { it.uppercase() } }
             status = anime?.let {
                 val media = json.decodeFromString<LinkData>(anime.url)
-                if (media.media_type == "series") fetchStatusByTitle(this@toSAnime.title)
-                else SAnime.COMPLETED
+                if (media.media_type == "series") {
+                    fetchStatusByTitle(this@toSAnime.title)
+                } else SAnime.COMPLETED
             } ?: SAnime.UNKNOWN
             author = content_provider
             description = anime?.description ?: StringBuilder().apply {

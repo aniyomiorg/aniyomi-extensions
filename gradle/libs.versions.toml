@@ -5,7 +5,7 @@ kotlin_version = "1.8.22"
 serialization_version = "1.5.1"
 
 [libraries]
-aniyomi-lib = { module = "com.github.jmir1:extensions-lib", version = "a2f1874" }
+aniyomi-lib = { module = "com.github.aniyomiorg:extensions-lib", version = "14" }
 
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin_version" }
 kotlin-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version.ref = "serialization_version" }
