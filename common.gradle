@@ -23,7 +23,7 @@ android {
         targetSdkVersion AndroidConfig.targetSdk
         applicationIdSuffix pkgNameSuffix
         versionCode extVersionCode
-        versionName project.ext.properties.getOrDefault("libVersion", "13") + ".$extVersionCode"
+        versionName project.ext.properties.getOrDefault("libVersion", "14") + ".$extVersionCode"
         base {
             archivesName = "aniyomi-$pkgNameSuffix-v$versionName"
         }
