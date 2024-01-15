@@ -27,7 +27,6 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -421,7 +420,7 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val host = episode.url.toHttpUrl().host
         val videoList = if (host == "drive.google.com") {
             GoogleDriveExtractor(client, headers).videosFromUrl(episode.url)
@@ -433,7 +432,7 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         require(videoList.isNotEmpty()) { "Failed to fetch videos" }
 
-        return Observable.just(videoList)
+        return videoList
     }
 
     override fun videoListSelector(): String = throw Exception("Not Used")

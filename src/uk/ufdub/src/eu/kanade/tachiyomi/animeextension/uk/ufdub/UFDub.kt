@@ -15,7 +15,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 
 class UFDub : ParsedAnimeHttpSource() {
 
@@ -142,11 +141,11 @@ class UFDub : ParsedAnimeHttpSource() {
 
     // ============================ Video ===============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val videoUrl = client.newCall(GET(episode.url)).execute().request.url.toString().replace("dl=1", "raw=1")
         Log.d("fetchVideoList", videoUrl)
         val video = Video(videoUrl, "Quality", videoUrl)
-        return Observable.just(listOf(video))
+        return listOf(video)
     }
 
     override fun videoFromElement(element: Element) = throw Exception("not used")

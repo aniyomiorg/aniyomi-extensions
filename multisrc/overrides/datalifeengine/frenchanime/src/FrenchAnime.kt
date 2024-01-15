@@ -19,7 +19,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import java.lang.Exception
 
 class FrenchAnime : DataLifeEngine(
@@ -88,7 +87,7 @@ class FrenchAnime : DataLifeEngine(
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val list = episode.url.split(",").filter { it.isNotBlank() }.parallelCatchingFlatMap {
             with(it) {
                 when {
@@ -108,7 +107,7 @@ class FrenchAnime : DataLifeEngine(
             }
         }.sort()
         if (list.isEmpty()) throw Exception("no player found")
-        return Observable.just(list)
+        return list
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("Not Used")

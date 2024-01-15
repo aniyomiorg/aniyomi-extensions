@@ -15,7 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -30,7 +30,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -82,14 +81,14 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =============================== Search ===============================
     override fun getFilterList() = HDFilmCehennemiFilters.FILTER_LIST
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val id = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/$id"))
-                .asObservableSuccess()
-                .map(::searchAnimeByIdParse)
+                .awaitSuccess()
+                .use(::searchAnimeByIdParse)
         } else {
-            super.fetchSearchAnime(page, query, filters)
+            super.getSearchAnime(page, query, filters)
         }
     }
 
@@ -192,19 +191,17 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+    override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
         // Series
-        if (anime.url.contains("/dizi/")) return super.fetchEpisodeList(anime)
+        if (anime.url.contains("/dizi/")) return super.getEpisodeList(anime)
 
         // Movies
-        return Observable.just(
-            listOf(
-                SEpisode.create().apply {
-                    url = anime.url
-                    name = "Movie"
-                    episode_number = 1F
-                },
-            ),
+        return listOf(
+            SEpisode.create().apply {
+                url = anime.url
+                name = "Movie"
+                episode_number = 1F
+            },
         )
     }
 

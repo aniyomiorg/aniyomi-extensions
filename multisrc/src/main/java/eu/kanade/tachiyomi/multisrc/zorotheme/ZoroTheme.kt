@@ -24,7 +24,6 @@ import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -40,8 +39,6 @@ abstract class ZoroTheme(
 ) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
-
-    
 
     private val json: Json by injectLazy()
 

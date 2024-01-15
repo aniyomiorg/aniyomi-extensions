@@ -18,7 +18,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
@@ -28,7 +28,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -106,16 +105,16 @@ class AnimeUnity :
         filters: AnimeFilterList,
     ): Request = throw Exception("Not used")
 
-    override fun fetchSearchAnime(
+    override suspend fun getSearchAnime(
         page: Int,
         query: String,
         filters: AnimeFilterList,
-    ): Observable<AnimesPage> {
+    ): AnimesPage {
         val params = AnimeUnityFilters.getSearchParameters(filters)
         return client
             .newCall(searchAnimeRequest(page, query, params))
-            .asObservableSuccess()
-            .map { response ->
+            .awaitSuccess()
+            .use { response ->
                 searchAnimeParse(response, page)
             }
     }
@@ -341,7 +340,7 @@ class AnimeUnity :
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val videoList = mutableListOf<Video>()
         val doc =
             client
@@ -408,7 +407,7 @@ class AnimeUnity :
 
         require(videoList.isNotEmpty()) { "Failed to fetch videos" }
 
-        return Observable.just(videoList.sort())
+        return videoList.sort()
     }
 
     override fun videoListRequest(episode: SEpisode): Request = throw Exception("Not used")

@@ -23,7 +23,7 @@ import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
@@ -31,7 +31,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -56,12 +55,11 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private val refererHeader = Headers.headersOf("Referer", baseUrl)
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
         return client.newCall(GET(baseUrl + anime.url))
-            .asObservableSuccess()
-            .map { response ->
-                animeDetailsParse(response).apply { initialized = true }
-            }
+            .awaitSuccess()
+            .use(::animeDetailsParse)
+            .apply { initialized = true }
     }
 
     override fun animeDetailsRequest(anime: SAnime): Request {

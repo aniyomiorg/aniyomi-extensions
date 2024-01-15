@@ -32,7 +32,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.internal.commonEmptyRequestBody
 import org.jsoup.nodes.Document
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -74,8 +73,8 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================== Popular ===============================
 
-    override fun fetchPopularAnime(page: Int): Observable<AnimesPage> =
-        Observable.just(parsePage(popularAnimeRequest(page), page))
+    override suspend fun getPopularAnime(page: Int): AnimesPage =
+        parsePage(popularAnimeRequest(page), page)
 
     override fun popularAnimeRequest(page: Int): Request {
         require(!baseUrlInternal.isNullOrEmpty()) { "Enter drive path(s) in extension settings." }
@@ -103,11 +102,11 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun searchAnimeParse(response: Response): AnimesPage = throw Exception("Not used")
 
-    override fun fetchSearchAnime(
+    override suspend fun getSearchAnime(
         page: Int,
         query: String,
         filters: AnimeFilterList,
-    ): Observable<AnimesPage> {
+    ): AnimesPage {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val urlFilter = filterList.find { it is URLFilter } as URLFilter
 
@@ -115,16 +114,16 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
             val req = searchAnimeRequest(page, query, filters)
 
             if (query.isEmpty()) {
-                Observable.just(parsePage(req, page))
+                parsePage(req, page)
             } else {
                 val parentId = req.url.pathSegments.last()
                 val cleanQuery = URLEncoder.encode(query, "UTF-8")
                 val genMultiFormReq = searchReq(parentId, cleanQuery)
 
-                Observable.just(parsePage(req, page, genMultiFormReq))
+                parsePage(req, page, genMultiFormReq)
             }
         } else {
-            Observable.just(addSinglePage(urlFilter.state))
+            addSinglePage(urlFilter.state)
         }
     }
 
@@ -184,10 +183,10 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
         return GET(parsed.url, headers = getHeaders)
     }
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
         val parsed = json.decodeFromString<LinkData>(anime.url)
 
-        if (parsed.type == "single") return Observable.just(anime)
+        if (parsed.type == "single") return anime
 
         val folderId = DRIVE_FOLDER_REGEX.matchEntire(parsed.url)!!.groups["id"]!!.value
 
@@ -195,7 +194,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
             client.newCall(GET(parsed.url, headers = getHeaders)).execute().asJsoup()
         } catch (a: ProtocolException) {
             null
-        } ?: return Observable.just(anime)
+        } ?: return anime
 
         // Get cover
 
@@ -248,28 +247,26 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
-        return Observable.just(anime)
+        return anime
     }
 
     override fun animeDetailsParse(response: Response): SAnime = throw Exception("Not used")
 
     // ============================== Episodes ==============================
 
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+    override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
         val episodeList = mutableListOf<SEpisode>()
         val parsed = json.decodeFromString<LinkData>(anime.url)
 
         if (parsed.type == "single") {
-            return Observable.just(
-                listOf(
-                    SEpisode.create().apply {
-                        name = "Video"
-                        scanlator = parsed.info!!.size
-                        url = parsed.url
-                        episode_number = 1F
-                        date_upload = -1L
-                    },
-                ),
+            return listOf(
+                SEpisode.create().apply {
+                    name = "Video"
+                    scanlator = parsed.info!!.size
+                    url = parsed.url
+                    episode_number = 1F
+                    date_upload = -1L
+                },
             )
         }
 
@@ -351,15 +348,15 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
 
         traverseFolder(parsed.url, "")
 
-        return Observable.just(episodeList.reversed())
+        return episodeList.reversed()
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> = throw Exception("Not used")
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> =
-        Observable.just(GoogleDriveExtractor(client, headers).videosFromUrl(episode.url))
+    override suspend fun getVideoList(episode: SEpisode): List<Video> =
+        GoogleDriveExtractor(client, headers).videosFromUrl(episode.url)
 
     // ============================= Utilities ==============================
 

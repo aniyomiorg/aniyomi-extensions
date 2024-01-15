@@ -24,7 +24,7 @@ import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -38,7 +38,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -101,11 +100,11 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
     // =============================== Search ===============================
     private lateinit var searchEntries: SearchDto
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (page == 1) {
-            super.fetchSearchAnime(page, query, filters)
+            super.getSearchAnime(page, query, filters)
         } else {
-            Observable.just(paginatedSearchParse(page))
+            paginatedSearchParse(page)
         }
     }
 
@@ -132,10 +131,10 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // =========================== Anime Details ============================
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
         return client.newCall(internalAnimeDetailsRequest(anime))
-            .asObservableSuccess()
-            .map(::animeDetailsParse)
+            .awaitSuccess()
+            .use(::animeDetailsParse)
     }
 
     // workaround to get correct WebView url

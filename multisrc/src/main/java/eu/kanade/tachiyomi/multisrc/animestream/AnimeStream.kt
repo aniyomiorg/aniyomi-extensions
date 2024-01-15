@@ -21,7 +21,7 @@ import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamFilters.StudioFilter
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamFilters.SubFilter
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamFilters.TypeFilter
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -34,7 +34,6 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
@@ -47,8 +46,6 @@ abstract class AnimeStream(
 ) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
-
-    
 
     protected open val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -81,9 +78,9 @@ abstract class AnimeStream(
     protected open val animeListUrl = "$baseUrl/anime"
 
     // ============================== Popular ===============================
-    override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
+    override suspend fun getPopularAnime(page: Int): AnimesPage {
         fetchFilterList()
-        return super.fetchPopularAnime(page)
+        return super.getPopularAnime(page)
     }
 
     override fun popularAnimeRequest(page: Int) = GET("$animeListUrl/?page=$page&order=popular")
@@ -95,9 +92,9 @@ abstract class AnimeStream(
     override fun popularAnimeNextPageSelector(): String? = searchAnimeNextPageSelector()
 
     // =============================== Latest ===============================
-    override fun fetchLatestUpdates(page: Int): Observable<AnimesPage> {
+    override suspend fun getLatestUpdates(page: Int): AnimesPage {
         fetchFilterList()
-        return super.fetchLatestUpdates(page)
+        return super.getLatestUpdates(page)
     }
 
     override fun latestUpdatesRequest(page: Int) = GET("$animeListUrl/?page=$page&order=update")
@@ -109,14 +106,14 @@ abstract class AnimeStream(
     override fun latestUpdatesNextPageSelector(): String? = searchAnimeNextPageSelector()
 
     // =============================== Search ===============================
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val path = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/$path"))
-                .asObservableSuccess()
-                .map(::searchAnimeByPathParse)
+                .awaitSuccess()
+                .use(::searchAnimeByPathParse)
         } else {
-            super.fetchSearchAnime(page, query, filters)
+            super.getSearchAnime(page, query, filters)
         }
     }
 

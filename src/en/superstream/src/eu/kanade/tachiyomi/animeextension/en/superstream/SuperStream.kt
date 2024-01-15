@@ -15,7 +15,6 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -40,16 +39,16 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
+    override suspend fun getPopularAnime(page: Int): AnimesPage {
         val animes = superStreamAPI.getMainPage(page)
-        return Observable.just(animes)
+        return animes
     }
 
     override fun popularAnimeRequest(page: Int) = throw Exception("not used")
 
     override fun popularAnimeParse(response: Response) = throw Exception("not used")
 
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+    override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
         val data = superStreamAPI.load(anime.url)
         val episodes = mutableListOf<SEpisode>()
         val (movie, seriesData) = data
@@ -79,24 +78,24 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
                 }
             }
         }
-        return Observable.just(episodes)
+        return episodes
     }
 
     override fun episodeListParse(response: Response) = throw Exception("not used")
 
-    override fun fetchLatestUpdates(page: Int): Observable<AnimesPage> {
+    override suspend fun getLatestUpdates(page: Int): AnimesPage {
         val animes = superStreamAPI.getLatest(page)
-        return Observable.just(animes)
+        return animes
     }
 
     override fun latestUpdatesParse(response: Response) = throw Exception("not used")
 
     override fun latestUpdatesRequest(page: Int) = throw Exception("not used")
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val videos = superStreamAPI.loadLinks(episode.url)
         val sortedVideos = videos.sort()
-        return Observable.just(sortedVideos)
+        return sortedVideos
     }
 
     override fun videoListParse(response: Response) = throw Exception("not used")
@@ -120,20 +119,20 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
         return this
     }
 
-    override fun fetchSearchAnime(
+    override suspend fun getSearchAnime(
         page: Int,
         query: String,
         filters: AnimeFilterList,
-    ): Observable<AnimesPage> {
+    ): AnimesPage {
         val searchResult = superStreamAPI.search(page, query)
-        return Observable.just(AnimesPage(searchResult, searchResult.size == 20))
+        return AnimesPage(searchResult, searchResult.size == 20)
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = throw Exception("not used")
 
     override fun searchAnimeParse(response: Response) = throw Exception("not used")
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
         val data = superStreamAPI.load(anime.url)
         val ani = SAnime.create()
         val (movie, seriesData) = data
@@ -184,7 +183,7 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
                         )
             }
         }
-        return Observable.just(ani)
+        return ani
     }
     override fun animeDetailsParse(response: Response) = throw Exception("not used")
 

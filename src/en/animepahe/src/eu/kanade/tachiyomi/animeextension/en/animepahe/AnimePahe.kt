@@ -127,7 +127,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================== Popular ===============================
     // This source doesnt have a popular animes page,
     // so we use latest animes page instead.
-    override fun fetchPopularAnime(page: Int) = fetchLatestUpdates(page)
+    override suspend fun getPopularAnime(page: Int) = getLatestUpdates(page)
     override fun popularAnimeParse(response: Response): AnimesPage = TODO()
     override fun popularAnimeRequest(page: Int): Request = TODO()
 

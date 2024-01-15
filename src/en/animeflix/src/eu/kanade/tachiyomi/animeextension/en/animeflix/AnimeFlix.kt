@@ -26,7 +26,6 @@ import okhttp3.MultipartBody
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -163,7 +162,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     val seasonRegex by lazy { Regex("""season (\d+)""", RegexOption.IGNORE_CASE) }
     val qualityRegex by lazy { """(\d+)p""".toRegex() }
 
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+    override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
         val document = client.newCall(GET(baseUrl + anime.url)).execute()
             .use { it.asJsoup() }
 
@@ -207,7 +206,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             transposeEpisodes(serversList)
         }
 
-        return Observable.just(episodeList.reversed())
+        return episodeList.reversed()
     }
 
     private fun transposeEpisodes(serversList: List<List<EpUrl>>) =
@@ -224,7 +223,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not Used")
 
     // ============================ Video Links =============================
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val urls = json.decodeFromString<List<EpUrl>>(episode.url)
 
         val leechUrls = urls.map {
@@ -263,7 +262,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         require(videoList.isNotEmpty()) { "Failed to fetch videos" }
 
-        return Observable.just(videoList.sort())
+        return videoList.sort()
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("Not Used")

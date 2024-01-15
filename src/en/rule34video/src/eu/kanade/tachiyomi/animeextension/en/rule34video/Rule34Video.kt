@@ -16,7 +16,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
@@ -123,14 +122,12 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
-        return Observable.just(
-            listOf(
-                SEpisode.create().apply {
-                    url = anime.url
-                    name = "Video"
-                },
-            ),
+    override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
+        return listOf(
+            SEpisode.create().apply {
+                url = anime.url
+                name = "Video"
+            },
         )
     }
 

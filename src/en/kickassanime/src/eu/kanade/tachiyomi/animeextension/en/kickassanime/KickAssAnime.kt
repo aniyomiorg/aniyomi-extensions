@@ -25,7 +25,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -34,7 +34,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
@@ -93,7 +92,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             .parseAs()
     }
 
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+    override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
         val languages = client.newCall(
             GET("$apiUrl${anime.url}/language"),
         ).execute().parseAs<LanguagesDto>()
@@ -118,7 +117,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
-        return Observable.just(episodes.reversed())
+        return episodes.reversed()
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -153,10 +152,10 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun animeDetailsRequest(anime: SAnime): Request = GET(baseUrl + anime.url)
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
         return client.newCall(animeDetailsRequestInternal(anime))
-            .asObservableSuccess()
-            .map { response ->
+            .awaitSuccess()
+            .use { response ->
                 animeDetailsParse(response).apply { initialized = true }
             }
     }
@@ -245,17 +244,17 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val slug = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/api/show/$slug"))
-                .asObservableSuccess()
-                .map(::searchAnimeBySlugParse)
+                .awaitSuccess()
+                .use(::searchAnimeBySlugParse)
         } else {
             val params = KickAssAnimeFilters.getSearchParameters(filters)
             return client.newCall(searchAnimeRequest(page, query, params))
-                .asObservableSuccess()
-                .map { response ->
+                .awaitSuccess()
+                .use { response ->
                     searchAnimeParse(response, page)
                 }
         }

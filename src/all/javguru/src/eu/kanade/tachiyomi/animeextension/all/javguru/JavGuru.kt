@@ -20,8 +20,8 @@ import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservable
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.await
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -33,7 +33,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.select.Elements
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import kotlin.math.min
@@ -58,13 +57,13 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
 
     private lateinit var popularElements: Elements
 
-    override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
+    override suspend fun getPopularAnime(page: Int): AnimesPage {
         return if (page == 1) {
             client.newCall(popularAnimeRequest(page))
-                .asObservableSuccess()
-                .map(::popularAnimeParse)
+                .awaitSuccess()
+                .use(::popularAnimeParse)
         } else {
-            Observable.just(cachedPopularAnimeParse(page))
+            cachedPopularAnimeParse(page)
         }
     }
 
@@ -124,22 +123,22 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
         return AnimesPage(entries, page < lastPage)
     }
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         if (query.startsWith(PREFIX_ID)) {
             val id = query.substringAfter(PREFIX_ID)
             if (id.toIntOrNull() == null) {
-                return Observable.just(AnimesPage(emptyList(), false))
+                return AnimesPage(emptyList(), false)
             }
             val url = "/$id/"
             val tempAnime = SAnime.create().apply { this.url = url }
-            return fetchAnimeDetails(tempAnime).map {
+            return getAnimeDetails(tempAnime).let {
                 val anime = it.apply { this.url = url }
                 AnimesPage(listOf(anime), false)
             }
         } else if (query.isNotEmpty()) {
             return client.newCall(searchAnimeRequest(page, query, filters))
-                .asObservableSuccess()
-                .map(::searchAnimeParse)
+                .awaitSuccess()
+                .use(::searchAnimeParse)
         } else {
             filters.forEach { filter ->
                 when (filter) {
@@ -150,8 +149,8 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
                             val url = "$baseUrl${filter.toUrlPart()}" + if (page > 1) "page/$page/" else ""
                             val request = GET(url, headers)
                             return client.newCall(request)
-                                .asObservableSuccess()
-                                .map(::searchAnimeParse)
+                                .awaitSuccess()
+                                .use(::searchAnimeParse)
                         }
                     }
                     is ActressFilter,
@@ -163,8 +162,8 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
                             val url = "$baseUrl${filter.toUrlPart()}" + if (page > 1) "page/$page/" else ""
                             val request = GET(url, headers)
                             return client.newCall(request)
-                                .asObservableIgnoreCode(404)
-                                .map(::searchAnimeParse)
+                                .awaitIgnoreCode(404)
+                                .use(::searchAnimeParse)
                         }
                     }
                     else -> { }
@@ -216,14 +215,12 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
         }
     }
 
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
-        return Observable.just(
-            listOf(
-                SEpisode.create().apply {
-                    url = anime.url
-                    name = "Episode"
-                },
-            ),
+    override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
+        return listOf(
+            SEpisode.create().apply {
+                url = anime.url
+                name = "Episode"
+            },
         )
     }
 
@@ -351,8 +348,8 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
             ?.last()
             ?.toIntOrNull()
 
-    private fun Call.asObservableIgnoreCode(code: Int): Observable<Response> {
-        return asObservable().doOnNext { response ->
+    private suspend fun Call.awaitIgnoreCode(code: Int): Response {
+        return await().also { response ->
             if (!response.isSuccessful && response.code != code) {
                 response.close()
                 throw Exception("HTTP error ${response.code}")

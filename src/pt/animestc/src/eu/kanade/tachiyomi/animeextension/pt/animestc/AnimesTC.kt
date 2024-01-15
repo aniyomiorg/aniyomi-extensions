@@ -18,7 +18,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -28,7 +28,6 @@ import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -105,14 +104,14 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         return AnimesPage(animes, hasNextPage)
     }
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val slug = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/series?slug=$slug"))
-                .asObservableSuccess()
-                .map(::searchAnimeBySlugParse)
+                .awaitSuccess()
+                .use(::searchAnimeBySlugParse)
         } else {
-            return super.fetchSearchAnime(page, query, filters)
+            return super.getSearchAnime(page, query, filters)
         }
     }
 

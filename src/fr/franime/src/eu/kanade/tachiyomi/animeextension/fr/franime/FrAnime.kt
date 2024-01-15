@@ -19,7 +19,6 @@ import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
@@ -51,7 +50,7 @@ class FrAnime : AnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
-    override fun fetchPopularAnime(page: Int) =
+    override suspend fun getPopularAnime(page: Int) =
         pagesToAnimesPage(database.sortedByDescending { it.note }, page)
 
     override fun popularAnimeParse(response: Response) = throw Exception("not used")
@@ -59,14 +58,14 @@ class FrAnime : AnimeHttpSource() {
     override fun popularAnimeRequest(page: Int) = throw Exception("not used")
 
     // =============================== Latest ===============================
-    override fun fetchLatestUpdates(page: Int) = pagesToAnimesPage(database.reversed(), page)
+    override suspend fun getLatestUpdates(page: Int) = pagesToAnimesPage(database.reversed(), page)
 
     override fun latestUpdatesParse(response: Response): AnimesPage = throw Exception("not used")
 
     override fun latestUpdatesRequest(page: Int): Request = throw Exception("not used")
 
     // =============================== Search ===============================
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         val pages = database.filter {
             it.title.contains(query, true) ||
                 it.originalTitle.contains(query, true) ||
@@ -83,12 +82,12 @@ class FrAnime : AnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
 
     // =========================== Anime Details ============================
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> = Observable.just(anime)
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime = anime
 
     override fun animeDetailsParse(response: Response): SAnime = throw Exception("not used")
 
     // ============================== Episodes ==============================
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+    override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
         val url = (baseUrl + anime.url).toHttpUrl()
         val stem = url.encodedPathSegments.last()
         val language = url.queryParameter("lang") ?: "vo"
@@ -109,13 +108,13 @@ class FrAnime : AnimeHttpSource() {
                     episode_number = (index + 1).toFloat()
                 }
             }
-        return Observable.just(episodes.sortedByDescending { it.episode_number })
+        return episodes.sortedByDescending { it.episode_number }
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> = throw Exception("not used")
 
     // ============================ Video Links =============================
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val url = (baseUrl + episode.url).toHttpUrl()
         val seasonNumber = url.queryParameter("s")?.toIntOrNull() ?: 1
         val episodeNumber = url.queryParameter("ep")?.toIntOrNull() ?: 1
@@ -138,7 +137,7 @@ class FrAnime : AnimeHttpSource() {
                 else -> emptyList()
             }
         }
-        return Observable.just(videos)
+        return videos
     }
 
     // ============================= Utilities ==============================
@@ -147,11 +146,11 @@ class FrAnime : AnimeHttpSource() {
             mapIndexed { index, it -> async(Dispatchers.Default) { runCatching { f(index, it) }.getOrElse { emptyList() } } }.awaitAll().flatten()
         }
 
-    private fun pagesToAnimesPage(pages: List<Anime>, page: Int): Observable<AnimesPage> {
+    private fun pagesToAnimesPage(pages: List<Anime>, page: Int): AnimesPage {
         val chunks = pages.chunked(50)
         val hasNextPage = chunks.size > page
         val entries = pageToSAnimes(chunks.getOrNull(page - 1) ?: emptyList())
-        return Observable.just(AnimesPage(entries, hasNextPage))
+        return AnimesPage(entries, hasNextPage)
     }
 
     private val titleRegex by lazy { Regex("[^A-Za-z0-9 ]") }

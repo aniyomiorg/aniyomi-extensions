@@ -24,7 +24,6 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -44,8 +43,6 @@ abstract class DopeFlix(
     }
 
     override val supportsLatest = true
-
-    
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)

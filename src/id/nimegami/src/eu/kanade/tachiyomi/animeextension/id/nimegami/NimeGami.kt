@@ -9,7 +9,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -21,7 +21,6 @@ import kotlinx.serialization.json.Json
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import eu.kanade.tachiyomi.lib.synchrony.Deobfuscator as Synchrony
 
@@ -66,14 +65,14 @@ class NimeGami : ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector() = "ul.pagination > li > a:contains(Next)"
 
     // =============================== Search ===============================
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val id = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/$id"))
-                .asObservableSuccess()
-                .map(::searchAnimeByIdParse)
+                .awaitSuccess()
+                .use(::searchAnimeByIdParse)
         } else {
-            super.fetchSearchAnime(page, query, filters)
+            super.getSearchAnime(page, query, filters)
         }
     }
 
@@ -138,7 +137,7 @@ class NimeGami : ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val qualities = json.decodeFromString<List<VideoQuality>>(episode.url.b64Decode())
         val episodeIndex = episode.episode_number.toInt() - 1
         var usedBunga = false // to prevent repeating the same request to bunga.nimegami
@@ -156,7 +155,7 @@ class NimeGami : ParsedAnimeHttpSource() {
                     extractVideos(url, quality, episodeIndex)
                 }.getOrElse { emptyList() }
             }.flatten()
-        }.let { Observable.just(it) }
+        }.let { it }
     }
 
     private fun extractVideos(url: String, quality: String, episodeIndex: Int): List<Video> {

@@ -31,7 +31,6 @@ import kotlinx.serialization.json.Json
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -91,7 +90,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
     }
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         val entriesPages = searchItems.filter { it.title.contains(query, true) }
             .sortedBy { it.title }
             .chunked(30) // to prevent exploding the user screen with 984948984 results
@@ -105,7 +104,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         } ?: emptyList()
 
-        return Observable.just(AnimesPage(entries, hasNextPage))
+        return AnimesPage(entries, hasNextPage)
     }
 
     // =========================== Anime Details ============================
@@ -156,7 +155,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     // val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
         val videos = episode.url.split(", ").parallelMap {
             runCatching {
@@ -165,7 +164,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 videosFromPath("$id/$type", hoster)
             }.getOrElse { emptyList() }
         }.flatten().sort()
-        return Observable.just(videos)
+        return videos
     }
 
     private fun videosFromPath(path: String, hoster: String): List<Video> {

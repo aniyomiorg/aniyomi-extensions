@@ -19,7 +19,6 @@ import org.json.JSONTokener
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 
 class UAKino : ParsedAnimeHttpSource() {
 
@@ -184,7 +183,7 @@ class UAKino : ParsedAnimeHttpSource() {
 
     // ============================ Video ===============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         Log.d("fetchVideoList", episode.url)
 
         val videoList = mutableListOf<Video>()
@@ -209,7 +208,7 @@ class UAKino : ParsedAnimeHttpSource() {
             videoList.add(Video(videoUrl, quality, videoUrl))
         }
 
-        return Observable.just(videoList)
+        return videoList
     }
 
     override fun videoFromElement(element: Element) = throw Exception("not used")

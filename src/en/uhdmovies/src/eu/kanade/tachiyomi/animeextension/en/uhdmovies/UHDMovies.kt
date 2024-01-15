@@ -28,7 +28,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -219,7 +218,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not Used")
 
     // ============================ Video Links =============================
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val urlJson = json.decodeFromString<EpLinks>(episode.url)
 
         val videoList = urlJson.urls.parallelCatchingFlatMap { eplink ->
@@ -238,7 +237,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-        return Observable.just(videoList.sort())
+        return videoList.sort()
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("Not Used")

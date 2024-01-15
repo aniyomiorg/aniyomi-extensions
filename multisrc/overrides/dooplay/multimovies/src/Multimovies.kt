@@ -30,7 +30,6 @@ class Multimovies : DooPlay(
     "Multimovies",
     "https://multimovies.live",
 ) {
-    
 
     private val defaultBaseUrl = "https://multimovies.live"
 

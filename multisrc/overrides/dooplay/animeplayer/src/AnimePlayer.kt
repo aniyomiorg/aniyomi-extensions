@@ -13,7 +13,6 @@ class AnimePlayer : DooPlay(
     "AnimePlayer",
     "https://animeplayer.com.br",
 ) {
-    
 
     // ============================== Popular ===============================
     override fun popularAnimeSelector() = "div#featured-titles article div.poster"

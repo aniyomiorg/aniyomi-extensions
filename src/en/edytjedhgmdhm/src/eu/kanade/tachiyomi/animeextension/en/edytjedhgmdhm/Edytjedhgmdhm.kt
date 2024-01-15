@@ -14,7 +14,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import java.net.URI
 import java.net.URISyntaxException
 
@@ -52,7 +51,7 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
 
     // ============================== Popular ===============================
 
-    override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
+    override suspend fun getPopularAnime(page: Int): AnimesPage {
         val results = tvsList.chunked(CHUNKED_SIZE).toList()
 
         val hasNextPage = results.size > page
@@ -67,7 +66,7 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
                 }
             }
         }
-        return Observable.just(AnimesPage(animeList, hasNextPage))
+        return AnimesPage(animeList, hasNextPage)
     }
 
     override fun popularAnimeRequest(page: Int): Request = throw Exception("Not used")
@@ -92,11 +91,11 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
 
     // =============================== Search ===============================
 
-    override fun fetchSearchAnime(
+    override suspend fun getSearchAnime(
         page: Int,
         query: String,
         filters: AnimeFilterList,
-    ): Observable<AnimesPage> {
+    ): AnimesPage {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val subPageFilter = filterList.find { it is SubPageFilter } as SubPageFilter
         val subPage = subPageFilter.toUriPart()
@@ -127,7 +126,7 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
                 }
             }
         }
-        return Observable.just(AnimesPage(animeList, hasNextPage))
+        return AnimesPage(animeList, hasNextPage)
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
@@ -161,13 +160,13 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> = Observable.just(anime)
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime = anime
 
     override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
 
     // ============================== Episodes ==============================
 
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+    override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
         val episodeList = mutableListOf<SEpisode>()
 
         fun traverseDirectory(url: String) {
@@ -212,7 +211,7 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
 
         traverseDirectory(baseUrl + anime.url)
 
-        return Observable.just(episodeList.reversed())
+        return episodeList.reversed()
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> = throw Exception("Not used")
@@ -223,8 +222,8 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> =
-        Observable.just(listOf(Video(baseUrl + episode.url, "Video", baseUrl + episode.url)))
+    override suspend fun getVideoList(episode: SEpisode): List<Video> =
+        listOf(Video(baseUrl + episode.url, "Video", baseUrl + episode.url))
 
     override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
 

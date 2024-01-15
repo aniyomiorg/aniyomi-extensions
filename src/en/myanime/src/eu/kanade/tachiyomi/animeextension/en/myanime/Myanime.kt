@@ -25,7 +25,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -115,7 +114,7 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> = Observable.just(anime)
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime = anime
 
     override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
 

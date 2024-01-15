@@ -28,7 +28,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -323,9 +322,9 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val videoList = GoogleDriveExtractor(client, headers).videosFromUrl(episode.url)
-        return Observable.just(videoList)
+        return videoList
     }
 
     override fun videoListSelector(): String = throw Exception("Not Used")

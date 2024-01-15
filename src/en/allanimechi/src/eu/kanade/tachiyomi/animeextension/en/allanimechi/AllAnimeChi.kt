@@ -23,7 +23,7 @@ import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -42,7 +42,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -222,12 +221,11 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
         return client.newCall(animeDetailsRequestInternal(anime))
-            .asObservableSuccess()
-            .map { response ->
-                animeDetailsParse(response).apply { initialized = true }
-            }
+            .awaitSuccess()
+            .use(::animeDetailsParse)
+            .apply { initialized = true }
     }
 
     private fun animeDetailsRequestInternal(anime: SAnime): Request {

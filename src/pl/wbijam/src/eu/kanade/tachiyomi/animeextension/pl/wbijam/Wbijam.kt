@@ -18,7 +18,7 @@ import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -32,7 +32,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -91,21 +90,14 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // button:contains(Lista anime) + div.dropdown-content > a:contains(chainsaw)
 
-    override fun fetchSearchAnime(
+    override suspend fun getSearchAnime(
         page: Int,
         query: String,
         filters: AnimeFilterList,
-    ): Observable<AnimesPage> {
-        return Observable.defer {
-            try {
-                client.newCall(searchAnimeRequest(page, query, filters)).asObservableSuccess()
-            } catch (e: NoClassDefFoundError) {
-                // RxJava doesn't handle Errors, which tends to happen during global searches
-                // if an old extension using non-existent classes is still around
-                throw RuntimeException(e)
-            }
-        }
-            .map { response ->
+    ): AnimesPage {
+        return client.newCall(searchAnimeRequest(page, query, filters))
+            .awaitSuccess()
+            .use { response ->
                 searchAnimeParse(response, query)
             }
     }
@@ -132,8 +124,8 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        return Observable.just(anime)
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
+        return anime
     }
 
     override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
@@ -237,7 +229,7 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val parsed = json.decodeFromString<EpisodeType>(episode.url)
         val videoList = mutableListOf<Video>()
         val serverList = mutableListOf<String>()
@@ -289,7 +281,7 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }.filterNotNull().flatten(),
         )
 
-        return Observable.just(videoList.sort())
+        return videoList.sort()
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("Not Used")

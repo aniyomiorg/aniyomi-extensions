@@ -17,7 +17,7 @@ import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -34,7 +34,6 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -85,13 +84,11 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         val params = KissAnimeFilters.getSearchParameters(filters)
         return client.newCall(searchAnimeRequest(page, query, params))
-            .asObservableSuccess()
-            .map { response ->
-                searchAnimeParse(response)
-            }
+            .awaitSuccess()
+            .use(::searchAnimeParse)
     }
 
     private fun searchAnimeRequest(page: Int, query: String, filters: KissAnimeFilters.FilterSearchParams): Request {
@@ -158,7 +155,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val videoList = mutableListOf<Video>()
         val serverList = mutableListOf<Server>()
 
@@ -240,7 +237,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         require(videoList.isNotEmpty()) { "Failed to fetch videos" }
 
-        return Observable.just(videoList.sort())
+        return videoList.sort()
     }
 
     override fun videoUrlParse(document: Document): String = throw Exception("Not Used")

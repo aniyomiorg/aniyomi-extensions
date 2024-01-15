@@ -30,7 +30,6 @@ import kotlinx.serialization.json.jsonObject
 import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -176,7 +175,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
         val mediaId = json.decodeFromString<LinkData>(anime.url)
         val resp = client.newCall(
             if (mediaId.media_type == "series") {
@@ -186,9 +185,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             },
         ).execute().use { it.body.string() }
         val info = json.decodeFromString<AnimeResult>(resp)
-        return Observable.just(
-            info.data.first().toSAnimeOrNull(anime) ?: anime,
-        )
+        return info.data.first().toSAnimeOrNull(anime) ?: anime
     }
 
     override fun animeDetailsParse(response: Response): SAnime = throw Exception("not used")
@@ -263,7 +260,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val urlJson = json.decodeFromString<EpisodeData>(episode.url)
         val dubLocale = preferences.getString(PREF_AUD_KEY, PREF_AUD_DEFAULT)!!
 
@@ -282,7 +279,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             }.getOrNull()
         }.filterNotNull().flatten()
 
-        return Observable.just(videoList.sort())
+        return videoList.sort()
     }
 
     // ============================= Utilities ==============================
@@ -421,7 +418,9 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 val media = json.decodeFromString<LinkData>(anime.url)
                 if (media.media_type == "series") {
                     fetchStatusByTitle(this@toSAnime.title)
-                } else SAnime.COMPLETED
+                } else {
+                    SAnime.COMPLETED
+                }
             } ?: SAnime.UNKNOWN
             author = content_provider
             description = anime?.description ?: StringBuilder().apply {
