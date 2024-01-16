@@ -124,9 +124,7 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
-        return anime
-    }
+    override suspend fun getAnimeDetails(anime: SAnime) = anime
 
     override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
 

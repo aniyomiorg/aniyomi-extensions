@@ -146,21 +146,9 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-    // Uncomment when extensions-lib v14 gets released
-    // tested with extensions-lib:9d3dcb0
-    // override fun getAnimeUrl(anime: SAnime) = "$baseUrl${anime.url}"
+    override fun getAnimeUrl(anime: SAnime) = "$baseUrl${anime.url}"
 
-    override fun animeDetailsRequest(anime: SAnime): Request = GET(baseUrl + anime.url)
-
-    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
-        return client.newCall(animeDetailsRequestInternal(anime))
-            .awaitSuccess()
-            .use { response ->
-                animeDetailsParse(response).apply { initialized = true }
-            }
-    }
-
-    private fun animeDetailsRequestInternal(anime: SAnime) = GET(apiUrl + anime.url)
+    override fun animeDetailsRequest(anime: SAnime) = GET(apiUrl + anime.url)
 
     override fun animeDetailsParse(response: Response): SAnime {
         val languages = client.newCall(

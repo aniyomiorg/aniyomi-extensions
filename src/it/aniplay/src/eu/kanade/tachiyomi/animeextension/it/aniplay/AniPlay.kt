@@ -124,17 +124,9 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun getFilterList(): AnimeFilterList = AniPlayFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
+    override fun getAnimeUrl(anime: SAnime) = "$baseUrl/anime/${anime.url}"
 
-    override fun animeDetailsRequest(anime: SAnime): Request = GET("$baseUrl/anime/${anime.url}")
-
-    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
-        return client.newCall(animeDetailsRequestInternal(anime))
-            .awaitSuccess()
-            .use(::animeDetailsParse)
-            .apply { initialized = true }
-    }
-
-    private fun animeDetailsRequestInternal(anime: SAnime): Request = GET("$baseUrl/api/anime/${anime.url}")
+    override fun animeDetailsRequest(anime: SAnime) = GET("$baseUrl/api/anime/${anime.url}")
 
     override fun animeDetailsParse(response: Response): SAnime {
         val detailsJson = json.decodeFromString<AnimeResult>(response.body.string())

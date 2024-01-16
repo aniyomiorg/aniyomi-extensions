@@ -24,7 +24,6 @@ import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -131,19 +130,13 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // =========================== Anime Details ============================
-    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
-        return client.newCall(internalAnimeDetailsRequest(anime))
-            .awaitSuccess()
-            .use(::animeDetailsParse)
-    }
-
     // workaround to get correct WebView url
-    override fun animeDetailsRequest(anime: SAnime): Request {
+    override fun getAnimeUrl(anime: SAnime): String {
         val slug = anime.title.titleToSlug()
-        return GET("$baseUrl/show-details/$slug/${anime.url}")
+        return "$baseUrl/show-details/$slug/${anime.url}"
     }
 
-    private fun internalAnimeDetailsRequest(anime: SAnime): Request {
+    override fun animeDetailsRequest(anime: SAnime): Request {
         return GET("$apiUrl/drama?id=${anime.url}", apiHeaders)
     }
 
@@ -152,7 +145,7 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListRequest(anime: SAnime) = internalAnimeDetailsRequest(anime)
+    override fun episodeListRequest(anime: SAnime) = animeDetailsRequest(anime)
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val result = response.parseAs<EpisodeResponseDto>()

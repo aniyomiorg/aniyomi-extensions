@@ -18,7 +18,6 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.awaitSuccess
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.boolean
@@ -85,15 +84,9 @@ class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
-        return client.newCall(GET("$apiUrl/content/${anime.url}/extensive"))
-            .awaitSuccess()
-            .use { response ->
-                animeDetailsParse(response).apply { initialized = true }
-            }
-    }
+    override fun animeDetailsRequest(anime: SAnime) = GET("$apiUrl/content/${anime.url}/extensive")
 
-    override fun animeDetailsRequest(anime: SAnime) = GET("$baseUrl/details/${anime.url}")
+    override fun getAnimeUrl(anime: SAnime) = "$baseUrl/details/${anime.url}"
 
     override fun animeDetailsParse(response: Response) = SAnime.create().apply {
         val details = response.parseAs<AnimeDetails>()

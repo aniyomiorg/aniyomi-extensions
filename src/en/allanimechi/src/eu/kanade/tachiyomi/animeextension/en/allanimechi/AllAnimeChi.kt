@@ -23,7 +23,6 @@ import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.awaitSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -220,15 +219,7 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun getFilterList(): AnimeFilterList = AllAnimeChiFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
-
-    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
-        return client.newCall(animeDetailsRequestInternal(anime))
-            .awaitSuccess()
-            .use(::animeDetailsParse)
-            .apply { initialized = true }
-    }
-
-    private fun animeDetailsRequestInternal(anime: SAnime): Request {
+    override fun animeDetailsRequest(anime: SAnime): Request {
         val variables = buildJsonObject {
             put("_id", anime.url)
         }.encode()
@@ -249,9 +240,8 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
         return GET(url, apiHeaders)
     }
 
-    // TODO: replace with getAnimeUrl when new ext-lib is available
-    override fun animeDetailsRequest(anime: SAnime): Request {
-        return GET("data:text/plain,This%20extension%20does%20not%20have%20a%20website.")
+    override fun getAnimeUrl(anime: SAnime): String {
+        return "data:text/plain,This%20extension%20does%20not%20have%20a%20website."
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
@@ -277,7 +267,7 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================== Episodes ==============================
 
-    override fun episodeListRequest(anime: SAnime): Request = animeDetailsRequestInternal(anime)
+    override fun episodeListRequest(anime: SAnime) = animeDetailsRequest(anime)
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val media = response.parseAs<SeriesResult>()
