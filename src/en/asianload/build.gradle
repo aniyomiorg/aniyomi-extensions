@@ -7,7 +7,7 @@ ext {
     extName = 'AsianLoad'
     pkgNameSuffix = 'en.asianload'
     extClass = '.AsianLoad'
-    extVersionCode = 36
+    extVersionCode = 37
 }
 
 dependencies {

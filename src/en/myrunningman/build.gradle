@@ -8,7 +8,7 @@ ext {
     extName = 'My Running Man'
     pkgNameSuffix = 'en.myrunningman'
     extClass = '.MyRunningMan'
-    extVersionCode = 2
+    extVersionCode = 3
 }
 
 dependencies {

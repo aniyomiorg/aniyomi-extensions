@@ -5,7 +5,7 @@ ext {
     extName = 'Hentaijk'
     pkgNameSuffix = 'es.hentaijk'
     extClass = '.Hentaijk'
-    extVersionCode = 11
+    extVersionCode = 12
     containsNsfw = true
 }
 

@@ -5,7 +5,7 @@ ext {
     extName = 'Vostfree'
     pkgNameSuffix = 'fr.vostfree'
     extClass = '.Vostfree'
-    extVersionCode = 18
+    extVersionCode = 19
 }
 
 dependencies {

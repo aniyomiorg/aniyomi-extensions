@@ -7,7 +7,7 @@ ext {
     extName = 'asia2tv'
     pkgNameSuffix = 'ar.asia2tv'
     extClass = '.Asia2TV'
-    extVersionCode = 15
+    extVersionCode = 16
 }
 
 dependencies {

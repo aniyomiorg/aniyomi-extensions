@@ -6,7 +6,7 @@ ext {
     extName = 'Kayoanime'
     pkgNameSuffix = 'en.kayoanime'
     extClass = '.Kayoanime'
-    extVersionCode = 10
+    extVersionCode = 11
 }
 
 dependencies {

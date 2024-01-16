@@ -6,7 +6,7 @@ ext {
     extName = 'Movie2k'
     pkgNameSuffix = 'de.movie2k'
     extClass = '.Movie2k'
-    extVersionCode = 4
+    extVersionCode = 5
 }
 
 dependencies {

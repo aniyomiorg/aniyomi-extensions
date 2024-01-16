@@ -8,7 +8,7 @@ ext {
     extName = 'Anizm'
     pkgNameSuffix = 'tr.anizm'
     extClass = '.Anizm'
-    extVersionCode = 11
+    extVersionCode = 12
 }
 
 dependencies {

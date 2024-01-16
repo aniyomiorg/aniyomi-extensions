@@ -7,7 +7,7 @@ ext {
     extName = 'Jav Guru'
     pkgNameSuffix = 'all.javguru'
     extClass = '.JavGuru'
-    extVersionCode = 9
+    extVersionCode = 10
     containsNsfw = true
 }
 

@@ -5,7 +5,7 @@ ext {
     extName = 'Animefenix'
     pkgNameSuffix = 'es.animefenix'
     extClass = '.Animefenix'
-    extVersionCode = 32
+    extVersionCode = 33
 }
 
 dependencies {

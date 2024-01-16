@@ -5,7 +5,7 @@ ext {
     extName = 'Gnula'
     pkgNameSuffix = 'es.gnula'
     extClass = '.Gnula'
-    extVersionCode = 11
+    extVersionCode = 12
 }
 
 dependencies {

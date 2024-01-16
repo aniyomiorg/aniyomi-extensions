@@ -6,7 +6,7 @@ ext {
     extName = 'HentaiLA'
     pkgNameSuffix = 'es.hentaila'
     extClass = '.Hentaila'
-    extVersionCode = 19
+    extVersionCode = 20
     containsNsfw = true
 }
 

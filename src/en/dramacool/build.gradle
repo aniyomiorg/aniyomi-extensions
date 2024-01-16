@@ -7,7 +7,7 @@ ext {
     extName = 'DramaCool'
     pkgNameSuffix = 'en.dramacool'
     extClass = '.DramaCool'
-    extVersionCode = 45
+    extVersionCode = 46
 }
 
 dependencies {

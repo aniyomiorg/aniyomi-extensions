@@ -8,7 +8,7 @@ ext {
     extName = 'AllAnime'
     pkgNameSuffix = 'en.allanime'
     extClass = '.AllAnime'
-    extVersionCode = 30
+    extVersionCode = 31
 }
 
 dependencies {

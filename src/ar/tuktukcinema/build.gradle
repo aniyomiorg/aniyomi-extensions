@@ -5,7 +5,7 @@ ext {
     extName = 'توك توك سينما'
     pkgNameSuffix = 'ar.tuktukcinema'
     extClass = '.Tuktukcinema'
-    extVersionCode = 15
+    extVersionCode = 16
 }
 
 dependencies {

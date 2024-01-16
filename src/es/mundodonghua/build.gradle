@@ -5,7 +5,7 @@ ext {
     extName = 'MundoDonghua'
     pkgNameSuffix = 'es.mundodonghua'
     extClass = '.MundoDonghua'
-    extVersionCode = 15
+    extVersionCode = 16
 }
 
 dependencies {

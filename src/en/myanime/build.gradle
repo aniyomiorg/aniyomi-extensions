@@ -6,7 +6,7 @@ ext {
     extName = 'Myanime'
     pkgNameSuffix = 'en.myanime'
     extClass = '.Myanime'
-    extVersionCode = 5
+    extVersionCode = 6
 }
 
 dependencies {

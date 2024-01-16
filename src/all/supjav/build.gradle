@@ -7,7 +7,7 @@ ext {
     extName = 'SupJav'
     pkgNameSuffix = 'all.supjav'
     extClass = '.SupJavFactory'
-    extVersionCode = 1
+    extVersionCode = 2
     containsNsfw = true
 }
 

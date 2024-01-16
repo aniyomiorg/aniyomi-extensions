@@ -8,7 +8,7 @@ ext {
     extName = 'Moflix-Stream'
     pkgNameSuffix = 'de.moflixstream'
     extClass = '.MoflixStream'
-    extVersionCode = 3
+    extVersionCode = 4
 }
 
 dependencies {

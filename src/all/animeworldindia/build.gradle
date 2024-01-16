@@ -8,7 +8,7 @@ ext {
     extName = 'AnimeWorld India'
     pkgNameSuffix = 'all.animeworldindia'
     extClass = '.AnimeWorldIndiaFactory'
-    extVersionCode = 7
+    extVersionCode = 8
 }
 
 dependencies {

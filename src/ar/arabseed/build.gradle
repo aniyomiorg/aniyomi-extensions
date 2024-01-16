@@ -7,7 +7,7 @@ ext {
     extName = 'عرب سيد'
     pkgNameSuffix = 'ar.arabseed'
     extClass = '.ArabSeed'
-    extVersionCode = 9
+    extVersionCode = 10
 }
 
 dependencies {

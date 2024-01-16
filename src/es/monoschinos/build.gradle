@@ -5,7 +5,7 @@ ext {
     extName = 'MonosChinos'
     pkgNameSuffix = 'es.monoschinos'
     extClass = '.MonosChinos'
-    extVersionCode = 23
+    extVersionCode = 24
 }
 
 dependencies {

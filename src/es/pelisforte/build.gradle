@@ -6,7 +6,7 @@ ext {
     extName = 'PelisForte'
     pkgNameSuffix = 'es.pelisforte'
     extClass = '.PelisForte'
-    extVersionCode = 6
+    extVersionCode = 7
 }
 
 dependencies {

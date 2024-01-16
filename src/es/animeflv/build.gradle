@@ -6,7 +6,7 @@ ext {
     extName = 'AnimeFLV'
     pkgNameSuffix = 'es.animeflv'
     extClass = '.AnimeFlv'
-    extVersionCode = 51
+    extVersionCode = 52
 }
 
 dependencies {

@@ -11,8 +11,8 @@ class ZoroThemeGenerator : ThemeSourceGenerator {
     override val baseVersionCode = 1
 
     override val sources = listOf(
-        SingleLang("AniWatch", "https://aniwatch.to", "en", isNsfw = false, pkgName = "zoro", overrideVersionCode = 37),
-        SingleLang("Kaido", "https://kaido.to", "en", isNsfw = false, overrideVersionCode = 4),
+        SingleLang("AniWatch", "https://aniwatch.to", "en", isNsfw = false, pkgName = "zoro", overrideVersionCode = 38),
+        SingleLang("Kaido", "https://kaido.to", "en", isNsfw = false, overrideVersionCode = 5),
     )
 
     companion object {

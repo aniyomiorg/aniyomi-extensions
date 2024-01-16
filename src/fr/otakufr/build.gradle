@@ -7,7 +7,7 @@ ext {
     extName = 'OtakuFR'
     pkgNameSuffix = 'fr.otakufr'
     extClass = '.OtakuFR'
-    extVersionCode = 5
+    extVersionCode = 6
 }
 
 dependencies {

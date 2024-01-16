@@ -25,7 +25,7 @@ ext {
     extName = 'Türk Anime TV'
     pkgNameSuffix = 'tr.turkanime'
     extClass = '.TurkAnime'
-    extVersionCode = 18
+    extVersionCode = 19
 }
 
 apply from: "$rootDir/common.gradle"
