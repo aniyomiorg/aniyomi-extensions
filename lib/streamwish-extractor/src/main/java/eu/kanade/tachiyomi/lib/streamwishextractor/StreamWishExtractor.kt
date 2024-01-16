@@ -21,7 +21,9 @@ class StreamWishExtractor(private val client: OkHttpClient, private val headers:
             ?.let { script ->
                 if (script.contains("eval(function(p,a,c")) {
                     JsUnpacker.unpackAndCombine(script)
-                } else script
+                } else {
+                    script
+                }
             }
 
         val masterUrl = scriptBody

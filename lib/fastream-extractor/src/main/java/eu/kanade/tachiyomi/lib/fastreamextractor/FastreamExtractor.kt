@@ -1,15 +1,15 @@
 package eu.kanade.tachiyomi.lib.fastreamextractor
 
+import dev.datlag.jsunpacker.JsUnpacker
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import okhttp3.FormBody
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.internal.commonEmptyHeaders
-import dev.datlag.jsunpacker.JsUnpacker
 
 class FastreamExtractor(private val client: OkHttpClient, private val headers: Headers = commonEmptyHeaders) {
     private val videoHeaders by lazy {
@@ -35,8 +35,7 @@ class FastreamExtractor(private val client: OkHttpClient, private val headers: H
                 }.build()
                 val doc = client.newCall(POST(url, videoHeaders, body = form)).execute().use { it.asJsoup() }
                 doc.selectFirst("script:containsData(jwplayer):containsData(vplayer)") ?: return emptyList()
-            }
-            else {
+            } else {
                 firstDoc.selectFirst("script:containsData(jwplayer):containsData(vplayer)") ?: return emptyList()
             }
 
