@@ -21,7 +21,6 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.lang.Exception
 
 class AnimeWorldIndia(
     final override val lang: String,
@@ -109,9 +108,9 @@ class AnimeWorldIndia(
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     @Serializable
     data class SeasonDto(val episodes: EpisodeTypeDto)
@@ -173,11 +172,11 @@ class AnimeWorldIndia(
     }
 
     // ============================ Video Links =============================
-    override fun videoFromElement(element: Element): Video = throw Exception("not used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
     @Serializable
     private data class PlayerDto(

@@ -247,7 +247,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
         return newList
     }
 
-    override fun videoUrlParse(response: Response) = throw Exception("not used")
+    override fun videoUrlParse(response: Response) = throw UnsupportedOperationException()
 
     @Suppress("UNCHECKED_CAST")
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

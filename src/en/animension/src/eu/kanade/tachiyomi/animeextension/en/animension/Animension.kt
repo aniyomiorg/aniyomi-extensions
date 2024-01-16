@@ -127,7 +127,7 @@ class Animension() : ConfigurableAnimeSource, AnimeHttpSource() {
         return this
     }
 
-    override fun videoUrlParse(response: Response) = throw Exception("not used")
+    override fun videoUrlParse(response: Response) = throw UnsupportedOperationException()
 
     // Anime details
     override fun animeDetailsParse(response: Response): SAnime {

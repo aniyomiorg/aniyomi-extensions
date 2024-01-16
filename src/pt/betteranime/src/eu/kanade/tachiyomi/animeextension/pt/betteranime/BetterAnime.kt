@@ -34,7 +34,6 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.io.IOException
-import java.lang.Exception
 
 class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -92,9 +91,9 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return extractor.videoListFromHtml(html)
     }
 
-    override fun videoListSelector() = throw Exception("not used")
-    override fun videoFromElement(element: Element) = throw Exception("not used")
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
     override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)

@@ -67,7 +67,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // episodes
 
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
@@ -93,7 +93,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episodeElement.map { episodeFromElement(it, url) }
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not Used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     private fun episodeFromElement(element: Element, url: String): SEpisode {
         val episode = SEpisode.create()
@@ -785,11 +785,11 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // Search
 
@@ -822,13 +822,13 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Latest
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = throw UnsupportedOperationException()
 
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
 
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesSelector(): String = throw UnsupportedOperationException()
 
     // Preferences
 

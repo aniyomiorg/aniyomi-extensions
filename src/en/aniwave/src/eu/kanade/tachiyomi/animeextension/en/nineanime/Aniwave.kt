@@ -164,7 +164,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episodeElements.parallelMapBlocking { episodeFromElements(it, animeUrl) }.reversed()
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not Used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     private fun episodeFromElements(element: Element, url: String): SEpisode {
         val title = element.parent()?.attr("title") ?: ""
@@ -238,11 +238,11 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .parallelFlatMapBlocking { extractVideo(it, epurl) }
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
 

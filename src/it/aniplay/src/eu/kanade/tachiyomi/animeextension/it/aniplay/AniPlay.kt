@@ -25,7 +25,6 @@ import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -54,9 +53,9 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =============================== Latest ===============================
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("not used")
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
 
-    override fun latestUpdatesParse(response: Response): AnimesPage = throw Exception("not used")
+    override fun latestUpdatesParse(response: Response): AnimesPage = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
 
@@ -67,7 +66,7 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
             .use(::searchAnimeParse)
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw UnsupportedOperationException()
 
     private fun searchAnimeRequest(page: Int, query: String, filters: AniPlayFilters.FilterSearchParams): Request {
         if ((filters.year.isNotEmpty() && filters.season.isEmpty()) ||

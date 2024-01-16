@@ -398,9 +398,9 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun videoListRequest(episode: SEpisode): Request = throw Exception("Not used")
+    override fun videoListRequest(episode: SEpisode): Request = throw UnsupportedOperationException()
 
-    override fun videoListParse(response: Response): List<Video> = throw Exception("Not used")
+    override fun videoListParse(response: Response): List<Video> = throw UnsupportedOperationException()
 
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val (request, videoId) = videoListRequestPair(episode)

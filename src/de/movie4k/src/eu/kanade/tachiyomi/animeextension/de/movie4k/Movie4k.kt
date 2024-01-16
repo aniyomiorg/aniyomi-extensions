@@ -418,9 +418,9 @@ class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // Latest
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
 
-    override fun latestUpdatesParse(response: Response): AnimesPage = throw Exception("not Used")
+    override fun latestUpdatesParse(response: Response): AnimesPage = throw UnsupportedOperationException()
 
     // Preferences
 

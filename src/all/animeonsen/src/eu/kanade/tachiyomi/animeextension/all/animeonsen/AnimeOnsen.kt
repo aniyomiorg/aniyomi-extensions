@@ -27,7 +27,6 @@ import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import kotlin.Exception
 
 class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -70,8 +69,8 @@ class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int) = throw Exception("not used")
-    override fun latestUpdatesParse(response: Response) = throw Exception("not used")
+    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException()
+    override fun latestUpdatesParse(response: Response) = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) =
@@ -133,7 +132,7 @@ class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun videoListRequest(episode: SEpisode) = GET("$apiUrl/content/${episode.url}")
 
-    override fun videoUrlParse(response: Response) = throw Exception("not used")
+    override fun videoUrlParse(response: Response) = throw UnsupportedOperationException()
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

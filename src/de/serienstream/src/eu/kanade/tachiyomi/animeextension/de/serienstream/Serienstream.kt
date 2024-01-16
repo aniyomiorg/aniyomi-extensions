@@ -281,7 +281,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("not Used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val hoster = preferences.getString(SConstants.PREFERRED_HOSTER, null)

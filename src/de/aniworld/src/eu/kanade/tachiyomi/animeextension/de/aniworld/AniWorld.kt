@@ -312,7 +312,7 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("not Used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val hoster = preferences.getString(AWConstants.PREFERRED_HOSTER, null)

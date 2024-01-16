@@ -202,9 +202,9 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             }
     }
 
-    override fun videoListSelector() = throw Exception("Not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("Not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!

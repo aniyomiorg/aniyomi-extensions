@@ -133,7 +133,7 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
 
     // ============================== Popular ===============================
 
-    override fun popularAnimeParse(response: Response): AnimesPage = throw Exception("Not used")
+    override fun popularAnimeParse(response: Response): AnimesPage = throw UnsupportedOperationException()
 
     override suspend fun getPopularAnime(page: Int): AnimesPage {
         return client.newCall(popularAnimeRequest(page))
@@ -173,7 +173,7 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
 
     // =============================== Latest ===============================
 
-    override fun latestUpdatesParse(response: Response) = throw Exception("Not used")
+    override fun latestUpdatesParse(response: Response) = throw UnsupportedOperationException()
 
     override suspend fun getLatestUpdates(page: Int): AnimesPage {
         return client.newCall(latestUpdatesRequest(page))
@@ -207,9 +207,9 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
 
     // =============================== Search ===============================
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw UnsupportedOperationException()
 
-    override fun searchAnimeParse(response: Response) = throw Exception("Not used")
+    override fun searchAnimeParse(response: Response) = throw UnsupportedOperationException()
 
     override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         require(parentId.isNotEmpty()) { "Select library in the extension settings." }

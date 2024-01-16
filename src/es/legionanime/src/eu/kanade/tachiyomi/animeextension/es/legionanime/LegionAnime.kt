@@ -449,31 +449,31 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     /* --Unused stuff-- */
 
-    override fun popularAnimeSelector(): String = throw Exception("not used")
+    override fun popularAnimeSelector(): String = throw UnsupportedOperationException()
 
-    override fun popularAnimeFromElement(element: Element): SAnime = throw Exception("not used")
+    override fun popularAnimeFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
-    override fun popularAnimeNextPageSelector(): String = throw Exception("not used")
+    override fun popularAnimeNextPageSelector(): String = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element): Video = throw Exception("not used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoListSelector(): String = throw Exception("not used")
+    override fun videoListSelector(): String = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document): String = throw Exception("not used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
-    override fun searchAnimeSelector(): String = throw Exception("not used")
+    override fun searchAnimeSelector(): String = throw UnsupportedOperationException()
 
-    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("not used")
+    override fun searchAnimeFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
-    override fun searchAnimeNextPageSelector(): String = throw Exception("not used")
+    override fun searchAnimeNextPageSelector(): String = throw UnsupportedOperationException()
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
-    override fun episodeListSelector(): String = throw Exception("not used")
+    override fun episodeListSelector(): String = throw UnsupportedOperationException()
 
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("not used")
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("not used")
+    override fun latestUpdatesNextPageSelector(): String = throw UnsupportedOperationException()
 
-    override fun latestUpdatesSelector(): String = throw Exception("not used")
+    override fun latestUpdatesSelector(): String = throw UnsupportedOperationException()
 }

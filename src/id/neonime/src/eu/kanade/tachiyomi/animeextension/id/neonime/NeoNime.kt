@@ -123,11 +123,11 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return GET("$baseUrl/list-anime/")
     }
 
-    override fun searchAnimeSelector() = throw Exception("Not Used")
+    override fun searchAnimeSelector() = throw UnsupportedOperationException()
 
     private fun generateSelector(query: String): String = "div.letter-section > ul > li > a:contains($query)"
 
-    override fun searchAnimeParse(response: Response) = throw Exception("Not Used")
+    override fun searchAnimeParse(response: Response) = throw UnsupportedOperationException()
 
     private fun searchQueryParse(response: Response, query: String): AnimesPage {
         val document = response.asJsoup()
@@ -198,7 +198,7 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListSelector() = "div > ul >ul > li >a:nth-child(6)"
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()

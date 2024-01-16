@@ -118,7 +118,7 @@ class EnNovelas : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListSelector() = "uwu"
 
-    override fun episodeFromElement(element: Element) = throw Exception("not used")
+    override fun episodeFromElement(element: Element) = throw UnsupportedOperationException()
 
     private fun getNumberFromEpsString(epsStr: String): String {
         return epsStr.filter { it.isDigit() }
@@ -195,11 +195,11 @@ class EnNovelas : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "Voex")
@@ -242,9 +242,9 @@ class EnNovelas : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         return AnimesPage(animeList, hasNextPage)
     }
-    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("not used")
-    override fun searchAnimeNextPageSelector(): String = throw Exception("not used")
-    override fun searchAnimeSelector(): String = throw Exception("not used")
+    override fun searchAnimeFromElement(element: Element): SAnime = throw UnsupportedOperationException()
+    override fun searchAnimeNextPageSelector(): String = throw UnsupportedOperationException()
+    override fun searchAnimeSelector(): String = throw UnsupportedOperationException()
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()

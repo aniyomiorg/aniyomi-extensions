@@ -27,7 +27,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -112,7 +111,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeSelector() = latestUpdatesSelector()
 
     // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("not used")
+    override fun searchAnimeFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
     private fun searchAnimeFromElement(element: Element, ui: String): SAnime {
         return SAnime.create().apply {
@@ -265,8 +264,8 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
     }
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================== Filters ===============================
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(

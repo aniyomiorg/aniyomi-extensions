@@ -110,9 +110,9 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episodes.reversed()
     }
 
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
-    override fun episodeFromElement(element: Element) = throw Exception("not used")
+    override fun episodeFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
@@ -143,9 +143,9 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videos
     }
 
-    override fun videoListSelector() = throw Exception("not used")
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
@@ -233,9 +233,9 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(animeList, hasNextPage)
     }
 
-    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("not used")
-    override fun searchAnimeNextPageSelector(): String = throw Exception("not used")
-    override fun searchAnimeSelector(): String = throw Exception("not used")
+    override fun searchAnimeFromElement(element: Element): SAnime = throw UnsupportedOperationException()
+    override fun searchAnimeNextPageSelector(): String = throw UnsupportedOperationException()
+    override fun searchAnimeSelector(): String = throw UnsupportedOperationException()
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()

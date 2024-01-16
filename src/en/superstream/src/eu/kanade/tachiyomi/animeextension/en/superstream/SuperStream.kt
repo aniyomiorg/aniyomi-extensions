@@ -44,9 +44,9 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
         return animes
     }
 
-    override fun popularAnimeRequest(page: Int) = throw Exception("not used")
+    override fun popularAnimeRequest(page: Int) = throw UnsupportedOperationException()
 
-    override fun popularAnimeParse(response: Response) = throw Exception("not used")
+    override fun popularAnimeParse(response: Response) = throw UnsupportedOperationException()
 
     override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
         val data = superStreamAPI.load(anime.url)
@@ -81,16 +81,16 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
         return episodes
     }
 
-    override fun episodeListParse(response: Response) = throw Exception("not used")
+    override fun episodeListParse(response: Response) = throw UnsupportedOperationException()
 
     override suspend fun getLatestUpdates(page: Int): AnimesPage {
         val animes = superStreamAPI.getLatest(page)
         return animes
     }
 
-    override fun latestUpdatesParse(response: Response) = throw Exception("not used")
+    override fun latestUpdatesParse(response: Response) = throw UnsupportedOperationException()
 
-    override fun latestUpdatesRequest(page: Int) = throw Exception("not used")
+    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException()
 
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val videos = superStreamAPI.loadLinks(episode.url)
@@ -98,7 +98,7 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
         return sortedVideos
     }
 
-    override fun videoListParse(response: Response) = throw Exception("not used")
+    override fun videoListParse(response: Response) = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "1080")
@@ -128,9 +128,9 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
         return AnimesPage(searchResult, searchResult.size == 20)
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = throw Exception("not used")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = throw UnsupportedOperationException()
 
-    override fun searchAnimeParse(response: Response) = throw Exception("not used")
+    override fun searchAnimeParse(response: Response) = throw UnsupportedOperationException()
 
     override suspend fun getAnimeDetails(anime: SAnime): SAnime {
         val data = superStreamAPI.load(anime.url)
@@ -185,7 +185,7 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
         }
         return ani
     }
-    override fun animeDetailsParse(response: Response) = throw Exception("not used")
+    override fun animeDetailsParse(response: Response) = throw UnsupportedOperationException()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {

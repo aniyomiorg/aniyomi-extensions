@@ -19,7 +19,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -165,7 +164,7 @@ class HahoMoe : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return Video(element.attr("src"), element.attr("title"), element.attr("src"))
     }
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

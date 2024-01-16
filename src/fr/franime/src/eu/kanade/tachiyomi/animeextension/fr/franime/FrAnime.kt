@@ -18,7 +18,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
-import java.lang.Exception
 
 class FrAnime : AnimeHttpSource() {
 
@@ -51,16 +50,16 @@ class FrAnime : AnimeHttpSource() {
     override suspend fun getPopularAnime(page: Int) =
         pagesToAnimesPage(database.sortedByDescending { it.note }, page)
 
-    override fun popularAnimeParse(response: Response) = throw Exception("not used")
+    override fun popularAnimeParse(response: Response) = throw UnsupportedOperationException()
 
-    override fun popularAnimeRequest(page: Int) = throw Exception("not used")
+    override fun popularAnimeRequest(page: Int) = throw UnsupportedOperationException()
 
     // =============================== Latest ===============================
     override suspend fun getLatestUpdates(page: Int) = pagesToAnimesPage(database.reversed(), page)
 
-    override fun latestUpdatesParse(response: Response): AnimesPage = throw Exception("not used")
+    override fun latestUpdatesParse(response: Response): AnimesPage = throw UnsupportedOperationException()
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("not used")
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
     override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
@@ -75,14 +74,14 @@ class FrAnime : AnimeHttpSource() {
         return pagesToAnimesPage(pages, page)
     }
 
-    override fun searchAnimeParse(response: Response): AnimesPage = throw Exception("not used")
+    override fun searchAnimeParse(response: Response): AnimesPage = throw UnsupportedOperationException()
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw UnsupportedOperationException()
 
     // =========================== Anime Details ============================
     override suspend fun getAnimeDetails(anime: SAnime): SAnime = anime
 
-    override fun animeDetailsParse(response: Response): SAnime = throw Exception("not used")
+    override fun animeDetailsParse(response: Response): SAnime = throw UnsupportedOperationException()
 
     // ============================== Episodes ==============================
     override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
@@ -109,7 +108,7 @@ class FrAnime : AnimeHttpSource() {
         return episodes.sortedByDescending { it.episode_number }
     }
 
-    override fun episodeListParse(response: Response): List<SEpisode> = throw Exception("not used")
+    override fun episodeListParse(response: Response): List<SEpisode> = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
