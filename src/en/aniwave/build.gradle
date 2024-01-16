@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'en.nineanime'
     extClass = '.Aniwave'
     extVersionCode = 61
-    libVersion = '13'
 }
 
 dependencies {

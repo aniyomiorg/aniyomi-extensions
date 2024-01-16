@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'es.pelisforte'
     extClass = '.PelisForte'
     extVersionCode = 6
-    libVersion = '13'
 }
 
 dependencies {

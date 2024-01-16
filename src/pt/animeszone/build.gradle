@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'pt.animeszone'
     extClass = '.AnimesZone'
     extVersionCode = 6
-    libVersion = '13'
     containsNsfw = true
 }
 

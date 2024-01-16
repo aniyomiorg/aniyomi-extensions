@@ -8,7 +8,6 @@ ext {
     pkgNameSuffix = 'ar.animerco'
     extClass = '.Animerco'
     extVersionCode = 34
-    libVersion = '13'
 }
 
 dependencies {

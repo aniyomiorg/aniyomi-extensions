@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'tr.anizm'
     extClass = '.Anizm'
     extVersionCode = 11
-    libVersion = '13'
 }
 
 dependencies {

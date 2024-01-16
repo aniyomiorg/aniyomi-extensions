@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'en.allanime'
     extClass = '.AllAnime'
     extVersionCode = 30
-    libVersion = '14'
 }
 
 dependencies {

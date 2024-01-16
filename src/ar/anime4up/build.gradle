@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'ar.anime4up'
     extClass = '.Anime4Up'
     extVersionCode = 52
-    libVersion = '13'
 }
 
 dependencies {

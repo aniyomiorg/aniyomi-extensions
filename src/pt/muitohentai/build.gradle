@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'pt.muitohentai'
     extClass = '.MuitoHentai'
     extVersionCode = 2
-    libVersion = '13'
     containsNsfw = true
 }
 

@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'en.allanimechi'
     extClass = '.AllAnimeChi'
     extVersionCode = 2
-    libVersion = '13'
 }
 
 dependencies {

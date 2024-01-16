@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'id.neonime'
     extClass = '.NeoNime'
     extVersionCode = 13
-    libVersion = '13'
 }
 
 dependencies {

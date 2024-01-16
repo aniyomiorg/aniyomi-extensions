@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.jkanime'
     extClass = '.Jkanime'
     extVersionCode = 18
-    libVersion = '13'
 }
 
 dependencies {

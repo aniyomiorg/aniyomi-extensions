@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.gnula'
     extClass = '.Gnula'
     extVersionCode = 11
-    libVersion = '13'
 }
 
 dependencies {

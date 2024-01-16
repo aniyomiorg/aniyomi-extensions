@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'tr.hentaizm'
     extClass = '.HentaiZM'
     extVersionCode = 1
-    libVersion = '13'
     containsNsfw = true
 }
 

@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'de.animetoast'
     extClass = '.AnimeToast'
     extVersionCode = 10
-    libVersion = '13'
 }
 
 dependencies {

@@ -8,7 +8,6 @@ ext {
     pkgNameSuffix = 'ar.witanime'
     extClass = '.WitAnime'
     extVersionCode = 47
-    libVersion = '13'
 }
 
 dependencies {

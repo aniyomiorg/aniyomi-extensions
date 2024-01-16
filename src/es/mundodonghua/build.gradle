@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.mundodonghua'
     extClass = '.MundoDonghua'
     extVersionCode = 15
-    libVersion = '13'
 }
 
 dependencies {

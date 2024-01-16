@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'ar.egydead'
     extClass = '.EgyDead'
     extVersionCode = 10
-    libVersion = '13'
 }
 
 dependencies {

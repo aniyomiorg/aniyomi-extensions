@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'en.ask4movie'
     extClass = '.Ask4Movie'
     extVersionCode = 10
-    libVersion = '13'
 }
 
 dependencies {

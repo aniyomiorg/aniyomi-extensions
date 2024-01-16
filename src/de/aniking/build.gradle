@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'de.aniking'
     extClass = '.Aniking'
     extVersionCode = 16
-    libVersion = '13'
 }
 
 dependencies {

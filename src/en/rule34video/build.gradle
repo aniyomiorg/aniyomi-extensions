@@ -8,7 +8,6 @@ ext {
     pkgNameSuffix = 'en.rule34video'
     extClass = '.Rule34Video'
     extVersionCode = 8
-    libVersion = '13'
     containsNsfw = true
 }
 

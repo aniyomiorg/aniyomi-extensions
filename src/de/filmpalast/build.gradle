@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'de.filmpalast'
     extClass = '.FilmPalast'
     extVersionCode = 13
-    libVersion = '13'
 }
 
 dependencies {

@@ -8,7 +8,6 @@ ext {
     pkgNameSuffix = 'pt.hinatasoul'
     extClass = '.HinataSoul'
     extVersionCode = 4
-    libVersion = '13'
 }
 
 

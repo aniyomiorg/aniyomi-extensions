@@ -8,7 +8,6 @@ ext {
     pkgNameSuffix = 'en.gogoanime'
     extClass = '.GogoAnime'
     extVersionCode = 78
-    libVersion = '13'
 }
 
 dependencies {

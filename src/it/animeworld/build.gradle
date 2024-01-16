@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'it.animeworld'
     extClass = '.ANIMEWORLD'
     extVersionCode = 33
-    libVersion = '13'
 }
 
 dependencies {

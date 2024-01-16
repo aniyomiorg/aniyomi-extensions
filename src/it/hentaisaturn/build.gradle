@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'it.hentaisaturn'
     extClass = '.HentaiSaturn'
     extVersionCode = 5
-    libVersion = '13'
     containsNsfw = true
 }
 

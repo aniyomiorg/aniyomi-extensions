@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'en.kissanime'
     extClass = '.KissAnime'
     extVersionCode = 5
-    libVersion = '13'
 }
 
 dependencies {

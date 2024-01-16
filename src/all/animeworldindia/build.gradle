@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'all.animeworldindia'
     extClass = '.AnimeWorldIndiaFactory'
     extVersionCode = 7
-    libVersion = '13'
 }
 
 dependencies {

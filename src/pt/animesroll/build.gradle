@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'pt.animesroll'
     extClass = '.AnimesROLL'
     extVersionCode = 3
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

@@ -8,7 +8,6 @@ ext {
     extName = 'KickAssAnime'
     pkgNameSuffix = 'en.kickassanime'
     extClass = '.KickAssAnime'
-    libVersion = '13'
     extVersionCode = 36
 }
 

@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'en.animepahe'
     extClass = '.AnimePahe'
     extVersionCode = 26
-    libVersion = '13'
 }
 
 dependencies {

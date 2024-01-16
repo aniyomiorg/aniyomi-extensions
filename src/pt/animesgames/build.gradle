@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'pt.animesgames'
     extClass = '.AnimesGames'
     extVersionCode = 2
-    libVersion = '13'
 }
 
 dependencies {

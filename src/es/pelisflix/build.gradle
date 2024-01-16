@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.pelisflix'
     extClass = '.PelisflixFactory'
     extVersionCode = 13
-    libVersion = '13'
 }
 
 dependencies {

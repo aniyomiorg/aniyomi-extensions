@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.locopelis'
     extClass = '.LocoPelis'
     extVersionCode = 18
-    libVersion = '13'
 }
 
 dependencies {

@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'ar.mycima'
     extClass = '.MyCima'
     extVersionCode = 20
-    libVersion = '13'
 }
 
 dependencies {

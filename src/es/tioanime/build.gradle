@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.tioanimeh'
     extClass = '.TioanimeHFactory'
     extVersionCode = 14
-    libVersion = '13'
 }
 
 dependencies {

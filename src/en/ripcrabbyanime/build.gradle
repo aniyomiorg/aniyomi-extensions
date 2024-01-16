@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'en.ripcrabbyanime'
     extClass = '.Ripcrabbyanime'
     extVersionCode = 10
-    libVersion = '13'
 }
 
 dependencies {

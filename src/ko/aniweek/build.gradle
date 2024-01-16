@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'ko.aniweek'
     extClass = '.Aniweek'
     extVersionCode = 3
-    libVersion = '13'
 }
 
 dependencies {

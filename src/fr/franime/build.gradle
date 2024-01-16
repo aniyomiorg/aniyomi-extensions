@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'fr.franime'
     extClass = '.FrAnime'
     extVersionCode = 9
-    libVersion = '13'
     containsNsfw = true
 }
 

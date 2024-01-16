@@ -8,7 +8,6 @@ ext {
     pkgNameSuffix = 'tr.tranimeizle'
     extClass = '.TRAnimeIzle'
     extVersionCode = 11
-    libVersion = '13'
 }
 
 dependencies {
