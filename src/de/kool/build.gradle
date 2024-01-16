@@ -1,7 +1,3 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
-
 ext {
     extName = 'Kool'
     pkgNameSuffix = 'de.kool'
@@ -9,10 +5,10 @@ ext {
     extVersionCode = 7
 }
 
+apply from: "$rootDir/common.gradle"
+
 dependencies {
     implementation(project(':lib-filemoon-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-voe-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

@@ -1,9 +1,3 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'FMovies'
     pkgNameSuffix = 'en.fmovies'
@@ -11,11 +5,10 @@ ext {
     extVersionCode = 15
 }
 
+apply from: "$rootDir/common.gradle"
+
 dependencies {
     implementation(project(':lib-filemoon-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-playlist-utils'))
 }
-
-
-apply from: "$rootDir/common.gradle"

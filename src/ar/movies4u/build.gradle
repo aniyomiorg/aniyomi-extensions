@@ -1,6 +1,3 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'موفيز فور يو'
     pkgNameSuffix = 'ar.movies4u'

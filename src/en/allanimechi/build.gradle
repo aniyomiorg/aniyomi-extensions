@@ -1,15 +1,11 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'AllAnimeChi'
     pkgNameSuffix = 'en.allanimechi'
     extClass = '.AllAnimeChi'
     extVersionCode = 3
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-mp4upload-extractor'))
@@ -20,6 +16,3 @@ dependencies {
     implementation(project(':lib-streamwish-extractor'))
     implementation(project(':lib-playlist-utils'))
 }
-
-
-apply from: "$rootDir/common.gradle"

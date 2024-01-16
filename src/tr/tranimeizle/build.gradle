@@ -1,14 +1,11 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'TR Anime Izle'
     pkgNameSuffix = 'tr.tranimeizle'
     extClass = '.TRAnimeIzle'
     extVersionCode = 12
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(":lib-filemoon-extractor"))
@@ -22,5 +19,3 @@ dependencies {
     implementation(project(":lib-vudeo-extractor"))
     implementation(project(":lib-yourupload-extractor"))
 }
-
-apply from: "$rootDir/common.gradle"

@@ -1,8 +1,3 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'Rule34Video'
     pkgNameSuffix = 'en.rule34video'

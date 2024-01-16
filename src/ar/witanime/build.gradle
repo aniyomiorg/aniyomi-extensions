@@ -1,14 +1,11 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'WIT ANIME'
     pkgNameSuffix = 'ar.witanime'
     extClass = '.WitAnime'
     extVersionCode = 48
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-dailymotion-extractor'))
@@ -17,5 +14,3 @@ dependencies {
     implementation(project(':lib-mp4upload-extractor'))
     implementation(project(':lib-vidbom-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

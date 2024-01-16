@@ -1,15 +1,11 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'Anime4up'
     pkgNameSuffix = 'ar.anime4up'
     extClass = '.Anime4Up'
     extVersionCode = 53
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-dood-extractor'))
@@ -22,5 +18,3 @@ dependencies {
     implementation(project(':lib-voe-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
-
-apply from: "$rootDir/common.gradle"

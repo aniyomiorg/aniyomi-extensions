@@ -1,14 +1,11 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'Animerco'
     pkgNameSuffix = 'ar.animerco'
     extClass = '.Animerco'
     extVersionCode = 35
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-uqload-extractor'))
@@ -21,5 +18,3 @@ dependencies {
     implementation(project(':lib-yourupload-extractor'))
     implementation(project(':lib-okru-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

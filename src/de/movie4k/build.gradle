@@ -1,7 +1,3 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
-
 ext {
     extName = 'Movie4k'
     pkgNameSuffix = 'de.movie4k'
@@ -9,9 +5,9 @@ ext {
     extVersionCode = 7
 }
 
+apply from: "$rootDir/common.gradle"
+
 dependencies {
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-voe-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

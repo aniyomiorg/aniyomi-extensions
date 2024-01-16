@@ -1,7 +1,3 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
-
 ext {
     extName = 'Aniflix'
     pkgNameSuffix = 'de.aniflix'
@@ -9,11 +5,11 @@ ext {
     extVersionCode = 25
 }
 
+apply from: "$rootDir/common.gradle"
+
 dependencies {
     implementation(project(':lib-streamlare-extractor'))
     implementation(project(':lib-voe-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-dood-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

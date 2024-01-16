@@ -1,9 +1,3 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-} 
-
 ext {
     extName = 'FrAnime'
     pkgNameSuffix = 'fr.franime'
@@ -11,6 +5,7 @@ ext {
     extVersionCode = 10
     containsNsfw = true
 }
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-vido-extractor'))
@@ -18,5 +13,3 @@ dependencies {
     implementation(project(':lib-sendvid-extractor'))
     implementation(project(':lib-sibnet-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

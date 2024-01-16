@@ -1,15 +1,11 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'AsiaFlix'
     pkgNameSuffix = 'en.asiaflix'
     extClass = '.AsiaFlix'
     extVersionCode = 6
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-cryptoaes'))
@@ -19,5 +15,3 @@ dependencies {
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-mixdrop-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"
