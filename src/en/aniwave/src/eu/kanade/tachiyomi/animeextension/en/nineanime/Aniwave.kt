@@ -21,6 +21,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelFlatMapBlocking
 import eu.kanade.tachiyomi.util.parallelMapBlocking
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.json.Json
 import okhttp3.Request
 import okhttp3.Response
@@ -307,11 +308,6 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Completed" -> SAnime.COMPLETED
             else -> SAnime.UNKNOWN
         }
-    }
-
-    private inline fun <reified T> Response.parseAs(): T {
-        val responseBody = use { it.body.string() }
-        return json.decodeFromString(responseBody)
     }
 
     companion object {

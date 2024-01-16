@@ -16,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.json.Json
 import okhttp3.Request
 import okhttp3.Response
@@ -163,10 +164,6 @@ class AnimesROLL : AnimeHttpSource() {
             .substringAfter(":")
             .substringBeforeLast(",\"page\"")
         return json.decodeFromString<PagePropDto<T>>(nextData).data
-    }
-
-    private inline fun <reified T> Response.parseAs(): T {
-        return use { it.body.string() }.let(json::decodeFromString)
     }
 
     private fun String.ifNotEmpty(block: (String) -> String): String {

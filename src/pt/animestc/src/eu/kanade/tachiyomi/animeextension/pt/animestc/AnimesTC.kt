@@ -21,6 +21,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
@@ -252,10 +253,10 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun Response.getAnimeDto(): AnimeDto {
         val responseBody = use { it.body.string() }
         return try {
-            parseAs<AnimeDto>(responseBody)
+            parseAs<AnimeDto> { responseBody }
         } catch (e: Exception) {
             // URL intent handler moment
-            parseAs<ResponseDto<AnimeDto>>(responseBody).items.first()
+            parseAs<ResponseDto<AnimeDto>> { responseBody }.items.first()
         }
     }
 
@@ -263,11 +264,6 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         return runCatching {
             DATE_FORMATTER.parse(this)?.time
         }.getOrNull() ?: 0L
-    }
-
-    private inline fun <reified T> Response.parseAs(preloaded: String? = null): T {
-        val responseBody = preloaded ?: use { it.body.string() }
-        return json.decodeFromString(responseBody)
     }
 
     override fun List<Video>.sort(): List<Video> {

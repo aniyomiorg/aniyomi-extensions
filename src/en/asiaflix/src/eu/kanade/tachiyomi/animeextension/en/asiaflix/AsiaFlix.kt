@@ -26,6 +26,7 @@ import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -258,14 +259,9 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // ============================ Utilities =============================
-    private inline fun <reified T> String.parseAs(): T =
-        json.decodeFromString(this)
 
     private inline fun <reified T> JsonElement.parseAs(): T =
         json.decodeFromJsonElement(this)
-
-    private inline fun <reified T> Response.parseAs(): T =
-        use { it.body.string() }.parseAs()
 
     companion object {
         private const val LIMIT = 20

@@ -26,6 +26,7 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.awaitSuccess
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -266,10 +267,6 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int) = GET("$apiUrl/recent?type=all&page=$page")
 
     // ============================= Utilities ==============================
-
-    private inline fun <reified T> Response.parseAs(): T {
-        return body.string().let(json::decodeFromString)
-    }
 
     private fun String.getLocale(): String {
         return LOCALE.firstOrNull { it.first == this }?.second ?: ""
