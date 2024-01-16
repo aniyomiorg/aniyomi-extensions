@@ -143,7 +143,7 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     )
 
     override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     // =========================== Anime Details ============================
@@ -264,11 +264,11 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "iframe, script:containsData(eval), script:containsData(player.src), script:containsData(this.src), script:containsData(sources:)"
 
     override fun videoFromElement(element: Element): Video {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     override fun videoUrlParse(document: Document): String {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     // ============================== Settings ==============================

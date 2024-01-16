@@ -456,7 +456,7 @@ class AnimeMovil : ConfigurableAnimeSource, AnimeHttpSource() {
         return try {
             URLEncoder.encode(s, "UTF-8")
         } catch (e: UnsupportedEncodingException) {
-            throw UnsupportedOperationException(e)
+            throw UnsupportedOperationException()
         }
     }
 

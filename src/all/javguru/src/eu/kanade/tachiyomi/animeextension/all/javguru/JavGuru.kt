@@ -375,6 +375,6 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        throw UnsupportedOperationException("Not used")
+        throw UnsupportedOperationException()
     }
 }

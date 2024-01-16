@@ -177,7 +177,7 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        throw UnsupportedOperationException("Not Used")
+        throw UnsupportedOperationException()
     }
 
     private inline fun <reified T> List<*>.firstInstanceOrNull(): T? =

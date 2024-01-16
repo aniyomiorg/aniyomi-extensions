@@ -107,7 +107,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Video urls
 
-    override fun videoListSelector() = throw UnsupportedOperationException("Not used.")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()

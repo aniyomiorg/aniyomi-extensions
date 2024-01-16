@@ -119,9 +119,9 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .build()
         return POST("$baseUrl/ajax/search", body = FormBody.Builder().add("keyword", query).build(), headers = headers)
     }
-    override fun searchAnimeSelector() = throw UnsupportedOperationException("Not used.")
+    override fun searchAnimeSelector() = throw UnsupportedOperationException()
 
-    override fun searchAnimeNextPageSelector() = throw UnsupportedOperationException("Not used.")
+    override fun searchAnimeNextPageSelector() = throw UnsupportedOperationException()
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         val body = response.body.string()
@@ -147,7 +147,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun searchAnimeFromElement(element: Element) = throw UnsupportedOperationException("Not used.")
+    override fun searchAnimeFromElement(element: Element) = throw UnsupportedOperationException()
 
     // ===== ANIME DETAILS =====
     override fun animeDetailsParse(document: Document): SAnime {
@@ -165,7 +165,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ===== EPISODE =====
-    override fun episodeListSelector() = throw UnsupportedOperationException("Not used.")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
@@ -218,7 +218,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ===== VIDEO SOURCES =====
-    override fun videoListSelector() = throw UnsupportedOperationException("Not used.")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
@@ -321,7 +321,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return newList
     }
 
-    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException("Not used.")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // ===== PREFERENCES ======
     @Suppress("UNCHECKED_CAST")
