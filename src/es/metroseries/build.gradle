@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'es.metroseries'
     extClass = '.MetroSeries'
     extVersionCode = 5
-    libVersion = '13'
 }
 
 dependencies {

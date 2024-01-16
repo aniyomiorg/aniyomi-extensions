@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'ar.xsmovie'
     extClass = '.XsMovie'
     extVersionCode = 5
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

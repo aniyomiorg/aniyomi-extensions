@@ -36,5 +36,4 @@ class SibnetExtractor(private val client: OkHttpClient) {
 
         return videoList
     }
-
 }

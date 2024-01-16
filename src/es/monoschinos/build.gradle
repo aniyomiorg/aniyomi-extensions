@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.monoschinos'
     extClass = '.MonosChinos'
     extVersionCode = 23
-    libVersion = '13'
 }
 
 dependencies {

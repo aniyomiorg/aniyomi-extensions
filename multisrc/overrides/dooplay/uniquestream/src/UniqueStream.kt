@@ -16,7 +16,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.injectLazy
 
 class UniqueStream : DooPlay(
@@ -24,7 +23,6 @@ class UniqueStream : DooPlay(
     "UniqueStream",
     "https://uniquestream.net",
 ) {
-    override val client = network.cloudflareClient
 
     private val json: Json by injectLazy()
 
@@ -183,7 +181,7 @@ class UniqueStream : DooPlay(
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val videoList = mutableListOf<Video>()
         val document = client.newCall(
             GET(baseUrl + episode.url, headers = headers),
@@ -290,7 +288,7 @@ class UniqueStream : DooPlay(
 
         require(videoList.isNotEmpty()) { "Failed to fetch videos" }
 
-        return Observable.just(videoList.sort())
+        return videoList.sort()
     }
 
     // ============================== Settings ==============================

@@ -17,14 +17,10 @@ import eu.kanade.tachiyomi.multisrc.dopeflix.dto.VideoDto
 import eu.kanade.tachiyomi.multisrc.dopeflix.extractors.DopeFlixExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -44,8 +40,6 @@ abstract class DopeFlix(
     }
 
     override val supportsLatest = true
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -191,7 +185,7 @@ abstract class DopeFlix(
         val doc = response.asJsoup()
         val episodeReferer = Headers.headersOf("Referer", response.request.header("referer")!!)
         return doc.select("ul.fss-list a.btn-play")
-            .parallelMap { server ->
+            .parallelCatchingFlatMapBlocking { server ->
                 val name = server.selectFirst("span")!!.text()
                 val id = server.attr("data-id")
                 val url = "$baseUrl/ajax/sources/$id"
@@ -199,19 +193,17 @@ abstract class DopeFlix(
                     .use { it.body.string() }
                 val sourceUrl = reqBody.substringAfter("\"link\":\"")
                     .substringBefore("\"")
-                runCatching {
-                    when {
-                        "DoodStream" in name ->
-                            DoodExtractor(client).videoFromUrl(sourceUrl)
-                                ?.let(::listOf)
-                        "Vidcloud" in name || "UpCloud" in name -> {
-                            val video = extractor.getVideoDto(sourceUrl)
-                            getVideosFromServer(video, name)
-                        }
-                        else -> null
+                when {
+                    "DoodStream" in name ->
+                        DoodExtractor(client).videoFromUrl(sourceUrl)
+                            ?.let(::listOf)
+                    "Vidcloud" in name || "UpCloud" in name -> {
+                        val video = extractor.getVideoDto(sourceUrl)
+                        getVideosFromServer(video, name)
                     }
-                }.getOrNull() ?: emptyList()
-            }.flatten()
+                    else -> null
+                }.orEmpty()
+            }
     }
 
     private fun getVideosFromServer(video: VideoDto, name: String): List<Video> {
@@ -343,11 +335,6 @@ abstract class DopeFlix(
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
-
     private fun HttpUrl.Builder.addIfNotBlank(query: String, value: String): HttpUrl.Builder {
         if (value.isNotBlank()) {
             addQueryParameter(query, value)

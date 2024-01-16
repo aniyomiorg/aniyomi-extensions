@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'de.aniflix'
     extClass = '.Aniflix'
     extVersionCode = 25
-    libVersion = '13'
 }
 
 dependencies {

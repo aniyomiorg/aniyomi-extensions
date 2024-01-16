@@ -20,6 +20,7 @@ import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.encodeToString
@@ -31,7 +32,6 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -49,8 +49,6 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
-
-    override val client: OkHttpClient = network.client
 
     private val json: Json by injectLazy()
 
@@ -275,7 +273,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     private val streamlareExtractor by lazy { StreamlareExtractor(client) }
 
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
-        val response = client.newCall(videoListRequest(episode)).execute()
+        val response = client.newCall(videoListRequest(episode)).await()
 
         val videoJson = response.parseAs<EpisodeResult>()
         val videoList = mutableListOf<Pair<Video, Float>>()
@@ -324,7 +322,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                         allAnimeExtractor.videoFromUrl(server.sourceUrl, server.sourceName)
                     }
                     sName.startsWith("player@") -> {
-                        val endPoint = client.newCall(GET("${preferences.siteUrl}/getVersion")).execute()
+                        val endPoint = client.newCall(GET("${preferences.siteUrl}/getVersion")).await()
                             .parseAs<AllAnimeExtractor.VersionResponse>()
                             .episodeIframeHead
 

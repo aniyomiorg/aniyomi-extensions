@@ -32,7 +32,6 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -133,17 +132,17 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         return GET(episode.url)
     }
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         setAuthCookie()
 
         if (authCookie != null) {
             return fetchVideoListPremium(episode)
         }
 
-        return super.fetchVideoList(episode)
+        return super.getVideoList(episode)
     }
 
-    private fun fetchVideoListPremium(episode: SEpisode): Observable<List<Video>> {
+    private fun fetchVideoListPremium(episode: SEpisode): List<Video> {
         val videoList = mutableListOf<Video>()
         val id = episode.url.substringAfter("?id=")
         val headers = headers.newBuilder()
@@ -165,7 +164,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
                 )
             }
         }
-        return Observable.just(videoList)
+        return videoList
     }
 
     override fun videoListParse(response: Response): List<Video> {

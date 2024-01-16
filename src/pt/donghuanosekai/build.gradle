@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'pt.donghuanosekai'
     extClass = '.DonghuaNoSekai'
     extVersionCode = 2
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

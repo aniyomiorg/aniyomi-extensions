@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONObject
@@ -20,7 +19,6 @@ import org.json.JSONTokener
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 
 class UAKino : ParsedAnimeHttpSource() {
 
@@ -35,8 +33,6 @@ class UAKino : ParsedAnimeHttpSource() {
     private val popularUrl = "/f/c.year=1921,2023/sort=rating;desc"
 
     private val episodesAPI = "https://uakino.club/engine/ajax/playlists.php?news_id=%s&xfield=playlist" // %s - ID title
-
-    override val client: OkHttpClient = network.client
 
     // =========================== Anime Details ============================
 
@@ -187,7 +183,7 @@ class UAKino : ParsedAnimeHttpSource() {
 
     // ============================ Video ===============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         Log.d("fetchVideoList", episode.url)
 
         val videoList = mutableListOf<Video>()
@@ -212,7 +208,7 @@ class UAKino : ParsedAnimeHttpSource() {
             videoList.add(Video(videoUrl, quality, videoUrl))
         }
 
-        return Observable.just(videoList)
+        return videoList
     }
 
     override fun videoFromElement(element: Element) = throw Exception("not used")

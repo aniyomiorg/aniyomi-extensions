@@ -18,17 +18,14 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -105,14 +102,14 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         return AnimesPage(animes, hasNextPage)
     }
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val slug = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/series?slug=$slug"))
-                .asObservableSuccess()
-                .map(::searchAnimeBySlugParse)
+                .awaitSuccess()
+                .use(::searchAnimeBySlugParse)
         } else {
-            return super.fetchSearchAnime(page, query, filters)
+            return super.getSearchAnime(page, query, filters)
         }
     }
 
@@ -180,6 +177,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     private val linkBypasser by lazy { LinkBypasser(client, json) }
 
     private val supportedPlayers = listOf("anonfiles", "send")
+
     override fun videoListParse(response: Response): List<Video> {
         val videoDto = response.parseAs<ResponseDto<VideoDto>>().items.first()
         val links = videoDto.links
@@ -195,7 +193,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
 
         val videoId = videoDto.id
 
-        return online + allLinks.parallelCatchingFlatMap { extractVideosFromLink(it, videoId) }
+        return online + allLinks.parallelCatchingFlatMapBlocking { extractVideosFromLink(it, videoId) }
     }
 
     private fun extractVideosFromLink(video: VideoDto.VideoLink, videoId: Int): List<Video> {
@@ -252,22 +250,13 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map {
-                async(Dispatchers.Default) {
-                    runCatching { f(it) }.getOrElse { emptyList() }
-                }
-            }.awaitAll().flatten()
-        }
-
     private fun Response.getAnimeDto(): AnimeDto {
         val responseBody = use { it.body.string() }
         return try {
-            parseAs<AnimeDto>(responseBody)
+            parseAs<AnimeDto> { responseBody }
         } catch (e: Exception) {
             // URL intent handler moment
-            parseAs<ResponseDto<AnimeDto>>(responseBody).items.first()
+            parseAs<ResponseDto<AnimeDto>> { responseBody }.items.first()
         }
     }
 
@@ -275,11 +264,6 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         return runCatching {
             DATE_FORMATTER.parse(this)?.time
         }.getOrNull() ?: 0L
-    }
-
-    private inline fun <reified T> Response.parseAs(preloaded: String? = null): T {
-        val responseBody = preloaded ?: use { it.body.string() }
-        return json.decodeFromString(responseBody)
     }
 
     override fun List<Video>.sort(): List<Video> {

@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'en.hanime'
     extClass = '.Hanime'
     extVersionCode = 17
-    libVersion = '13'
     containsNsfw = true
 }
 

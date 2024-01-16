@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'en.bestdubbedanime'
     extClass = '.BestDubbedAnime'
     extVersionCode = 4
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

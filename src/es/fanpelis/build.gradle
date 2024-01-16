@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.fanpelis'
     extClass = '.FanPelis'
     extVersionCode = 10
-    libVersion = '13'
 }
 
 dependencies {

@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.kisskh'
     extClass = '.KissKH'
     extVersionCode = 3
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

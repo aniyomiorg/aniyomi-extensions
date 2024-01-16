@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'en.animeui'
     extClass = '.AnimeUI'
     extVersionCode = 1
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

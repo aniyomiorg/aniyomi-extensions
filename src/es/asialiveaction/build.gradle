@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.asialiveaction'
     extClass = '.AsiaLiveAction'
     extVersionCode = 24
-    libVersion = '13'
 }
 
 dependencies {

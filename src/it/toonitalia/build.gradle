@@ -8,7 +8,6 @@ ext {
     pkgNameSuffix = 'it.toonitalia'
     extClass = '.Toonitalia'
     extVersionCode = 14
-    libVersion = '13'
 }
 
 dependencies {

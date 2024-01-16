@@ -18,22 +18,17 @@ import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -49,8 +44,6 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "pl"
 
     override val supportsLatest = true
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val json: Json by injectLazy()
 
@@ -94,21 +87,14 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // button:contains(Lista anime) + div.dropdown-content > a:contains(chainsaw)
 
-    override fun fetchSearchAnime(
+    override suspend fun getSearchAnime(
         page: Int,
         query: String,
         filters: AnimeFilterList,
-    ): Observable<AnimesPage> {
-        return Observable.defer {
-            try {
-                client.newCall(searchAnimeRequest(page, query, filters)).asObservableSuccess()
-            } catch (e: NoClassDefFoundError) {
-                // RxJava doesn't handle Errors, which tends to happen during global searches
-                // if an old extension using non-existent classes is still around
-                throw RuntimeException(e)
-            }
-        }
-            .map { response ->
+    ): AnimesPage {
+        return client.newCall(searchAnimeRequest(page, query, filters))
+            .awaitSuccess()
+            .use { response ->
                 searchAnimeParse(response, query)
             }
     }
@@ -135,9 +121,7 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        return Observable.just(anime)
-    }
+    override suspend fun getAnimeDetails(anime: SAnime) = anime
 
     override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
 
@@ -240,9 +224,8 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val parsed = json.decodeFromString<EpisodeType>(episode.url)
-        val videoList = mutableListOf<Video>()
         val serverList = mutableListOf<String>()
 
         parsed.url.forEach {
@@ -267,32 +250,28 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-        videoList.addAll(
-            serverList.parallelMap { serverUrl ->
-                runCatching {
-                    when {
-                        serverUrl.contains("mp4upload") -> {
-                            Mp4uploadExtractor(client).videosFromUrl(serverUrl, headers)
-                        }
-                        serverUrl.contains("cda.pl") -> {
-                            CdaPlExtractor(client).getVideosFromUrl(serverUrl, headers)
-                        }
-                        serverUrl.contains("sibnet.ru") -> {
-                            SibnetExtractor(client).videosFromUrl(serverUrl)
-                        }
-                        serverUrl.contains("vk.com") -> {
-                            VkExtractor(client).getVideosFromUrl(serverUrl, headers)
-                        }
-                        serverUrl.contains("dailymotion") -> {
-                            DailymotionExtractor(client, headers).videosFromUrl(serverUrl)
-                        }
-                        else -> null
-                    }
-                }.getOrNull()
-            }.filterNotNull().flatten(),
-        )
+        val videoList = serverList.parallelCatchingFlatMap { serverUrl ->
+            when {
+                serverUrl.contains("mp4upload") -> {
+                    Mp4uploadExtractor(client).videosFromUrl(serverUrl, headers)
+                }
+                serverUrl.contains("cda.pl") -> {
+                    CdaPlExtractor(client).getVideosFromUrl(serverUrl, headers)
+                }
+                serverUrl.contains("sibnet.ru") -> {
+                    SibnetExtractor(client).videosFromUrl(serverUrl)
+                }
+                serverUrl.contains("vk.com") -> {
+                    VkExtractor(client).getVideosFromUrl(serverUrl, headers)
+                }
+                serverUrl.contains("dailymotion") -> {
+                    DailymotionExtractor(client, headers).videosFromUrl(serverUrl)
+                }
+                else -> null
+            }.orEmpty()
+        }
 
-        return Observable.just(videoList.sort())
+        return videoList.sort()
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
@@ -329,12 +308,6 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
             .getOrNull() ?: 0L
     }
-
-    // From Dopebox
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {

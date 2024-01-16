@@ -8,7 +8,6 @@ ext {
     pkgNameSuffix = 'id.otakudesu'
     extClass = '.OtakuDesu'
     extVersionCode = 23
-    libVersion = '13'
 }
 
 dependencies {

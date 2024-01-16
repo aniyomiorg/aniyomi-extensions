@@ -3,12 +3,11 @@ package eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromStream
 import okhttp3.Headers
 import okhttp3.OkHttpClient
-import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
 
 class BlembedExtractor(private val client: OkHttpClient, private val headers: Headers) {
@@ -31,10 +30,6 @@ class BlembedExtractor(private val client: OkHttpClient, private val headers: He
             .parseAs<ResponseData>()
 
         return res.sources.map { Video(it.file, "Blembed - ${it.label}", it.file, headers) }
-    }
-
-    private inline fun <reified T> Response.parseAs(): T = use {
-        json.decodeFromStream(it.body.byteStream())
     }
 }
 

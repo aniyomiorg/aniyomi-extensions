@@ -14,9 +14,8 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -28,7 +27,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -66,8 +64,6 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = false
-
-    override val client = network.cloudflareClient
 
     private val json: Json by injectLazy()
 
@@ -221,7 +217,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not Used")
 
     // ============================ Video Links =============================
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val urlJson = json.decodeFromString<EpLinks>(episode.url)
 
         val videoList = urlJson.urls.parallelCatchingFlatMap { eplink ->
@@ -240,7 +236,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-        return Observable.just(videoList.sort())
+        return videoList.sort()
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
@@ -429,15 +425,6 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun EpLinks.toJson(): String {
         return json.encodeToString(this)
     }
-
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map {
-                async(Dispatchers.Default) {
-                    runCatching { f(it) }.getOrElse { emptyList() }
-                }
-            }.awaitAll().flatten()
-        }
 
     private fun getDomainPrefSummary(): String =
         preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!!.let {

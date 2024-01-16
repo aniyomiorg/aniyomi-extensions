@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.doramasyt'
     extClass = '.Doramasyt'
     extVersionCode = 11
-    libVersion = '13'
 }
 
 dependencies {

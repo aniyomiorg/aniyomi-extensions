@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'pt.betteranime'
     extClass = '.BetterAnime'
     extVersionCode = 8
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

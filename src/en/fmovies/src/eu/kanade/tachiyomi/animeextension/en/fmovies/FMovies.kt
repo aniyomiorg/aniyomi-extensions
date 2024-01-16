@@ -16,22 +16,19 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.await
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -45,8 +42,6 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val json: Json by injectLazy()
 
@@ -184,10 +179,10 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         return client.newCall(videoListRequest(episode))
-            .asObservableSuccess()
-            .map { response ->
+            .awaitSuccess()
+            .use { response ->
                 videoListParse(response, episode).sort()
             }
     }
@@ -210,49 +205,47 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val filemoonExtractor by lazy { FilemoonExtractor(client) }
     private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
 
-    private fun videoListParse(response: Response, episode: SEpisode): List<Video> {
+    private suspend fun videoListParse(response: Response, episode: SEpisode): List<Video> {
         val data = json.decodeFromString<EpisodeInfo>(episode.url)
         val document = Jsoup.parse(
             response.parseAs<AjaxResponse>().result,
         )
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
 
-        return document.select("ul.servers > li.server").parallelMap { server ->
-            runCatching {
-                val name = server.text().trim()
-                if (!hosterSelection.contains(name)) return@runCatching emptyList()
+        return document.select("ul.servers > li.server").parallelCatchingFlatMap { server ->
+            val name = server.text().trim()
+            if (!hosterSelection.contains(name)) return@parallelCatchingFlatMap emptyList()
 
-                // Get decrypted url
-                val vrf = vrfHelper.getVrf(server.attr("data-link-id"))
+            // Get decrypted url
+            val vrf = vrfHelper.getVrf(server.attr("data-link-id"))
 
-                val vrfHeaders = headers.newBuilder()
-                    .add("Accept", "application/json, text/javascript, */*; q=0.01")
-                    .add("Host", baseUrl.toHttpUrl().host)
-                    .add("Referer", data.url)
-                    .add("X-Requested-With", "XMLHttpRequest")
-                    .build()
-                val encrypted = client.newCall(
-                    GET("$baseUrl/ajax/server/${server.attr("data-link-id")}?vrf=$vrf", headers = vrfHeaders),
-                ).execute().parseAs<AjaxServerResponse>().result.url
+            val vrfHeaders = headers.newBuilder()
+                .add("Accept", "application/json, text/javascript, */*; q=0.01")
+                .add("Host", baseUrl.toHttpUrl().host)
+                .add("Referer", data.url)
+                .add("X-Requested-With", "XMLHttpRequest")
+                .build()
+            val encrypted = client.newCall(
+                GET("$baseUrl/ajax/server/${server.attr("data-link-id")}?vrf=$vrf", headers = vrfHeaders),
+            ).await().parseAs<AjaxServerResponse>().result.url
 
-                val decrypted = vrfHelper.decrypt(encrypted)
+            val decrypted = vrfHelper.decrypt(encrypted)
 
-                when (name) {
-                    "Vidplay", "MyCloud" -> vidsrcExtractor.videosFromUrl(decrypted, name)
-                    "Filemoon" -> filemoonExtractor.videosFromUrl(decrypted, headers = headers)
-                    "Streamtape" -> {
-                        val subtitleList = decrypted.toHttpUrl().queryParameter("sub.info")?.let {
-                            client.newCall(GET(it, headers)).execute().parseAs<List<FMoviesSubs>>().map { t ->
-                                Track(t.file, t.label)
-                            }
-                        } ?: emptyList()
+            when (name) {
+                "Vidplay", "MyCloud" -> vidsrcExtractor.videosFromUrl(decrypted, name)
+                "Filemoon" -> filemoonExtractor.videosFromUrl(decrypted, headers = headers)
+                "Streamtape" -> {
+                    val subtitleList = decrypted.toHttpUrl().queryParameter("sub.info")?.let {
+                        client.newCall(GET(it, headers)).await().parseAs<List<FMoviesSubs>>().map { t ->
+                            Track(t.file, t.label)
+                        }
+                    } ?: emptyList()
 
-                        streamtapeExtractor.videoFromUrl(decrypted, subtitleList = subtitleList)?.let(::listOf) ?: emptyList()
-                    }
-                    else -> emptyList()
+                    streamtapeExtractor.videoFromUrl(decrypted, subtitleList = subtitleList)?.let(::listOf) ?: emptyList()
                 }
-            }.getOrElse { emptyList() }
-        }.flatten().ifEmpty { throw Exception("Failed to fetch videos") }
+                else -> emptyList()
+            }
+        }
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -275,17 +268,6 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             ),
         ).reversed()
     }
-
-    private inline fun <reified T> Response.parseAs(): T {
-        val responseBody = use { it.body.string() }
-        return json.decodeFromString(responseBody)
-    }
-
-    // From Dopebox
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     private fun Int.toPageQuery(first: Boolean = true): String {
         return if (this == 1) "" else "${if (first) "?" else "&"}page=$this"

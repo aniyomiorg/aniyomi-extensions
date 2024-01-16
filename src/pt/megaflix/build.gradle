@@ -8,7 +8,6 @@ ext {
     pkgNameSuffix = 'pt.megaflix'
     extClass = '.Megaflix'
     extVersionCode = 11
-    libVersion = '13'
     containsNsfw = true
 }
 

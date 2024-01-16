@@ -17,10 +17,8 @@ import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parallelMapNotNullBlocking
 import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.Response
@@ -42,8 +40,6 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "id"
 
     override val supportsLatest = true
-
-    override val client = network.cloudflareClient
 
     private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -187,14 +183,12 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val nonce = getNonce(nonceAction)
 
         return doc.select(videoListSelector())
-            .parallelMapNotNull {
+            .parallelMapNotNullBlocking {
                 runCatching { getEmbedLinks(it, action, nonce) }.getOrNull()
             }
-            .parallelMapNotNull {
-                runCatching {
-                    getVideosFromEmbed(it.first, it.second)
-                }.getOrNull()
-            }.flatten()
+            .parallelCatchingFlatMapBlocking {
+                getVideosFromEmbed(it.first, it.second)
+            }
     }
 
     private fun getEmbedLinks(element: Element, action: String, nonce: String): Pair<String, String> {
@@ -369,11 +363,6 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             compareByDescending { it.quality.contains(quality) },
         )
     }
-
-    private inline fun <A, B> Iterable<A>.parallelMapNotNull(crossinline f: suspend (A) -> B?): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll().filterNotNull()
-        }
 
     private fun String.b64Decode(): String {
         return String(Base64.decode(this, Base64.DEFAULT))

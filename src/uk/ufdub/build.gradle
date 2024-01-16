@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'uk.ufdub'
     extClass = '.UFDub'
     extVersionCode = 1
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

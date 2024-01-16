@@ -2,6 +2,8 @@ package eu.kanade.tachiyomi.lib.javcoverfetcher
 
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.POST
@@ -13,13 +15,11 @@ import okhttp3.internal.commonEmptyHeaders
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.IOException
-import androidx.preference.PreferenceScreen
-import androidx.preference.SwitchPreferenceCompat
 
 object JavCoverFetcher {
 
     private val CLIENT by lazy {
-        Injekt.get<NetworkHelper>().cloudflareClient.newBuilder()
+        Injekt.get<NetworkHelper>().client.newBuilder()
             .addInterceptor(::amazonAgeVerifyIntercept)
             .build()
     }
@@ -149,5 +149,4 @@ object JavCoverFetcher {
 
     val SharedPreferences.fetchHDCovers
         get() = getBoolean("JavCoverFetcherPref", false)
-
 }

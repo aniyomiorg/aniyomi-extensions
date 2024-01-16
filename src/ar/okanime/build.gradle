@@ -8,7 +8,6 @@ ext {
     pkgNameSuffix = 'ar.okanime'
     extClass = '.Okanime'
     extVersionCode = 5
-    libVersion = '13'
 }
 
 dependencies {

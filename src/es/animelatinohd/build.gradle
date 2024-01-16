@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.animelatinohd'
     extClass = '.AnimeLatinoHD'
     extVersionCode = 29
-    libVersion = '13'
 }
 
 dependencies {

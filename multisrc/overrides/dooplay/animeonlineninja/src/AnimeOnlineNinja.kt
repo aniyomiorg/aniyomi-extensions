@@ -26,11 +26,11 @@ class AnimeOnlineNinja : DooPlay(
 ) {
     override val client by lazy {
         if (preferences.getBoolean(PREF_VRF_INTERCEPT_KEY, PREF_VRF_INTERCEPT_DEFAULT)) {
-            network.cloudflareClient.newBuilder()
+            network.client.newBuilder()
                 .addInterceptor(VrfInterceptor())
                 .build()
         } else {
-            network.cloudflareClient
+            network.client
         }
     }
 

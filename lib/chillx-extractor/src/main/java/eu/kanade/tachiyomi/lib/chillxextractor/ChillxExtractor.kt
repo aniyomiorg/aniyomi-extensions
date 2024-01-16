@@ -23,7 +23,7 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
         private val REGEX_EVAL_KEY by lazy { Regex("""eval\(\S+\("(\S+)",\d+,"(\S+)",(\d+),(\d+),""") }
         private val REGEX_SOURCES by lazy { Regex("""sources:\s*\[\{"file":"([^"]+)""") }
         private val REGEX_FILE by lazy { Regex("""file: ?"([^"]+)"""") }
-        private val REGEX_SOURCE by lazy { Regex("""source = ?"([^"]+)"""")}
+        private val REGEX_SOURCE by lazy { Regex("""source = ?"([^"]+)"""") }
 
         // matches "[language]https://...,"
         private val REGEX_SUBS by lazy { Regex("""\[(.*?)\](.*?)"?\,""") }
@@ -99,7 +99,6 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
 
         return bits.joinToString("") { Char(it.toInt(index) - offset).toString() }
     }
-
 
     @Serializable
     data class CryptoInfo(

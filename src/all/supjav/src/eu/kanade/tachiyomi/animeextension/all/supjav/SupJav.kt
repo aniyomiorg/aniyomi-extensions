@@ -15,18 +15,14 @@ import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -37,8 +33,6 @@ class SupJav(override val lang: String = "en") : ConfigurableAnimeSource, Parsed
     override val baseUrl = "https://supjav.com"
 
     override val supportsLatest = false
-
-    override val client = network.cloudflareClient
 
     override fun headersBuilder() = super.headersBuilder()
         .set("Referer", "$baseUrl/")
@@ -87,14 +81,14 @@ class SupJav(override val lang: String = "en") : ConfigurableAnimeSource, Parsed
     }
 
     // =============================== Search ===============================
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val id = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/$id"))
-                .asObservableSuccess()
-                .map(::searchAnimeByIdParse)
+                .awaitSuccess()
+                .use(::searchAnimeByIdParse)
         } else {
-            super.fetchSearchAnime(page, query, filters)
+            super.getSearchAnime(page, query, filters)
         }
     }
 
@@ -129,14 +123,14 @@ class SupJav(override val lang: String = "en") : ConfigurableAnimeSource, Parsed
     private fun Elements.textsOrNull() = eachText().joinToString().takeUnless(String::isEmpty)
 
     // ============================== Episodes ==============================
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+    override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
         val episode = SEpisode.create().apply {
             name = "JAV"
             episode_number = 1F
             url = anime.url
         }
 
-        return Observable.just(listOf(episode))
+        return listOf(episode)
     }
 
     override fun episodeListSelector(): String {
@@ -155,7 +149,7 @@ class SupJav(override val lang: String = "en") : ConfigurableAnimeSource, Parsed
             .filter { it.text() in SUPPORTED_PLAYERS }
             .map { it.text() to it.attr("data-link").reversed() }
 
-        return players.parallelCatchingFlatMap(::videosFromPlayer)
+        return players.parallelCatchingFlatMapBlocking(::videosFromPlayer)
     }
 
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
@@ -227,15 +221,6 @@ class SupJav(override val lang: String = "en") : ConfigurableAnimeSource, Parsed
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map {
-                async(Dispatchers.Default) {
-                    runCatching { f(it) }.getOrElse { emptyList() }
-                }
-            }.awaitAll().flatten()
-        }
-
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 

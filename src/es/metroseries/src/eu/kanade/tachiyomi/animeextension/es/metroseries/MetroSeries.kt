@@ -20,14 +20,12 @@ import eu.kanade.tachiyomi.lib.upstreamextractor.UpstreamExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parallelMapBlocking
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Element
@@ -45,8 +43,6 @@ class MetroSeries : ConfigurableAnimeSource, AnimeHttpSource() {
     override val lang = "es"
 
     override val supportsLatest = false
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -123,15 +119,13 @@ class MetroSeries : ConfigurableAnimeSource, AnimeHttpSource() {
         val episodes = document.select(".season-list li a")
             .sortedByDescending { it.attr("data-season") }
             .chunked(chunkSize).flatMap { chunk ->
-                chunk.parallelMap { season ->
-                    runCatching {
-                        val pages = getDetailSeason(season, objectNumber, referer)
-                        getPageEpisodeList(pages, referer, objectNumber, season.attr("data-season"))
-                    }.getOrNull()
-                }.filterNotNull().flatten()
+                chunk.parallelCatchingFlatMapBlocking { season ->
+                    val pages = getDetailSeason(season, objectNumber, referer)
+                    getPageEpisodeList(pages, referer, objectNumber, season.attr("data-season"))
+                }
             }.sortedByDescending {
                 it.name.substringBeforeLast("-")
-            }.ifEmpty { emptyList() }
+            }
         return episodes
     }
 
@@ -167,7 +161,7 @@ class MetroSeries : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun getPageEpisodeList(pages: IntRange, referer: String, objectNumber: String, season: String): List<SEpisode> {
         val episodes = mutableListOf<SEpisode>()
         try {
-            pages.parallelMap {
+            pages.parallelMapBlocking {
                 val formBody = FormBody.Builder()
                     .add("action", "action_pagination_ep")
                     .add("page", "$it")
@@ -184,16 +178,11 @@ class MetroSeries : ConfigurableAnimeSource, AnimeHttpSource() {
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .build()
 
-                client.newCall(requestPage).execute().parseAsEpisodeList().also(episodes::addAll)
+                client.newCall(requestPage).await().parseAsEpisodeList().also(episodes::addAll)
             }
         } catch (_: Exception) { }
         return episodes
     }
-
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()

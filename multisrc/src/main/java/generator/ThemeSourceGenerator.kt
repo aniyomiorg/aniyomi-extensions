@@ -81,7 +81,6 @@ interface ThemeSourceGenerator {
                 |    extClass = '.${source.className}'
                 |    extFactory = '$themePkg'
                 |    extVersionCode = ${baseVersionCode + source.overrideVersionCode + MULTISRC_LIBRARY_VERSION}
-                |    libVersion = '13'
                 |    ${if (source.isNsfw) "containsNsfw = true\n" else ""}
                 |}
                 |$defaultAdditionalGradleText

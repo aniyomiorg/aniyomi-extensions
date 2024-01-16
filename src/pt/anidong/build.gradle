@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'pt.anidong'
     extClass = '.AniDong'
     extVersionCode = 1
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

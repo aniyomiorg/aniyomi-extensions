@@ -24,7 +24,7 @@ import uy.kohesive.injekt.injectLazy
 class MegaCloudExtractor(
     private val client: OkHttpClient,
     private val headers: Headers,
-    private val preferences: SharedPreferences
+    private val preferences: SharedPreferences,
 ) {
     private val json: Json by injectLazy()
 
@@ -59,7 +59,7 @@ class MegaCloudExtractor(
             shouldUpdateKey = false
         }
         json.decodeFromString<List<List<Int>>>(
-            preferences.getString(PREF_KEY_KEY + type, PREF_KEY_DEFAULT)!!
+            preferences.getString(PREF_KEY_KEY + type, PREF_KEY_DEFAULT)!!,
         )
     }
 
@@ -79,8 +79,8 @@ class MegaCloudExtractor(
             val var1 = match.groupValues[1]
             val var2 = match.groupValues[2]
 
-            val regexVar1 = Regex(",${var1}=((?:0x)?([0-9a-fA-F]+))")
-            val regexVar2 = Regex(",${var2}=((?:0x)?([0-9a-fA-F]+))")
+            val regexVar1 = Regex(",$var1=((?:0x)?([0-9a-fA-F]+))")
+            val regexVar2 = Regex(",$var2=((?:0x)?([0-9a-fA-F]+))")
 
             val matchVar1 = regexVar1.find(script)?.groupValues?.get(1)?.removePrefix("0x")
             val matchVar2 = regexVar2.find(script)?.groupValues?.get(1)?.removePrefix("0x")
@@ -135,7 +135,7 @@ class MegaCloudExtractor(
             masterUrl,
             videoNameGen = { "$name - $it - $type" },
             subtitleList = subs2,
-            referer = "https://${url.toHttpUrl().host}/"
+            referer = "https://${url.toHttpUrl().host}/",
         )
     }
 
@@ -158,7 +158,6 @@ class MegaCloudExtractor(
 
         return VideoDto(decrypted, data.tracks)
     }
-
 
     @Serializable
     data class VideoDto(

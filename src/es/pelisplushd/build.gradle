@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.pelisplushd'
     extClass = '.PelisplushdFactory'
     extVersionCode = 47
-    libVersion = '13'
 }
 
 dependencies {

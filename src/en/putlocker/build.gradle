@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'en.putlocker'
     extClass = '.PutLocker'
     extVersionCode = 3
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

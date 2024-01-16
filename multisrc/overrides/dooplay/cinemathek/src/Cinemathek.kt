@@ -11,11 +11,9 @@ import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -49,21 +47,19 @@ class Cinemathek : DooPlay(
     override fun videoListParse(response: Response): List<Video> {
         val players = response.use { it.asJsoup().select("ul#playeroptionsul li") }
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
-        return players.parallelMapNotNull { player ->
-            runCatching {
-                val url = getPlayerUrl(player).ifEmpty { return@parallelMapNotNull null }
-                getPlayerVideos(url, hosterSelection)
-            }.getOrNull()
-        }.flatten()
+        return players.parallelCatchingFlatMapBlocking { player ->
+            val url = getPlayerUrl(player).takeUnless(String::isEmpty)!!
+            getPlayerVideos(url, hosterSelection)
+        }
     }
 
-    private fun getPlayerUrl(player: Element): String {
+    private suspend fun getPlayerUrl(player: Element): String {
         val type = player.attr("data-type")
         val id = player.attr("data-post")
         val num = player.attr("data-nume")
         if (num == "trailer") return ""
         return client.newCall(GET("$baseUrl/wp-json/dooplayer/v2/$id/$type/$num"))
-            .execute()
+            .await()
             .use { it.body.string() }
             .substringAfter("\"embed_url\":\"")
             .substringBefore("\",")
@@ -76,7 +72,7 @@ class Cinemathek : DooPlay(
     private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
     private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }
 
-    private fun getPlayerVideos(url: String, hosterSelection: Set<String>): List<Video>? {
+    private fun getPlayerVideos(url: String, hosterSelection: Set<String>): List<Video> {
         return when {
             url.contains("https://streamlare.com") && hosterSelection.contains("slare") -> {
                 streamlareExtractor.videosFromUrl(url)
@@ -95,7 +91,7 @@ class Cinemathek : DooPlay(
                 streamwishExtractor.videosFromUrl(url)
             }
             else -> null
-        }
+        }.orEmpty()
     }
 
     // ============================== Settings ==============================
@@ -162,11 +158,6 @@ class Cinemathek : DooPlay(
             ),
         ).reversed()
     }
-
-    private inline fun <A, B> Iterable<A>.parallelMapNotNull(crossinline f: suspend (A) -> B?): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll().filterNotNull()
-        }
 
     companion object {
         private const val PREF_HOSTER_KEY = "preferred_hoster"

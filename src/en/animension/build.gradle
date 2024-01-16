@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.animension'
     extClass = '.Animension'
     extVersionCode = 20
-    libVersion = '13'
 }
 
 dependencies {

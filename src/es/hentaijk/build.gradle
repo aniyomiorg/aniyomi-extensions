@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.hentaijk'
     extClass = '.Hentaijk'
     extVersionCode = 11
-    libVersion = '13'
     containsNsfw = true
 }
 

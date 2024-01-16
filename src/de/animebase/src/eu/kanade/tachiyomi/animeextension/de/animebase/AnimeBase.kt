@@ -17,12 +17,8 @@ import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.FormBody
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -39,8 +35,6 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "de"
 
     override val supportsLatest = true
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -198,26 +192,24 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return doc.select("$selector div.panel-body > button").toList()
             .filter { it.text() in hosterSettings.keys }
-            .parallelMap {
-                runCatching {
-                    val language = when (it.attr("data-dubbed")) {
-                        "0" -> "SUB"
-                        else -> "DUB"
-                    }
+            .parallelCatchingFlatMapBlocking {
+                val language = when (it.attr("data-dubbed")) {
+                    "0" -> "SUB"
+                    else -> "DUB"
+                }
 
-                    getVideosFromHoster(it.text(), it.attr("data-streamlink"))
-                        .map { video ->
-                            Video(
-                                video.url,
-                                "$language ${video.quality}",
-                                video.videoUrl,
-                                video.headers,
-                                video.subtitleTracks,
-                                video.audioTracks,
-                            )
-                        }
-                }.onFailure { it.printStackTrace() }.getOrElse { emptyList() }
-            }.flatten().ifEmpty { throw Exception("No videos xDDDDDD") }
+                getVideosFromHoster(it.text(), it.attr("data-streamlink"))
+                    .map { video ->
+                        Video(
+                            video.url,
+                            "$language ${video.quality}",
+                            video.videoUrl,
+                            video.headers,
+                            video.subtitleTracks,
+                            video.audioTracks,
+                        )
+                    }
+            }
     }
 
     private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
@@ -291,11 +283,6 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
-
     companion object {
         private const val PREF_LANG_KEY = "preferred_sub"
         private const val PREF_LANG_TITLE = "Standardmäßig Sub oder Dub?"

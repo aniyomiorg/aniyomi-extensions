@@ -17,16 +17,12 @@ import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -69,14 +65,14 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector() = "ul.pagination > li:last-child:not(.disabled)"
 
     // =============================== Search ===============================
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val id = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/anime/$id"))
-                .asObservableSuccess()
-                .map(::searchAnimeByIdParse)
+                .awaitSuccess()
+                .use(::searchAnimeByIdParse)
         } else {
-            super.fetchSearchAnime(page, query, filters)
+            super.getSearchAnime(page, query, filters)
         }
     }
 
@@ -141,7 +137,7 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
         return response.use { it.asJsoup() }
             .select("a.ep-link")
-            .parallelMap { element ->
+            .parallelCatchingFlatMapBlocking { element ->
                 val quality = element.selectFirst("span")?.text().orEmpty().let {
                     when (it) {
                         "HD" -> "720p"
@@ -152,7 +148,7 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 val url = element.attr("data-src")
                 extractVideosFromUrl(url, quality, hosterSelection)
-            }.flatten()
+            }
     }
 
     // Inspirated by JavGuru(all)
@@ -163,28 +159,26 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val vidBomExtractor by lazy { VidBomExtractor(client) }
 
     private fun extractVideosFromUrl(url: String, quality: String, selection: Set<String>): List<Video> {
-        return runCatching {
-            when {
-                "https://doo" in url && "/e/" in url && selection.contains("Dood") -> {
-                    doodExtractor.videoFromUrl(url, "DoodStream - $quality")
-                        ?.let(::listOf)
-                }
-                "mp4upload" in url && selection.contains("Mp4upload") -> {
-                    mp4uploadExtractor.videosFromUrl(url, headers)
-                }
-                "ok.ru" in url && selection.contains("Okru") -> {
-                    okruExtractor.videosFromUrl(url)
-                }
-                "voe.sx" in url && selection.contains("Voe") -> {
-                    voeExtractor.videoFromUrl(url, "VoeSX ($quality)")
-                        ?.let(::listOf)
-                }
-                VID_BOM_DOMAINS.any(url::contains) && selection.contains("VidBom") -> {
-                    vidBomExtractor.videosFromUrl(url)
-                }
-                else -> null
+        return when {
+            "https://doo" in url && "/e/" in url && selection.contains("Dood") -> {
+                doodExtractor.videoFromUrl(url, "DoodStream - $quality")
+                    ?.let(::listOf)
             }
-        }.getOrNull() ?: emptyList()
+            "mp4upload" in url && selection.contains("Mp4upload") -> {
+                mp4uploadExtractor.videosFromUrl(url, headers)
+            }
+            "ok.ru" in url && selection.contains("Okru") -> {
+                okruExtractor.videosFromUrl(url)
+            }
+            "voe.sx" in url && selection.contains("Voe") -> {
+                voeExtractor.videoFromUrl(url, "VoeSX ($quality)")
+                    ?.let(::listOf)
+            }
+            VID_BOM_DOMAINS.any(url::contains) && selection.contains("VidBom") -> {
+                vidBomExtractor.videosFromUrl(url)
+            }
+            else -> null
+        }.orEmpty()
     }
 
     override fun videoListSelector(): String {
@@ -238,11 +232,6 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
-
     companion object {
         const val PREFIX_SEARCH = "id:"
 

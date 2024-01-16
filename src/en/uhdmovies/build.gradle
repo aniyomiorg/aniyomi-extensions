@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'en.uhdmovies'
     extClass = '.UHDMovies'
     extVersionCode = 19
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

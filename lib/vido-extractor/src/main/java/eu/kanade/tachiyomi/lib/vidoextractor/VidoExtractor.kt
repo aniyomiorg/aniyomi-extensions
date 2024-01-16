@@ -16,7 +16,7 @@ class VidoExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
         val document = client.newCall(GET(url)).execute().use { it.body.string() }
         val id = REGEX_ID.find(document)?.groupValues?.get(1)
-        val masterUrl = "$VIDO_URL/hls/${id}/master.m3u8"
-        return playlistUtils.extractFromHls(masterUrl, videoNameGen = { "${prefix}Vido - (${it})" })
+        val masterUrl = "$VIDO_URL/hls/$id/master.m3u8"
+        return playlistUtils.extractFromHls(masterUrl, videoNameGen = { "${prefix}Vido - ($it)" })
     }
 }

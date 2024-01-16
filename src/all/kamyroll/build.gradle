@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'all.kamyroll'
     extClass = '.Yomiroll'
     extVersionCode = 29
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

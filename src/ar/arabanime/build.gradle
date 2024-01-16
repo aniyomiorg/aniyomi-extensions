@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'ar.arabanime'
     extClass = '.ArabAnime'
     extVersionCode = 2
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

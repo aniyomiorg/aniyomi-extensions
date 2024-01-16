@@ -18,10 +18,7 @@ import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -41,8 +38,6 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "ar"
 
     override val supportsLatest = false
-
-    override val client = network.cloudflareClient
 
     override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
@@ -97,11 +92,11 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "div.containerServers ul li"
 
     private fun videosFromElement(document: Document): List<Video> {
-        return document.select(videoListSelector()).parallelMap { element ->
+        return document.select(videoListSelector()).parallelCatchingFlatMapBlocking { element ->
             val quality = element.text()
             val embedUrl = element.attr("data-link")
-            runCatching { getVideosFromUrl(embedUrl, quality) }.getOrElse { emptyList() }
-        }.flatten()
+            getVideosFromUrl(embedUrl, quality)
+        }
     }
 
     private val doodExtractor by lazy { DoodExtractor(client) }
@@ -251,11 +246,6 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
-
     companion object {
         // From egydead(ar)
         private const val PREF_DOMAIN_KEY = "default_domain_v${BuildConfig.VERSION_NAME}"

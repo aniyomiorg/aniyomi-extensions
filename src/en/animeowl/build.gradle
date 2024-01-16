@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.animeowl'
     extClass = '.AnimeOwl'
     extVersionCode = 14
-    libVersion = '13'
 }
 
 dependencies {

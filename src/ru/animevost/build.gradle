@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'ru.animevost'
     extClass = '.Animevost'
     extVersionCode = 7
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

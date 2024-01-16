@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'id.kuramanime'
     extClass = '.Kuramanime'
     extVersionCode = 11
-    libVersion = '13'
 }
 
 dependencies {

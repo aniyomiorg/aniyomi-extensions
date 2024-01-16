@@ -24,12 +24,9 @@ import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -38,7 +35,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -58,8 +54,6 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
     override val supportsLatest = true
 
     private val json: Json by injectLazy()
-
-    override val client = network.cloudflareClient
 
     private val apiHeaders by lazy {
         headersBuilder()
@@ -103,11 +97,11 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
     // =============================== Search ===============================
     private lateinit var searchEntries: SearchDto
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (page == 1) {
-            super.fetchSearchAnime(page, query, filters)
+            super.getSearchAnime(page, query, filters)
         } else {
-            Observable.just(paginatedSearchParse(page))
+            paginatedSearchParse(page)
         }
     }
 
@@ -134,19 +128,13 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // =========================== Anime Details ============================
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        return client.newCall(internalAnimeDetailsRequest(anime))
-            .asObservableSuccess()
-            .map(::animeDetailsParse)
-    }
-
     // workaround to get correct WebView url
-    override fun animeDetailsRequest(anime: SAnime): Request {
+    override fun getAnimeUrl(anime: SAnime): String {
         val slug = anime.title.titleToSlug()
-        return GET("$baseUrl/show-details/$slug/${anime.url}")
+        return "$baseUrl/show-details/$slug/${anime.url}"
     }
 
-    private fun internalAnimeDetailsRequest(anime: SAnime): Request {
+    override fun animeDetailsRequest(anime: SAnime): Request {
         return GET("$apiUrl/drama?id=${anime.url}", apiHeaders)
     }
 
@@ -155,7 +143,7 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListRequest(anime: SAnime) = internalAnimeDetailsRequest(anime)
+    override fun episodeListRequest(anime: SAnime) = animeDetailsRequest(anime)
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val result = response.parseAs<EpisodeResponseDto>()
@@ -195,7 +183,7 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
             it.attr("data-video")
         }
 
-        val videos = hostUrls.parallelCatchingFlatMap { hostUrl ->
+        val videos = hostUrls.parallelCatchingFlatMapBlocking { hostUrl ->
             when {
                 hostUrl.contains("dwish") -> {
                     streamWishExtractor.videosFromUrl(hostUrl)
@@ -216,8 +204,6 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
         runCatching {
             videos.addAll(getSelfVideo(document))
         }
-
-        if (videos.isEmpty()) throw Exception("Failed to get Videos")
 
         return videos
     }
@@ -273,23 +259,9 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // ============================ Utilities =============================
-    private inline fun <reified T> String.parseAs(): T =
-        json.decodeFromString(this)
 
     private inline fun <reified T> JsonElement.parseAs(): T =
         json.decodeFromJsonElement(this)
-
-    private inline fun <reified T> Response.parseAs(): T =
-        use { it.body.string() }.parseAs()
-
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map {
-                async(Dispatchers.Default) {
-                    runCatching { f(it) }.getOrElse { emptyList() }
-                }
-            }.awaitAll().flatten()
-        }
 
     companion object {
         private const val LIMIT = 20

@@ -20,7 +20,6 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -44,7 +43,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val id: Long = 655155856096L
 
-    override val client: OkHttpClient = network.client.newBuilder()
+    override val client = network.client.newBuilder()
         .addInterceptor(DdosGuardInterceptor(network.client))
         .build()
 
@@ -197,7 +196,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                     pnglist.forEach { itmax ->
                                         if (max.toInt() == itmax.substringBefore(" |").toInt()) {
                                             val maxhash = itmax.substringAfter("| ")
-                                            network.cloudflareClient.newCall(
+                                            network.client.newCall(
                                                 POST(
                                                     "$baseUrl/files/captcha",
                                                     body = "cID=0&pC=$maxhash&rT=2".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
@@ -313,7 +312,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                     pnglist.forEach { itmin ->
                                         if (min.toInt() == itmin.substringBefore(" |").toInt()) {
                                             val minhash = itmin.substringAfter("| ")
-                                            network.cloudflareClient.newCall(
+                                            network.client.newCall(
                                                 POST(
                                                     "$baseUrl/files/captcha",
                                                     body = "cID=0&pC=$minhash&rT=2".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
@@ -517,7 +516,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                     pnglist.forEach { itmax ->
                                         if (max.toInt() == itmax.substringBefore(" |").toInt()) {
                                             val maxhash = itmax.substringAfter("| ")
-                                            network.cloudflareClient.newCall(
+                                            network.client.newCall(
                                                 POST(
                                                     "$baseUrl/files/captcha",
                                                     body = "cID=0&pC=$maxhash&rT=2".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
@@ -633,7 +632,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                     pnglist.forEach { itmin ->
                                         if (min.toInt() == itmin.substringBefore(" |").toInt()) {
                                             val minhash = itmin.substringAfter("| ")
-                                            network.cloudflareClient.newCall(
+                                            network.client.newCall(
                                                 POST(
                                                     "$baseUrl/files/captcha",
                                                     body = "cID=0&pC=$minhash&rT=2".toRequestBody("application/x-www-form-urlencoded".toMediaType()),

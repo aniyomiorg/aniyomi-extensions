@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import kotlinx.serialization.decodeFromString
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.Headers
@@ -13,7 +13,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
 
 class DailymotionExtractor(private val client: OkHttpClient, private val headers: Headers) {
@@ -132,9 +131,5 @@ class DailymotionExtractor(private val client: OkHttpClient, private val headers
             subtitleList = subtitleList,
             videoNameGen = { "$prefix$it" },
         )
-    }
-
-    private inline fun <reified T> Response.parseAs(): T {
-        return use { it.body.string() }.let(json::decodeFromString)
     }
 }

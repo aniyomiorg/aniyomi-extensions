@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'ar.xsanime'
     extClass = '.XsAnime'
     extVersionCode = 10
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

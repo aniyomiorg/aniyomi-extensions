@@ -8,7 +8,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -27,8 +26,6 @@ class AnimeStream : ParsedAnimeHttpSource() {
     override val id: Long = 314593699490737069
 
     override val supportsLatest = false
-
-    override val client: OkHttpClient = network.client
 
     override fun popularAnimeSelector(): String = "div.movies-list div.ml-item"
 

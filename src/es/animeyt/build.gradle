@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.animeyt'
     extClass = '.Animeyt'
     extVersionCode = 9
-    libVersion = '13'
 }
 dependencies {
     implementation(project(':lib-fastream-extractor'))

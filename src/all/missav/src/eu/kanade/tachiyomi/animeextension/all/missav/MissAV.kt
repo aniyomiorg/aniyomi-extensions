@@ -20,7 +20,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -33,8 +32,6 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
     override val baseUrl = "https://missav.com"
 
     override val supportsLatest = true
-
-    override val client = network.cloudflareClient
 
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", "$baseUrl/")
@@ -136,14 +133,12 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
             .joinToString()
             .takeIf(String::isNotBlank)
 
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
-        return Observable.just(
-            listOf(
-                SEpisode.create().apply {
-                    url = anime.url
-                    name = "Episode"
-                },
-            ),
+    override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
+        return listOf(
+            SEpisode.create().apply {
+                url = anime.url
+                name = "Episode"
+            },
         )
     }
 

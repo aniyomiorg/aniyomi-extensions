@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'en.genoanime'
     extClass = '.GenoAnime'
     extVersionCode = 32
-    libVersion = '13'
 }
 
 dependencies {

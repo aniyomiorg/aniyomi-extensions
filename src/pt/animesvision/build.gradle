@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'pt.animesvision'
     extClass = '.AnimesVision'
     extVersionCode = 22
-    libVersion = '13'
 }
 
 dependencies {

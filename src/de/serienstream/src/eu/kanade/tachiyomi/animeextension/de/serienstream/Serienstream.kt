@@ -30,7 +30,6 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -56,11 +55,11 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+    override val client = network.client.newBuilder()
         .addInterceptor(DdosGuardInterceptor(network.client))
         .build()
 
-    private val authClient = network.cloudflareClient.newBuilder()
+    private val authClient = network.client.newBuilder()
         .addInterceptor(SerienstreamInterceptor(client, preferences))
         .build()
 

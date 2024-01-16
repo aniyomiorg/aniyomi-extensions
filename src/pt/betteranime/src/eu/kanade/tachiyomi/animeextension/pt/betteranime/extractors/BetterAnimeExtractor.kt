@@ -5,10 +5,8 @@ import eu.kanade.tachiyomi.animeextension.pt.betteranime.unescape
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.network.await
+import eu.kanade.tachiyomi.util.parallelMapNotNullBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
@@ -28,14 +26,14 @@ class BetterAnimeExtractor(
             Pair(it.groupValues[1], it.groupValues[2])
         }.toList()
         val token = html.substringAfter("_token:\"").substringBefore("\"")
-        return qualities.parallelMap { (quality, qtoken) ->
+        return qualities.parallelMapNotNullBlocking { (quality, qtoken) ->
             videoUrlFromToken(qtoken, token)?.let { videoUrl ->
                 Video(videoUrl, quality, videoUrl)
             }
-        }.filterNotNull()
+        }
     }
 
-    private fun videoUrlFromToken(qtoken: String, token: String): String? {
+    private suspend fun videoUrlFromToken(qtoken: String, token: String): String? {
         val body = """
             {
                 "_token": "$token",
@@ -45,14 +43,14 @@ class BetterAnimeExtractor(
         val reqBody = body.toRequestBody("application/json".toMediaType())
         val request = POST("$baseUrl/changePlayer", headers, reqBody)
         return runCatching {
-            val response = client.newCall(request).execute().use { it.body.string() }
+            val response = client.newCall(request).await().use { it.body.string() }
             val resJson = json.decodeFromString<ChangePlayerDto>(response)
-            resJson.frameLink?.let(::videoUrlFromPlayer)
+            videoUrlFromPlayer(resJson.frameLink!!)
         }.getOrNull()
     }
 
-    private fun videoUrlFromPlayer(url: String): String {
-        val html = client.newCall(GET(url, headers)).execute().use { it.body.string() }
+    private suspend fun videoUrlFromPlayer(url: String): String {
+        val html = client.newCall(GET(url, headers)).await().use { it.body.string() }
 
         val videoUrl = html.substringAfter("file\":")
             .substringAfter("\"")
@@ -61,11 +59,6 @@ class BetterAnimeExtractor(
 
         return videoUrl
     }
-
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     companion object {
         private val REGEX_QUALITIES = """qualityString\["(\w+)"\] = "(\S+)"""".toRegex()

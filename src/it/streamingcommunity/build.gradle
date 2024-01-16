@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'it.streamingcommunity'
     extClass = '.StreamingCommunity'
     extVersionCode = 2
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

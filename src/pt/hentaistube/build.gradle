@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'pt.hentaistube'
     extClass = '.HentaisTube'
     extVersionCode = 1
-    libVersion = '13'
     containsNsfw = true
 }
 

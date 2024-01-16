@@ -5,6 +5,7 @@ import android.os.Build
 import android.util.Log
 import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
@@ -13,7 +14,6 @@ import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
 
 class JellyfinAuthenticator(
@@ -83,11 +83,6 @@ class JellyfinAuthenticator(
         DEVICEID_KEY,
         value,
     ).apply()
-
-    private inline fun <reified T> Response.parseAs(transform: (String) -> String = { it }): T {
-        val responseBody = use { transform(it.body.string()) }
-        return json.decodeFromString(responseBody)
-    }
 
     companion object {
         private const val DEVICEID_KEY = "device_id"

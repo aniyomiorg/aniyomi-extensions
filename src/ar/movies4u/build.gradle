@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'ar.movies4u'
     extClass = '.Movies4U'
     extVersionCode = 4
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

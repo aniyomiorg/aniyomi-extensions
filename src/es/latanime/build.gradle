@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.latanime'
     extClass = '.Latanime'
     extVersionCode = 14
-    libVersion = '13'
 }
 
 dependencies {

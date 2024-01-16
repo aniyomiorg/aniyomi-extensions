@@ -16,15 +16,12 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
@@ -44,8 +41,6 @@ class Seez : ConfigurableAnimeSource, AnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = false
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val json: Json by injectLazy()
 
@@ -309,18 +304,16 @@ class Seez : ConfigurableAnimeSource, AnimeHttpSource() {
             Pair(vrfHelper.decrypt(encrypted), it.title)
         }
 
-        return urlList.parallelMap {
+        return urlList.parallelCatchingFlatMapBlocking {
             val url = it.first
             val name = it.second
 
-            runCatching {
-                when (name) {
-                    "Vidplay" -> vidsrcExtractor.videosFromUrl(url, name)
-                    "Filemoon" -> filemoonExtractor.videosFromUrl(url)
-                    else -> emptyList()
-                }
-            }.getOrElse { emptyList() }
-        }.flatten().ifEmpty { throw Exception("Failed to fetch videos") }
+            when (name) {
+                "Vidplay" -> vidsrcExtractor.videosFromUrl(url, name)
+                "Filemoon" -> filemoonExtractor.videosFromUrl(url)
+                else -> emptyList()
+            }
+        }
     }
 
     // ============================= Utilities ==============================
@@ -350,17 +343,6 @@ class Seez : ConfigurableAnimeSource, AnimeHttpSource() {
         return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
             .getOrNull() ?: 0L
     }
-
-    private inline fun <reified T> Response.parseAs(): T {
-        val responseBody = use { it.body.string() }
-        return json.decodeFromString(responseBody)
-    }
-
-    // From Dopebox
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     companion object {
         private val TMDB_URL = "https://api.themoviedb.org/3".toHttpUrl()

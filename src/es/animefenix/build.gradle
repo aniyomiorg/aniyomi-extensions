@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.animefenix'
     extClass = '.Animefenix'
     extVersionCode = 32
-    libVersion = '13'
 }
 
 dependencies {

@@ -19,10 +19,7 @@ import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -39,8 +36,6 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "ar"
 
     override val supportsLatest = true
-
-    override val client = network.cloudflareClient
 
     override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
@@ -130,7 +125,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         return document.select("ul#episode-servers li a")
             .distinctBy { it.text().substringBefore(" -") } // remove duplicates by server name
-            .parallelCatchingFlatMap {
+            .parallelCatchingFlatMapBlocking {
                 val url = it.attr("data-url")
                     .takeUnless(String::isBlank)
                     ?.let { String(Base64.decode(it, Base64.DEFAULT)) }
@@ -237,15 +232,6 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map {
-                async(Dispatchers.Default) {
-                    runCatching { f(it) }.getOrElse { emptyList() }
-                }
-            }.awaitAll().flatten()
-        }
-
     private fun getRealDoc(document: Document): Document {
         return document.selectFirst("div.anime-page-link a")?.let {
             client.newCall(GET(it.attr("href"), headers)).execute().asJsoup()

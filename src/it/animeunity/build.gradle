@@ -7,7 +7,6 @@ ext {
     pkgNameSuffix = 'it.animeunity'
     extClass = '.AnimeUnity'
     extVersionCode = 7
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

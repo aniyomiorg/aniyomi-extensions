@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'en.myrunningman'
     extClass = '.MyRunningMan'
     extVersionCode = 2
-    libVersion = '13'
 }
 
 dependencies {

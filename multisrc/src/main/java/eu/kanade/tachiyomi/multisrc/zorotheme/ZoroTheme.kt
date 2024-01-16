@@ -16,13 +16,14 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.multisrc.zorotheme.dto.HtmlResponse
 import eu.kanade.tachiyomi.multisrc.zorotheme.dto.SourcesResponse
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import eu.kanade.tachiyomi.util.parallelMapNotNull
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -38,8 +39,6 @@ abstract class ZoroTheme(
 ) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
-
-    override val client: OkHttpClient = network.client
 
     private val json: Json by injectLazy()
 
@@ -210,7 +209,7 @@ abstract class ZoroTheme(
     )
 
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
-        val response = client.newCall(videoListRequest(episode)).execute()
+        val response = client.newCall(videoListRequest(episode)).await()
 
         val episodeReferer = response.request.header("referer")!!
         val typeSelection = preferences.typeToggle
@@ -230,7 +229,7 @@ abstract class ZoroTheme(
 
                 val link = client.newCall(
                     GET("$baseUrl/ajax$ajaxRoute/episode/sources?id=$id", apiHeaders(episodeReferer)),
-                ).execute().parseAs<SourcesResponse>().link ?: ""
+                ).await().parseAs<SourcesResponse>().link ?: ""
 
                 VideoData(type, link, name)
             }
@@ -250,11 +249,6 @@ abstract class ZoroTheme(
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // ============================= Utilities ==============================
-
-    private inline fun <reified T> Response.parseAs(): T {
-        return use { it.body.string() }.let(json::decodeFromString)
-    }
-
     private fun Set<String>.contains(s: String, ignoreCase: Boolean): Boolean {
         return any { it.equals(s, ignoreCase) }
     }

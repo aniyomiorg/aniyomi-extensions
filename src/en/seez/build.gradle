@@ -9,7 +9,6 @@ ext {
     pkgNameSuffix = 'en.seez'
     extClass = '.Seez'
     extVersionCode = 5
-    libVersion = '13'
 }
 
 dependencies {

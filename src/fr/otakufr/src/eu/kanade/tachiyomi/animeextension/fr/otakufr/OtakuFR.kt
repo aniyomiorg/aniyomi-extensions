@@ -21,12 +21,8 @@ import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -46,8 +42,6 @@ class OtakuFR : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "fr"
 
     override val supportsLatest = false
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -180,9 +174,7 @@ class OtakuFR : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-        return serversList.parallelMap {
-            runCatching { getHosterVideos(it) }.getOrElse { emptyList() }
-        }.flatten().sort().ifEmpty { throw Exception("Failed to extract videos") }
+        return serversList.parallelCatchingFlatMapBlocking(::getHosterVideos)
     }
 
     private fun getHosterVideos(host: String): List<Video> {
@@ -243,12 +235,6 @@ class OtakuFR : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> SAnime.UNKNOWN
         }
     }
-
-    // From Dopebox
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     companion object {
         private val DATE_FORMATTER by lazy {

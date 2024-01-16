@@ -8,7 +8,6 @@ ext {
     pkgNameSuffix = 'pt.listadeanimes'
     extClass = '.ListaDeAnimes'
     extVersionCode = 2
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

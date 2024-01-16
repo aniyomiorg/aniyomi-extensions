@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'ar.tuktukcinema'
     extClass = '.Tuktukcinema'
     extVersionCode = 15
-    libVersion = '13'
 }
 
 dependencies {

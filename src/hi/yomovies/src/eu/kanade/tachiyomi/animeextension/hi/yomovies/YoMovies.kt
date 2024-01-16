@@ -18,12 +18,8 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -41,8 +37,6 @@ class YoMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "hi"
 
     override val supportsLatest = false
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -151,16 +145,16 @@ class YoMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.use { it.asJsoup() }
 
-        val videoList = document.select("div[id*=tab]:has(div.movieplay > iframe)").parallelMap { server ->
-            val iframe = server.selectFirst("div.movieplay > iframe")!!
-            val name = document.selectFirst("ul.idTabs > li:has(a[href=#${server.id()}]) div.les-title")?.text()?.let { "[$it] - " } ?: ""
+        val videoList = document.select("div[id*=tab]:has(div.movieplay > iframe)")
+            .parallelCatchingFlatMapBlocking { server ->
+                val iframe = server.selectFirst("div.movieplay > iframe")!!
+                val name = document.selectFirst("ul.idTabs > li:has(a[href=#${server.id()}]) div.les-title")
+                    ?.text()
+                    ?.let { "[$it] - " }
+                    .orEmpty()
 
-            runCatching {
                 extractVideosFromIframe(iframe.attr("abs:src"), name)
-            }.getOrElse { emptyList() }
-        }.flatten()
-
-        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
+            }
 
         return videoList.sort()
     }
@@ -213,12 +207,6 @@ class YoMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             ),
         ).reversed()
     }
-
-    // From Dopebox
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     companion object {
         private val PREF_DOMAIN_KEY = "preferred_domain_name_v${BuildConfig.VERSION_CODE}"

@@ -11,7 +11,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 
 class ListaDeAnimes : ParsedAnimeHttpSource() {
     override val name = "Lista de Animes"
@@ -94,8 +93,8 @@ class ListaDeAnimes : ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
-        return Observable.just(listOf(Video(episode.url, episode.name, episode.url)))
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
+        return listOf(Video(episode.url, episode.name, episode.url))
     }
 
     override fun videoListSelector() = throw UnsupportedOperationException("Not used.")

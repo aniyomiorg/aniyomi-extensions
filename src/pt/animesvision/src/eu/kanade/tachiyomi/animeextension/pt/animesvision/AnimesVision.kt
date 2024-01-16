@@ -19,12 +19,10 @@ import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.await
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelFlatMapBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -34,7 +32,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -51,7 +48,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client = network.cloudflareClient.newBuilder()
+    override val client = network.client.newBuilder()
         .addInterceptor(::loginInterceptor)
         .build()
 
@@ -92,14 +89,14 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector() = nextPageSelector()
 
     // =============================== Search ===============================
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH)) {
             val path = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/$path"))
-                .asObservableSuccess()
-                .map(::searchAnimeByPathParse)
+                .awaitSuccess()
+                .use(::searchAnimeByPathParse)
         } else {
-            super.fetchSearchAnime(page, query, filters)
+            super.getSearchAnime(page, query, filters)
         }
     }
 
@@ -222,7 +219,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val players = doc.select("div.server-item > a.btn")
 
-        return players.parallelMap {
+        return players.parallelFlatMapBlocking {
             val id = it.attr("wire:click")
                 .substringAfter("(")
                 .substringBefore(")")
@@ -232,12 +229,12 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val body = "$initialData, \"updates\": [$updateString]}"
             val reqBody = body.toRequestBody()
             val url = "$baseUrl/livewire/message/components.episodio.player-episodio-component"
-            val response = client.newCall(POST(url, headers, reqBody)).execute()
+            val response = client.newCall(POST(url, headers, reqBody)).await()
             val responseBody = response.use { it.body.string() }
             val resJson = json.decodeFromString<AVResponseDto>(responseBody)
             (resJson.serverMemo?.data?.framePlay ?: resJson.effects?.html)
                 ?.let(::parsePlayerData).orEmpty()
-        }.flatten()
+        }
     }
 
     private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
@@ -289,11 +286,6 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return response
     }
-
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     private fun getRealDoc(document: Document): Document {
         val originalUrl = document.location()

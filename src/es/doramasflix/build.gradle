@@ -6,7 +6,6 @@ ext {
     pkgNameSuffix = 'es.doramasflix'
     extClass = '.Doramasflix'
     extVersionCode = 13
-    libVersion = '13'
 }
 
 dependencies {
