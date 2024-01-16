@@ -16,10 +16,8 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.multisrc.zorotheme.dto.HtmlResponse
 import eu.kanade.tachiyomi.multisrc.zorotheme.dto.SourcesResponse
 import eu.kanade.tachiyomi.network.GET
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
+import eu.kanade.tachiyomi.util.parallelMapNotNull
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl
@@ -42,7 +40,7 @@ abstract class ZoroTheme(
 
     private val json: Json by injectLazy()
 
-    private val preferences: SharedPreferences by lazy {
+    val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -112,7 +110,7 @@ abstract class ZoroTheme(
             addIfNotBlank("em", params.end_month)
             addIfNotBlank("ed", params.end_day)
             addIfNotBlank("genres", params.genres)
-        }.build().toString()
+        }.build()
 
         return GET(url, docHeaders)
     }
@@ -208,7 +206,9 @@ abstract class ZoroTheme(
         val name: String,
     )
 
-    override fun videoListParse(response: Response): List<Video> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
+        val response = client.newCall(videoListRequest(episode)).execute()
+
         val episodeReferer = response.request.header("referer")!!
         val typeSelection = preferences.typeToggle
         val hosterSelection = preferences.hostToggle
@@ -233,9 +233,7 @@ abstract class ZoroTheme(
             }
         }.flatten()
 
-        return embedLinks.parallelCatchingFlatMap(::extractVideo).ifEmpty {
-            throw Exception("Failed to extract videos.")
-        }
+        return embedLinks.parallelCatchingFlatMap(::extractVideo)
     }
 
     protected open fun extractVideo(server: VideoData): List<Video> {
@@ -249,16 +247,6 @@ abstract class ZoroTheme(
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // ============================= Utilities ==============================
-
-    private inline fun <A, B> Iterable<A>.parallelMapNotNull(crossinline f: suspend (A) -> B?): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll().filterNotNull()
-        }
-
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { runCatching { f(it) }.getOrElse { emptyList() } } }.awaitAll().flatten()
-        }
 
     private inline fun <reified T> Response.parseAs(): T {
         return use { it.body.string() }.let(json::decodeFromString)
