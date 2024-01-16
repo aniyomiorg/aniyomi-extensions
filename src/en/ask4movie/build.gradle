@@ -1,6 +1,5 @@
 ext {
     extName = 'Ask4Movie'
-    pkgNameSuffix = 'en.ask4movie'
     extClass = '.Ask4Movie'
     extVersionCode = 11
 }

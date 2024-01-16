@@ -1,6 +1,5 @@
 ext {
     extName = 'Pelisflix'
-    pkgNameSuffix = 'es.pelisflix'
     extClass = '.PelisflixFactory'
     extVersionCode = 13
 }

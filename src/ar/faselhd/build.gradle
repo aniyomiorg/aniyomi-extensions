@@ -1,6 +1,5 @@
 ext {
     extName = 'فاصل اعلاني'
-    pkgNameSuffix = 'ar.faselhd'
     extClass = '.FASELHD'
     extVersionCode = 14
 }

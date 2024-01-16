@@ -1,6 +1,5 @@
 ext {
     extName = 'توك توك سينما'
-    pkgNameSuffix = 'ar.tuktukcinema'
     extClass = '.Tuktukcinema'
     extVersionCode = 16
 }

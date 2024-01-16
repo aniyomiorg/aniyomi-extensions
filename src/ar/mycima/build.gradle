@@ -1,6 +1,5 @@
 ext {
     extName = 'MY CIMA'
-    pkgNameSuffix = 'ar.mycima'
     extClass = '.MyCima'
     extVersionCode = 20
 }

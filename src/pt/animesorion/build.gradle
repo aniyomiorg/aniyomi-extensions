@@ -1,6 +1,5 @@
 ext {
     extName = 'Animes Órion'
-    pkgNameSuffix = 'pt.animesorion'
     extClass = '.AnimesOrion'
     extVersionCode = 1
     containsNsfw = true

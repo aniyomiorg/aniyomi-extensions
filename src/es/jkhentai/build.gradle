@@ -1,6 +1,5 @@
 ext {
     extName = 'Jkhentai'
-    pkgNameSuffix = 'es.jkhentai'
     extClass = '.Jkhentai'
     extVersionCode = 9
     containsNsfw = true

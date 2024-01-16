@@ -1,6 +1,5 @@
 ext {
     extName = 'Moflix-Stream'
-    pkgNameSuffix = 'de.moflixstream'
     extClass = '.MoflixStream'
     extVersionCode = 4
 }

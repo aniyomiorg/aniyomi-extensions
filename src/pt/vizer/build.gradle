@@ -1,6 +1,5 @@
 ext {
     extName = 'Vizer.tv'
-    pkgNameSuffix = 'pt.vizer'
     extClass = '.Vizer'
     extVersionCode = 12
     containsNsfw = true

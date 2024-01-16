@@ -1,6 +1,5 @@
 ext {
     extName = 'Samehadaku'
-    pkgNameSuffix = 'id.samehadaku'
     extClass = '.Samehadaku'
     extVersionCode = 4
 }

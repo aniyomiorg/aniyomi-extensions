@@ -1,6 +1,5 @@
 ext {
     extName = 'AniPlay'
-    pkgNameSuffix = 'it.aniplay'
     extClass = '.AniPlay'
     extVersionCode = 6
 }

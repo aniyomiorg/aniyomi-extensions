@@ -1,6 +1,5 @@
 ext {
     extName = 'AsianLoad'
-    pkgNameSuffix = 'en.asianload'
     extClass = '.AsianLoad'
     extVersionCode = 37
 }

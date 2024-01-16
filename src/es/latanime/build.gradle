@@ -1,6 +1,5 @@
 ext {
     extName = 'Latanime'
-    pkgNameSuffix = 'es.latanime'
     extClass = '.Latanime'
     extVersionCode = 15
 }

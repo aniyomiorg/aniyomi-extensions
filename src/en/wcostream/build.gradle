@@ -1,6 +1,5 @@
 ext {
     extName = 'WCOStream'
-    pkgNameSuffix = 'en.wcostream'
     extClass = '.WCOStream'
     extVersionCode = 5
 }

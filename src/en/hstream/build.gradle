@@ -1,6 +1,5 @@
 ext {
     extName = 'Hstream'
-    pkgNameSuffix = 'en.hstream'
     extClass = '.Hstream'
     extVersionCode = 7
     containsNsfw = true

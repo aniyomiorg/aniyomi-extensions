@@ -1,6 +1,5 @@
 ext {
     extName = 'BestDubbedAnime'
-    pkgNameSuffix = 'en.bestdubbedanime'
     extClass = '.BestDubbedAnime'
     extVersionCode = 4
 }

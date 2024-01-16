@@ -1,6 +1,5 @@
 ext {
     extName = 'PutLocker'
-    pkgNameSuffix = 'en.putlocker'
     extClass = '.PutLocker'
     extVersionCode = 3
 }

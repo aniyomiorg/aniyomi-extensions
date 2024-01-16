@@ -1,6 +1,5 @@
 ext {
     extName = 'Aniflix'
-    pkgNameSuffix = 'de.aniflix'
     extClass = '.Aniflix'
     extVersionCode = 25
 }

@@ -1,6 +1,5 @@
 ext {
     extName = 'Egy Dead'
-    pkgNameSuffix = 'ar.egydead'
     extClass = '.EgyDead'
     extVersionCode = 11
 }

@@ -1,6 +1,5 @@
 ext {
     extName = 'Hinata Soul'
-    pkgNameSuffix = 'pt.hinatasoul'
     extClass = '.HinataSoul'
     extVersionCode = 4
 }

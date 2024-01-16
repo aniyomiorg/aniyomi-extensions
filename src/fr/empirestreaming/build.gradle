@@ -1,6 +1,5 @@
 ext {
     extName = 'EmpireStreaming'
-    pkgNameSuffix = 'fr.empirestreaming'
     extClass = '.EmpireStreaming'
     extVersionCode = 14
 }

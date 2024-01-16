@@ -1,6 +1,5 @@
 ext {
     extName = 'WIT ANIME'
-    pkgNameSuffix = 'ar.witanime'
     extClass = '.WitAnime'
     extVersionCode = 48
 }

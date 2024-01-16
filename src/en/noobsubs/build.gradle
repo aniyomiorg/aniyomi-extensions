@@ -1,6 +1,5 @@
 ext {
     extName = 'NoobSubs'
-    pkgNameSuffix = 'en.noobsubs'
     extClass = '.NoobSubs'
     extVersionCode = 1
 }

@@ -1,6 +1,5 @@
 ext {
     extName = 'Animension'
-    pkgNameSuffix = 'en.animension'
     extClass = '.Animension'
     extVersionCode = 20
 }

@@ -1,6 +1,5 @@
 ext {
     extName = 'Aniweek'
-    pkgNameSuffix = 'ko.aniweek'
     extClass = '.Aniweek'
     extVersionCode = 4
 }

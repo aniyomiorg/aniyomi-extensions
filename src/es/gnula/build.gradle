@@ -1,6 +1,5 @@
 ext {
     extName = 'Gnula'
-    pkgNameSuffix = 'es.gnula'
     extClass = '.Gnula'
     extVersionCode = 12
 }

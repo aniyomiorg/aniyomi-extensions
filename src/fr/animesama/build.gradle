@@ -1,6 +1,5 @@
 ext {
     extName = 'Anime-Sama'
-    pkgNameSuffix = 'fr.animesama'
     extClass = '.AnimeSama'
     extVersionCode = 7
     containsNsfw = false

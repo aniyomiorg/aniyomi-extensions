@@ -1,6 +1,5 @@
 ext {
     extName = 'Seez'
-    pkgNameSuffix = 'en.seez'
     extClass = '.Seez'
     extVersionCode = 6
 }

@@ -1,6 +1,5 @@
 ext {
     extName = 'PelisForte'
-    pkgNameSuffix = 'es.pelisforte'
     extClass = '.PelisForte'
     extVersionCode = 7
 }

@@ -1,6 +1,5 @@
 ext {
     extName = 'Vostfree'
-    pkgNameSuffix = 'fr.vostfree'
     extClass = '.Vostfree'
     extVersionCode = 19
 }

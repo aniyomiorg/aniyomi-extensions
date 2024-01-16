@@ -1,6 +1,5 @@
 ext {
     extName = 'AnimeWorld India'
-    pkgNameSuffix = 'all.animeworldindia'
     extClass = '.AnimeWorldIndiaFactory'
     extVersionCode = 8
 }

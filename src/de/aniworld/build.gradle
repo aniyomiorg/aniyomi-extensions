@@ -1,6 +1,5 @@
 ext {
     extName = 'AniWorld (experimental)'
-    pkgNameSuffix = 'de.aniworld'
     extClass = '.AniWorld'
     extVersionCode = 20
 }

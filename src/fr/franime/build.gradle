@@ -1,6 +1,5 @@
 ext {
     extName = 'FrAnime'
-    pkgNameSuffix = 'fr.franime'
     extClass = '.FrAnime'
     extVersionCode = 10
     containsNsfw = true

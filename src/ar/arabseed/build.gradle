@@ -1,6 +1,5 @@
 ext {
     extName = 'عرب سيد'
-    pkgNameSuffix = 'ar.arabseed'
     extClass = '.ArabSeed'
     extVersionCode = 10
 }

@@ -1,6 +1,5 @@
 ext {
     extName = 'Jellyfin'
-    pkgNameSuffix = 'all.jellyfin'
     extClass = '.JellyfinFactory'
     extVersionCode = 11
 }

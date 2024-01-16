@@ -1,6 +1,5 @@
 ext {
     extName = 'FMovies'
-    pkgNameSuffix = 'en.fmovies'
     extClass = '.FMovies'
     extVersionCode = 15
 }

@@ -1,6 +1,5 @@
 ext {
     extName = 'Anime-Stream'
-    pkgNameSuffix = 'de.animestream'
     extClass = '.AnimeStream'
     extVersionCode = 2
 }

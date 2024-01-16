@@ -1,6 +1,5 @@
 ext {
     extName = 'HDFilmCehennemi'
-    pkgNameSuffix = 'tr.hdfilmcehennemi'
     extClass = '.HDFilmCehennemi'
     extVersionCode = 8
     containsNsfw = true

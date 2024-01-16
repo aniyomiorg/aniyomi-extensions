@@ -1,6 +1,5 @@
 ext {
     extName = 'Flixei'
-    pkgNameSuffix = 'pt.flixei'
     extClass = '.Flixei'
     extVersionCode = 5
 }

@@ -1,6 +1,5 @@
 ext {
     extName = 'Animes Digital'
-    pkgNameSuffix = 'pt.animesdigital'
     extClass = '.AnimesDigital'
     extVersionCode = 2
 }

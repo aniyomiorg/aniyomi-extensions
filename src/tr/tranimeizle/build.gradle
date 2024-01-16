@@ -1,6 +1,5 @@
 ext {
     extName = 'TR Anime Izle'
-    pkgNameSuffix = 'tr.tranimeizle'
     extClass = '.TRAnimeIzle'
     extVersionCode = 12
 }

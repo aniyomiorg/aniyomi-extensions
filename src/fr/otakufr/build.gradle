@@ -1,6 +1,5 @@
 ext {
     extName = 'OtakuFR'
-    pkgNameSuffix = 'fr.otakufr'
     extClass = '.OtakuFR'
     extVersionCode = 6
 }

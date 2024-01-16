@@ -1,6 +1,5 @@
 ext {
     extName = 'HentaisTube'
-    pkgNameSuffix = 'pt.hentaistube'
     extClass = '.HentaisTube'
     extVersionCode = 1
     containsNsfw = true

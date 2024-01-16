@@ -1,6 +1,5 @@
 ext {
     extName = 'MetroSeries'
-    pkgNameSuffix = 'es.metroseries'
     extClass = '.MetroSeries'
     extVersionCode = 6
 }

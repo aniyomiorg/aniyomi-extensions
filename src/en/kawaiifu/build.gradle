@@ -1,6 +1,5 @@
 ext {
     extName = 'Kawaiifu'
-    pkgNameSuffix = 'en.kawaiifu'
     extClass = '.Kawaiifu'
     extVersionCode = 4
     containsNsfw = true

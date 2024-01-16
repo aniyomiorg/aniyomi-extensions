@@ -211,6 +211,10 @@ src/<lang>/<mysourcename>/
 13 directories, 9 files
 ```
 
+`<lang>` should be an ISO 639-1 compliant language code (two letters or `all`). `<mysourcename>`
+should be adapted from the site name, and can only contain lowercase ASCII letters and digits.
+Your extension code must be placed in the package `eu.kanade.tachiyomi.animeextension.<lang>.<mysourcename>`.
+
 #### AndroidManifest.xml
 A minimal [Android manifest file](https://developer.android.com/guide/topics/manifest/manifest-intro) is needed for Android to recognize a extension when it's compiled into an APK file. You can also add intent filters inside this file (see [URL intent filter](#url-intent-filter) for more information).
 
@@ -220,7 +224,6 @@ Make sure that your new extension's `build.gradle` file follows the following st
 ```gradle
 ext {
     extName = '<My source name>'
-    pkgNameSuffix = '<lang>.<mysourcename>'
     extClass = '.<MySourceName>'
     extVersionCode = 1
     containsNsfw = true
@@ -231,8 +234,7 @@ apply from: "$rootDir/common.gradle"
 
 | Field | Description |
 | ----- | ----------- |
-| `extName` | The name of the extension. |
-| `pkgNameSuffix` | A unique suffix added to `eu.kanade.tachiyomi.animeextension`. The language and the site name should be enough. Remember your extension code implementation must be placed in this package. |
+| `extName` | The name of the extension. Should be romanized if site name is not in English.|
 | `extClass` | Points to the class that implements `AnimeSource`. You can use a relative path starting with a dot (the package name is the base path). This is used to find and instantiate the source(s). |
 | `extVersionCode` | The extension version code. This must be a positive integer and incremented with any change to the code. |
 | `libVersion` | (Optional, defaults to `14`) The version of the [extensions library](https://github.com/aniyomiorg/extensions-lib) used. |

@@ -1,6 +1,5 @@
 ext {
     extName = 'Tokuzilla'
-    pkgNameSuffix = 'en.tokuzilla'
     extClass = '.Tokuzilla'
     extVersionCode = 15
     containsNsfw = false

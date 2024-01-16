@@ -1,6 +1,5 @@
 ext {
     extName = 'YoMovies'
-    pkgNameSuffix = 'hi.yomovies'
     extClass = '.YoMovies'
     extVersionCode = 8
     containsNsfw = true

@@ -1,6 +1,5 @@
 ext {
     extName = 'Anizm'
-    pkgNameSuffix = 'tr.anizm'
     extClass = '.Anizm'
     extVersionCode = 12
 }

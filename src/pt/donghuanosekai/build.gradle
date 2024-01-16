@@ -1,6 +1,5 @@
 ext {
     extName = 'Donghua no Sekai'
-    pkgNameSuffix = 'pt.donghuanosekai'
     extClass = '.DonghuaNoSekai'
     extVersionCode = 2
 }

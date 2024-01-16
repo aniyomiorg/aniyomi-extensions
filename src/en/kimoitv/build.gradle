@@ -1,6 +1,5 @@
 ext {
     extName = 'KimoiTV'
-    pkgNameSuffix = 'en.kimoitv'
     extClass = '.KimoiTV'
     extVersionCode = 1
 }

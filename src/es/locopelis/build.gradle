@@ -1,6 +1,5 @@
 ext {
     extName = 'LocoPelis'
-    pkgNameSuffix = 'es.locopelis'
     extClass = '.LocoPelis'
     extVersionCode = 19
 }

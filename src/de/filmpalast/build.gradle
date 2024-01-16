@@ -1,6 +1,5 @@
 ext {
     extName = 'FilmPalast'
-    pkgNameSuffix = 'de.filmpalast'
     extClass = '.FilmPalast'
     extVersionCode = 14
 }

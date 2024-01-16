@@ -1,6 +1,5 @@
 ext {
     extName = 'Oploverz'
-    pkgNameSuffix = 'id.oploverz'
     extClass = '.Oploverz'
     extVersionCode = 20
 }

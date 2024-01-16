@@ -1,6 +1,5 @@
 ext {
     extName = 'MonosChinos'
-    pkgNameSuffix = 'es.monoschinos'
     extClass = '.MonosChinos'
     extVersionCode = 24
 }

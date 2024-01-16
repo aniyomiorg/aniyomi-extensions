@@ -1,6 +1,5 @@
 ext {
     extName = 'Yomiroll'
-    pkgNameSuffix = 'all.kamyroll'
     extClass = '.Yomiroll'
     extVersionCode = 29
 }

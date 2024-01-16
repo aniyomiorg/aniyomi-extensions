@@ -1,6 +1,5 @@
 ext {
     extName = 'MissAV'
-    pkgNameSuffix = 'all.missav'
     extClass = '.MissAV'
     extVersionCode = 6
     containsNsfw = true

@@ -1,6 +1,5 @@
 ext {
     extName = 'AniDong'
-    pkgNameSuffix = 'pt.anidong'
     extClass = '.AniDong'
     extVersionCode = 1
 }

@@ -1,6 +1,5 @@
 ext {
     extName = 'Kool'
-    pkgNameSuffix = 'de.kool'
     extClass = '.Kool'
     extVersionCode = 7
 }

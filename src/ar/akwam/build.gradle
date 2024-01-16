@@ -1,6 +1,5 @@
 ext {
     extName = 'أكوام'
-    pkgNameSuffix = 'ar.akwam'
     extClass = '.Akwam'
     extVersionCode = 9
 }

@@ -1,6 +1,5 @@
 ext {
     extName = 'AnimeToast'
-    pkgNameSuffix = 'de.animetoast'
     extClass = '.AnimeToast'
     extVersionCode = 11
 }

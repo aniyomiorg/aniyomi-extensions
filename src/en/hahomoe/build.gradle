@@ -1,6 +1,5 @@
 ext {
     extName = 'haho.moe'
-    pkgNameSuffix = 'en.hahomoe'
     extClass = '.HahoMoe'
     extVersionCode = 10
     containsNsfw = true

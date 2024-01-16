@@ -1,6 +1,5 @@
 ext {
     extName = 'Anitube'
-    pkgNameSuffix = 'pt.anitube'
     extClass = '.Anitube'
     extVersionCode = 13
 }

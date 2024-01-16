@@ -1,6 +1,5 @@
 ext {
     extName = 'NekoSama'
-    pkgNameSuffix = 'fr.nekosama'
     extClass = '.NekoSama'
     extVersionCode = 9
     containsNsfw = true

@@ -1,6 +1,5 @@
 ext {
     extName = 'Toonitalia'
-    pkgNameSuffix = 'it.toonitalia'
     extClass = '.Toonitalia'
     extVersionCode = 15
 }

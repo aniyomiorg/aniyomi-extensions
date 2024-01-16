@@ -1,6 +1,5 @@
 ext {
     extName = 'StreamingCommunity'
-    pkgNameSuffix = 'it.streamingcommunity'
     extClass = '.StreamingCommunity'
     extVersionCode = 2
 }
