@@ -1,12 +1,10 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'توك توك سينما'
-    pkgNameSuffix = 'ar.tuktukcinema'
     extClass = '.Tuktukcinema'
     extVersionCode = 16
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-uqload-extractor'))
@@ -17,5 +15,3 @@ dependencies {
     implementation(project(':lib-playlist-utils'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
-
-apply from: "$rootDir/common.gradle"

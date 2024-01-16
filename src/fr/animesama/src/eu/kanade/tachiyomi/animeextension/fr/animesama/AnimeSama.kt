@@ -96,13 +96,13 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
         return AnimesPage(animes, page < elements.size)
     }
 
-    override fun searchAnimeParse(response: Response): AnimesPage = throw Exception("not used")
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
+    override fun searchAnimeParse(response: Response): AnimesPage = throw UnsupportedOperationException()
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw UnsupportedOperationException()
 
     // =========================== Anime Details ============================
     override suspend fun getAnimeDetails(anime: SAnime): SAnime = anime
 
-    override fun animeDetailsParse(response: Response): SAnime = throw Exception("not used")
+    override fun animeDetailsParse(response: Response): SAnime = throw UnsupportedOperationException()
 
     // ============================== Episodes ==============================
     override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
@@ -113,7 +113,7 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
         return if (movie == null) episodes.reversed() else listOf(episodes[movie])
     }
 
-    override fun episodeListParse(response: Response): List<SEpisode> = throw Exception("not used")
+    override fun episodeListParse(response: Response): List<SEpisode> = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
     override suspend fun getVideoList(episode: SEpisode): List<Video> {

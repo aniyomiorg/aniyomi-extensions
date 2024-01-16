@@ -1,15 +1,11 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'MY CIMA'
-    pkgNameSuffix = 'ar.mycima'
     extClass = '.MyCima'
     extVersionCode = 20
 }
 
+apply from: "$rootDir/common.gradle"
+
 dependencies {
     implementation(project(':lib-uqload-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

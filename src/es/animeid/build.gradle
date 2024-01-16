@@ -1,16 +1,11 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'AnimeID'
-    pkgNameSuffix = 'es.animeid'
     extClass = '.AnimeID'
     extVersionCode = 7
 }
 
+apply from: "$rootDir/common.gradle"
+
 dependencies {
     implementation(project(':lib-streamtape-extractor'))
 }
-
-
-apply from: "$rootDir/common.gradle"

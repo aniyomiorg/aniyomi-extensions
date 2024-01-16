@@ -125,7 +125,7 @@ abstract class DopeFlix(
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.use { it.asJsoup() }
@@ -154,7 +154,7 @@ abstract class DopeFlix(
         }
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     private fun parseEpisodesFromSeries(element: Element): List<SEpisode> {
         val seasonId = element.attr("data-id")
@@ -245,11 +245,11 @@ abstract class DopeFlix(
         ).reversed()
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

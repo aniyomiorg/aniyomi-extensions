@@ -25,7 +25,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 
 class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -58,7 +57,7 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // episodes
 
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
@@ -71,7 +70,7 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episodeList.reversed()
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     // Video Extractor
 
@@ -161,11 +160,11 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ).reversed()
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // Search
 

@@ -1,9 +1,5 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'فاصل اعلاني'
-    pkgNameSuffix = 'ar.faselhd'
     extClass = '.FASELHD'
     extVersionCode = 14
 }

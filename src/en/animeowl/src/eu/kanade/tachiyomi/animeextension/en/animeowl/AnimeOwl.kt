@@ -108,13 +108,13 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request =
-        throw Exception("Not Used")
+        throw UnsupportedOperationException()
 
-    override fun searchAnimeSelector(): String = throw Exception("Not Used")
+    override fun searchAnimeSelector(): String = throw UnsupportedOperationException()
 
-    override fun searchAnimeNextPageSelector(): String = throw Exception("Not Used")
+    override fun searchAnimeNextPageSelector(): String = throw UnsupportedOperationException()
 
-    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("Not Used")
+    override fun searchAnimeFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
@@ -163,9 +163,9 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }.reversed()
     }
 
-    override fun episodeListSelector(): String = throw Exception("Not Used")
+    override fun episodeListSelector(): String = throw UnsupportedOperationException()
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not Used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
@@ -197,11 +197,11 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList.sort()
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoListSelector(): String = throw Exception("Not Used")
+    override fun videoListSelector(): String = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
     private fun extractOwlVideo(link: String, files: List<Pair<String, Headers>>, lang: String): List<Video> {

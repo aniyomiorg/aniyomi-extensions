@@ -23,7 +23,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 
 class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -164,9 +163,9 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         )
     }
 
-    override fun episodeListSelector() = throw Exception("Not used")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
 
@@ -176,11 +175,11 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
 

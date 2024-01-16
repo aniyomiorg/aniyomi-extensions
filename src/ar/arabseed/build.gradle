@@ -1,19 +1,13 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'عرب سيد'
-    pkgNameSuffix = 'ar.arabseed'
     extClass = '.ArabSeed'
     extVersionCode = 10
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(":lib-dood-extractor"))
     implementation(project(":lib-voe-extractor"))
     implementation(project(":lib-streamwish-extractor"))
 }
-
-apply from: "$rootDir/common.gradle"

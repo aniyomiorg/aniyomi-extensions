@@ -162,9 +162,9 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response) = extractor.getVideoList(response)
 
-    override fun videoListSelector() = throw Exception("not used")
-    override fun videoFromElement(element: Element) = throw Exception("not used")
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

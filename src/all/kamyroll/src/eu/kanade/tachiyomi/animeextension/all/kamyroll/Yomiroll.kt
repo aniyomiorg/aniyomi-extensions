@@ -188,7 +188,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         return info.data.first().toSAnimeOrNull(anime) ?: anime
     }
 
-    override fun animeDetailsParse(response: Response): SAnime = throw Exception("not used")
+    override fun animeDetailsParse(response: Response): SAnime = throw UnsupportedOperationException()
 
     // ============================== Episodes ==============================
 

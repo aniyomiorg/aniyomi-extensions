@@ -69,10 +69,10 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector() = "ul.pagination > li > a.next"
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int) = throw Exception("not used")
-    override fun latestUpdatesSelector() = throw Exception("not used")
-    override fun latestUpdatesFromElement(element: Element) = throw Exception("not used")
-    override fun latestUpdatesNextPageSelector() = throw Exception("not used")
+    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException()
+    override fun latestUpdatesSelector() = throw UnsupportedOperationException()
+    override fun latestUpdatesFromElement(element: Element) = throw UnsupportedOperationException()
+    override fun latestUpdatesNextPageSelector() = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
     override fun getFilterList() = Anime4UpFilters.FILTER_LIST
@@ -187,9 +187,9 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } ?: emptyList()
     }
 
-    override fun videoListSelector() = throw Exception("not used")
-    override fun videoFromElement(element: Element) = throw Exception("not used")
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

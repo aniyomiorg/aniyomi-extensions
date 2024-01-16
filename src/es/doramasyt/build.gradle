@@ -1,18 +1,13 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'Doramasyt'
-    pkgNameSuffix = 'es.doramasyt'
     extClass = '.Doramasyt'
     extVersionCode = 12
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-uqload-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-okru-extractor'))
 }
-
-
-apply from: "$rootDir/common.gradle"

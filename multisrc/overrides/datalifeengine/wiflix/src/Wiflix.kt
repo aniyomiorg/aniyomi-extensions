@@ -95,9 +95,9 @@ class Wiflix : DataLifeEngine(
         return list
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoListSelector(): String = throw Exception("Not Used")
+    override fun videoListSelector(): String = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 }

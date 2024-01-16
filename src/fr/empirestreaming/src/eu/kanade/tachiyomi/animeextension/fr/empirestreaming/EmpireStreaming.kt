@@ -34,7 +34,6 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
-import kotlin.Exception
 
 class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -75,11 +74,11 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector() = null
 
     // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element) = throw Exception("not used")
+    override fun searchAnimeFromElement(element: Element) = throw UnsupportedOperationException()
     override fun searchAnimeNextPageSelector() = null
-    override fun searchAnimeSelector() = throw Exception("not used")
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = throw Exception("not used")
-    override fun searchAnimeParse(response: Response) = throw Exception("not used")
+    override fun searchAnimeSelector() = throw UnsupportedOperationException()
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = throw UnsupportedOperationException()
+    override fun searchAnimeParse(response: Response) = throw UnsupportedOperationException()
 
     private val searchItems by lazy {
         client.newCall(GET("$baseUrl/api/views/contenitem", headers)).execute()
@@ -117,7 +116,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val doc = response.asJsoup()
@@ -149,7 +148,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         date_upload = obj.date.toDate()
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
     // val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
@@ -177,7 +176,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } ?: emptyList()
     }
 
-    override fun videoListParse(response: Response) = throw Exception("not used")
+    override fun videoListParse(response: Response) = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val hoster = preferences.getString(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
@@ -190,11 +189,11 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ).reversed()
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

@@ -1,10 +1,5 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
-
 ext {
     extName = 'VVVVID'
-    pkgNameSuffix = 'it.vvvvid'
     extClass = '.VVVVID'
     extVersionCode = 1
 }

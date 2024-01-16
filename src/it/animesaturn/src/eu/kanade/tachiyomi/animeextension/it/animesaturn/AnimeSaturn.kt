@@ -20,7 +20,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 
 class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -87,9 +86,9 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return GET("$watchUrl&s=alt")
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
     private fun videosFromElement(document: Document): List<Video> {
         val url = if (document.html().contains("jwplayer(")) {
@@ -142,7 +141,7 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return qualityList
     }
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()

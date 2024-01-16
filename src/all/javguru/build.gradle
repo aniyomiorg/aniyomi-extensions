@@ -1,15 +1,11 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'Jav Guru'
-    pkgNameSuffix = 'all.javguru'
     extClass = '.JavGuru'
     extVersionCode = 10
     containsNsfw = true
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-streamwish-extractor'))
@@ -20,5 +16,3 @@ dependencies {
     implementation(project(':lib-playlist-utils'))
     implementation(project(':lib-javcoverfetcher'))
 }
-
-apply from: "$rootDir/common.gradle"

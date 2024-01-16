@@ -32,7 +32,6 @@ import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.lang.Exception
 import java.text.SimpleDateFormat
 
 class AnimeUnity :
@@ -104,7 +103,7 @@ class AnimeUnity :
         page: Int,
         query: String,
         filters: AnimeFilterList,
-    ): Request = throw Exception("Not used")
+    ): Request = throw UnsupportedOperationException()
 
     override suspend fun getSearchAnime(
         page: Int,
@@ -192,7 +191,7 @@ class AnimeUnity :
         return POST("$baseUrl/archivio/get-animes", body = body, headers = searchHeaders)
     }
 
-    override fun searchAnimeParse(response: Response): AnimesPage = throw Exception("Not used")
+    override fun searchAnimeParse(response: Response): AnimesPage = throw UnsupportedOperationException()
 
     private fun searchAnimeParse(
         response: Response,
@@ -411,9 +410,9 @@ class AnimeUnity :
         return videoList.sort()
     }
 
-    override fun videoListRequest(episode: SEpisode): Request = throw Exception("Not used")
+    override fun videoListRequest(episode: SEpisode): Request = throw UnsupportedOperationException()
 
-    override fun videoListParse(response: Response): List<Video> = throw Exception("Not used")
+    override fun videoListParse(response: Response): List<Video> = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
 

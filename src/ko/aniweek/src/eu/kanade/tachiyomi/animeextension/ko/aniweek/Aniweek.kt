@@ -73,13 +73,13 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =============================== Latest ===============================
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not Used")
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
 
-    override fun latestUpdatesSelector(): String = throw Exception("Not Used")
+    override fun latestUpdatesSelector(): String = throw UnsupportedOperationException()
 
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not Used")
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not Used")
+    override fun latestUpdatesNextPageSelector(): String = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
 
@@ -323,11 +323,11 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoListSelector(): String = throw Exception("Not Used")
+    override fun videoListSelector(): String = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
 

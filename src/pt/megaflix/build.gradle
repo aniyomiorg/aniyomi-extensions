@@ -1,15 +1,11 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'Megaflix'
-    pkgNameSuffix = 'pt.megaflix'
     extClass = '.Megaflix'
     extVersionCode = 12
     containsNsfw = true
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-mixdrop-extractor'))
@@ -18,5 +14,3 @@ dependencies {
     // for mixdrop and megaflix
     implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
 }
-
-apply from: "$rootDir/common.gradle"

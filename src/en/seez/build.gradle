@@ -1,21 +1,13 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'Seez'
-    pkgNameSuffix = 'en.seez'
     extClass = '.Seez'
     extVersionCode = 6
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-filemoon-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-playlist-utils'))
 }
-
-
-apply from: "$rootDir/common.gradle"

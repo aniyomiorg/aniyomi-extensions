@@ -122,19 +122,19 @@ class HentaisTube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     override fun searchAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     // =========================== Anime Details ============================
@@ -197,11 +197,11 @@ class HentaisTube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "iframe.meu-player"
 
     override fun videoFromElement(element: Element): Video {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     override fun videoUrlParse(document: Document): String {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     // ============================== Settings ==============================

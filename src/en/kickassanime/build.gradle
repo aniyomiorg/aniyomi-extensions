@@ -1,19 +1,12 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'KickAssAnime'
-    pkgNameSuffix = 'en.kickassanime'
     extClass = '.KickAssAnime'
     extVersionCode = 37
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(":lib-cryptoaes"))
     implementation(project(":lib-playlist-utils"))
 }
-
-apply from: "$rootDir/common.gradle"

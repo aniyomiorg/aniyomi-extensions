@@ -69,23 +69,18 @@ interface ThemeSourceGenerator {
             gradle.writeText(
                 """
                 |// THIS FILE IS AUTO-GENERATED; DO NOT EDIT
-                |plugins {
-                |    alias(libs.plugins.android.application)
-                |    alias(libs.plugins.kotlin.android)
-                |    alias(libs.plugins.kotlin.serialization)
-                |}
-                |
                 |ext {
                 |    extName = '${source.name}'
-                |    pkgNameSuffix = '${pkgNameSuffix(source, ".")}'
                 |    extClass = '.${source.className}'
                 |    extFactory = '$themePkg'
                 |    extVersionCode = ${baseVersionCode + source.overrideVersionCode + MULTISRC_LIBRARY_VERSION}
                 |    ${if (source.isNsfw) "containsNsfw = true\n" else ""}
                 |}
+                |
+                |apply from: "${'$'}rootDir/common.gradle"
+                |
                 |$defaultAdditionalGradleText
                 |$additionalGradleOverrideText
-                |apply from: "${'$'}rootDir/common.gradle"
                 |
                 |android {
                 |    defaultConfig {

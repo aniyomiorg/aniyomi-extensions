@@ -177,7 +177,7 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListSelector() = "ul.serversList li"
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "1080p")
@@ -197,7 +197,7 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ================================== search ==================================
 

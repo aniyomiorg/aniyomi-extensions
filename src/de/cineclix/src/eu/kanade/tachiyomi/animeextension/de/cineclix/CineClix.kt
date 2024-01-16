@@ -30,7 +30,6 @@ import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import kotlin.Exception
 
 class CineClix : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -332,9 +331,9 @@ class CineClix : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // Latest
 
-    override fun latestUpdatesParse(response: Response): AnimesPage = throw Exception("not Used")
+    override fun latestUpdatesParse(response: Response): AnimesPage = throw UnsupportedOperationException()
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
 
     // Preferences
 

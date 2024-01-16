@@ -1,14 +1,10 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'AnimeLek'
-    pkgNameSuffix = 'ar.animelek'
     extClass = '.AnimeLek'
     extVersionCode = 28
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-streamtape-extractor'))
@@ -16,5 +12,3 @@ dependencies {
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-vidbom-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

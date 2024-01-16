@@ -242,11 +242,11 @@ abstract class ZoroTheme(
         return emptyList()
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
     private fun Set<String>.contains(s: String, ignoreCase: Boolean): Boolean {

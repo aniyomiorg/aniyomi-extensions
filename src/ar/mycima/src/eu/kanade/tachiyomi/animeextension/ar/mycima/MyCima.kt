@@ -108,7 +108,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episode
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     private fun getNumberFromEpsString(epsStr: String): String {
         return epsStr.filter { it.isDigit() }
@@ -174,9 +174,9 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ).reversed()
     }
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================== search ==============================
 

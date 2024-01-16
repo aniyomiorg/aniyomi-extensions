@@ -128,7 +128,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListSelector() = "link[rel=canonical]"
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     // ============================ video links ============================
     override fun videoListRequest(episode: SEpisode): Request {
@@ -183,9 +183,9 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ).reversed()
     }
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
     private fun videosFromMain(url: String): List<Video> {
         val jsE = client.newCall(GET(url)).execute().asJsoup().selectFirst("script:containsData(player)")!!.data()

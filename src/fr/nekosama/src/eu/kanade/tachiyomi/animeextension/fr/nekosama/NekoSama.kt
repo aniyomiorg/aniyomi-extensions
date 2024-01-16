@@ -82,9 +82,9 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }.reversed()
     }
 
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
-    override fun episodeFromElement(element: Element) = throw Exception("not used")
+    override fun episodeFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
@@ -102,11 +102,11 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }.toList()
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "1080")!!
@@ -174,11 +174,11 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("not used")
+    override fun searchAnimeFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
-    override fun searchAnimeNextPageSelector(): String = throw Exception("not used")
+    override fun searchAnimeNextPageSelector(): String = throw UnsupportedOperationException()
 
-    override fun searchAnimeSelector(): String = throw Exception("not used")
+    override fun searchAnimeSelector(): String = throw UnsupportedOperationException()
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
@@ -212,9 +212,9 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun latestUpdatesNextPageSelector() = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector() = throw UnsupportedOperationException()
 
-    override fun latestUpdatesFromElement(element: Element) = throw Exception("Not used")
+    override fun latestUpdatesFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun latestUpdatesRequest(page: Int): Request {
         return GET(baseUrl)
@@ -244,7 +244,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(animeList, false)
     }
 
-    override fun latestUpdatesSelector() = throw Exception("Not used")
+    override fun latestUpdatesSelector() = throw UnsupportedOperationException()
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("Utilisez ce filtre pour affiner votre recherche"),

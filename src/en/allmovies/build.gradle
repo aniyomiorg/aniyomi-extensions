@@ -1,9 +1,5 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'AllMovies'
-    pkgNameSuffix = 'en.allmovies'
     extClass = '.AllMovies'
     extVersionCode = 12
 }

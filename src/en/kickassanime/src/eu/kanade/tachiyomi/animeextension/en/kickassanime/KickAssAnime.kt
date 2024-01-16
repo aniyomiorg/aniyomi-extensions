@@ -37,7 +37,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 import java.util.Locale
 
 class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
@@ -186,8 +185,8 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // =============================== Search ===============================
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
-    override fun searchAnimeParse(response: Response) = throw Exception("Not used")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw UnsupportedOperationException()
+    override fun searchAnimeParse(response: Response) = throw UnsupportedOperationException()
 
     private fun searchAnimeParse(response: Response, page: Int): AnimesPage {
         val path = response.request.url.encodedPath

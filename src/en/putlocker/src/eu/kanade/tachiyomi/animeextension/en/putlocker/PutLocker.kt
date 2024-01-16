@@ -155,9 +155,9 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
     }
 
-    override fun episodeListSelector(): String = throw Exception("Not Used")
+    override fun episodeListSelector(): String = throw UnsupportedOperationException()
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not Used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
 
@@ -167,11 +167,11 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList.sort()
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoListSelector(): String = throw Exception("Not Used")
+    override fun videoListSelector(): String = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
 

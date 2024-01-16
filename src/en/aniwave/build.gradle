@@ -1,15 +1,10 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'Aniwave'
-    pkgNameSuffix = 'en.nineanime'
     extClass = '.Aniwave'
     extVersionCode = 63
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-filemoon-extractor'))
@@ -17,5 +12,3 @@ dependencies {
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-playlist-utils'))
 }
-
-apply from: "$rootDir/common.gradle"

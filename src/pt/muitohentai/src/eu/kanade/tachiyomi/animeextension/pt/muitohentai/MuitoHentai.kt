@@ -109,7 +109,7 @@ class MuitoHentai : ParsedAnimeHttpSource() {
         return Video(url, element.attr("label"), url)
     }
 
-    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException("Not used.")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
     private fun String.parseDate(): Long {

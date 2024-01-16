@@ -1,9 +1,5 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'Anime Saturn'
-    pkgNameSuffix = 'it.animesaturn'
     extClass = '.AnimeSaturn'
     extVersionCode = 8
 }

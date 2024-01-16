@@ -103,9 +103,9 @@ class UAKino : ParsedAnimeHttpSource() {
 
     // ============================== Episode ===============================
 
-    override fun episodeFromElement(element: Element) = throw Exception("not used")
+    override fun episodeFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -211,9 +211,9 @@ class UAKino : ParsedAnimeHttpSource() {
         return videoList
     }
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 }

@@ -211,11 +211,11 @@ class Einfach : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun videoFromElement(element: Element): Video {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     override fun videoUrlParse(document: Document): String {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     // ============================== Settings ==============================

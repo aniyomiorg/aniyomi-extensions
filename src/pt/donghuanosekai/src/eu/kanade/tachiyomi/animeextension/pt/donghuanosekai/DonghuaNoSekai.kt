@@ -155,7 +155,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
 
     override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     // =========================== Anime Details ============================
@@ -215,15 +215,15 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun videoListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     override fun videoFromElement(element: Element): Video {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     override fun videoUrlParse(document: Document): String {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     // ============================== Settings ==============================

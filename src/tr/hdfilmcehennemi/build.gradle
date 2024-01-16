@@ -1,20 +1,13 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'HDFilmCehennemi'
-    pkgNameSuffix = 'tr.hdfilmcehennemi'
     extClass = '.HDFilmCehennemi'
     extVersionCode = 8
     containsNsfw = true
 }
 
+apply from: "$rootDir/common.gradle"
+
 dependencies {
     implementation(project(":lib-unpacker"))
     implementation(project(":lib-playlist-utils"))
 }
-
-apply from: "$rootDir/common.gradle"

@@ -1,17 +1,13 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'LocoPelis'
-    pkgNameSuffix = 'es.locopelis'
     extClass = '.LocoPelis'
     extVersionCode = 19
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-dood-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

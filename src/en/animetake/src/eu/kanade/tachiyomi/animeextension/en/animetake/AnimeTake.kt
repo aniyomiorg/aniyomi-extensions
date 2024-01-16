@@ -191,11 +191,11 @@ class AnimeTake : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } + videos
     }
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("Not Used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoListSelector() = throw Exception("Not Used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
     private fun extractIframeSrc(scriptData: String): String {

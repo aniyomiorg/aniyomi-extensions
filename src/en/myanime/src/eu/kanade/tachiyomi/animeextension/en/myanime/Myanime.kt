@@ -113,7 +113,7 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override suspend fun getAnimeDetails(anime: SAnime): SAnime = anime
 
-    override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
+    override fun animeDetailsParse(document: Document): SAnime = throw UnsupportedOperationException()
 
     // ============================== Episodes ==============================
 
@@ -184,7 +184,7 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListSelector(): String = "div#episodes-tab-pane > div.row > div > div.card"
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
 
@@ -223,9 +223,9 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListSelector(): String = "div.entry-content iframe[src]"
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
 

@@ -24,7 +24,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 
 class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -56,13 +55,13 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector() = "nav.pagination a.next"
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
 
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesSelector(): String = throw UnsupportedOperationException()
 
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
     override fun searchAnimeParse(response: Response): AnimesPage {
@@ -164,7 +163,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }.reversed()
     }
 
-    override fun episodeFromElement(element: Element) = throw Exception("Not used")
+    override fun episodeFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun episodeListSelector() = "article > div.entry-content table tr:has(a)"
 
@@ -205,11 +204,11 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> null
         } ?: emptyList()
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoListSelector(): String = throw Exception("Not used")
+    override fun videoListSelector(): String = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // ============================== Filters ===============================
     override fun getFilterList() = AnimeFilterList(

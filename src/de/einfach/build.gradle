@@ -1,14 +1,10 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'Einfach'
-    pkgNameSuffix = 'de.einfach'
     extClass = '.Einfach'
     extVersionCode = 2
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(":lib-dood-extractor"))
@@ -20,5 +16,3 @@ dependencies {
     implementation(project(":lib-voe-extractor"))
     implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
 }
-
-apply from: "$rootDir/common.gradle"

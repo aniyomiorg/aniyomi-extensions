@@ -86,7 +86,7 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListSelector() = "uwu"
 
-    override fun episodeFromElement(element: Element) = throw Exception("not used")
+    override fun episodeFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
@@ -121,11 +121,11 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
     private fun getNumberFromString(epsStr: String): String {
         return epsStr.filter { it.isDigit() }.ifEmpty { "0" }

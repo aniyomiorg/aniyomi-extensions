@@ -1,9 +1,5 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'UFDub'
-    pkgNameSuffix = 'uk.ufdub'
     extClass = '.UFDub'
     extVersionCode = 1
 }

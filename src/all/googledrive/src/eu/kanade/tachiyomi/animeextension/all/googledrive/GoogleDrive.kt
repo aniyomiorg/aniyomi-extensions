@@ -91,17 +91,17 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
         )
     }
 
-    override fun popularAnimeParse(response: Response): AnimesPage = throw Exception("Not used")
+    override fun popularAnimeParse(response: Response): AnimesPage = throw UnsupportedOperationException()
 
     // =============================== Latest ===============================
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
 
-    override fun latestUpdatesParse(response: Response): AnimesPage = throw Exception("Not used")
+    override fun latestUpdatesParse(response: Response): AnimesPage = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
 
-    override fun searchAnimeParse(response: Response): AnimesPage = throw Exception("Not used")
+    override fun searchAnimeParse(response: Response): AnimesPage = throw UnsupportedOperationException()
 
     override suspend fun getSearchAnime(
         page: Int,
@@ -251,7 +251,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
         return anime
     }
 
-    override fun animeDetailsParse(response: Response): SAnime = throw Exception("Not used")
+    override fun animeDetailsParse(response: Response): SAnime = throw UnsupportedOperationException()
 
     // ============================== Episodes ==============================
 
@@ -352,7 +352,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
         return episodeList.reversed()
     }
 
-    override fun episodeListParse(response: Response): List<SEpisode> = throw Exception("Not used")
+    override fun episodeListParse(response: Response): List<SEpisode> = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
 

@@ -1,18 +1,11 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'Animes Games'
-    pkgNameSuffix = 'pt.animesgames'
     extClass = '.AnimesGames'
     extVersionCode = 2
 }
 
+apply from: "$rootDir/common.gradle"
+
 dependencies {
     implementation(project(':lib-blogger-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

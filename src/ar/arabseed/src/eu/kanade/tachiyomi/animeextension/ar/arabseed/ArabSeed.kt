@@ -118,8 +118,8 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } ?: emptyList()
     }
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
@@ -202,10 +202,10 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     )
 
     // =============================== Latest ===============================
-    override fun latestUpdatesNextPageSelector(): String? = throw Exception("Not used")
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String? = throw UnsupportedOperationException()
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw UnsupportedOperationException()
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
+    override fun latestUpdatesSelector(): String = throw UnsupportedOperationException()
 
     // =============================== Preferences ===============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

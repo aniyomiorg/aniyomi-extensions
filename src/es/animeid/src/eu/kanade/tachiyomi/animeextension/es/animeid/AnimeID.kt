@@ -61,7 +61,7 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector(): String = "#paginas ul li:nth-last-child(2) a"
 
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
@@ -115,7 +115,7 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun episodeFromElement(element: Element) = throw Exception("not used")
+    override fun episodeFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
@@ -157,11 +157,11 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters

@@ -30,7 +30,6 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.lang.Exception
 
 class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -86,9 +85,9 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         title = element.select("div.tixtlis").text()
     }
 
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesSelector(): String = throw UnsupportedOperationException()
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
 
@@ -135,15 +134,15 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(animeList, false)
     }
 
-    override fun searchAnimeSelector(): String = throw Exception("Not used")
+    override fun searchAnimeSelector(): String = throw UnsupportedOperationException()
 
-    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("Not used")
+    override fun searchAnimeFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
-    override fun searchAnimeNextPageSelector(): String = throw Exception("Not used")
+    override fun searchAnimeNextPageSelector(): String = throw UnsupportedOperationException()
 
     // =========================== Anime Details ============================
 
-    override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
+    override fun animeDetailsParse(document: Document): SAnime = throw UnsupportedOperationException()
 
     override fun animeDetailsParse(response: Response): SAnime {
         return if (response.request.url.encodedPath.startsWith("/movies/")) {
@@ -182,7 +181,7 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
 
     // Episodes
-    override fun episodeListSelector() = throw Exception("Not used")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
@@ -222,7 +221,7 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episodeList.reversed()
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
 
@@ -268,11 +267,11 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList.sort()
     }
 
-    override fun videoListSelector() = throw Exception("Not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("Not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("Not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
 

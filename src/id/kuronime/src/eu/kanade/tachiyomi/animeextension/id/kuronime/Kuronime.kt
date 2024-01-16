@@ -27,7 +27,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 import java.util.Locale
 
 class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -165,11 +164,11 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList.sort()
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("not used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoListSelector(): String = throw Exception("not used")
+    override fun videoListSelector(): String = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", null)

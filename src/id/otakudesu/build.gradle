@@ -1,18 +1,12 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'OtakuDesu'
-    pkgNameSuffix = 'id.otakudesu'
     extClass = '.OtakuDesu'
     extVersionCode = 24
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(":lib-yourupload-extractor"))
     implementation(project(":lib-streamwish-extractor"))
 }
-
-apply from: "$rootDir/common.gradle"

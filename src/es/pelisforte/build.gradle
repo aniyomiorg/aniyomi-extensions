@@ -1,13 +1,10 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
-
 ext {
     extName = 'PelisForte'
-    pkgNameSuffix = 'es.pelisforte'
     extClass = '.PelisForte'
     extVersionCode = 7
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-voe-extractor'))
@@ -25,5 +22,3 @@ dependencies {
     implementation(project(':lib-streamlare-extractor'))
     implementation(project(':lib-okru-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

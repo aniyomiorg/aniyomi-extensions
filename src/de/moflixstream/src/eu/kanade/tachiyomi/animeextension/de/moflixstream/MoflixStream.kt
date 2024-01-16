@@ -69,9 +69,9 @@ class MoflixStream : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesParse(response: Response) = throw Exception("not Used")
+    override fun latestUpdatesParse(response: Response) = throw UnsupportedOperationException()
 
-    override fun latestUpdatesRequest(page: Int) = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = GET(

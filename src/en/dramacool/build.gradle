@@ -1,19 +1,13 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'DramaCool'
-    pkgNameSuffix = 'en.dramacool'
     extClass = '.DramaCool'
     extVersionCode = 46
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-streamwish-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-dood-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

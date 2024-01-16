@@ -361,9 +361,9 @@ abstract class AnimeStream(
         return emptyList()
     }
 
-    override fun videoFromElement(element: Element) = throw Exception("Not Used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

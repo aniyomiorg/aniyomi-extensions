@@ -1,8 +1,10 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
+ext {
+    extName = 'Türk Anime TV'
+    extClass = '.TurkAnime'
+    extVersionCode = 19
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-vudeo-extractor'))
@@ -20,12 +22,3 @@ dependencies {
     implementation(project(":lib-vk-extractor"))
     implementation(project(":lib-voe-extractor"))
 }
-
-ext {
-    extName = 'Türk Anime TV'
-    pkgNameSuffix = 'tr.turkanime'
-    extClass = '.TurkAnime'
-    extVersionCode = 19
-}
-
-apply from: "$rootDir/common.gradle"

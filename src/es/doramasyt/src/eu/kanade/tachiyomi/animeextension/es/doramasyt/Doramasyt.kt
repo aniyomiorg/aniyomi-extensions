@@ -110,11 +110,11 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         return try {

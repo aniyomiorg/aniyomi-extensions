@@ -1,11 +1,5 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'Animes Aria'
-    pkgNameSuffix = 'pt.animesaria'
     extClass = '.AnimesAria'
     extVersionCode = 2
 }

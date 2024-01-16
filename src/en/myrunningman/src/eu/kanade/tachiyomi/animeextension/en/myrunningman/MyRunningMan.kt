@@ -100,11 +100,11 @@ class MyRunningMan : ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     override fun searchAnimeNextPageSelector() = null
@@ -153,11 +153,11 @@ class MyRunningMan : ParsedAnimeHttpSource() {
     }
 
     override fun episodeListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     override fun episodeFromElement(element: Element): SEpisode {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     // ============================ Video Links =============================
@@ -181,7 +181,7 @@ class MyRunningMan : ParsedAnimeHttpSource() {
     }
 
     override fun videoListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     private fun getUrlById(id: String): String? {
@@ -201,11 +201,11 @@ class MyRunningMan : ParsedAnimeHttpSource() {
     }
 
     override fun videoFromElement(element: Element): Video {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     override fun videoUrlParse(document: Document): String {
-        throw UnsupportedOperationException("Not used.")
+        throw UnsupportedOperationException()
     }
 
     // ============================= Utilities ==============================

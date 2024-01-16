@@ -1,9 +1,5 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'XS Anime'
-    pkgNameSuffix = 'ar.xsanime'
     extClass = '.XsAnime'
     extVersionCode = 10
 }

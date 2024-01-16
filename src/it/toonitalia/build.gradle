@@ -1,14 +1,10 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'Toonitalia'
-    pkgNameSuffix = 'it.toonitalia'
     extClass = '.Toonitalia'
     extVersionCode = 15
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-voe-extractor'))
@@ -16,5 +12,3 @@ dependencies {
     implementation(project(':lib-playlist-utils'))
     implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
 }
-
-apply from: "$rootDir/common.gradle"

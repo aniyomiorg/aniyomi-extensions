@@ -21,7 +21,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -124,7 +123,7 @@ abstract class DooPlay(
         }
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     protected open fun episodeFromElement(element: Element, seasonName: String): SEpisode {
         return SEpisode.create().apply {
@@ -145,13 +144,13 @@ abstract class DooPlay(
     }
 
     // ============================ Video Links =============================
-    override fun videoListParse(response: Response): List<Video> = throw Exception("not used")
+    override fun videoListParse(response: Response): List<Video> = throw UnsupportedOperationException()
 
-    override fun videoListSelector(): String = throw Exception("not used")
+    override fun videoListSelector(): String = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element): Video = throw Exception("not used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document): String = throw Exception("not used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
 

@@ -63,19 +63,19 @@ class NoobSubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "table tr:has(a)"
 
-    override fun popularAnimeFromElement(element: Element): SAnime = throw Exception("Not used")
+    override fun popularAnimeFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
     override fun popularAnimeNextPageSelector(): String? = null
 
     // =============================== Latest ===============================
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
 
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesSelector(): String = throw UnsupportedOperationException()
 
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
 
@@ -112,17 +112,17 @@ class NoobSubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(animeList, false)
     }
 
-    override fun searchAnimeSelector(): String = throw Exception("Not used")
+    override fun searchAnimeSelector(): String = throw UnsupportedOperationException()
 
-    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("Not used")
+    override fun searchAnimeFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
-    override fun searchAnimeNextPageSelector(): String = throw Exception("Not used")
+    override fun searchAnimeNextPageSelector(): String = throw UnsupportedOperationException()
 
     // =========================== Anime Details ============================
 
     override suspend fun getAnimeDetails(anime: SAnime): SAnime = anime
 
-    override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
+    override fun animeDetailsParse(document: Document): SAnime = throw UnsupportedOperationException()
 
     // ============================== Episodes ==============================
 
@@ -186,22 +186,22 @@ class NoobSubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episodeList.reversed()
     }
 
-    override fun episodeListParse(response: Response): List<SEpisode> = throw Exception("Not used")
+    override fun episodeListParse(response: Response): List<SEpisode> = throw UnsupportedOperationException()
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
-    override fun episodeListSelector(): String = throw Exception("Not Used")
+    override fun episodeListSelector(): String = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
 
     override suspend fun getVideoList(episode: SEpisode): List<Video> =
         listOf(Video(episode.url, "Video", episode.url))
 
-    override fun videoListSelector(): String = throw Exception("Not Used")
+    override fun videoListSelector(): String = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
 

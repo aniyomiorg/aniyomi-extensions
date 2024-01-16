@@ -87,13 +87,13 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         "div#content  > nav.gridlove-pagination > a.next"
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not Used")
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
 
-    override fun latestUpdatesSelector(): String = throw Exception("Not Used")
+    override fun latestUpdatesSelector(): String = throw UnsupportedOperationException()
 
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not Used")
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not Used")
+    override fun latestUpdatesNextPageSelector(): String = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -214,7 +214,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListSelector(): String = "p:has(a[href*=?sid=],a[href*=r?key=]):has(a[class*=maxbutton])[style*=center]"
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not Used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
@@ -239,11 +239,11 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList.sort()
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoListSelector(): String = throw Exception("Not Used")
+    override fun videoListSelector(): String = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
     private val redirectBypasser by lazy { RedirectorBypasser(client, headers) }

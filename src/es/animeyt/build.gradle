@@ -1,14 +1,10 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'Animeyt'
-    pkgNameSuffix = 'es.animeyt'
     extClass = '.Animeyt'
     extVersionCode = 10
 }
+apply from: "$rootDir/common.gradle"
+
 dependencies {
     implementation(project(':lib-fastream-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

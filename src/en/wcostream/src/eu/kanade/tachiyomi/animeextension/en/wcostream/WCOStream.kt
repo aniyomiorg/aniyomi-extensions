@@ -31,7 +31,6 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.lang.Exception
 
 class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -187,7 +186,7 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val fhd: String? = null,
     )
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "1080")!!
@@ -200,9 +199,9 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ).reversed()
     }
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // Search
 
@@ -253,7 +252,7 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
+    override fun animeDetailsParse(document: Document): SAnime = throw UnsupportedOperationException()
 
     // Latest
 
