@@ -17,10 +17,7 @@ import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -152,7 +149,7 @@ class SupJav(override val lang: String = "en") : ConfigurableAnimeSource, Parsed
             .filter { it.text() in SUPPORTED_PLAYERS }
             .map { it.text() to it.attr("data-link").reversed() }
 
-        return players.parallelCatchingFlatMap(::videosFromPlayer)
+        return players.parallelCatchingFlatMapBlocking(::videosFromPlayer)
     }
 
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
@@ -224,15 +221,6 @@ class SupJav(override val lang: String = "en") : ConfigurableAnimeSource, Parsed
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map {
-                async(Dispatchers.Default) {
-                    runCatching { f(it) }.getOrElse { emptyList() }
-                }
-            }.awaitAll().flatten()
-        }
-
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 

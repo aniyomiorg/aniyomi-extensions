@@ -9,12 +9,10 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelFlatMapBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -202,8 +200,7 @@ class NimeGami : ParsedAnimeHttpSource() {
                         .select("div.server_list ul > li")
                         .map { it.attr("url") to it.text() }
                         .filter { it.first.contains("uservideo") } // naniplay is absurdly slow
-                        .parallelMap(::extractUserVideo)
-                        .flatten()
+                        .parallelFlatMapBlocking(::extractUserVideo)
                 }
 
                 else -> emptyList()
@@ -215,13 +212,13 @@ class NimeGami : ParsedAnimeHttpSource() {
         Regex("\\.(?:title|file) =(?:\n.*?'| ')(.*?)'", RegexOption.MULTILINE)
     }
 
-    private fun extractUserVideo(pair: Pair<String, String>): List<Video> {
+    private suspend fun extractUserVideo(pair: Pair<String, String>): List<Video> {
         val (url, quality) = pair
-        val doc = client.newCall(GET(url, headers)).execute().use { it.asJsoup() }
+        val doc = client.newCall(GET(url, headers)).await().use { it.asJsoup() }
         val scriptUrl = doc.selectFirst("script[src*=/s/?data]")?.attr("src")
             ?: return emptyList()
 
-        return client.newCall(GET(scriptUrl, headers)).execute()
+        return client.newCall(GET(scriptUrl, headers)).await()
             .use { it.body.string() }
             .let(Synchrony::deobfuscateScript)
             ?.let(urlPartRegex::findAll)
@@ -259,11 +256,6 @@ class NimeGami : ParsedAnimeHttpSource() {
 
     // ============================= Utilities ==============================
     private fun String.b64Decode() = String(Base64.decode(this, Base64.DEFAULT))
-
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     companion object {
         const val PREFIX_SEARCH = "id:"

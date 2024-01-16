@@ -27,10 +27,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -201,12 +198,9 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                     .select("li.sourceBtn")
                     .toList()
                     .filter { it.selectFirst("p")?.ownText().orEmpty() in chosenHosts }
-                    .parallelMap {
-                        runCatching {
-                            getVideosFromId(it.attr("data-id"))
-                        }.getOrElse { emptyList() }
+                    .parallelCatchingFlatMapBlocking {
+                        getVideosFromId(it.attr("data-id"))
                     }
-                    .flatten()
                     .map {
                         Video(
                             it.url,
@@ -350,11 +344,6 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }
             .getOrNull() ?: 0L
     }
-
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!

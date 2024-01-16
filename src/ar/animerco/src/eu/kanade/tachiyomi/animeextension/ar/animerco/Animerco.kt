@@ -23,10 +23,7 @@ import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.Response
@@ -157,9 +154,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.use { it.asJsoup() }
         val players = document.select(videoListSelector())
-        return players.parallelMap {
-            runCatching { getPlayerVideos(it) }.getOrElse { emptyList() }
-        }.flatten()
+        return players.parallelCatchingFlatMapBlocking(::getPlayerVideos)
     }
 
     override fun videoListSelector() = "li.dooplay_player_option" // ul#playeroptionsul
@@ -247,11 +242,6 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
-
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"

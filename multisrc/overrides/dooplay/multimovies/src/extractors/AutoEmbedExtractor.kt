@@ -689,10 +689,7 @@ import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -733,51 +730,47 @@ class AutoEmbedExtractor(private val client: OkHttpClient) {
         }
 
         // Get video servers from containers
-        val serverList = containerList.parallelMap { container ->
-            runCatching {
-                when (container.name) {
-                    "2embed" -> {
-                        getTwoEmbedServers(container.url, headers = headers)
-                    }
-                    "gomostream" -> {
-                        getGomoStreamServers(container.url, headers = headers)
-                    }
-                    else -> null
+        val serverList = containerList.parallelCatchingFlatMapBlocking { container ->
+            when (container.name) {
+                "2embed" -> {
+                    getTwoEmbedServers(container.url, headers = headers)
                 }
-            }.getOrNull() ?: emptyList()
-        }.flatten()
+                "gomostream" -> {
+                    getGomoStreamServers(container.url, headers = headers)
+                }
+                else -> null
+            }.orEmpty()
+        }
 
         val videoHeaders = headers.newBuilder()
             .add("Referer", "https://www.2embed.to/")
             .build()
 
-        return serverList.parallelMap { server ->
-            runCatching {
-                val prefix = server.name
-                val videoUrl = server.url
+        return serverList.parallelCatchingFlatMapBlocking { server ->
+            val prefix = server.name
+            val videoUrl = server.url
 
-                when {
-                    videoUrl.contains("streamlare") -> {
-                        StreamlareExtractor(client).videosFromUrl(videoUrl, prefix = prefix)
-                    }
-                    videoUrl.contains("mixdrop") -> {
-                        MixDropExtractor(client).videoFromUrl(videoUrl, prefix = prefix)
-                    }
-                    videoUrl.contains("https://voe") -> {
-                        VoeExtractor(client).videoFromUrl(videoUrl, server.name)
-                            ?.let(::listOf)
-                    }
-                    videoUrl.contains("rabbitstream") -> {
-                        RabbitStreamExtractor(client).videosFromUrl(videoUrl, headers = videoHeaders, prefix = prefix)
-                    }
-                    videoUrl.contains("https://dood") -> {
-                        DoodExtractor(client).videoFromUrl(videoUrl, server.name, false)
-                            ?.let(::listOf)
-                    }
-                    else -> null
+            when {
+                videoUrl.contains("streamlare") -> {
+                    StreamlareExtractor(client).videosFromUrl(videoUrl, prefix = prefix)
                 }
-            }.getOrNull() ?: emptyList()
-        }.flatten()
+                videoUrl.contains("mixdrop") -> {
+                    MixDropExtractor(client).videoFromUrl(videoUrl, prefix = prefix)
+                }
+                videoUrl.contains("https://voe") -> {
+                    VoeExtractor(client).videoFromUrl(videoUrl, server.name)
+                        ?.let(::listOf)
+                }
+                videoUrl.contains("rabbitstream") -> {
+                    RabbitStreamExtractor(client).videosFromUrl(videoUrl, headers = videoHeaders, prefix = prefix)
+                }
+                videoUrl.contains("https://dood") -> {
+                    DoodExtractor(client).videoFromUrl(videoUrl, server.name, false)
+                        ?.let(::listOf)
+                }
+                else -> null
+            }.orEmpty()
+        }
     }
 
     data class Server(
@@ -892,10 +885,4 @@ class AutoEmbedExtractor(private val client: OkHttpClient) {
                 }
         }.getOrNull()
     }
-
-    // From Dopebox
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 }

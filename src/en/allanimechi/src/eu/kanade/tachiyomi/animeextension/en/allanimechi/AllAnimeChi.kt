@@ -23,10 +23,7 @@ import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -348,7 +345,7 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         return prioritySort(
-            serverList.parallelCatchingFlatMap { getVideoFromServer(it, useHosterNames) },
+            serverList.parallelCatchingFlatMapBlocking { getVideoFromServer(it, useHosterNames) },
         )
     }
 
@@ -442,15 +439,6 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
     fun Set<String>.contains(element: String, ignoreCase: Boolean): Boolean {
         return this.any { it.equals(element, ignoreCase = ignoreCase) }
     }
-
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map {
-                async(Dispatchers.Default) {
-                    runCatching { f(it) }.getOrElse { emptyList() }
-                }
-            }.awaitAll().flatten()
-        }
 
     private fun prioritySort(pList: List<Pair<Video, Float>>): List<Video> {
         val prefServer = preferences.prefServer

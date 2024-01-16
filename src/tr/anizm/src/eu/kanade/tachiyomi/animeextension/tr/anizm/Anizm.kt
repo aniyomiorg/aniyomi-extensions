@@ -29,10 +29,7 @@ import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -215,22 +212,18 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             }.getOrElse { emptyList() }
         }
 
-        return playerUrls.parallelMap { pair ->
+        return playerUrls.parallelCatchingFlatMapBlocking { pair ->
             val (fansub, url) = pair
-            runCatching {
-                getVideosFromUrl(url).map {
-                    Video(
-                        it.url,
-                        "[$fansub] ${it.quality}",
-                        it.videoUrl,
-                        it.headers,
-                        it.subtitleTracks,
-                        it.audioTracks,
-                    )
-                }
-            }.getOrElse { emptyList() }
-        }.flatten().ifEmpty {
-            throw Exception("No videos available, eat a yogurt and cry a bit.")
+            getVideosFromUrl(url).map {
+                Video(
+                    it.url,
+                    "[$fansub] ${it.quality}",
+                    it.videoUrl,
+                    it.headers,
+                    it.subtitleTracks,
+                    it.audioTracks,
+                )
+            }
         }
     }
 
@@ -356,11 +349,6 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     private inline fun <reified T> Response.parseAs(): T = use {
         json.decodeFromStream(it.body.byteStream())
     }
-
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!

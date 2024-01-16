@@ -16,12 +16,12 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parallelMapNotNullBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
@@ -207,11 +207,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         val chunkSize = Runtime.getRuntime().availableProcessors()
         return if (series) {
             seasons.data.sortedBy { it.season_number }.chunked(chunkSize).flatMap { chunk ->
-                chunk.parallelMap { seasonData ->
-                    runCatching {
-                        getEpisodes(seasonData)
-                    }.getOrNull()
-                }.filterNotNull().flatten()
+                chunk.parallelCatchingFlatMapBlocking(::getEpisodes)
             }.reversed()
         } else {
             seasons.data.mapIndexed { index, movie ->
@@ -273,11 +269,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 it.second == "en-US" ||
                 it.second == "" ||
                 if (isUsingLocalToken) it.second == urlJson.ids.first().second else false
-        }.parallelMap { media ->
-            runCatching {
-                extractVideo(media)
-            }.getOrNull()
-        }.filterNotNull().flatten()
+        }.parallelCatchingFlatMap(::extractVideo)
 
         return videoList.sort()
     }
@@ -311,11 +303,11 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         audLang: String,
         subsList: List<Track>,
     ): List<Video> {
-        return streams.streams?.adaptive_hls?.entries?.parallelMap { (_, value) ->
+        return streams.streams?.adaptive_hls?.entries?.parallelMapNotNullBlocking { (_, value) ->
             val stream = json.decodeFromString<HlsLinks>(value.jsonObject.toString())
             runCatching {
                 val playlist = client.newCall(GET(stream.url)).execute()
-                if (playlist.code != 200) return@parallelMap null
+                if (playlist.code != 200) return@parallelMapNotNullBlocking null
                 playlist.use { it.body.string() }.substringAfter("#EXT-X-STREAM-INF:")
                     .split("#EXT-X-STREAM-INF:").map {
                         val hardsub = stream.hardsub_locale.let { hs ->
@@ -339,7 +331,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                         }
                     }
             }.getOrNull()
-        }?.filterNotNull()?.flatten() ?: emptyList()
+        }?.flatten() ?: emptyList()
     }
 
     private fun getVideoRequest(mediaId: String): Request {
@@ -598,12 +590,6 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 }
             }
         }.apply { reload() }
-
-    // From Dopebox
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     private fun getTokenDetail(force: Boolean = false): String {
         return runCatching {

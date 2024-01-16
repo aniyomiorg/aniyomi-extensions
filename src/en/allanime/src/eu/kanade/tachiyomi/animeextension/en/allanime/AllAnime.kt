@@ -20,6 +20,7 @@ import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.encodeToString
@@ -272,7 +273,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     private val streamlareExtractor by lazy { StreamlareExtractor(client) }
 
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
-        val response = client.newCall(videoListRequest(episode)).execute()
+        val response = client.newCall(videoListRequest(episode)).await()
 
         val videoJson = response.parseAs<EpisodeResult>()
         val videoList = mutableListOf<Pair<Video, Float>>()
@@ -321,7 +322,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                         allAnimeExtractor.videoFromUrl(server.sourceUrl, server.sourceName)
                     }
                     sName.startsWith("player@") -> {
-                        val endPoint = client.newCall(GET("${preferences.siteUrl}/getVersion")).execute()
+                        val endPoint = client.newCall(GET("${preferences.siteUrl}/getVersion")).await()
                             .parseAs<AllAnimeExtractor.VersionResponse>()
                             .episodeIframeHead
 

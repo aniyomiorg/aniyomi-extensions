@@ -15,12 +15,10 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.bloggerextractor.BloggerExtractor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.Request
 import okhttp3.Response
@@ -163,13 +161,12 @@ class HentaisTube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        return response.use { it.asJsoup() }.select(videoListSelector()).parallelMap {
-            runCatching {
-                client.newCall(GET(it.attr("src"), headers)).execute().use { res ->
+        return response.use { it.asJsoup() }.select(videoListSelector())
+            .parallelCatchingFlatMapBlocking {
+                client.newCall(GET(it.attr("src"), headers)).await().use { res ->
                     extractVideosFromIframe(res.use { it.asJsoup() })
                 }
-            }.getOrElse { emptyList() }
-        }.flatten()
+            }
     }
 
     private val bloggerExtractor by lazy { BloggerExtractor(client) }
@@ -230,11 +227,6 @@ class HentaisTube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         select("div.boxAnimeSobreLinha:has(b:contains($key)) > a")
             .eachText()
             .joinToString()
-
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!

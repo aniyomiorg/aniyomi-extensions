@@ -15,12 +15,11 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parallelFlatMapBlocking
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -128,13 +127,13 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     episode_number = 1F
                 },
             )
-            else -> seasons.parallelMap(::episodesFromSeason).flatten().reversed()
+            else -> seasons.parallelFlatMapBlocking(::episodesFromSeason).reversed()
         }
     }
 
-    private fun episodesFromSeason(seasonElement: Element): List<SEpisode> {
+    private suspend fun episodesFromSeason(seasonElement: Element): List<SEpisode> {
         return seasonElement.attr("href").let { url ->
-            client.newCall(GET(url, headers)).execute()
+            client.newCall(GET(url, headers)).await()
                 .use { it.asJsoup() }
                 .select(episodeListSelector())
                 .map(::episodeFromElement)
@@ -157,7 +156,7 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val items = response.use { it.asJsoup() }.select(videoListSelector())
         return items
-            .parallelMap { element ->
+            .parallelCatchingFlatMapBlocking { element ->
                 val language = element.text().substringAfter("-")
                 val id = element.attr("href")
                 val url = element.parents().get(5)?.selectFirst("div$id a")
@@ -166,23 +165,23 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             .substringAfter("token=")
                             .let { String(Base64.decode(it, Base64.DEFAULT)) }
                             .substringAfter("||")
-                    } ?: return@parallelMap emptyList()
+                    } ?: return@parallelCatchingFlatMapBlocking emptyList()
 
-                runCatching { getVideoList(url, language) }.getOrNull().orEmpty()
-            }.flatten()
+                getVideoList(url, language)
+            }
     }
 
     private val mixdropExtractor by lazy { MixDropExtractor(client) }
     private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
     private val megaflixExtractor by lazy { MegaflixExtractor(client, headers) }
 
-    private fun getVideoList(url: String, language: String): List<Video>? {
+    private fun getVideoList(url: String, language: String): List<Video> {
         return when {
             "mixdrop.co" in url -> mixdropExtractor.videoFromUrl(url, language)
             "streamtape.com" in url -> streamtapeExtractor.videosFromUrl(url, "StreamTape - $language")
             "mflix.vip" in url -> megaflixExtractor.videosFromUrl(url, language)
             else -> null
-        }
+        }.orEmpty()
     }
 
     override fun videoListSelector() = "aside.video-options li a"
@@ -247,11 +246,6 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
-
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
         val lang = preferences.getString(PREF_LANGUAGE_KEY, PREF_LANGUAGE_DEFAULT)!!

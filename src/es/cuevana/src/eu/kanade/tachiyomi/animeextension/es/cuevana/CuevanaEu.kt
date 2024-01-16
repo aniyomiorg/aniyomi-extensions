@@ -24,10 +24,7 @@ import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelMapBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -152,14 +149,9 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
         return videoList
     }
 
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
-
     private fun serverIterator(videos: Videos?): MutableList<Video> {
         val videoList = mutableListOf<Video>()
-        videos?.latino?.parallelMap {
+        videos?.latino?.parallelMapBlocking {
             try {
                 val body = client.newCall(GET(it.result!!)).execute().asJsoup()
                 val url = body.selectFirst("script:containsData(var message)")?.data()?.substringAfter("var url = '")?.substringBefore("'") ?: ""

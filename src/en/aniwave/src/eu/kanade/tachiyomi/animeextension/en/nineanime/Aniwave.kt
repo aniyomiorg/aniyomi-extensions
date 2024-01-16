@@ -19,10 +19,8 @@ import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelFlatMapBlocking
+import eu.kanade.tachiyomi.util.parallelMapBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.Request
 import okhttp3.Response
@@ -162,7 +160,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.parseAs<ResultResponse>().toDocument()
 
         val episodeElements = document.select(episodeListSelector())
-        return episodeElements.parallelMap { episodeFromElements(it, animeUrl) }.reversed()
+        return episodeElements.parallelMapBlocking { episodeFromElements(it, animeUrl) }.reversed()
     }
 
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not Used")
@@ -225,7 +223,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
         val typeSelection = preferences.getStringSet(PREF_TYPE_TOGGLE_KEY, PREF_TYPES_TOGGLE_DEFAULT)!!
 
-        return document.select("div.servers > div").parallelFlatMap { elem ->
+        return document.select("div.servers > div").parallelFlatMapBlocking { elem ->
             val type = elem.attr("data-type").replaceFirstChar { it.uppercase() }
             elem.select("li").mapNotNull { serverElement ->
                 val serverId = serverElement.attr("data-link-id")
@@ -236,8 +234,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 VideoData(type, serverId, serverName)
             }
         }
-            .parallelFlatMap { extractVideo(it, epurl) }
-            .ifEmpty { throw Exception("Failed to fetch videos") }
+            .parallelFlatMapBlocking { extractVideo(it, epurl) }
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -311,15 +308,6 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> SAnime.UNKNOWN
         }
     }
-
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> = runBlocking {
-        map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-    }
-
-    inline fun <A, B> Iterable<A>.parallelFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll().flatten()
-        }
 
     private inline fun <reified T> Response.parseAs(): T {
         val responseBody = use { it.body.string() }

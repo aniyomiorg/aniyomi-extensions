@@ -11,10 +11,8 @@ import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.lib.vkextractor.VkExtractor
 import eu.kanade.tachiyomi.network.GET
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.network.await
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
@@ -126,9 +124,9 @@ class FrAnime : AnimeHttpSource() {
 
         val players = if (episodeLang == "vo") episodeData.languages.vo.players else episodeData.languages.vf.players
 
-        val videos = players.parallelCatchingFlatMapIndexed { index, playerName ->
+        val videos = players.withIndex().parallelCatchingFlatMap { (index, playerName) ->
             val apiUrl = "$videoBaseUrl/$episodeLang/$index"
-            val playerUrl = client.newCall(GET(apiUrl, headers)).execute().body.string()
+            val playerUrl = client.newCall(GET(apiUrl, headers)).await().body.string()
             when (playerName) {
                 "vido" -> listOf(Video(playerUrl, "FRAnime (Vido)", playerUrl))
                 "sendvid" -> SendvidExtractor(client, headers).videosFromUrl(playerUrl)
@@ -141,11 +139,6 @@ class FrAnime : AnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMapIndexed(crossinline f: suspend (Int, A) -> Iterable<B>): List<B> =
-        runBlocking {
-            mapIndexed { index, it -> async(Dispatchers.Default) { runCatching { f(index, it) }.getOrElse { emptyList() } } }.awaitAll().flatten()
-        }
-
     private fun pagesToAnimesPage(pages: List<Anime>, page: Int): AnimesPage {
         val chunks = pages.chunked(50)
         val hasNextPage = chunks.size > page

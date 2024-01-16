@@ -15,11 +15,10 @@ import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.gogostreamextractor.GogoStreamExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parallelFlatMap
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -158,41 +157,38 @@ class AnimeTake : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val scripts = document.select("div#divscript > script").filter { it ->
             it.data().contains("function")
         }
-        return scripts.parallelMap { elem ->
-            runCatching {
-                val data = elem.data().trimIndent()
-                val url = baseUrl + extractIframeSrc(data)
-                if (data.contains("vidstream()")) {
-                    val iframeSrc = client.newCall(GET(url)).execute().asJsoup()
-                        .select("iframe").attr("src")
-                    extractVideo(iframeSrc)
-                } else if (data.contains("fm()")) {
-                    val iframeSrc = client.newCall(GET(url)).execute().asJsoup()
-                        .select("iframe").attr("src")
-                    filemoonExtractor.videosFromUrl(url = iframeSrc, headers = headers)
-                } else {
-                    emptyList()
-                }
-            }.getOrElse { emptyList() }
-        }.flatten().ifEmpty { throw Exception("Failed to fetch videos") }
+        return scripts.parallelCatchingFlatMapBlocking { elem ->
+            val data = elem.data().trimIndent()
+            val url = baseUrl + extractIframeSrc(data)
+            if (data.contains("vidstream()")) {
+                val iframeSrc = client.newCall(GET(url)).execute().asJsoup()
+                    .select("iframe").attr("src")
+                extractVideo(iframeSrc)
+            } else if (data.contains("fm()")) {
+                val iframeSrc = client.newCall(GET(url)).execute().asJsoup()
+                    .select("iframe").attr("src")
+                filemoonExtractor.videosFromUrl(url = iframeSrc, headers = headers)
+            } else {
+                emptyList()
+            }
+        }
     }
 
-    private fun extractVideo(url: String): List<Video> {
+    private suspend fun extractVideo(url: String): List<Video> {
         val videos = gogoStreamExtractor.videosFromUrl(url)
 
         val request = GET(url)
-        val response = client.newCall(request).execute()
+        val response = client.newCall(request).await()
         val document = response.asJsoup()
         val servers = document.select("div#list-server-more > ul > li.linkserver")
-        return servers.parallelMap {
+        return servers.parallelFlatMap {
             val link = it.attr("data-video")
             when (it.text().lowercase()) {
                 "doodstream" -> doodExtractor.videosFromUrl(link)
                 "mp4upload" -> mp4uploadExtractor.videosFromUrl(link, headers)
                 else -> emptyList()
             }
-        }.flatten().toMutableList().apply { addAll(videos) }.toList()
-            .ifEmpty { throw Exception("Failed to extract videos") }
+        } + videos
     }
 
     override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
@@ -235,10 +231,6 @@ class AnimeTake : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } else {
             SAnime.COMPLETED
         }
-    }
-
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> = runBlocking {
-        map { async(Dispatchers.Default) { f(it) } }.awaitAll()
     }
 
     companion object {

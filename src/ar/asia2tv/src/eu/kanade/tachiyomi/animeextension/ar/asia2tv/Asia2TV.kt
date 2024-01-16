@@ -19,10 +19,7 @@ import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import okhttp3.Response
@@ -87,7 +84,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.use { it.asJsoup() }
-        return document.select(videoListSelector()).parallelCatchingFlatMap {
+        return document.select(videoListSelector()).parallelCatchingFlatMapBlocking {
             val url = it.attr("data-server")
             getVideosFromUrl(url)
         }
@@ -262,15 +259,6 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map {
-                async(Dispatchers.Default) {
-                    runCatching { f(it) }.getOrElse { emptyList() }
-                }
-            }.awaitAll().flatten()
-        }
-
     companion object {
         private val STREAM_WISH_DOMAINS by lazy { listOf("wishfast", "fviplions", "filelions", "streamwish", "dwish") }
         private val VID_BOM_DOMAINS by lazy { listOf("vidbam", "vadbam", "vidbom", "vidbm") }

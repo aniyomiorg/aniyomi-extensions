@@ -15,12 +15,11 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parallelMapBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -234,20 +233,18 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return doc.select("div.card-body > nav > a:not([href^=#])")
             .drop(1)
-            .parallelMap { client.newCall(GET(it.absUrl("href") + "/")).execute().use { it.asJsoup() } }
+            .parallelMapBlocking { client.newCall(GET(it.absUrl("href") + "/")).await().use { it.asJsoup() } }
             .let { listOf(doc) + it }
             .mapNotNull { it.selectFirst("div.card-video > iframe")?.attr("data-src") }
             .filter(String::isNotBlank)
-            .parallelMap { url ->
-                runCatching {
-                    when {
-                        url.contains("vidmoly") -> vidmolyExtractor.videosFromUrl(url)
-                        url.contains("$baseUrl/playerr") -> rapidrameExtractor.videosFromUrl(url)
-                        url.contains("trstx.org") -> xbetExtractor.videosFromUrl(url)
-                        else -> emptyList()
-                    }
-                }.getOrNull().orEmpty()
-            }.flatten().ifEmpty { throw Exception("No videos available xD") }
+            .parallelCatchingFlatMapBlocking { url ->
+                when {
+                    url.contains("vidmoly") -> vidmolyExtractor.videosFromUrl(url)
+                    url.contains("$baseUrl/playerr") -> rapidrameExtractor.videosFromUrl(url)
+                    url.contains("trstx.org") -> xbetExtractor.videosFromUrl(url)
+                    else -> emptyList()
+                }
+            }
     }
 
     override fun videoListSelector(): String {
@@ -285,11 +282,6 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private inline fun <reified T> Response.parseAs(): T {
         return use { it.body.string() }.let(json::decodeFromString)
     }
-
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!

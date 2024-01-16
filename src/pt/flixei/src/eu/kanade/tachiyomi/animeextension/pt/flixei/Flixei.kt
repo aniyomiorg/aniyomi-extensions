@@ -20,10 +20,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
@@ -230,8 +227,7 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
         }
-
-        return items.parallelMap(::getVideosFromItem).flatten()
+        return items.parallelCatchingFlatMapBlocking(::getVideosFromItem)
     }
 
     private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
@@ -308,11 +304,6 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private inline fun <reified T> Response.parseAs(): T {
         return use { it.body.string() }.let(json::decodeFromString)
     }
-
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     private fun Element.getInfo(item: String) = selectFirst("*:containsOwn($item) b")?.text()
 

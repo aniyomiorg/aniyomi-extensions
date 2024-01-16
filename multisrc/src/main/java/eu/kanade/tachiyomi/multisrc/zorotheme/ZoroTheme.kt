@@ -16,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.multisrc.zorotheme.dto.HtmlResponse
 import eu.kanade.tachiyomi.multisrc.zorotheme.dto.SourcesResponse
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import eu.kanade.tachiyomi.util.parallelMapNotNull
 import kotlinx.serialization.json.Json
@@ -207,7 +208,7 @@ abstract class ZoroTheme(
     )
 
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
-        val response = client.newCall(videoListRequest(episode)).execute()
+        val response = client.newCall(videoListRequest(episode)).await()
 
         val episodeReferer = response.request.header("referer")!!
         val typeSelection = preferences.typeToggle
@@ -227,7 +228,7 @@ abstract class ZoroTheme(
 
                 val link = client.newCall(
                     GET("$baseUrl/ajax$ajaxRoute/episode/sources?id=$id", apiHeaders(episodeReferer)),
-                ).execute().parseAs<SourcesResponse>().link ?: ""
+                ).await().parseAs<SourcesResponse>().link ?: ""
 
                 VideoData(type, link, name)
             }

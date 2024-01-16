@@ -13,10 +13,7 @@ import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
@@ -60,7 +57,7 @@ class AnimesOnline : DooPlay(
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val players = document.select("ul#playeroptionsul li")
-        return players.parallelMap(::getPlayerVideos).flatten()
+        return players.parallelCatchingFlatMapBlocking(::getPlayerVideos)
     }
 
     override val prefQualityValues = arrayOf("360p", "480p", "720p", "1080p")
@@ -138,11 +135,6 @@ class AnimesOnline : DooPlay(
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
-
     override fun getRealAnimeDoc(document: Document): Document {
         if (!document.location().contains("/episodio/")) return document
 

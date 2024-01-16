@@ -17,10 +17,7 @@ import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -196,29 +193,27 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
 
         videoList.addAll(
-            document.select(videoListSelector()).parallelMap { element ->
-                runCatching {
-                    val url = element.attr("src")
-                        .replace("""^\/\/""".toRegex(), "https://")
+            document.select(videoListSelector()).parallelCatchingFlatMapBlocking { element ->
+                val url = element.attr("src")
+                    .replace("""^\/\/""".toRegex(), "https://")
 
-                    when {
-                        url.contains("dailymotion") -> {
-                            DailymotionExtractor(client, headers).videosFromUrl(url)
-                        }
-                        url.contains("ok.ru") -> {
-                            OkruExtractor(client).videosFromUrl(url)
-                        }
-                        url.contains("youtube.com") -> {
-                            YouTubeExtractor(client).videosFromUrl(url, "YouTube - ")
-                        }
-                        url.contains("gdriveplayer") -> {
-                            val newHeaders = headersBuilder().add("Referer", baseUrl).build()
-                            GdrivePlayerExtractor(client).videosFromUrl(url, name = "Gdriveplayer", headers = newHeaders)
-                        }
-                        else -> null
+                when {
+                    url.contains("dailymotion") -> {
+                        DailymotionExtractor(client, headers).videosFromUrl(url)
                     }
-                }.getOrNull()
-            }.filterNotNull().flatten(),
+                    url.contains("ok.ru") -> {
+                        OkruExtractor(client).videosFromUrl(url)
+                    }
+                    url.contains("youtube.com") -> {
+                        YouTubeExtractor(client).videosFromUrl(url, "YouTube - ")
+                    }
+                    url.contains("gdriveplayer") -> {
+                        val newHeaders = headersBuilder().add("Referer", baseUrl).build()
+                        GdrivePlayerExtractor(client).videosFromUrl(url, name = "Gdriveplayer", headers = newHeaders)
+                    }
+                    else -> null
+                }.orEmpty()
+            },
         )
 
         require(videoList.isNotEmpty()) { "Failed to fetch videos" }
@@ -245,12 +240,6 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             ),
         ).reversed()
     }
-
-    // From Dopebox
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"

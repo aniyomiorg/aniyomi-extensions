@@ -16,10 +16,7 @@ import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.lib.vkextractor.VkExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Request
@@ -139,11 +136,6 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================ Utils =============================
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { runCatching { f(it) }.getOrElse { emptyList() } } }.awaitAll().flatten()
-        }
-
     private fun sanitizeEpisodesJs(doc: String) = doc
         .replace(Regex("[\"\t]"), "") // Fix trash format
         .replace("'", "\"") // Fix quotes

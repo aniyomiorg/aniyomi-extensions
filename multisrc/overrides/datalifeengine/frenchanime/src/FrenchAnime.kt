@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.lib.vudeoextractor.VudeoExtractor
 import eu.kanade.tachiyomi.multisrc.datalifeengine.DataLifeEngine
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -86,7 +87,6 @@ class FrenchAnime : DataLifeEngine(
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
     // ============================ Video Links =============================
-
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val list = episode.url.split(",").filter { it.isNotBlank() }.parallelCatchingFlatMap {
             with(it) {
@@ -106,7 +106,6 @@ class FrenchAnime : DataLifeEngine(
                 }
             }
         }.sort()
-        if (list.isEmpty()) throw Exception("no player found")
         return list
     }
 

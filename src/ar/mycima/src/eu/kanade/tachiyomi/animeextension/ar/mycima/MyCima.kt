@@ -16,10 +16,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -121,19 +118,17 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        return document.select("ul.WatchServersList li btn").parallelMap {
+        return document.select("ul.WatchServersList li btn").parallelCatchingFlatMapBlocking {
             val frameURL = it.attr("data-url")
-            runCatching {
-                if (it.parent()?.hasClass("MyCimaServer") == true) {
-                    val referer = response.request.url.encodedPath
-                    val newHeader = headers.newBuilder().add("referer", baseUrl + referer).build()
-                    val iframeResponse = client.newCall(GET(frameURL, newHeader)).execute().asJsoup()
-                    videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
-                } else {
-                    extractVideos(frameURL)
-                }
-            }.getOrElse { emptyList() }
-        }.flatten()
+            if (it.parent()?.hasClass("MyCimaServer") == true) {
+                val referer = response.request.url.encodedPath
+                val newHeader = headers.newBuilder().add("referer", baseUrl + referer).build()
+                val iframeResponse = client.newCall(GET(frameURL, newHeader)).execute().asJsoup()
+                videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
+            } else {
+                extractVideos(frameURL)
+            }
+        }
     }
 
     private fun extractVideos(url: String): List<Video> {
@@ -364,10 +359,6 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun getPrefBaseUrl(): String = preferences.getString(PREF_BASE_URL_KEY, PREF_BASE_URL_DEFAULT)!!
 
     // ============================= Utilities ===================================
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"

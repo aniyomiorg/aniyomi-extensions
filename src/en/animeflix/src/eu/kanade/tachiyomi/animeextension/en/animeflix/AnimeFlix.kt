@@ -14,10 +14,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -243,24 +240,20 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             EpUrl(it.quality, link, it.name)
         }
 
-        val videoList = leechUrls.parallelMap { url ->
-            runCatching {
-                if (url.url.toHttpUrl().encodedPath == "/404") return@runCatching null
-                val (videos, mediaUrl) = extractVideo(url)
-                when {
-                    videos.isEmpty() -> {
-                        extractGDriveLink(mediaUrl, url.quality).ifEmpty {
-                            getDirectLink(mediaUrl, "instant", "/mfile/")?.let {
-                                listOf(Video(it, "${url.quality}p - GDrive Instant link", it))
-                            } ?: emptyList()
-                        }
+        val videoList = leechUrls.parallelCatchingFlatMap { url ->
+            if (url.url.toHttpUrl().encodedPath == "/404") return@parallelCatchingFlatMap emptyList()
+            val (videos, mediaUrl) = extractVideo(url)
+            when {
+                videos.isEmpty() -> {
+                    extractGDriveLink(mediaUrl, url.quality).ifEmpty {
+                        getDirectLink(mediaUrl, "instant", "/mfile/")?.let {
+                            listOf(Video(it, "${url.quality}p - GDrive Instant link", it))
+                        } ?: emptyList()
                     }
-                    else -> videos
                 }
-            }.getOrNull()
-        }.filterNotNull().flatten()
-
-        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
+                else -> videos
+            }
+        }
 
         return videoList.sort()
     }
@@ -373,12 +366,6 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     @Serializable
     data class DriveLeechDirect(val url: String? = null)
-
-    // From Dopebox
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     companion object {
         private val SIZE_REGEX = "\\[((?:.(?!\\[))+)][ ]*\$".toRegex(RegexOption.IGNORE_CASE)

@@ -30,12 +30,10 @@ import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.vudeoextractor.VudeoExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -257,14 +255,12 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
             chosenHosts.any { it.contains(source.value, true) }
         }
 
-        return filteredSources.parallelMap {
+        return filteredSources.parallelCatchingFlatMapBlocking {
             val body = playerBody(it.key)
-            runCatching {
-                val res = client.newCall(POST(actionUrl, headers, body)).execute()
-                    .parseAs<VideoDto>()
-                videosFromUrl(res.videoSrc)
-            }.getOrElse { emptyList() }
-        }.flatten().ifEmpty { throw Exception("No video available.") }
+            val res = client.newCall(POST(actionUrl, headers, body)).await()
+                .parseAs<VideoDto>()
+            videosFromUrl(res.videoSrc)
+        }
     }
 
     private fun videosFromUrl(url: String): List<Video> {
@@ -327,11 +323,6 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }
             .getOrNull() ?: 0L
     }
-
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     private val qualityRegex by lazy { Regex("""(\d+)p""") }
     override fun List<Video>.sort(): List<Video> {

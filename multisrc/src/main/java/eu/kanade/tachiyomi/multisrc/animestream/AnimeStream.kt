@@ -23,9 +23,8 @@ import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamFilters.TypeFilter
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -317,13 +316,11 @@ abstract class AnimeStream(
 
     override fun videoListParse(response: Response): List<Video> {
         val items = response.use { it.asJsoup() }.select(videoListSelector())
-        return items.parallelMap { element ->
-            runCatching {
-                val name = element.text()
-                val url = getHosterUrl(element)
-                getVideoList(url, name)
-            }.onFailure { it.printStackTrace() }.getOrElse { emptyList() }
-        }.flatten()
+        return items.parallelCatchingFlatMapBlocking { element ->
+            val name = element.text()
+            val url = getHosterUrl(element)
+            getVideoList(url, name)
+        }
     }
 
     protected open fun getHosterUrl(element: Element): String {
@@ -418,11 +415,6 @@ abstract class AnimeStream(
             }.getOrNull()
         } ?: 0L
     }
-
-    protected inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     /**
      * Tries to get the image url via various possible attributes.

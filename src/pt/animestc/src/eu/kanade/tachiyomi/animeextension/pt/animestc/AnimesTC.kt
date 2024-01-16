@@ -20,10 +20,7 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
@@ -179,6 +176,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     private val linkBypasser by lazy { LinkBypasser(client, json) }
 
     private val supportedPlayers = listOf("anonfiles", "send")
+
     override fun videoListParse(response: Response): List<Video> {
         val videoDto = response.parseAs<ResponseDto<VideoDto>>().items.first()
         val links = videoDto.links
@@ -194,7 +192,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
 
         val videoId = videoDto.id
 
-        return online + allLinks.parallelCatchingFlatMap { extractVideosFromLink(it, videoId) }
+        return online + allLinks.parallelCatchingFlatMapBlocking { extractVideosFromLink(it, videoId) }
     }
 
     private fun extractVideosFromLink(video: VideoDto.VideoLink, videoId: Int): List<Video> {
@@ -251,15 +249,6 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map {
-                async(Dispatchers.Default) {
-                    runCatching { f(it) }.getOrElse { emptyList() }
-                }
-            }.awaitAll().flatten()
-        }
-
     private fun Response.getAnimeDto(): AnimeDto {
         val responseBody = use { it.body.string() }
         return try {

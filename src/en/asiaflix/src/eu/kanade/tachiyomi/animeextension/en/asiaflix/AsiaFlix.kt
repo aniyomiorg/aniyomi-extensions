@@ -25,10 +25,7 @@ import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -185,7 +182,7 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
             it.attr("data-video")
         }
 
-        val videos = hostUrls.parallelCatchingFlatMap { hostUrl ->
+        val videos = hostUrls.parallelCatchingFlatMapBlocking { hostUrl ->
             when {
                 hostUrl.contains("dwish") -> {
                     streamWishExtractor.videosFromUrl(hostUrl)
@@ -206,8 +203,6 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
         runCatching {
             videos.addAll(getSelfVideo(document))
         }
-
-        if (videos.isEmpty()) throw Exception("Failed to get Videos")
 
         return videos
     }
@@ -271,15 +266,6 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
 
     private inline fun <reified T> Response.parseAs(): T =
         use { it.body.string() }.parseAs()
-
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map {
-                async(Dispatchers.Default) {
-                    runCatching { f(it) }.getOrElse { emptyList() }
-                }
-            }.awaitAll().flatten()
-        }
 
     companion object {
         private const val LIMIT = 20

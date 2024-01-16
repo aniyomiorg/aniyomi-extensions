@@ -12,10 +12,7 @@ import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -173,16 +170,14 @@ class MyRunningMan : ParsedAnimeHttpSource() {
 
         return doc.select("a.changePlayer")
             .mapNotNull { getUrlById(it.attr("data-url")) }
-            .parallelMap { url ->
-                runCatching {
-                    when {
-                        url.contains("dooo") -> doodExtractor.videosFromUrl(url)
-                        url.contains("mixdro") -> mixdropExtractor.videoFromUrl(url, referer = doc.location())
-                        url.contains("streamtape.com") -> streamtapeExtractor.videoFromUrl(url)?.let(::listOf)
-                        else -> null
-                    }
-                }.getOrNull() ?: emptyList()
-            }.flatten().ifEmpty { throw Exception("No videos!") }
+            .parallelCatchingFlatMapBlocking { url ->
+                when {
+                    url.contains("dooo") -> doodExtractor.videosFromUrl(url)
+                    url.contains("mixdro") -> mixdropExtractor.videoFromUrl(url, referer = doc.location())
+                    url.contains("streamtape.com") -> streamtapeExtractor.videoFromUrl(url)?.let(::listOf)
+                    else -> null
+                }.orEmpty()
+            }
     }
 
     override fun videoListSelector(): String {
@@ -222,11 +217,6 @@ class MyRunningMan : ParsedAnimeHttpSource() {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }
             .getOrNull() ?: 0L
     }
-
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     companion object {
         const val PREFIX_SEARCH = "id:"

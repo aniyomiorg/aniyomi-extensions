@@ -13,12 +13,10 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
@@ -208,13 +206,11 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.use { it.asJsoup() }
 
-        return doc.select("div.slideItem[data-video-url]").parallelMap {
-            runCatching {
-                client.newCall(GET(it.attr("data-video-url"), headers)).execute()
-                    .use { it.asJsoup() }
-                    .let(extractor::videosFromDocument)
-            }.getOrElse { emptyList() }
-        }.flatten()
+        return doc.select("div.slideItem[data-video-url]").parallelCatchingFlatMapBlocking {
+            client.newCall(GET(it.attr("data-video-url"), headers)).await()
+                .use { it.asJsoup() }
+                .let(extractor::videosFromDocument)
+        }
     }
 
     override fun videoListSelector(): String {
@@ -271,11 +267,6 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }
             .getOrNull() ?: 0L
     }
-
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!

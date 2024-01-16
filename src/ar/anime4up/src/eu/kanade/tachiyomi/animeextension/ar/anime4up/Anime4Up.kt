@@ -22,10 +22,7 @@ import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -157,7 +154,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val parsedData = json.decodeFromString<Qualities>(base64)
         val streamLinks = with(parsedData) { fhd + hd + sd }
 
-        return streamLinks.values.distinct().parallelCatchingFlatMap(::extractVideos)
+        return streamLinks.values.distinct().parallelCatchingFlatMapBlocking(::extractVideos)
     }
 
     private val uqloadExtractor by lazy { UqloadExtractor(client) }
@@ -214,15 +211,6 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map {
-                async(Dispatchers.Default) {
-                    runCatching { f(it) }.getOrElse { emptyList() }
-                }
-            }.awaitAll().flatten()
-        }
-
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 

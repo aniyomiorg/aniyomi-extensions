@@ -19,11 +19,9 @@ import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.Response
@@ -129,19 +127,18 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ================================== video urls ==================================
     private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
 
-    override fun videoListParse(response: Response): List<Video> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val requestBody = FormBody.Builder().add("View", "1").build()
-        val document = client.newCall(POST(response.request.url.toString(), body = requestBody)).execute().asJsoup()
-        return document.select(videoListSelector()).parallelMap {
+
+        val document = client.newCall(POST(baseUrl + episode.url, body = requestBody))
+            .await()
+            .use { it.asJsoup() }
+        return document.select(videoListSelector()).parallelCatchingFlatMap {
             val url = it.attr("data-link")
-            runCatching { extractVideos(url) }.getOrElse { emptyList() }
-        }.flatten()
+            extractVideos(url)
+        }
     }
 
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
     private fun extractVideos(url: String): List<Video> {
         return when {
             DOOD_REGEX.containsMatchIn(url) -> {

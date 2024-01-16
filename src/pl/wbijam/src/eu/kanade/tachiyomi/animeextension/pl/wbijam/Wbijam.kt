@@ -20,10 +20,7 @@ import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -229,7 +226,6 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val parsed = json.decodeFromString<EpisodeType>(episode.url)
-        val videoList = mutableListOf<Video>()
         val serverList = mutableListOf<String>()
 
         parsed.url.forEach {
@@ -254,30 +250,26 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-        videoList.addAll(
-            serverList.parallelMap { serverUrl ->
-                runCatching {
-                    when {
-                        serverUrl.contains("mp4upload") -> {
-                            Mp4uploadExtractor(client).videosFromUrl(serverUrl, headers)
-                        }
-                        serverUrl.contains("cda.pl") -> {
-                            CdaPlExtractor(client).getVideosFromUrl(serverUrl, headers)
-                        }
-                        serverUrl.contains("sibnet.ru") -> {
-                            SibnetExtractor(client).videosFromUrl(serverUrl)
-                        }
-                        serverUrl.contains("vk.com") -> {
-                            VkExtractor(client).getVideosFromUrl(serverUrl, headers)
-                        }
-                        serverUrl.contains("dailymotion") -> {
-                            DailymotionExtractor(client, headers).videosFromUrl(serverUrl)
-                        }
-                        else -> null
-                    }
-                }.getOrNull()
-            }.filterNotNull().flatten(),
-        )
+        val videoList = serverList.parallelCatchingFlatMap { serverUrl ->
+            when {
+                serverUrl.contains("mp4upload") -> {
+                    Mp4uploadExtractor(client).videosFromUrl(serverUrl, headers)
+                }
+                serverUrl.contains("cda.pl") -> {
+                    CdaPlExtractor(client).getVideosFromUrl(serverUrl, headers)
+                }
+                serverUrl.contains("sibnet.ru") -> {
+                    SibnetExtractor(client).videosFromUrl(serverUrl)
+                }
+                serverUrl.contains("vk.com") -> {
+                    VkExtractor(client).getVideosFromUrl(serverUrl, headers)
+                }
+                serverUrl.contains("dailymotion") -> {
+                    DailymotionExtractor(client, headers).videosFromUrl(serverUrl)
+                }
+                else -> null
+            }.orEmpty()
+        }
 
         return videoList.sort()
     }
@@ -316,12 +308,6 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
             .getOrNull() ?: 0L
     }
-
-    // From Dopebox
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {

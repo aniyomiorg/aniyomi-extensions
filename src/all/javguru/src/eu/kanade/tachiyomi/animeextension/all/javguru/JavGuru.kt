@@ -23,10 +23,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Call
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -237,8 +234,7 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
 
         return iframeUrls
             .mapNotNull(::resolveHosterUrl)
-            .parallelMap(::getVideos)
-            .flatten()
+            .parallelCatchingFlatMapBlocking(::getVideos)
     }
 
     private fun resolveHosterUrl(iframeUrl: String): String? {
@@ -284,37 +280,33 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
     private val emTurboExtractor by lazy { EmTurboExtractor(client, headers) }
 
     private fun getVideos(hosterUrl: String): List<Video> {
-        return runCatching {
-            when {
-                hosterUrl.contains("javplaya") -> {
-                    streamWishExtractor.videosFromUrl(hosterUrl)
-                }
-
-                hosterUrl.contains("streamtape") -> {
-                    streamTapeExtractor.videoFromUrl(hosterUrl).let(::listOfNotNull)
-                }
-
-                hosterUrl.contains("dood") -> {
-                    doodExtractor.videosFromUrl(hosterUrl)
-                }
-
-                MIXDROP_DOMAINS.any { it in hosterUrl } -> {
-                    mixDropExtractor.videoFromUrl(hosterUrl)
-                }
-
-                hosterUrl.contains("maxstream") -> {
-                    maxStreamExtractor.videoFromUrl(hosterUrl)
-                }
-
-                hosterUrl.contains("emturbovid") -> {
-                    emTurboExtractor.getVideos(hosterUrl)
-                }
-
-                else -> {
-                    emptyList()
-                }
+        return when {
+            hosterUrl.contains("javplaya") -> {
+                streamWishExtractor.videosFromUrl(hosterUrl)
             }
-        }.getOrDefault(emptyList())
+
+            hosterUrl.contains("streamtape") -> {
+                streamTapeExtractor.videoFromUrl(hosterUrl).let(::listOfNotNull)
+            }
+
+            hosterUrl.contains("dood") -> {
+                doodExtractor.videosFromUrl(hosterUrl)
+            }
+
+            MIXDROP_DOMAINS.any { it in hosterUrl } -> {
+                mixDropExtractor.videoFromUrl(hosterUrl)
+            }
+
+            hosterUrl.contains("maxstream") -> {
+                maxStreamExtractor.videoFromUrl(hosterUrl)
+            }
+
+            hosterUrl.contains("emturbovid") -> {
+                emTurboExtractor.getVideos(hosterUrl)
+            }
+
+            else -> emptyList()
+        }
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -324,11 +316,6 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
             compareBy { it.quality.contains(quality) },
         ).reversed()
     }
-
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     private fun getIDFromUrl(element: Elements): String? {
         return element.attr("abs:href")

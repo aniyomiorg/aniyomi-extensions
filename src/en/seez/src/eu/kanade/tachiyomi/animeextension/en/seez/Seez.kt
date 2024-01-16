@@ -16,10 +16,7 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl
@@ -306,18 +303,16 @@ class Seez : ConfigurableAnimeSource, AnimeHttpSource() {
             Pair(vrfHelper.decrypt(encrypted), it.title)
         }
 
-        return urlList.parallelMap {
+        return urlList.parallelCatchingFlatMapBlocking {
             val url = it.first
             val name = it.second
 
-            runCatching {
-                when (name) {
-                    "Vidplay" -> vidsrcExtractor.videosFromUrl(url, name)
-                    "Filemoon" -> filemoonExtractor.videosFromUrl(url)
-                    else -> emptyList()
-                }
-            }.getOrElse { emptyList() }
-        }.flatten().ifEmpty { throw Exception("Failed to fetch videos") }
+            when (name) {
+                "Vidplay" -> vidsrcExtractor.videosFromUrl(url, name)
+                "Filemoon" -> filemoonExtractor.videosFromUrl(url)
+                else -> emptyList()
+            }
+        }
     }
 
     // ============================= Utilities ==============================
@@ -352,12 +347,6 @@ class Seez : ConfigurableAnimeSource, AnimeHttpSource() {
         val responseBody = use { it.body.string() }
         return json.decodeFromString(responseBody)
     }
-
-    // From Dopebox
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     companion object {
         private val TMDB_URL = "https://api.themoviedb.org/3".toHttpUrl()

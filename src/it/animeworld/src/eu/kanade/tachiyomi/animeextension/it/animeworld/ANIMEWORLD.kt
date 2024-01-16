@@ -20,10 +20,7 @@ import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -101,7 +98,6 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         "center a[href*=streamingaw.online][id=alternativeDownloadLink]"
 
     private fun videosFromElement(document: Document): List<Video> {
-        val videoList = mutableListOf<Video>()
         // afaik this element appears when videos are taken down, in this case instead of
         // displaying Videolist empty show the element's text
         val copyrightError = document.select("div.alert.alert-primary:contains(Copyright)")
@@ -145,33 +141,29 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             serverList.add(Pair(name, url))
         }
 
-        videoList.addAll(
-            serverList.parallelMap { server ->
-                runCatching {
-                    val url = server.second
-                    when {
-                        url.contains("streamingaw") -> {
-                            listOf(Video(url, "AnimeWorld Server", url))
-                        }
-                        url.contains("https://doo") -> {
-                            DoodExtractor(client).videoFromUrl(url, redirect = true)
-                                ?.let(::listOf)
-                        }
-                        url.contains("streamtape") -> {
-                            StreamTapeExtractor(client).videoFromUrl(url.replace("/v/", "/e/"))
-                                ?.let(::listOf)
-                        }
-                        url.contains("filemoon") -> {
-                            FilemoonExtractor(client).videosFromUrl(url, prefix = "${server.first} - ", headers = headers)
-                        }
-                        server.first.contains("streamhide", true) -> {
-                            StreamHideExtractor(client).videosFromUrl(url, headers)
-                        }
-                        else -> null
-                    }
-                }.getOrNull()
-            }.filterNotNull().flatten(),
-        )
+        val videoList = serverList.parallelCatchingFlatMapBlocking { server ->
+            val url = server.second
+            when {
+                url.contains("streamingaw") -> {
+                    listOf(Video(url, "AnimeWorld Server", url))
+                }
+                url.contains("https://doo") -> {
+                    DoodExtractor(client).videoFromUrl(url, redirect = true)
+                        ?.let(::listOf)
+                }
+                url.contains("streamtape") -> {
+                    StreamTapeExtractor(client).videoFromUrl(url.replace("/v/", "/e/"))
+                        ?.let(::listOf)
+                }
+                url.contains("filemoon") -> {
+                    FilemoonExtractor(client).videosFromUrl(url, prefix = "${server.first} - ", headers = headers)
+                }
+                server.first.contains("streamhide", true) -> {
+                    StreamHideExtractor(client).videosFromUrl(url, headers)
+                }
+                else -> null
+            }.orEmpty()
+        }
 
         return videoList
     }
@@ -563,12 +555,6 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     data class ServerResponse(
         val target: String,
     )
-
-    // From Dopebox
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     companion object {
         private val PREF_DOMAIN_KEY = "preferred_domain_name_v${BuildConfig.VERSION_CODE}"

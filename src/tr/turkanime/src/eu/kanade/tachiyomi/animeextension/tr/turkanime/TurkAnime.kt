@@ -36,10 +36,11 @@ import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.vudeoextractor.VudeoExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parallelMapBlocking
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -203,11 +204,11 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 chosenFansubs.any(subName::contains) || allFansubs.none(subName::contains)
             }
 
-            filteredSubs.parallelMap {
+            filteredSubs.parallelCatchingFlatMapBlocking {
                 val url = it.attr("onclick").trimOnClick()
-                val subDoc = client.newCall(GET(url, xmlHeader)).execute().asJsoup()
+                val subDoc = client.newCall(GET(url, xmlHeader)).await().asJsoup()
                 getVideosFromHosters(subDoc, it.text().trim())
-            }.flatten()
+            }
         }
 
         require(videoList.isNotEmpty()) { "Failed to extract videos" }
@@ -229,15 +230,15 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
 
-            hosters.parallelMap {
+            hosters.parallelMapBlocking {
                 val hosterName = it.text().trim()
-                if (hosterName !in SUPPORTED_HOSTERS) return@parallelMap
-                if (hosterName !in hosterSelection) return@parallelMap
+                if (hosterName !in SUPPORTED_HOSTERS) return@parallelMapBlocking
+                if (hosterName !in hosterSelection) return@parallelMapBlocking
                 val url = it.attr("onclick").trimOnClick()
-                val videoDoc = client.newCall(GET(url, xmlHeader)).execute().asJsoup()
+                val videoDoc = client.newCall(GET(url, xmlHeader)).await().asJsoup()
                 val src = videoDoc.selectFirst("iframe")?.attr("src")
                     ?.replace("^//".toRegex(), "https://")
-                    ?: return@parallelMap
+                    ?: return@parallelMapBlocking
                 addAll(getVideosFromSource(src, hosterName, subber))
             }
         }
@@ -355,11 +356,6 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val xmlHeader = Headers.headersOf("X-Requested-With", "XMLHttpRequest")
     private val refererHeader = Headers.headersOf("Referer", baseUrl)
-
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking(Dispatchers.Default) {
-            map { async { f(it) } }.awaitAll()
-        }
 
     private val mutex = Mutex()
     private var shouldUpdateKey = false
