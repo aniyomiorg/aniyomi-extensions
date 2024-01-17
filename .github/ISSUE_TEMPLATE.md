@@ -2,7 +2,7 @@
 
 I acknowledge that:
 
-- I have updated to the latest version of the app (stable is v0.12.3.10)
+- I have updated to the latest version of the app (stable is v0.15.2.2)
 - I have updated all extensions
 - If this is an issue with the app itself, that I should be opening an issue in https://github.com/aniyomiorg/aniyomi
 - I have searched the existing issues for duplicates
