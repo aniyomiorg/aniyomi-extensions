@@ -21,19 +21,18 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Credentials
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -59,7 +58,7 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+    override val client = network.client.newBuilder()
         .addInterceptor { chain ->
             var request = chain.request()
 
@@ -111,37 +110,30 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =============================== Latest ===============================
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
 
-    override fun latestUpdatesParse(response: Response): AnimesPage = throw Exception("Not used")
+    override fun latestUpdatesParse(response: Response): AnimesPage = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
 
-    override fun searchAnimeParse(response: Response): AnimesPage = throw Exception("Not used")
+    override fun searchAnimeParse(response: Response): AnimesPage = throw UnsupportedOperationException()
 
-    override fun fetchSearchAnime(
+    override suspend fun getSearchAnime(
         page: Int,
         query: String,
         filters: AnimeFilterList,
-    ): Observable<AnimesPage> {
+    ): AnimesPage {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val urlFilter = filterList.find { it is URLFilter } as URLFilter
 
         return if (urlFilter.state.isEmpty()) {
             val req = searchAnimeRequest(page, query, filters)
-            Observable.defer {
-                try {
-                    client.newCall(req).asObservableSuccess()
-                } catch (e: NoClassDefFoundError) {
-                    // RxJava doesn't handle Errors, which tends to happen during global searches
-                    // if an old extension using non-existent classes is still around
-                    throw RuntimeException(e)
+            client.newCall(req).awaitSuccess()
+                .use { response ->
+                    searchAnimeParse(response, req.url.toString())
                 }
-            }.map { response ->
-                searchAnimeParse(response, req.url.toString())
-            }
         } else {
-            Observable.just(addSinglePage(urlFilter.state))
+            addSinglePage(urlFilter.state)
         }
     }
 
@@ -237,7 +229,7 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
         val parsed = json.decodeFromString<LinkData>(anime.url)
         val newParsed = if (parsed.type != "search") {
             parsed
@@ -265,7 +257,7 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         if (newParsed.type == "single") {
-            return Observable.just(anime)
+            return anime
         }
 
         var newToken: String? = ""
@@ -309,14 +301,14 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
             newPageIndex += 1
         }
 
-        return Observable.just(anime)
+        return anime
     }
 
-    override fun animeDetailsParse(response: Response): SAnime = throw Exception("Not used")
+    override fun animeDetailsParse(response: Response): SAnime = throw UnsupportedOperationException()
 
     // ============================== Episodes ==============================
 
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+    override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
         val episodeList = mutableListOf<SEpisode>()
         val parsed = json.decodeFromString<LinkData>(anime.url)
         var counter = 1
@@ -446,14 +438,14 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
             traverseDirectory(newParsed.url)
         }
 
-        return Observable.just(episodeList.reversed())
+        return episodeList.reversed()
     }
 
-    override fun episodeListParse(response: Response): List<SEpisode> = throw Exception("Not used")
+    override fun episodeListParse(response: Response): List<SEpisode> = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val url = episode.url
 
         val doc = client.newCall(
@@ -462,10 +454,10 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
 
         val script = doc.selectFirst("script:containsData(videodomain)")?.data()
             ?: doc.selectFirst("script:containsData(downloaddomain)")?.data()
-            ?: return Observable.just(listOf(Video(url, "Video", url)))
+            ?: return listOf(Video(url, "Video", url))
 
         if (script.contains("\"second_domain_for_dl\":false")) {
-            return Observable.just(listOf(Video(url, "Video", url)))
+            return listOf(Video(url, "Video", url))
         }
 
         val domainUrl = if (script.contains("videodomain", true)) {
@@ -484,18 +476,10 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
             domainUrl + url.toHttpUrl().encodedPath
         }
 
-        return Observable.just(
-            listOf(Video(videoUrl, "Video", videoUrl)),
-        )
+        return listOf(Video(videoUrl, "Video", videoUrl))
     }
 
     // ============================= Utilities ==============================
-
-    private inline fun <reified T> Response.parseAs(transform: (String) -> String = { it }): T {
-        val responseBody = use { transform(it.body.string()) }
-        return json.decodeFromString(responseBody)
-    }
-
     private fun HttpUrl.hostAndCred(): String {
         return if (this.password.isNotBlank() && this.username.isNotBlank()) {
             "${this.username}:${this.password}@${this.host}"

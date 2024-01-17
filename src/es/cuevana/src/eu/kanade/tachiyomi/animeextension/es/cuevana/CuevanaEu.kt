@@ -24,14 +24,10 @@ import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelMapBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -47,8 +43,6 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
     override val supportsLatest = false
 
     private val json = Json { ignoreUnknownKeys = true }
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -76,7 +70,7 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/peliculas/estrenos/page/$page")
 
-    override fun popularAnimeFromElement(element: Element) = throw Exception("not used")
+    override fun popularAnimeFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
@@ -134,9 +128,9 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
         return episodes.reversed()
     }
 
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
-    override fun episodeFromElement(element: Element) = throw Exception("not used")
+    override fun episodeFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
@@ -155,14 +149,9 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
         return videoList
     }
 
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
-
     private fun serverIterator(videos: Videos?): MutableList<Video> {
         val videoList = mutableListOf<Video>()
-        videos?.latino?.parallelMap {
+        videos?.latino?.parallelMapBlocking {
             try {
                 val body = client.newCall(GET(it.result!!)).execute().asJsoup()
                 val url = body.selectFirst("script:containsData(var message)")?.data()?.substringAfter("var url = '")?.substringBefore("'") ?: ""
@@ -249,11 +238,11 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
         return videoList
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
@@ -288,7 +277,7 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
-    override fun animeDetailsParse(document: Document) = throw Exception("not used")
+    override fun animeDetailsParse(document: Document) = throw UnsupportedOperationException()
 
     override fun animeDetailsParse(response: Response): SAnime {
         val document = response.asJsoup()
@@ -318,13 +307,13 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
         return newAnime
     }
 
-    override fun latestUpdatesNextPageSelector() = throw Exception("not used")
+    override fun latestUpdatesNextPageSelector() = throw UnsupportedOperationException()
 
-    override fun latestUpdatesFromElement(element: Element) = throw Exception("not used")
+    override fun latestUpdatesFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun latestUpdatesRequest(page: Int) = throw Exception("not used")
+    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException()
 
-    override fun latestUpdatesSelector() = throw Exception("not used")
+    override fun latestUpdatesSelector() = throw UnsupportedOperationException()
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),

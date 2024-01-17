@@ -1,15 +1,10 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'OtakuFR'
-    pkgNameSuffix = 'fr.otakufr'
     extClass = '.OtakuFR'
-    extVersionCode = 5
-    libVersion = '13'
+    extVersionCode = 6
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-streamwish-extractor'))
@@ -21,5 +16,3 @@ dependencies {
     implementation(project(":lib-playlist-utils"))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
-
-apply from: "$rootDir/common.gradle"

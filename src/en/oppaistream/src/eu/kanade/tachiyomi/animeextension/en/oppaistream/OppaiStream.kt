@@ -18,7 +18,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -39,8 +39,6 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     override val baseUrl = "https://oppai.stream"
 
     override val supportsLatest = true
-
-    override val client = network.cloudflareClient
 
     override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
@@ -204,9 +202,9 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             }
     }
 
-    override fun videoListSelector() = throw Exception("Not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("Not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
@@ -217,7 +215,7 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     override fun videoUrlParse(document: Document): String {
-        throw UnsupportedOperationException("Not used")
+        throw UnsupportedOperationException()
     }
 
     // ============================== Settings ==============================
@@ -268,9 +266,6 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <reified T> Response.parseAs(): T {
-        return use { it.body.string() }.let(json::decodeFromString)
-    }
 
     // Function to fetch thumbnail URL using AniList GraphQL API
     // Only use in animeDetailsParse.

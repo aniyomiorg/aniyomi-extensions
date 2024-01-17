@@ -15,7 +15,7 @@ class StreamVidExtractor(private val client: OkHttpClient) {
             val script = doc.selectFirst("script:containsData(eval):containsData(p,a,c,k,e,d)")?.data()
                 ?.let(JsUnpacker::unpackAndCombine)
                 ?: return emptyList()
-            val masterUrl = if(!sourceChange) {
+            val masterUrl = if (!sourceChange) {
                 script.substringAfter("sources:[{src:\"").substringBefore("\",")
             } else {
                 script.substringAfter("sources:[{file:\"").substringBefore("\"")

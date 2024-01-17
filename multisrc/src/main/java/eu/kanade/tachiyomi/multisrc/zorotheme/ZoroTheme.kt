@@ -16,15 +16,14 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.multisrc.zorotheme.dto.HtmlResponse
 import eu.kanade.tachiyomi.multisrc.zorotheme.dto.SourcesResponse
 import eu.kanade.tachiyomi.network.GET
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.network.await
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
+import eu.kanade.tachiyomi.util.parallelMapNotNull
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -41,11 +40,9 @@ abstract class ZoroTheme(
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
-
     private val json: Json by injectLazy()
 
-    private val preferences: SharedPreferences by lazy {
+    val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -115,7 +112,7 @@ abstract class ZoroTheme(
             addIfNotBlank("em", params.end_month)
             addIfNotBlank("ed", params.end_day)
             addIfNotBlank("genres", params.genres)
-        }.build().toString()
+        }.build()
 
         return GET(url, docHeaders)
     }
@@ -211,7 +208,9 @@ abstract class ZoroTheme(
         val name: String,
     )
 
-    override fun videoListParse(response: Response): List<Video> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
+        val response = client.newCall(videoListRequest(episode)).await()
+
         val episodeReferer = response.request.header("referer")!!
         val typeSelection = preferences.typeToggle
         val hosterSelection = preferences.hostToggle
@@ -230,43 +229,26 @@ abstract class ZoroTheme(
 
                 val link = client.newCall(
                     GET("$baseUrl/ajax$ajaxRoute/episode/sources?id=$id", apiHeaders(episodeReferer)),
-                ).execute().parseAs<SourcesResponse>().link ?: ""
+                ).await().parseAs<SourcesResponse>().link ?: ""
 
                 VideoData(type, link, name)
             }
         }.flatten()
 
-        return embedLinks.parallelCatchingFlatMap(::extractVideo).ifEmpty {
-            throw Exception("Failed to extract videos.")
-        }
+        return embedLinks.parallelCatchingFlatMap(::extractVideo)
     }
 
     protected open fun extractVideo(server: VideoData): List<Video> {
         return emptyList()
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
-
-    private inline fun <A, B> Iterable<A>.parallelMapNotNull(crossinline f: suspend (A) -> B?): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll().filterNotNull()
-        }
-
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { runCatching { f(it) }.getOrElse { emptyList() } } }.awaitAll().flatten()
-        }
-
-    private inline fun <reified T> Response.parseAs(): T {
-        return use { it.body.string() }.let(json::decodeFromString)
-    }
-
     private fun Set<String>.contains(s: String, ignoreCase: Boolean): Boolean {
         return any { it.equals(s, ignoreCase) }
     }

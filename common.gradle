@@ -1,3 +1,6 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
 apply plugin: 'org.jmailen.kotlinter'
 
 android {
@@ -21,11 +24,11 @@ android {
     defaultConfig {
         minSdkVersion AndroidConfig.minSdk
         targetSdkVersion AndroidConfig.targetSdk
-        applicationIdSuffix pkgNameSuffix
+        applicationIdSuffix project.parent.name + "." + project.name
         versionCode extVersionCode
-        versionName project.ext.properties.getOrDefault("libVersion", "13") + ".$extVersionCode"
+        versionName project.ext.properties.getOrDefault("libVersion", "14") + ".$extVersionCode"
         base {
-            archivesName = "aniyomi-$pkgNameSuffix-v$versionName"
+            archivesName = "aniyomi-$applicationIdSuffix-v$versionName"
         }
         def readmes = project.projectDir.listFiles({ File file ->
             file.name.equals("README.md") ||

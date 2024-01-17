@@ -1,19 +1,13 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
-
 ext {
     extName = 'Serienstream'
-    pkgNameSuffix = 'de.serienstream'
     extClass = '.Serienstream'
     extVersionCode = 14
-    libVersion = '13'
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-voe-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-dood-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

@@ -21,24 +21,19 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
-import kotlin.Exception
 
 class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -49,10 +44,6 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "fr"
 
     override val supportsLatest = true
-
-    override val client = network.cloudflareClient
-
-    private val vclient: OkHttpClient = network.client
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -83,11 +74,11 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector() = null
 
     // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element) = throw Exception("not used")
+    override fun searchAnimeFromElement(element: Element) = throw UnsupportedOperationException()
     override fun searchAnimeNextPageSelector() = null
-    override fun searchAnimeSelector() = throw Exception("not used")
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = throw Exception("not used")
-    override fun searchAnimeParse(response: Response) = throw Exception("not used")
+    override fun searchAnimeSelector() = throw UnsupportedOperationException()
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = throw UnsupportedOperationException()
+    override fun searchAnimeParse(response: Response) = throw UnsupportedOperationException()
 
     private val searchItems by lazy {
         client.newCall(GET("$baseUrl/api/views/contenitem", headers)).execute()
@@ -96,7 +87,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
     }
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         val entriesPages = searchItems.filter { it.title.contains(query, true) }
             .sortedBy { it.title }
             .chunked(30) // to prevent exploding the user screen with 984948984 results
@@ -110,7 +101,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         } ?: emptyList()
 
-        return Observable.just(AnimesPage(entries, hasNextPage))
+        return AnimesPage(entries, hasNextPage)
     }
 
     // =========================== Anime Details ============================
@@ -125,7 +116,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val doc = response.asJsoup()
@@ -157,37 +148,35 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         date_upload = obj.date.toDate()
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
     // val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
-        val videos = episode.url.split(", ").parallelMap {
-            runCatching {
-                val (id, type, hoster) = it.split("|")
-                if (hoster !in hosterSelection) return@parallelMap emptyList()
-                videosFromPath("$id/$type", hoster)
-            }.getOrElse { emptyList() }
-        }.flatten().sort()
-        return Observable.just(videos)
+        val videos = episode.url.split(", ").parallelCatchingFlatMap {
+            val (id, type, hoster) = it.split("|")
+            if (hoster !in hosterSelection) return@parallelCatchingFlatMap emptyList()
+            videosFromPath("$id/$type", hoster)
+        }
+        return videos
     }
 
-    private fun videosFromPath(path: String, hoster: String): List<Video> {
-        val url = client.newCall(GET("$baseUrl/player_submit/$path", headers)).execute()
+    private suspend fun videosFromPath(path: String, hoster: String): List<Video> {
+        val url = client.newCall(GET("$baseUrl/player_submit/$path", headers)).await()
             .use { it.body.string() }
             .substringAfter("window.location.href = \"")
             .substringBefore('"')
 
         return when (hoster) {
-            "doodstream" -> DoodExtractor(vclient).videosFromUrl(url)
-            "voe" -> VoeExtractor(vclient).videoFromUrl(url)?.let(::listOf)
+            "doodstream" -> DoodExtractor(client).videosFromUrl(url)
+            "voe" -> VoeExtractor(client).videoFromUrl(url)?.let(::listOf)
             "Eplayer" -> EplayerExtractor(client).videosFromUrl(url)
             else -> null
         } ?: emptyList()
     }
 
-    override fun videoListParse(response: Response) = throw Exception("not used")
+    override fun videoListParse(response: Response) = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val hoster = preferences.getString(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
@@ -200,11 +189,11 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ).reversed()
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -276,11 +265,6 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun List<VideoDto>.encode() = joinToString { it.encoded }
-
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     companion object {
         private val DATE_FORMATTER by lazy {

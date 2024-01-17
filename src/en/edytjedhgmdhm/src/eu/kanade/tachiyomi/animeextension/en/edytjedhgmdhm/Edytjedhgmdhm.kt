@@ -10,12 +10,10 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import java.net.URI
 import java.net.URISyntaxException
 
@@ -30,8 +28,6 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = false
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     // ============================ Initializers ============================
 
@@ -55,7 +51,7 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
 
     // ============================== Popular ===============================
 
-    override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
+    override suspend fun getPopularAnime(page: Int): AnimesPage {
         val results = tvsList.chunked(CHUNKED_SIZE).toList()
 
         val hasNextPage = results.size > page
@@ -70,36 +66,36 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
                 }
             }
         }
-        return Observable.just(AnimesPage(animeList, hasNextPage))
+        return AnimesPage(animeList, hasNextPage)
     }
 
-    override fun popularAnimeRequest(page: Int): Request = throw Exception("Not used")
+    override fun popularAnimeRequest(page: Int): Request = throw UnsupportedOperationException()
 
-    override fun popularAnimeParse(response: Response): AnimesPage = throw Exception("Not used")
+    override fun popularAnimeParse(response: Response): AnimesPage = throw UnsupportedOperationException()
 
-    override fun popularAnimeSelector(): String = throw Exception("Not used")
+    override fun popularAnimeSelector(): String = throw UnsupportedOperationException()
 
-    override fun popularAnimeFromElement(element: Element): SAnime = throw Exception("Not used")
+    override fun popularAnimeFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
-    override fun popularAnimeNextPageSelector(): String = throw Exception("Not used")
+    override fun popularAnimeNextPageSelector(): String = throw UnsupportedOperationException()
 
     // =============================== Latest ===============================
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
 
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesSelector(): String = throw UnsupportedOperationException()
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = throw UnsupportedOperationException()
 
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
 
-    override fun fetchSearchAnime(
+    override suspend fun getSearchAnime(
         page: Int,
         query: String,
         filters: AnimeFilterList,
-    ): Observable<AnimesPage> {
+    ): AnimesPage {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val subPageFilter = filterList.find { it is SubPageFilter } as SubPageFilter
         val subPage = subPageFilter.toUriPart()
@@ -130,16 +126,16 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
                 }
             }
         }
-        return Observable.just(AnimesPage(animeList, hasNextPage))
+        return AnimesPage(animeList, hasNextPage)
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw UnsupportedOperationException()
 
-    override fun searchAnimeSelector(): String = throw Exception("Not used")
+    override fun searchAnimeSelector(): String = throw UnsupportedOperationException()
 
-    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("Not used")
+    override fun searchAnimeFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
-    override fun searchAnimeNextPageSelector(): String = throw Exception("Not used")
+    override fun searchAnimeNextPageSelector(): String = throw UnsupportedOperationException()
 
     // ============================== FILTERS ===============================
 
@@ -164,13 +160,13 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> = Observable.just(anime)
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime = anime
 
-    override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
+    override fun animeDetailsParse(document: Document): SAnime = throw UnsupportedOperationException()
 
     // ============================== Episodes ==============================
 
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+    override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
         val episodeList = mutableListOf<SEpisode>()
 
         fun traverseDirectory(url: String) {
@@ -215,25 +211,25 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
 
         traverseDirectory(baseUrl + anime.url)
 
-        return Observable.just(episodeList.reversed())
+        return episodeList.reversed()
     }
 
-    override fun episodeListParse(response: Response): List<SEpisode> = throw Exception("Not used")
+    override fun episodeListParse(response: Response): List<SEpisode> = throw UnsupportedOperationException()
 
-    override fun episodeListSelector(): String = throw Exception("Not Used")
+    override fun episodeListSelector(): String = throw UnsupportedOperationException()
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> =
-        Observable.just(listOf(Video(baseUrl + episode.url, "Video", baseUrl + episode.url)))
+    override suspend fun getVideoList(episode: SEpisode): List<Video> =
+        listOf(Video(baseUrl + episode.url, "Video", baseUrl + episode.url))
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoListSelector(): String = throw Exception("Not Used")
+    override fun videoListSelector(): String = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
 

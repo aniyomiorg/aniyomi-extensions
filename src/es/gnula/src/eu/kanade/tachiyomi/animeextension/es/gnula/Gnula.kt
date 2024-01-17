@@ -35,7 +35,6 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -54,8 +53,6 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "es"
 
     override val supportsLatest = false
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val json: Json by injectLazy()
 
@@ -445,18 +442,18 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // Not Used
-    override fun popularAnimeSelector(): String = throw Exception("not used")
-    override fun episodeListSelector() = throw Exception("not used")
-    override fun episodeFromElement(element: Element) = throw Exception("not used")
-    override fun popularAnimeFromElement(element: Element) = throw Exception("not used")
-    override fun popularAnimeNextPageSelector() = throw Exception("not used")
-    override fun videoListSelector() = throw Exception("not used")
-    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("not used")
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
-    override fun videoFromElement(element: Element) = throw Exception("not used")
-    override fun latestUpdatesNextPageSelector() = throw Exception("not used")
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("not used")
-    override fun latestUpdatesRequest(page: Int) = throw Exception("not used")
-    override fun latestUpdatesSelector() = throw Exception("not used")
+    override fun popularAnimeSelector(): String = throw UnsupportedOperationException()
+    override fun episodeListSelector() = throw UnsupportedOperationException()
+    override fun episodeFromElement(element: Element) = throw UnsupportedOperationException()
+    override fun popularAnimeFromElement(element: Element) = throw UnsupportedOperationException()
+    override fun popularAnimeNextPageSelector() = throw UnsupportedOperationException()
+    override fun videoListSelector() = throw UnsupportedOperationException()
+    override fun searchAnimeFromElement(element: Element): SAnime = throw UnsupportedOperationException()
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
+    override fun latestUpdatesNextPageSelector() = throw UnsupportedOperationException()
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw UnsupportedOperationException()
+    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException()
+    override fun latestUpdatesSelector() = throw UnsupportedOperationException()
     // Not Used
 }

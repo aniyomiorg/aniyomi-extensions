@@ -17,12 +17,10 @@ import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.await
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
@@ -34,7 +32,6 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -50,8 +47,6 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
-
-    override val client = network.cloudflareClient
 
     private val json: Json by injectLazy()
 
@@ -85,15 +80,13 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =============================== Search ===============================
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw UnsupportedOperationException()
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         val params = KissAnimeFilters.getSearchParameters(filters)
         return client.newCall(searchAnimeRequest(page, query, params))
-            .asObservableSuccess()
-            .map { response ->
-                searchAnimeParse(response)
-            }
+            .awaitSuccess()
+            .use(::searchAnimeParse)
     }
 
     private fun searchAnimeRequest(page: Int, query: String, filters: KissAnimeFilters.FilterSearchParams): Request {
@@ -160,8 +153,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
-        val videoList = mutableListOf<Video>()
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val serverList = mutableListOf<Server>()
 
         // GET VIDEO HOSTERS
@@ -169,7 +161,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         var document = client.newCall(
             GET(baseUrl + episode.url, headers = headers),
-        ).execute().asJsoup()
+        ).await().asJsoup()
         var newDocument = document
 
         for (server in document.select("select#selectServer > option")) {
@@ -178,7 +170,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (!server.hasAttr("selected")) {
                 newDocument = client.newCall(
                     GET(url, headers = headers),
-                ).execute().asJsoup()
+                ).await().asJsoup()
             }
 
             val ctk = newDocument.selectFirst("script:containsData(ctk)")!!.data().substringAfter("var ctk = '").substringBefore("';")
@@ -200,7 +192,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val iframe = json.decodeFromString<IframeResponse>(
                 client.newCall(
                     POST("$baseUrl/ajax/anime/load_episodes_v2?s=$serverName", body = getIframeBody, headers = getIframeHeaders),
-                ).execute().body.string(),
+                ).await().body.string(),
             )
             var iframeUrl = Jsoup.parse(iframe.value).selectFirst("iframe")!!.attr("src")
 
@@ -215,41 +207,35 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
         // GET VIDEO URLS
-        videoList.addAll(
-            serverList.parallelMap { server ->
-                runCatching {
-                    val url = server.url
+        val videoList = serverList.parallelCatchingFlatMap { server ->
+            val url = server.url
 
-                    when {
-                        url.contains("yourupload") -> {
-                            YourUploadExtractor(client).videoFromUrl(url, headers = headers, name = server.name)
-                        }
-                        url.contains("mp4upload") -> {
-                            Mp4uploadExtractor(client).videosFromUrl(url, headers, "(${server.name}) ")
-                        }
-                        url.contains("embed.vodstream.xyz") -> {
-                            val referer = "$baseUrl/"
-                            VodstreamExtractor(client).getVideosFromUrl(url, referer = referer, prefix = "${server.name} - ")
-                        }
-                        url.contains("dailymotion") -> {
-                            DailymotionExtractor(client, headers).videosFromUrl(url, "${server.name} - ", baseUrl, server.password)
-                        }
-                        else -> null
-                    }
-                }.getOrNull()
-            }.filterNotNull().flatten(),
-        )
+            when {
+                url.contains("yourupload") -> {
+                    YourUploadExtractor(client).videoFromUrl(url, headers = headers, name = server.name)
+                }
+                url.contains("mp4upload") -> {
+                    Mp4uploadExtractor(client).videosFromUrl(url, headers, "(${server.name}) ")
+                }
+                url.contains("embed.vodstream.xyz") -> {
+                    val referer = "$baseUrl/"
+                    VodstreamExtractor(client).getVideosFromUrl(url, referer = referer, prefix = "${server.name} - ")
+                }
+                url.contains("dailymotion") -> {
+                    DailymotionExtractor(client, headers).videosFromUrl(url, "${server.name} - ", baseUrl, server.password)
+                }
+                else -> null
+            }.orEmpty()
+        }
 
-        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
-
-        return Observable.just(videoList.sort())
+        return videoList.sort()
     }
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
-    override fun videoListSelector(): String = throw Exception("Not Used")
+    override fun videoListSelector(): String = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
 
@@ -284,12 +270,6 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> SAnime.UNKNOWN
         }
     }
-
-    // From Dopebox
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     companion object {
         private val DATE_FORMATTER by lazy {

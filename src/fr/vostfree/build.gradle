@@ -1,18 +1,13 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'Vostfree'
-    pkgNameSuffix = 'fr.vostfree'
     extClass = '.Vostfree'
-    extVersionCode = 18
-    libVersion = '13'
+    extVersionCode = 19
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-vudeo-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-okru-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

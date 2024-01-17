@@ -23,16 +23,13 @@ import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -46,8 +43,6 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
-
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
@@ -59,16 +54,8 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private val refererHeader = Headers.headersOf("Referer", baseUrl)
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        return client.newCall(GET(baseUrl + anime.url))
-            .asObservableSuccess()
-            .map { response ->
-                animeDetailsParse(response).apply { initialized = true }
-            }
-    }
-
-    override fun animeDetailsRequest(anime: SAnime): Request {
-        return GET(baseUrl + anime.url.replace("api/", ""))
+    override fun getAnimeUrl(anime: SAnime): String {
+        return baseUrl + anime.url.replace("api/", "")
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
@@ -260,7 +247,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
         return newList
     }
 
-    override fun videoUrlParse(response: Response) = throw Exception("not used")
+    override fun videoUrlParse(response: Response) = throw UnsupportedOperationException()
 
     @Suppress("UNCHECKED_CAST")
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

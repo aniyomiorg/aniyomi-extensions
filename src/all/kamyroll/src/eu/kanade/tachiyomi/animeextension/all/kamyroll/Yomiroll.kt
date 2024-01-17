@@ -16,12 +16,12 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parallelMapNotNullBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
@@ -30,7 +30,6 @@ import kotlinx.serialization.json.jsonObject
 import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -137,15 +136,22 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun fetchStatusByTitle(title: String): Int {
         val query = """
             query {
-            	Media(search: "$title", isAdult: false, sort: UPDATED_AT, type: ANIME) {
-                id
-                idMal
-                title {
+            	Media(
+                  search: "$title",
+                  sort: STATUS_DESC,
+                  status_not_in: [NOT_YET_RELEASED],
+                  format_not_in: [SPECIAL, MOVIE],
+                  isAdult: false,
+                  type: ANIME
+                ) {
+                  id
+                  idMal
+                  title {
                     romaji
                     native
                     english
-                    }
-                status
+                  }
+                  status
                 }
             }
         """.trimIndent()
@@ -163,14 +169,13 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         return when (responseParsed.data.media?.status) {
             "FINISHED" -> SAnime.COMPLETED
             "RELEASING" -> SAnime.ONGOING
-            "NOT_YET_RELEASED" -> SAnime.LICENSED
             "CANCELLED" -> SAnime.CANCELLED
             "HIATUS" -> SAnime.ON_HIATUS
             else -> SAnime.UNKNOWN
         }
     }
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
         val mediaId = json.decodeFromString<LinkData>(anime.url)
         val resp = client.newCall(
             if (mediaId.media_type == "series") {
@@ -180,12 +185,10 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             },
         ).execute().use { it.body.string() }
         val info = json.decodeFromString<AnimeResult>(resp)
-        return Observable.just(
-            info.data.first().toSAnimeOrNull(anime) ?: anime,
-        )
+        return info.data.first().toSAnimeOrNull(anime) ?: anime
     }
 
-    override fun animeDetailsParse(response: Response): SAnime = throw Exception("not used")
+    override fun animeDetailsParse(response: Response): SAnime = throw UnsupportedOperationException()
 
     // ============================== Episodes ==============================
 
@@ -204,11 +207,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         val chunkSize = Runtime.getRuntime().availableProcessors()
         return if (series) {
             seasons.data.sortedBy { it.season_number }.chunked(chunkSize).flatMap { chunk ->
-                chunk.parallelMap { seasonData ->
-                    runCatching {
-                        getEpisodes(seasonData)
-                    }.getOrNull()
-                }.filterNotNull().flatten()
+                chunk.parallelCatchingFlatMapBlocking(::getEpisodes)
             }.reversed()
         } else {
             seasons.data.mapIndexed { index, movie ->
@@ -257,7 +256,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val urlJson = json.decodeFromString<EpisodeData>(episode.url)
         val dubLocale = preferences.getString(PREF_AUD_KEY, PREF_AUD_DEFAULT)!!
 
@@ -270,13 +269,9 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 it.second == "en-US" ||
                 it.second == "" ||
                 if (isUsingLocalToken) it.second == urlJson.ids.first().second else false
-        }.parallelMap { media ->
-            runCatching {
-                extractVideo(media)
-            }.getOrNull()
-        }.filterNotNull().flatten()
+        }.parallelCatchingFlatMap(::extractVideo)
 
-        return Observable.just(videoList.sort())
+        return videoList.sort()
     }
 
     // ============================= Utilities ==============================
@@ -308,11 +303,11 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         audLang: String,
         subsList: List<Track>,
     ): List<Video> {
-        return streams.streams?.adaptive_hls?.entries?.parallelMap { (_, value) ->
+        return streams.streams?.adaptive_hls?.entries?.parallelMapNotNullBlocking { (_, value) ->
             val stream = json.decodeFromString<HlsLinks>(value.jsonObject.toString())
             runCatching {
                 val playlist = client.newCall(GET(stream.url)).execute()
-                if (playlist.code != 200) return@parallelMap null
+                if (playlist.code != 200) return@parallelMapNotNullBlocking null
                 playlist.use { it.body.string() }.substringAfter("#EXT-X-STREAM-INF:")
                     .split("#EXT-X-STREAM-INF:").map {
                         val hardsub = stream.hardsub_locale.let { hs ->
@@ -336,7 +331,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                         }
                     }
             }.getOrNull()
-        }?.filterNotNull()?.flatten() ?: emptyList()
+        }?.flatten() ?: emptyList()
     }
 
     private fun getVideoRequest(mediaId: String): Request {
@@ -411,7 +406,14 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             url = anime?.url ?: LinkData(id, type!!).toJsonString()
             genre = anime?.genre ?: (series_metadata?.genres ?: movie_metadata?.genres ?: genres)
                 ?.joinToString { gen -> gen.replaceFirstChar { it.uppercase() } }
-            status = if (anime != null) fetchStatusByTitle(this@toSAnime.title) else SAnime.UNKNOWN
+            status = anime?.let {
+                val media = json.decodeFromString<LinkData>(anime.url)
+                if (media.media_type == "series") {
+                    fetchStatusByTitle(this@toSAnime.title)
+                } else {
+                    SAnime.COMPLETED
+                }
+            } ?: SAnime.UNKNOWN
             author = content_provider
             description = anime?.description ?: StringBuilder().apply {
                 appendLine(this@toSAnime.description)
@@ -588,12 +590,6 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 }
             }
         }.apply { reload() }
-
-    // From Dopebox
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     private fun getTokenDetail(force: Boolean = false): String {
         return runCatching {

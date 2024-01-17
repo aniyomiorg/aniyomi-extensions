@@ -12,8 +12,8 @@ class StreamHubExtractor(private val client: OkHttpClient) {
         val document = client.newCall(GET(url)).execute().use { it.body.string() }
         val id = REGEX_ID.find(document)?.groupValues?.get(1)
         val sub = REGEX_SUB.find(document)?.groupValues?.get(1)
-        val masterUrl = "https://${sub}.streamhub.ink/hls/,${id},.urlset/master.m3u8"
-        return playlistUtils.extractFromHls(masterUrl, videoNameGen = { "${prefix}StreamHub - (${it})" })
+        val masterUrl = "https://$sub.streamhub.ink/hls/,$id,.urlset/master.m3u8"
+        return playlistUtils.extractFromHls(masterUrl, videoNameGen = { "${prefix}StreamHub - ($it)" })
     }
 
     companion object {

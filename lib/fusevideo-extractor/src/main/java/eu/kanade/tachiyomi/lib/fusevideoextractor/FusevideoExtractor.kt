@@ -1,10 +1,10 @@
 package eu.kanade.tachiyomi.lib.fusevideoextractor
 
+import android.util.Base64
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import android.util.Base64
-import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -28,5 +28,4 @@ class FusevideoExtractor(private val client: OkHttpClient, private val headers: 
             PlaylistUtils(client, newHeaders).extractFromHls(videoUrl, videoNameGen = { "${prefix}Fusevideo - $it" })
         }.getOrDefault(emptyList())
     }
-
 }

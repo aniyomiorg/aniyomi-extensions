@@ -1,14 +1,7 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'Animes Aria'
-    pkgNameSuffix = 'pt.animesaria'
     extClass = '.AnimesAria'
     extVersionCode = 2
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

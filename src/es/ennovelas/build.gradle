@@ -1,13 +1,10 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'EnNovelas'
-    pkgNameSuffix = 'es.ennovelas'
     extClass = '.EnNovelas'
-    extVersionCode = 7
-    libVersion = '13'
+    extVersionCode = 8
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-streamtape-extractor'))
@@ -18,5 +15,3 @@ dependencies {
     implementation(project(':lib-uqload-extractor'))
     implementation(project(':lib-vudeo-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

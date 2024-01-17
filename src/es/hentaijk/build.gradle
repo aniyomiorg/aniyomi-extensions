@@ -1,18 +1,12 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'Hentaijk'
-    pkgNameSuffix = 'es.hentaijk'
     extClass = '.Hentaijk'
-    extVersionCode = 11
-    libVersion = '13'
+    extVersionCode = 12
     containsNsfw = true
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-okru-extractor'))
 }
-
-
-apply from: "$rootDir/common.gradle"

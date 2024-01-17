@@ -1,14 +1,7 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'haho.moe'
-    pkgNameSuffix = 'en.hahomoe'
     extClass = '.HahoMoe'
     extVersionCode = 10
-    libVersion = '13'
     containsNsfw = true
 }
 

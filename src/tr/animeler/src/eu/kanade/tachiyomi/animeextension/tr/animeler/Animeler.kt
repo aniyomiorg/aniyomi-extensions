@@ -30,12 +30,11 @@ import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.vudeoextractor.VudeoExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.await
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -45,7 +44,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -91,14 +89,14 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
     override fun latestUpdatesParse(response: Response) = popularAnimeParse(response)
 
     // =============================== Search ===============================
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val id = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/anime/$id"))
-                .asObservableSuccess()
-                .map(::searchAnimeByIdParse)
+                .awaitSuccess()
+                .use(::searchAnimeByIdParse)
         } else {
-            super.fetchSearchAnime(page, query, filters)
+            super.getSearchAnime(page, query, filters)
         }
     }
 
@@ -258,14 +256,12 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
             chosenHosts.any { it.contains(source.value, true) }
         }
 
-        return filteredSources.parallelMap {
+        return filteredSources.parallelCatchingFlatMapBlocking {
             val body = playerBody(it.key)
-            runCatching {
-                val res = client.newCall(POST(actionUrl, headers, body)).execute()
-                    .parseAs<VideoDto>()
-                videosFromUrl(res.videoSrc)
-            }.getOrElse { emptyList() }
-        }.flatten().ifEmpty { throw Exception("No video available.") }
+            val res = client.newCall(POST(actionUrl, headers, body)).await()
+                .parseAs<VideoDto>()
+            videosFromUrl(res.videoSrc)
+        }
     }
 
     private fun videosFromUrl(url: String): List<Video> {
@@ -320,19 +316,11 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <reified T> Response.parseAs(): T {
-        return body.string().let(json::decodeFromString)
-    }
 
     private fun String.toDate(): Long {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }
             .getOrNull() ?: 0L
     }
-
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     private val qualityRegex by lazy { Regex("""(\d+)p""") }
     override fun List<Video>.sort(): List<Video> {

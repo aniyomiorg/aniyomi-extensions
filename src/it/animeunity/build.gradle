@@ -1,13 +1,7 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
-
 ext {
     extName = 'AnimeUnity'
-    pkgNameSuffix = 'it.animeunity'
     extClass = '.AnimeUnity'
     extVersionCode = 7
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

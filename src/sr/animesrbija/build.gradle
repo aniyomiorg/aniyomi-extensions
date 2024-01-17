@@ -1,20 +1,12 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'Anime Srbija'
-    pkgNameSuffix = 'sr.animesrbija'
     extClass = '.AnimeSrbija'
-    extVersionCode = 6
-    libVersion = '13'
+    extVersionCode = 7
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-filemoon-extractor'))
     implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
 }
-
-apply from: "$rootDir/common.gradle"

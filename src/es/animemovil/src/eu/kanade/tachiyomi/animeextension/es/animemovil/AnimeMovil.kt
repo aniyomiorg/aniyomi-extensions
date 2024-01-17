@@ -30,7 +30,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -51,8 +50,6 @@ class AnimeMovil : ConfigurableAnimeSource, AnimeHttpSource() {
     private val json: Json by injectLazy()
 
     override val supportsLatest = false
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -459,7 +456,7 @@ class AnimeMovil : ConfigurableAnimeSource, AnimeHttpSource() {
         return try {
             URLEncoder.encode(s, "UTF-8")
         } catch (e: UnsupportedEncodingException) {
-            throw UnsupportedOperationException(e)
+            throw UnsupportedOperationException()
         }
     }
 

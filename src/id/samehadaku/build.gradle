@@ -1,12 +1,7 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'Samehadaku'
-    pkgNameSuffix = 'id.samehadaku'
     extClass = '.Samehadaku'
     extVersionCode = 4
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

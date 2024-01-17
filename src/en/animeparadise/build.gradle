@@ -1,15 +1,7 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'AnimeParadise'
-    pkgNameSuffix = 'en.animeparadise'
     extClass = '.AnimeParadise'
     extVersionCode = 1
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

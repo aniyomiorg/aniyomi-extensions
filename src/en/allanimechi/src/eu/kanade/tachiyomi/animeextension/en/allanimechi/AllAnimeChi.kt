@@ -23,11 +23,8 @@ import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -39,11 +36,9 @@ import kotlinx.serialization.json.putJsonObject
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -59,8 +54,6 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val json: Json by injectLazy()
 
@@ -224,16 +217,7 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun getFilterList(): AnimeFilterList = AllAnimeChiFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
-
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        return client.newCall(animeDetailsRequestInternal(anime))
-            .asObservableSuccess()
-            .map { response ->
-                animeDetailsParse(response).apply { initialized = true }
-            }
-    }
-
-    private fun animeDetailsRequestInternal(anime: SAnime): Request {
+    override fun animeDetailsRequest(anime: SAnime): Request {
         val variables = buildJsonObject {
             put("_id", anime.url)
         }.encode()
@@ -254,9 +238,8 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
         return GET(url, apiHeaders)
     }
 
-    // TODO: replace with getAnimeUrl when new ext-lib is available
-    override fun animeDetailsRequest(anime: SAnime): Request {
-        return GET("data:text/plain,This%20extension%20does%20not%20have%20a%20website.")
+    override fun getAnimeUrl(anime: SAnime): String {
+        return "data:text/plain,This%20extension%20does%20not%20have%20a%20website."
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
@@ -282,7 +265,7 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================== Episodes ==============================
 
-    override fun episodeListRequest(anime: SAnime): Request = animeDetailsRequestInternal(anime)
+    override fun episodeListRequest(anime: SAnime) = animeDetailsRequest(anime)
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val media = response.parseAs<SeriesResult>()
@@ -363,7 +346,7 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         return prioritySort(
-            serverList.parallelCatchingFlatMap { getVideoFromServer(it, useHosterNames) },
+            serverList.parallelCatchingFlatMapBlocking { getVideoFromServer(it, useHosterNames) },
         )
     }
 
@@ -442,11 +425,6 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
         return json.encodeToString(this)
     }
 
-    private inline fun <reified T> Response.parseAs(transform: (String) -> String = { it }): T {
-        val responseBody = use { transform(it.body.string()) }
-        return json.decodeFromString(responseBody)
-    }
-
     data class Server(
         val sourceUrl: String,
         val sourceName: String,
@@ -457,15 +435,6 @@ class AllAnimeChi : ConfigurableAnimeSource, AnimeHttpSource() {
     fun Set<String>.contains(element: String, ignoreCase: Boolean): Boolean {
         return this.any { it.equals(element, ignoreCase = ignoreCase) }
     }
-
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map {
-                async(Dispatchers.Default) {
-                    runCatching { f(it) }.getOrElse { emptyList() }
-                }
-            }.awaitAll().flatten()
-        }
 
     private fun prioritySort(pList: List<Pair<Video, Float>>): List<Video> {
         val prefServer = preferences.prefServer

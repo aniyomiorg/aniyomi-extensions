@@ -1,13 +1,10 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'Pelisplushd'
-    pkgNameSuffix = 'es.pelisplushd'
     extClass = '.PelisplushdFactory'
-    extVersionCode = 47
-    libVersion = '13'
+    extVersionCode = 48
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-vudeo-extractor'))
@@ -27,5 +24,3 @@ dependencies {
     implementation(project(':lib-upstream-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
-
-apply from: "$rootDir/common.gradle"

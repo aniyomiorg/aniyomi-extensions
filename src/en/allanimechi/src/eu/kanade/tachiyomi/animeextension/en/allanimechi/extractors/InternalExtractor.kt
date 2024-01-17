@@ -5,13 +5,13 @@ import eu.kanade.tachiyomi.animeextension.en.allanimechi.AllAnimeChi
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
-import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
 import java.util.Locale
 
@@ -150,10 +150,5 @@ class InternalExtractor(private val client: OkHttpClient, private val apiHeaders
 
     private fun String.decodeBase64(): String {
         return String(Base64.decode(this, Base64.DEFAULT))
-    }
-
-    private inline fun <reified T> Response.parseAs(transform: (String) -> String = { it }): T {
-        val responseBody = use { transform(it.body.string()) }
-        return json.decodeFromString(responseBody)
     }
 }

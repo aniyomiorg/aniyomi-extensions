@@ -1,15 +1,10 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'AsianLoad'
-    pkgNameSuffix = 'en.asianload'
     extClass = '.AsianLoad'
-    extVersionCode = 36
-    libVersion = '13'
+    extVersionCode = 37
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-streamtape-extractor'))
@@ -17,5 +12,3 @@ dependencies {
     implementation(project(':lib-mixdrop-extractor'))
     implementation(project(':lib-streamwish-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

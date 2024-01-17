@@ -1,16 +1,10 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'Moflix-Stream'
-    pkgNameSuffix = 'de.moflixstream'
     extClass = '.MoflixStream'
-    extVersionCode = 3
-    libVersion = '13'
+    extVersionCode = 4
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-streamvid-extractor'))
@@ -19,6 +13,3 @@ dependencies {
     implementation(project(':lib-playlist-utils'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
-
-
-apply from: "$rootDir/common.gradle"

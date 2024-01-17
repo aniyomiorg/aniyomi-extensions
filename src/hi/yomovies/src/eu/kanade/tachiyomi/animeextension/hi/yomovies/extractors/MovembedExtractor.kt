@@ -6,10 +6,7 @@ import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -20,11 +17,10 @@ class MovembedExtractor(private val client: OkHttpClient, private val headers: H
             GET(url, headers),
         ).execute().asJsoup()
 
-        return document.select("ul.list-server-items > li.linkserver").parallelMap { server ->
-            runCatching {
+        return document.select("ul.list-server-items > li.linkserver")
+            .parallelCatchingFlatMapBlocking { server ->
                 extractVideosFromIframe(server.attr("abs:data-video"))
-            }.getOrElse { emptyList() }
-        }.flatten()
+            }
     }
 
     private fun extractVideosFromIframe(iframeUrl: String): List<Video> {
@@ -48,12 +44,6 @@ class MovembedExtractor(private val client: OkHttpClient, private val headers: H
             else -> emptyList()
         }
     }
-
-    // From Dopebox
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     companion object {
 

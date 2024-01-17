@@ -1,15 +1,10 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'asia2tv'
-    pkgNameSuffix = 'ar.asia2tv'
     extClass = '.Asia2TV'
-    extVersionCode = 15
-    libVersion = '13'
+    extVersionCode = 16
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-dood-extractor'))
@@ -19,5 +14,3 @@ dependencies {
     implementation(project(':lib-uqload-extractor'))
     implementation(project(':lib-vidbom-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

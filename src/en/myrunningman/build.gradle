@@ -1,21 +1,13 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'My Running Man'
-    pkgNameSuffix = 'en.myrunningman'
     extClass = '.MyRunningMan'
-    extVersionCode = 2
-    libVersion = '13'
+    extVersionCode = 3
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(":lib-dood-extractor"))
     implementation(project(":lib-mixdrop-extractor"))
     implementation(project(":lib-streamtape-extractor"))
 }
-
-apply from: "$rootDir/common.gradle"

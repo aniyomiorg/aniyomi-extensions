@@ -30,7 +30,6 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -56,11 +55,11 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+    override val client = network.client.newBuilder()
         .addInterceptor(DdosGuardInterceptor(network.client))
         .build()
 
-    private val authClient = network.cloudflareClient.newBuilder()
+    private val authClient = network.client.newBuilder()
         .addInterceptor(SerienstreamInterceptor(client, preferences))
         .build()
 
@@ -120,9 +119,9 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .build()
         return POST("$baseUrl/ajax/search", body = FormBody.Builder().add("keyword", query).build(), headers = headers)
     }
-    override fun searchAnimeSelector() = throw UnsupportedOperationException("Not used.")
+    override fun searchAnimeSelector() = throw UnsupportedOperationException()
 
-    override fun searchAnimeNextPageSelector() = throw UnsupportedOperationException("Not used.")
+    override fun searchAnimeNextPageSelector() = throw UnsupportedOperationException()
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         val body = response.body.string()
@@ -148,7 +147,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun searchAnimeFromElement(element: Element) = throw UnsupportedOperationException("Not used.")
+    override fun searchAnimeFromElement(element: Element) = throw UnsupportedOperationException()
 
     // ===== ANIME DETAILS =====
     override fun animeDetailsParse(document: Document): SAnime {
@@ -166,7 +165,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ===== EPISODE =====
-    override fun episodeListSelector() = throw UnsupportedOperationException("Not used.")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
@@ -219,7 +218,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ===== VIDEO SOURCES =====
-    override fun videoListSelector() = throw UnsupportedOperationException("Not used.")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
@@ -282,7 +281,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("not Used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val hoster = preferences.getString(SConstants.PREFERRED_HOSTER, null)
@@ -322,7 +321,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return newList
     }
 
-    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException("Not used.")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // ===== PREFERENCES ======
     @Suppress("UNCHECKED_CAST")

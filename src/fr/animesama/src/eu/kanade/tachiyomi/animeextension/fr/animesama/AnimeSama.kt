@@ -16,16 +16,11 @@ import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.lib.vkextractor.VkExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -39,8 +34,6 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
     override val lang = "fr"
 
     override val supportsLatest = true
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val json: Json by injectLazy()
 
@@ -82,9 +75,9 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
     // =============================== Search ===============================
     override fun getFilterList() = AnimeSamaFilters.FILTER_LIST
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         if (query.startsWith(PREFIX_SEARCH)) {
-            return Observable.just(AnimesPage(fetchAnimeSeasons("$baseUrl/catalogue/${query.removePrefix(PREFIX_SEARCH)}/"), false))
+            return AnimesPage(fetchAnimeSeasons("$baseUrl/catalogue/${query.removePrefix(PREFIX_SEARCH)}/"), false)
         }
         val params = AnimeSamaFilters.getSearchFilters(filters)
         val elements = database
@@ -96,34 +89,34 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
             .filter { params.language.fold(params.language.isEmpty()) { v, p -> v || it.className().contains(p) } }
             .chunked(5)
             .toList()
-        if (elements.isEmpty()) return Observable.just(AnimesPage(emptyList(), false))
+        if (elements.isEmpty()) return AnimesPage(emptyList(), false)
         val animes = elements[page - 1].flatMap {
             fetchAnimeSeasons(it.getElementsByTag("a").attr("href"))
         }
-        return Observable.just(AnimesPage(animes, page < elements.size))
+        return AnimesPage(animes, page < elements.size)
     }
 
-    override fun searchAnimeParse(response: Response): AnimesPage = throw Exception("not used")
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
+    override fun searchAnimeParse(response: Response): AnimesPage = throw UnsupportedOperationException()
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw UnsupportedOperationException()
 
     // =========================== Anime Details ============================
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> = Observable.just(anime)
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime = anime
 
-    override fun animeDetailsParse(response: Response): SAnime = throw Exception("not used")
+    override fun animeDetailsParse(response: Response): SAnime = throw UnsupportedOperationException()
 
     // ============================== Episodes ==============================
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+    override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
         val animeUrl = "$baseUrl${anime.url.substringBeforeLast("/")}"
         val movie = anime.url.split("#").getOrElse(1) { "" }.toIntOrNull()
         val players = VOICES_VALUES.map { fetchPlayers("$animeUrl/$it") }
         val episodes = playersToEpisodes(players)
-        return Observable.just(if (movie == null) episodes.reversed() else listOf(episodes[movie]))
+        return if (movie == null) episodes.reversed() else listOf(episodes[movie])
     }
 
-    override fun episodeListParse(response: Response): List<SEpisode> = throw Exception("not used")
+    override fun episodeListParse(response: Response): List<SEpisode> = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val playerUrls = json.decodeFromString<List<List<String>>>(episode.url)
         val videos = playerUrls.flatMapIndexed { i, it ->
             val prefix = "(${VOICES_VALUES[i].uppercase()}) "
@@ -139,15 +132,10 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
                 }
             }
         }.sort()
-        return Observable.just(videos)
+        return videos
     }
 
     // ============================ Utils =============================
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { runCatching { f(it) }.getOrElse { emptyList() } } }.awaitAll().flatten()
-        }
-
     private fun sanitizeEpisodesJs(doc: String) = doc
         .replace(Regex("[\"\t]"), "") // Fix trash format
         .replace("'", "\"") // Fix quotes

@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Response
 
 class LMAnime : AnimeStream(
@@ -27,11 +28,11 @@ class LMAnime : AnimeStream(
             .filter { element ->
                 val text = element.text()
                 allowed.any { it in text }
-            }.parallelMap {
+            }.parallelCatchingFlatMapBlocking {
                 val language = it.text().substringBefore(" ")
                 val url = getHosterUrl(it)
                 getVideoList(url, language)
-            }.flatten().ifEmpty { throw Exception("Empty video list!") }
+            }
     }
 
     private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }

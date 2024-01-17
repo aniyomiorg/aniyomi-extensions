@@ -18,22 +18,20 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.lang.Exception
 import java.text.SimpleDateFormat
 
 class AnimeUnity :
@@ -48,8 +46,6 @@ class AnimeUnity :
     override val supportsLatest = true
 
     private val json: Json by injectLazy()
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -107,18 +103,18 @@ class AnimeUnity :
         page: Int,
         query: String,
         filters: AnimeFilterList,
-    ): Request = throw Exception("Not used")
+    ): Request = throw UnsupportedOperationException()
 
-    override fun fetchSearchAnime(
+    override suspend fun getSearchAnime(
         page: Int,
         query: String,
         filters: AnimeFilterList,
-    ): Observable<AnimesPage> {
+    ): AnimesPage {
         val params = AnimeUnityFilters.getSearchParameters(filters)
         return client
             .newCall(searchAnimeRequest(page, query, params))
-            .asObservableSuccess()
-            .map { response ->
+            .awaitSuccess()
+            .use { response ->
                 searchAnimeParse(response, page)
             }
     }
@@ -195,7 +191,7 @@ class AnimeUnity :
         return POST("$baseUrl/archivio/get-animes", body = body, headers = searchHeaders)
     }
 
-    override fun searchAnimeParse(response: Response): AnimesPage = throw Exception("Not used")
+    override fun searchAnimeParse(response: Response): AnimesPage = throw UnsupportedOperationException()
 
     private fun searchAnimeParse(
         response: Response,
@@ -344,7 +340,7 @@ class AnimeUnity :
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val videoList = mutableListOf<Video>()
         val doc =
             client
@@ -411,19 +407,14 @@ class AnimeUnity :
 
         require(videoList.isNotEmpty()) { "Failed to fetch videos" }
 
-        return Observable.just(videoList.sort())
+        return videoList.sort()
     }
 
-    override fun videoListRequest(episode: SEpisode): Request = throw Exception("Not used")
+    override fun videoListRequest(episode: SEpisode): Request = throw UnsupportedOperationException()
 
-    override fun videoListParse(response: Response): List<Video> = throw Exception("Not used")
+    override fun videoListParse(response: Response): List<Video> = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
-
-    private inline fun <reified T> Response.parseAs(transform: (String) -> String = { it }): T {
-        val responseBody = use { transform(it.body.string()) }
-        return json.decodeFromString(responseBody)
-    }
 
     private fun parseStatus(statusString: String): Int =
         when (statusString) {

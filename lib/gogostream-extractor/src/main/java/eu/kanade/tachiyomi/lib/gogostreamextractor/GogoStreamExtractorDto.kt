@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.lib.gogostreamextractor
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable

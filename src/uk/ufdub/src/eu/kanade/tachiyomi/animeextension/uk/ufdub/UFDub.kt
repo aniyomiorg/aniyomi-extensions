@@ -11,12 +11,10 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.FormBody
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 
 class UFDub : ParsedAnimeHttpSource() {
 
@@ -28,8 +26,6 @@ class UFDub : ParsedAnimeHttpSource() {
 
     override val baseUrl = "https://ufdub.com/anime"
     private val baseUrlWithoutAnime = "https://ufdub.com"
-
-    override val client: OkHttpClient = network.client
 
     // =========================== Anime Details ============================
 
@@ -109,9 +105,9 @@ class UFDub : ParsedAnimeHttpSource() {
 
     // ============================== Episode ===============================
 
-    override fun episodeFromElement(element: Element) = throw Exception("not used")
+    override fun episodeFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val animePage = response.asJsoup()
@@ -145,16 +141,16 @@ class UFDub : ParsedAnimeHttpSource() {
 
     // ============================ Video ===============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val videoUrl = client.newCall(GET(episode.url)).execute().request.url.toString().replace("dl=1", "raw=1")
         Log.d("fetchVideoList", videoUrl)
         val video = Video(videoUrl, "Quality", videoUrl)
-        return Observable.just(listOf(video))
+        return listOf(video)
     }
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 }

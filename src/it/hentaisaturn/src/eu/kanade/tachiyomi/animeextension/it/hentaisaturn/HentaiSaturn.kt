@@ -14,14 +14,12 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 
 class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -32,8 +30,6 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "it"
 
     override val supportsLatest = true
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -90,9 +86,9 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return GET("$watchUrl&s=alt")
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
     private fun videosFromElement(document: Document): List<Video> {
         val url = if (document.html().contains("jwplayer(")) {
@@ -145,7 +141,7 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return qualityList
     }
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()

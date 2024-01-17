@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import dev.datlag.jsunpacker.JsUnpacker
 import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -16,18 +17,13 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
-import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
-import dev.datlag.jsunpacker.JsUnpacker
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
-import okhttp3.OkHttpClient
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -47,8 +43,6 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "ar"
 
     override val supportsLatest = true
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -134,7 +128,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListSelector() = "link[rel=canonical]"
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     // ============================ video links ============================
     override fun videoListRequest(episode: SEpisode): Request {
@@ -149,20 +143,15 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        return document.select(videoListSelector()).parallelMap {
-            runCatching { extractVideos(it) }.getOrElse { emptyList() }
-        }.flatten()
+        return document.select(videoListSelector())
+            .parallelCatchingFlatMapBlocking(::extractVideos)
     }
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     private fun extractVideos(element: Element): List<Video> {
         val url = element.attr("data-link")
         val txt = element.text()
         return when {
-            "Main" in txt -> { 
+            "Main" in txt -> {
                 videosFromMain(url)
             }
             url.contains("ok") -> {
@@ -194,9 +183,9 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ).reversed()
     }
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
     private fun videosFromMain(url: String): List<Video> {
         val jsE = client.newCall(GET(url)).execute().asJsoup().selectFirst("script:containsData(player)")!!.data()
@@ -208,7 +197,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun videosFromOthers(url: String, prefix: String): List<Video> {
         val jsE = client.newCall(GET(url)).execute().asJsoup().selectFirst("script:containsData(source)")!!.data()
         val masterUrl = JsUnpacker.unpackAndCombine(jsE)!!.substringAfter("file").substringAfter("\"").substringBefore("\"")
-        return PlaylistUtils(client).extractFromHls(masterUrl, url, videoNameGen = { "$prefix - $it" } )
+        return PlaylistUtils(client).extractFromHls(masterUrl, url, videoNameGen = { "$prefix - $it" })
     }
     // ============================ search ============================
 

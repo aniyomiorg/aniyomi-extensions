@@ -1,15 +1,7 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'UHD Movies'
-    pkgNameSuffix = 'en.uhdmovies'
     extClass = '.UHDMovies'
     extVersionCode = 19
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

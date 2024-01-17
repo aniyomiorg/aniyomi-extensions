@@ -1,19 +1,13 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'Jkhentai'
-    pkgNameSuffix = 'es.jkhentai'
     extClass = '.Jkhentai'
     extVersionCode = 9
-    libVersion = '13'
     containsNsfw = true
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-yourupload-extractor'))
     implementation(project(':lib-streamtape-extractor'))
 }
-
-
-apply from: "$rootDir/common.gradle"

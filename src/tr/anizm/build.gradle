@@ -1,16 +1,10 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'Anizm'
-    pkgNameSuffix = 'tr.anizm'
     extClass = '.Anizm'
-    extVersionCode = 11
-    libVersion = '13'
+    extVersionCode = 12
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(":lib-playlist-utils"))
@@ -26,5 +20,3 @@ dependencies {
     implementation(project(":lib-voe-extractor"))
     implementation(project(":lib-yourupload-extractor"))
 }
-
-apply from: "$rootDir/common.gradle"

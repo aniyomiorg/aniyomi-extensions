@@ -1,13 +1,10 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'Animefenix'
-    pkgNameSuffix = 'es.animefenix'
     extClass = '.Animefenix'
-    extVersionCode = 32
-    libVersion = '13'
+    extVersionCode = 33
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-mp4upload-extractor'))
@@ -25,6 +22,3 @@ dependencies {
     implementation(project(':lib-upstream-extractor'))
     implementation(project(':lib-streamhidevid-extractor'))
 }
-
-
-apply from: "$rootDir/common.gradle"

@@ -1,14 +1,7 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-}
-
 ext {
     extName = 'Anitube'
-    pkgNameSuffix = 'pt.anitube'
     extClass = '.Anitube'
     extVersionCode = 13
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

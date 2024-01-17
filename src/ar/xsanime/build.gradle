@@ -1,12 +1,7 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'XS Anime'
-    pkgNameSuffix = 'ar.xsanime'
     extClass = '.XsAnime'
     extVersionCode = 10
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

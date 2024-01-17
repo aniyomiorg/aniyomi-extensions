@@ -1,14 +1,10 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
-
 ext {
     extName = 'MetroSeries'
-    pkgNameSuffix = 'es.metroseries'
     extClass = '.MetroSeries'
-    extVersionCode = 5
-    libVersion = '13'
+    extVersionCode = 6
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-burstcloud-extractor'))
@@ -20,5 +16,3 @@ dependencies {
     implementation(project(':lib-upstream-extractor'))
     implementation(project(':lib-filemoon-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

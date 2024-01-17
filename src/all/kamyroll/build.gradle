@@ -1,15 +1,7 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'Yomiroll'
-    pkgNameSuffix = 'all.kamyroll'
     extClass = '.Yomiroll'
-    extVersionCode = 28
-    libVersion = '13'
+    extVersionCode = 29
 }
 
 apply from: "$rootDir/common.gradle"

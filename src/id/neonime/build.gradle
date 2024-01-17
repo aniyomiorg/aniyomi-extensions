@@ -1,14 +1,10 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
-
 ext {
     extName = 'NeoNime'
-    pkgNameSuffix = 'id.neonime'
     extClass = '.NeoNime'
-    extVersionCode = 13
-    libVersion = '13'
+    extVersionCode = 14
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-blogger-extractor'))
@@ -17,5 +13,3 @@ dependencies {
     implementation(project(':lib-okru-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
-
-apply from: "$rootDir/common.gradle"

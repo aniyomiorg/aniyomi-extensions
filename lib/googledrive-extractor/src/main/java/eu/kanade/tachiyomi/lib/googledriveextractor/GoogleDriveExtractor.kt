@@ -7,8 +7,8 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.Headers
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.internal.commonEmptyRequestBody
 
@@ -37,7 +37,7 @@ class GoogleDriveExtractor(private val client: OkHttpClient, private val headers
         }.build()
 
         val docResp = noRedirectClient.newCall(
-            GET(itemUrl, headers = docHeaders)
+            GET(itemUrl, headers = docHeaders),
         ).execute()
 
         if (docResp.isRedirect) {
@@ -60,7 +60,7 @@ class GoogleDriveExtractor(private val client: OkHttpClient, private val headers
         }.build()
 
         val newUrl = noRedirectClient.newCall(
-            POST(downloadUrl, headers = postHeaders, body = commonEmptyRequestBody)
+            POST(downloadUrl, headers = postHeaders, body = commonEmptyRequestBody),
         ).execute().use { it.headers["location"] ?: downloadUrl }
 
         return videoFromRedirect(newUrl, videoName, itemSize, cookieJar)
@@ -70,7 +70,7 @@ class GoogleDriveExtractor(private val client: OkHttpClient, private val headers
         downloadUrl: String,
         videoName: String,
         itemSize: String,
-        cookieJar: GDriveCookieJar
+        cookieJar: GDriveCookieJar,
     ): List<Video> {
         var newUrl = downloadUrl
 
@@ -82,7 +82,7 @@ class GoogleDriveExtractor(private val client: OkHttpClient, private val headers
         }.build()
 
         var newResp = noRedirectClient.newCall(
-            GET(newUrl, headers = newHeaders)
+            GET(newUrl, headers = newHeaders),
         ).execute()
 
         var redirectCounter = 1
@@ -101,7 +101,7 @@ class GoogleDriveExtractor(private val client: OkHttpClient, private val headers
             }.build()
 
             newResp = noRedirectClient.newCall(
-                GET(newUrl, headers = newHeaders)
+                GET(newUrl, headers = newHeaders),
             ).execute()
             redirectCounter += 1
         }
@@ -120,8 +120,8 @@ class GoogleDriveExtractor(private val client: OkHttpClient, private val headers
                 videoUrl.toString(),
                 videoName + itemSize,
                 videoUrl.toString(),
-                headers = videoHeaders
-            )
+                headers = videoHeaders,
+            ),
         )
     }
 

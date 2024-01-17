@@ -1,18 +1,13 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'FanPelis'
-    pkgNameSuffix = 'es.fanpelis'
     extClass = '.FanPelis'
-    extVersionCode = 10
-    libVersion = '13'
+    extVersionCode = 11
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-dood-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

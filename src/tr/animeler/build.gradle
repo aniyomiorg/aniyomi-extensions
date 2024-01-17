@@ -1,16 +1,10 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'Animeler'
-    pkgNameSuffix = 'tr.animeler'
     extClass = '.Animeler'
-    extVersionCode = 6
-    libVersion = '13'
+    extVersionCode = 7
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(":lib-dood-extractor"))
@@ -24,5 +18,3 @@ dependencies {
     implementation(project(":lib-voe-extractor"))
     implementation(project(":lib-vudeo-extractor"))
 }
-
-apply from: "$rootDir/common.gradle"

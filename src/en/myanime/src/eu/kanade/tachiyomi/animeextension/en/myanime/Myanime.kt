@@ -17,16 +17,11 @@ import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
-import okhttp3.OkHttpClient
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -39,8 +34,6 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -118,9 +111,9 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> = Observable.just(anime)
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime = anime
 
-    override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
+    override fun animeDetailsParse(document: Document): SAnime = throw UnsupportedOperationException()
 
     // ============================== Episodes ==============================
 
@@ -191,7 +184,7 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListSelector(): String = "div#episodes-tab-pane > div.row > div > div.card"
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
 
@@ -200,29 +193,27 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
 
         videoList.addAll(
-            document.select(videoListSelector()).parallelMap { element ->
-                runCatching {
-                    val url = element.attr("src")
-                        .replace("""^\/\/""".toRegex(), "https://")
+            document.select(videoListSelector()).parallelCatchingFlatMapBlocking { element ->
+                val url = element.attr("src")
+                    .replace("""^\/\/""".toRegex(), "https://")
 
-                    when {
-                        url.contains("dailymotion") -> {
-                            DailymotionExtractor(client, headers).videosFromUrl(url)
-                        }
-                        url.contains("ok.ru") -> {
-                            OkruExtractor(client).videosFromUrl(url)
-                        }
-                        url.contains("youtube.com") -> {
-                            YouTubeExtractor(client).videosFromUrl(url, "YouTube - ")
-                        }
-                        url.contains("gdriveplayer") -> {
-                            val newHeaders = headersBuilder().add("Referer", baseUrl).build()
-                            GdrivePlayerExtractor(client).videosFromUrl(url, name = "Gdriveplayer", headers = newHeaders)
-                        }
-                        else -> null
+                when {
+                    url.contains("dailymotion") -> {
+                        DailymotionExtractor(client, headers).videosFromUrl(url)
                     }
-                }.getOrNull()
-            }.filterNotNull().flatten(),
+                    url.contains("ok.ru") -> {
+                        OkruExtractor(client).videosFromUrl(url)
+                    }
+                    url.contains("youtube.com") -> {
+                        YouTubeExtractor(client).videosFromUrl(url, "YouTube - ")
+                    }
+                    url.contains("gdriveplayer") -> {
+                        val newHeaders = headersBuilder().add("Referer", baseUrl).build()
+                        GdrivePlayerExtractor(client).videosFromUrl(url, name = "Gdriveplayer", headers = newHeaders)
+                    }
+                    else -> null
+                }.orEmpty()
+            },
         )
 
         require(videoList.isNotEmpty()) { "Failed to fetch videos" }
@@ -232,9 +223,9 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListSelector(): String = "div.entry-content iframe[src]"
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
 
@@ -249,12 +240,6 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             ),
         ).reversed()
     }
-
-    // From Dopebox
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"

@@ -10,11 +10,9 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.bloggerextractor.BloggerExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Response
 import org.jsoup.nodes.Element
 
@@ -76,10 +74,10 @@ class GoAnimes : DooPlay(
     override fun videoListParse(response: Response): List<Video> {
         val document = response.use { it.asJsoup() }
         val players = document.select("ul#playeroptionsul li")
-        return players.parallelCatchingFlatMap(::getPlayerVideos)
+        return players.parallelCatchingFlatMapBlocking(::getPlayerVideos)
     }
 
-    private fun getPlayerVideos(player: Element): List<Video> {
+    private suspend fun getPlayerVideos(player: Element): List<Video> {
         val url = getPlayerUrl(player)
         return when {
             "player5.goanimes.net" in url -> goanimesExtractor.videosFromUrl(url)
@@ -88,7 +86,7 @@ class GoAnimes : DooPlay(
                     .set("referer", url)
                     .build()
 
-                val script = client.newCall(GET(url, headers)).execute()
+                val script = client.newCall(GET(url, headers)).await()
                     .use { it.body.string() }
                     .let { JsDecoder.decodeScript(it, false) }
 
@@ -111,7 +109,7 @@ class GoAnimes : DooPlay(
                     }
             }
             listOf("/bloggerjwplayer", "/m3u8", "/multivideo").any { it in url } -> {
-                val script = client.newCall(GET(url)).execute()
+                val script = client.newCall(GET(url)).await()
                     .use { it.body.string() }
                     .let(JsDecoder::decodeScript)
                 when {
@@ -132,12 +130,12 @@ class GoAnimes : DooPlay(
         }
     }
 
-    private fun getPlayerUrl(player: Element): String {
+    private suspend fun getPlayerUrl(player: Element): String {
         val type = player.attr("data-type")
         val id = player.attr("data-post")
         val num = player.attr("data-nume")
         val url = client.newCall(GET("$baseUrl/wp-json/dooplayer/v2/$id/$type/$num"))
-            .execute()
+            .await()
             .use { it.body.string() }
             .substringAfter("\"embed_url\":\"")
             .substringBefore("\",")
@@ -145,24 +143,14 @@ class GoAnimes : DooPlay(
 
         return when {
             "/protetorlinks/" in url -> {
-                val link = client.newCall(GET(url)).execute()
+                val link = client.newCall(GET(url)).await()
                     .use { it.asJsoup() }
                     .selectFirst("a[href]")!!.attr("href")
 
-                client.newCall(GET(link)).execute()
+                client.newCall(GET(link)).await()
                     .use(linkfunBypasser::getIframeUrl)
             }
             else -> url
         }
     }
-
-    // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map {
-                async(Dispatchers.Default) {
-                    runCatching { f(it) }.getOrElse { emptyList() }
-                }
-            }.awaitAll().flatten()
-        }
 }

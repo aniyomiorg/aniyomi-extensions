@@ -1,12 +1,7 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'Animevost'
-    pkgNameSuffix = 'ru.animevost'
     extClass = '.Animevost'
     extVersionCode = 7
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

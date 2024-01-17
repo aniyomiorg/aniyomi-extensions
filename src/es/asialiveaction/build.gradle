@@ -1,13 +1,10 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'AsiaLiveAction'
-    pkgNameSuffix = 'es.asialiveaction'
     extClass = '.AsiaLiveAction'
-    extVersionCode = 24
-    libVersion = '13'
+    extVersionCode = 25
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-vudeo-extractor'))
@@ -28,6 +25,3 @@ dependencies {
     implementation(project(':lib-streamhidevid-extractor'))
     implementation(project(':lib-vk-extractor'))
 }
-
-
-apply from: "$rootDir/common.gradle"

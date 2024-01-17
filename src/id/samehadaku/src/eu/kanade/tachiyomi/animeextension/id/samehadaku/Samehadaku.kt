@@ -14,10 +14,8 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parallelMapNotNullBlocking
 import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.Response
@@ -113,12 +111,12 @@ class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.asJsoup()
         return doc.select("#server > ul > li > div")
-            .parallelMapNotNull {
+            .parallelMapNotNullBlocking {
                 runCatching { getEmbedLinks(it) }.getOrNull()
             }
-            .parallelMapNotNull {
-                runCatching { getVideosFromEmbed(it.first, it.second) }.getOrNull()
-            }.flatten()
+            .parallelCatchingFlatMapBlocking {
+                getVideosFromEmbed(it.first, it.second)
+            }
     }
 
     // ============================= Utilities ==============================
@@ -141,12 +139,6 @@ class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
                     else -> it
                 }.trim()
             }
-    }
-
-    private inline fun <A, B> Iterable<A>.parallelMapNotNull(crossinline f: suspend (A) -> B?): List<B> {
-        return runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll().filterNotNull()
-        }
     }
 
     private fun getAnimeParse(document: Document, query: String): AnimesPage {

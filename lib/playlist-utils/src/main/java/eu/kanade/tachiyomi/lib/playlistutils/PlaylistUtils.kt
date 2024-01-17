@@ -43,7 +43,7 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
             { _, _, _ -> videoHeaders },
             videoNameGen,
             subtitleList,
-            audioList
+            audioList,
         )
     }
 
@@ -90,8 +90,13 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
         if (PLAYLIST_SEPARATOR !in masterPlaylist) {
             return listOf(
                 Video(
-                    playlistUrl, videoNameGen("Video"), playlistUrl, headers = masterHeaders, subtitleTracks = subtitleList, audioTracks = audioList
-                )
+                    playlistUrl,
+                    videoNameGen("Video"),
+                    playlistUrl,
+                    headers = masterHeaders,
+                    subtitleTracks = subtitleList,
+                    audioTracks = audioList,
+                ),
             )
         }
 
@@ -107,16 +112,16 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
         // Get subtitles
         val subtitleTracks = subtitleList + SUBTITLE_REGEX.findAll(masterPlaylist).mapNotNull {
             Track(
-                getAbsoluteUrl(it.groupValues[2], playlistUrl, masterUrlBasePath ) ?: return@mapNotNull null,
-                it.groupValues[1]
+                getAbsoluteUrl(it.groupValues[2], playlistUrl, masterUrlBasePath) ?: return@mapNotNull null,
+                it.groupValues[1],
             )
         }.toList()
 
         // Get audio tracks
         val audioTracks = audioList + AUDIO_REGEX.findAll(masterPlaylist).mapNotNull {
             Track(
-                getAbsoluteUrl(it.groupValues[2], playlistUrl, masterUrlBasePath ) ?: return@mapNotNull null,
-                it.groupValues[1]
+                getAbsoluteUrl(it.groupValues[2], playlistUrl, masterUrlBasePath) ?: return@mapNotNull null,
+                it.groupValues[1],
             )
         }.toList()
 
@@ -127,15 +132,16 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
                 .substringBefore(",") + "p"
 
             val videoUrl = it.substringAfter("\n").substringBefore("\n").let { url ->
-                getAbsoluteUrl(url, playlistUrl, masterUrlBasePath )
+                getAbsoluteUrl(url, playlistUrl, masterUrlBasePath)
             } ?: return@mapNotNull null
 
-
-
             Video(
-                videoUrl, videoNameGen(resolution), videoUrl,
+                videoUrl,
+                videoNameGen(resolution),
+                videoUrl,
                 headers = videoHeadersGen(headers, referer, videoUrl),
-                subtitleTracks = subtitleTracks, audioTracks = audioTracks
+                subtitleTracks = subtitleTracks,
+                audioTracks = audioTracks,
             )
         }
     }
@@ -146,7 +152,7 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
             url.startsWith("http") -> url
             url.startsWith("//") -> "https:$url"
             url.startsWith("/") -> playlistUrl.toHttpUrl().newBuilder().encodedPath("/").build().toString()
-                    .substringBeforeLast("/") + url
+                .substringBeforeLast("/") + url
             else -> masterBase + url
         }
     }
@@ -192,10 +198,10 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
                 videoNameGen(videoRes) + " - ${formatBytes(bandwidth.toLongOrNull())}"
             },
             referer,
-            { _, _ -> mpdHeaders},
-            { _, _, _ -> videoHeaders},
+            { _, _ -> mpdHeaders },
+            { _, _, _ -> videoHeaders },
             subtitleList,
-            audioList
+            audioList,
         )
     }
 
@@ -242,7 +248,7 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
             mpdHeadersGen,
             videoHeadersGen,
             subtitleList,
-            audioList
+            audioList,
         )
     }
 

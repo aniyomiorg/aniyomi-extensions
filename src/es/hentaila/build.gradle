@@ -1,15 +1,11 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
-
 ext {
     extName = 'HentaiLA'
-    pkgNameSuffix = 'es.hentaila'
     extClass = '.Hentaila'
-    extVersionCode = 19
-    libVersion = '13'
+    extVersionCode = 20
     containsNsfw = true
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-burstcloud-extractor'))
@@ -18,5 +14,3 @@ dependencies {
     implementation(project(':lib-voe-extractor'))
     implementation(project(':lib-yourupload-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

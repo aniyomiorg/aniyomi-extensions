@@ -13,17 +13,14 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -38,8 +35,6 @@ abstract class DooPlay(
 ) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
-
-    override val client: OkHttpClient = network.client
 
     override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
@@ -128,7 +123,7 @@ abstract class DooPlay(
         }
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     protected open fun episodeFromElement(element: Element, seasonName: String): SEpisode {
         return SEpisode.create().apply {
@@ -149,13 +144,13 @@ abstract class DooPlay(
     }
 
     // ============================ Video Links =============================
-    override fun videoListParse(response: Response): List<Video> = throw Exception("not used")
+    override fun videoListParse(response: Response): List<Video> = throw UnsupportedOperationException()
 
-    override fun videoListSelector(): String = throw Exception("not used")
+    override fun videoListSelector(): String = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element): Video = throw Exception("not used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document): String = throw Exception("not used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
 
@@ -185,16 +180,14 @@ abstract class DooPlay(
         return AnimesPage(animes, hasNextPage)
     }
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH)) {
             val path = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/$path", headers))
-                .asObservableSuccess()
-                .map { response ->
-                    searchAnimeByPathParse(response)
-                }
+                .awaitSuccess()
+                .use(::searchAnimeByPathParse)
         } else {
-            super.fetchSearchAnime(page, query, filters)
+            super.getSearchAnime(page, query, filters)
         }
     }
 

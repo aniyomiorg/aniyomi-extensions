@@ -18,12 +18,12 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
@@ -52,8 +52,6 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     private val json = Json {
         ignoreUnknownKeys = true
     }
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     // =========================== Anime Details ============================
     /**
@@ -130,7 +128,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================== Popular ===============================
     // This source doesnt have a popular animes page,
     // so we use latest animes page instead.
-    override fun fetchPopularAnime(page: Int) = fetchLatestUpdates(page)
+    override suspend fun getPopularAnime(page: Int) = getLatestUpdates(page)
     override fun popularAnimeParse(response: Response): AnimesPage = TODO()
     override fun popularAnimeRequest(page: Int): Request = TODO()
 
@@ -329,11 +327,6 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         return runCatching {
             DATE_FORMATTER.parse(this)?.time ?: 0L
         }.getOrNull() ?: 0L
-    }
-
-    private inline fun <reified T> Response.parseAs(): T {
-        val responseBody = use { it.body.string() }
-        return json.decodeFromString(responseBody)
     }
 
     companion object {

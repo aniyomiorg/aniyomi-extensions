@@ -14,20 +14,15 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MultipartBody
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -41,8 +36,6 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val json: Json by injectLazy()
 
@@ -166,7 +159,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     val seasonRegex by lazy { Regex("""season (\d+)""", RegexOption.IGNORE_CASE) }
     val qualityRegex by lazy { """(\d+)p""".toRegex() }
 
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+    override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
         val document = client.newCall(GET(baseUrl + anime.url)).execute()
             .use { it.asJsoup() }
 
@@ -210,7 +203,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             transposeEpisodes(serversList)
         }
 
-        return Observable.just(episodeList.reversed())
+        return episodeList.reversed()
     }
 
     private fun transposeEpisodes(serversList: List<List<EpUrl>>) =
@@ -222,12 +215,12 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-    override fun episodeListSelector(): String = throw Exception("Not Used")
+    override fun episodeListSelector(): String = throw UnsupportedOperationException()
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not Used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val urls = json.decodeFromString<List<EpUrl>>(episode.url)
 
         val leechUrls = urls.map {
@@ -247,33 +240,29 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             EpUrl(it.quality, link, it.name)
         }
 
-        val videoList = leechUrls.parallelMap { url ->
-            runCatching {
-                if (url.url.toHttpUrl().encodedPath == "/404") return@runCatching null
-                val (videos, mediaUrl) = extractVideo(url)
-                when {
-                    videos.isEmpty() -> {
-                        extractGDriveLink(mediaUrl, url.quality).ifEmpty {
-                            getDirectLink(mediaUrl, "instant", "/mfile/")?.let {
-                                listOf(Video(it, "${url.quality}p - GDrive Instant link", it))
-                            } ?: emptyList()
-                        }
+        val videoList = leechUrls.parallelCatchingFlatMap { url ->
+            if (url.url.toHttpUrl().encodedPath == "/404") return@parallelCatchingFlatMap emptyList()
+            val (videos, mediaUrl) = extractVideo(url)
+            when {
+                videos.isEmpty() -> {
+                    extractGDriveLink(mediaUrl, url.quality).ifEmpty {
+                        getDirectLink(mediaUrl, "instant", "/mfile/")?.let {
+                            listOf(Video(it, "${url.quality}p - GDrive Instant link", it))
+                        } ?: emptyList()
                     }
-                    else -> videos
                 }
-            }.getOrNull()
-        }.filterNotNull().flatten()
+                else -> videos
+            }
+        }
 
-        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
-
-        return Observable.just(videoList.sort())
+        return videoList.sort()
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoListSelector(): String = throw Exception("Not Used")
+    override fun videoListSelector(): String = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
     // https://github.com/aniyomiorg/aniyomi-extensions/blob/master/src/en/uhdmovies/src/eu/kanade/tachiyomi/animeextension/en/uhdmovies/UHDMovies.kt
@@ -377,12 +366,6 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     @Serializable
     data class DriveLeechDirect(val url: String? = null)
-
-    // From Dopebox
-    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     companion object {
         private val SIZE_REGEX = "\\[((?:.(?!\\[))+)][ ]*\$".toRegex(RegexOption.IGNORE_CASE)

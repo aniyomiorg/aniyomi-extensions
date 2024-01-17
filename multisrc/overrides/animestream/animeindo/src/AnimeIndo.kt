@@ -27,7 +27,7 @@ import org.jsoup.nodes.Element
 class AnimeIndo : AnimeStream(
     "id",
     "AnimeIndo",
-    "https://animeindo.quest",
+    "https://animeindo.skin",
 ) {
     override val animeListUrl = "$baseUrl/animelist"
 

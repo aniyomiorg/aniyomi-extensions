@@ -1,13 +1,7 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
-
 ext {
     extName = 'UAKino'
-    pkgNameSuffix = 'uk.uakino'
     extClass = '.UAKino'
     extVersionCode = 1
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

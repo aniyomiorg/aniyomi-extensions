@@ -20,7 +20,6 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -44,7 +43,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val id: Long = 655155856096L
 
-    override val client: OkHttpClient = network.client.newBuilder()
+    override val client = network.client.newBuilder()
         .addInterceptor(DdosGuardInterceptor(network.client))
         .build()
 
@@ -68,7 +67,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // episodes
 
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
@@ -94,7 +93,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episodeElement.map { episodeFromElement(it, url) }
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not Used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     private fun episodeFromElement(element: Element, url: String): SEpisode {
         val episode = SEpisode.create()
@@ -197,7 +196,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                     pnglist.forEach { itmax ->
                                         if (max.toInt() == itmax.substringBefore(" |").toInt()) {
                                             val maxhash = itmax.substringAfter("| ")
-                                            network.cloudflareClient.newCall(
+                                            network.client.newCall(
                                                 POST(
                                                     "$baseUrl/files/captcha",
                                                     body = "cID=0&pC=$maxhash&rT=2".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
@@ -313,7 +312,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                     pnglist.forEach { itmin ->
                                         if (min.toInt() == itmin.substringBefore(" |").toInt()) {
                                             val minhash = itmin.substringAfter("| ")
-                                            network.cloudflareClient.newCall(
+                                            network.client.newCall(
                                                 POST(
                                                     "$baseUrl/files/captcha",
                                                     body = "cID=0&pC=$minhash&rT=2".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
@@ -517,7 +516,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                     pnglist.forEach { itmax ->
                                         if (max.toInt() == itmax.substringBefore(" |").toInt()) {
                                             val maxhash = itmax.substringAfter("| ")
-                                            network.cloudflareClient.newCall(
+                                            network.client.newCall(
                                                 POST(
                                                     "$baseUrl/files/captcha",
                                                     body = "cID=0&pC=$maxhash&rT=2".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
@@ -633,7 +632,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                     pnglist.forEach { itmin ->
                                         if (min.toInt() == itmin.substringBefore(" |").toInt()) {
                                             val minhash = itmin.substringAfter("| ")
-                                            network.cloudflareClient.newCall(
+                                            network.client.newCall(
                                                 POST(
                                                     "$baseUrl/files/captcha",
                                                     body = "cID=0&pC=$minhash&rT=2".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
@@ -786,11 +785,11 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // Search
 
@@ -823,13 +822,13 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Latest
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = throw UnsupportedOperationException()
 
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
 
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesSelector(): String = throw UnsupportedOperationException()
 
     // Preferences
 

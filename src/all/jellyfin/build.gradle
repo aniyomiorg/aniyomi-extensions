@@ -1,15 +1,7 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'Jellyfin'
-    pkgNameSuffix = 'all.jellyfin'
     extClass = '.JellyfinFactory'
     extVersionCode = 11
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

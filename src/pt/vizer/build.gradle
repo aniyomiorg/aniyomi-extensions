@@ -1,21 +1,13 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'Vizer.tv'
-    pkgNameSuffix = 'pt.vizer'
     extClass = '.Vizer'
-    extVersionCode = 11
-    libVersion = '13'
+    extVersionCode = 12
     containsNsfw = true
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-mixdrop-extractor'))
     implementation(project(':lib-streamtape-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

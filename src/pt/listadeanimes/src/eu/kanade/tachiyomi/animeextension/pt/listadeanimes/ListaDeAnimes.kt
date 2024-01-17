@@ -11,7 +11,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 
 class ListaDeAnimes : ParsedAnimeHttpSource() {
     override val name = "Lista de Animes"
@@ -40,10 +39,10 @@ class ListaDeAnimes : ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector() = "a.next.page-numbers"
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException("Not used.")
-    override fun latestUpdatesSelector(): String = throw UnsupportedOperationException("Not used.")
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw UnsupportedOperationException("Not used.")
-    override fun latestUpdatesNextPageSelector() = throw UnsupportedOperationException("Not used.")
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
+    override fun latestUpdatesSelector(): String = throw UnsupportedOperationException()
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw UnsupportedOperationException()
+    override fun latestUpdatesNextPageSelector() = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = GET("$baseUrl/page/$page?s=$query")
@@ -94,15 +93,15 @@ class ListaDeAnimes : ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
-        return Observable.just(listOf(Video(episode.url, episode.name, episode.url)))
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
+        return listOf(Video(episode.url, episode.name, episode.url))
     }
 
-    override fun videoListSelector() = throw UnsupportedOperationException("Not used.")
-    override fun videoListRequest(episode: SEpisode) = throw UnsupportedOperationException("Not used.")
-    override fun videoListParse(response: Response) = throw UnsupportedOperationException("Not used.")
-    override fun videoFromElement(element: Element) = throw UnsupportedOperationException("Not used.")
-    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException("Not used.")
+    override fun videoListSelector() = throw UnsupportedOperationException()
+    override fun videoListRequest(episode: SEpisode) = throw UnsupportedOperationException()
+    override fun videoListParse(response: Response) = throw UnsupportedOperationException()
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
     private fun titleCase(str: String): String {

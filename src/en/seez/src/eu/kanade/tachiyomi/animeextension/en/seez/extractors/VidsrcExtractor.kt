@@ -5,14 +5,13 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
-import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
-
 // Stolen from fmovies
 class VidsrcExtractor(private val client: OkHttpClient, private val headers: Headers) {
 
@@ -77,11 +76,6 @@ class VidsrcExtractor(private val client: OkHttpClient, private val headers: Hea
 
     private fun String.addAutoStart(): String {
         return this.toHttpUrl().newBuilder().setQueryParameter("autostart", "true").build().toString()
-    }
-
-    private inline fun <reified T> Response.parseAs(transform: (String) -> String = { it }): T {
-        val responseBody = use { transform(it.body.string()) }
-        return json.decodeFromString(responseBody)
     }
 
     @Serializable

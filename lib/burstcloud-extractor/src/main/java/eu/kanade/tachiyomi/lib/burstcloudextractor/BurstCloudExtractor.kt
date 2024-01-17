@@ -38,7 +38,6 @@ class BurstCloudExtractor(private val client: OkHttpClient) {
             } else {
                 null
             }
-
         }.getOrNull().orEmpty()
     }
 }

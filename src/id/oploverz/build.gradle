@@ -1,12 +1,7 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'Oploverz'
-    pkgNameSuffix = 'id.oploverz'
     extClass = '.Oploverz'
     extVersionCode = 20
-    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

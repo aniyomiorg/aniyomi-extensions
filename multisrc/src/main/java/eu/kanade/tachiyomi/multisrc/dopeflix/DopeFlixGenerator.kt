@@ -11,8 +11,8 @@ class DopeFlixGenerator : ThemeSourceGenerator {
     override val baseVersionCode = 19
 
     override val sources = listOf(
-        SingleLang("DopeBox", "https://dopebox.to", "en", isNsfw = false, overrideVersionCode = 5),
-        SingleLang("SFlix", "https://sflix.to", "en", isNsfw = false, overrideVersionCode = 4),
+        SingleLang("DopeBox", "https://dopebox.to", "en", isNsfw = false, overrideVersionCode = 6),
+        SingleLang("SFlix", "https://sflix.to", "en", isNsfw = false, overrideVersionCode = 5),
     )
 
     companion object {

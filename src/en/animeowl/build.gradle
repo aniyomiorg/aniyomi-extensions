@@ -1,16 +1,11 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'AnimeOwl'
-    pkgNameSuffix = 'en.animeowl'
     extClass = '.AnimeOwl'
     extVersionCode = 14
-    libVersion = '13'
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-dood-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

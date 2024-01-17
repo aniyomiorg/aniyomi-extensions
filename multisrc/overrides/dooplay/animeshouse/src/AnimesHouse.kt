@@ -27,7 +27,7 @@ class AnimesHouse : DooPlay(
     // ============================== Popular ===============================
     // This source does not have a "popular" animes page, so we're going to
     // use latest updates page instead.
-    override fun fetchPopularAnime(page: Int) = fetchLatestUpdates(page)
+    override suspend fun getPopularAnime(page: Int) = getLatestUpdates(page)
 
     // =============================== Latest ===============================
     override fun latestUpdatesNextPageSelector(): String = "div.resppages > a > span.icon-chevron-right"

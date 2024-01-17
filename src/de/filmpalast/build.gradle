@@ -1,19 +1,12 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
-
 ext {
     extName = 'FilmPalast'
-    pkgNameSuffix = 'de.filmpalast'
     extClass = '.FilmPalast'
-    extVersionCode = 13
-    libVersion = '13'
+    extVersionCode = 14
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-filemoon-extractor'))
     implementation(project(':lib-voe-extractor'))
 }
-
-
-apply from: "$rootDir/common.gradle"

@@ -1,13 +1,10 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 ext {
     extName = 'Doramasflix'
-    pkgNameSuffix = 'es.doramasflix'
     extClass = '.Doramasflix'
-    extVersionCode = 13
-    libVersion = '13'
+    extVersionCode = 14
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-vudeo-extractor'))
@@ -27,5 +24,3 @@ dependencies {
     implementation(project(':lib-upstream-extractor'))
     implementation(project(':lib-streamhidevid-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

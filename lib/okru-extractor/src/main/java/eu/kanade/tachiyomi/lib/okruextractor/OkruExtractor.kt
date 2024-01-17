@@ -1,9 +1,9 @@
 package eu.kanade.tachiyomi.lib.okruextractor
 
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import okhttp3.OkHttpClient
 
 class OkruExtractor(private val client: OkHttpClient) {
@@ -37,7 +37,6 @@ class OkruExtractor(private val client: OkHttpClient) {
             "ondemandDash" in videoString -> {
                 val playlistUrl = videoString.extractLink("ondemandDash")
                 playlistUtils.extractFromDash(playlistUrl, videoNameGen = { it -> "Okru:$it".addPrefix(prefix) })
-
             }
             else -> videosFromJson(videoString, prefix, fixQualities)
         }
@@ -52,7 +51,6 @@ class OkruExtractor(private val client: OkHttpClient) {
         substringAfter("$attr\\\":\\\"")
             .substringBefore("\\\"")
             .replace("\\\\u0026", "&")
-
 
     private fun videosFromJson(videoString: String, prefix: String = "", fixQualities: Boolean = true): List<Video> {
         val arrayData = videoString.substringAfter("\\\"videos\\\":[{\\\"name\\\":\\\"")

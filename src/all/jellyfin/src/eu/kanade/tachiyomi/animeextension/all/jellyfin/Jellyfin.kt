@@ -19,7 +19,8 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -31,7 +32,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -133,12 +133,12 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
 
     // ============================== Popular ===============================
 
-    override fun popularAnimeParse(response: Response): AnimesPage = throw Exception("Not used")
+    override fun popularAnimeParse(response: Response): AnimesPage = throw UnsupportedOperationException()
 
-    override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
+    override suspend fun getPopularAnime(page: Int): AnimesPage {
         return client.newCall(popularAnimeRequest(page))
-            .asObservableSuccess()
-            .map { response ->
+            .awaitSuccess()
+            .use { response ->
                 popularAnimeParsePage(response, page)
             }
     }
@@ -173,12 +173,12 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
 
     // =============================== Latest ===============================
 
-    override fun latestUpdatesParse(response: Response) = throw Exception("Not used")
+    override fun latestUpdatesParse(response: Response) = throw UnsupportedOperationException()
 
-    override fun fetchLatestUpdates(page: Int): Observable<AnimesPage> {
+    override suspend fun getLatestUpdates(page: Int): AnimesPage {
         return client.newCall(latestUpdatesRequest(page))
-            .asObservableSuccess()
-            .map { response ->
+            .awaitSuccess()
+            .use { response ->
                 latestUpdatesParsePage(response, page)
             }
     }
@@ -207,11 +207,11 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
 
     // =============================== Search ===============================
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw UnsupportedOperationException()
 
-    override fun searchAnimeParse(response: Response) = throw Exception("Not used")
+    override fun searchAnimeParse(response: Response) = throw UnsupportedOperationException()
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         require(parentId.isNotEmpty()) { "Select library in the extension settings." }
         val startIndex = (page - 1) * 5
 
@@ -240,7 +240,7 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
             getAnimeFromId(it.Id)
         }
 
-        return Observable.just(AnimesPage(animeList, 5 * page < items.TotalRecordCount))
+        return AnimesPage(animeList, 5 * page < items.TotalRecordCount)
     }
 
     private fun getAnimeFromMovie(movieList: List<ItemsResponse.Item>): List<SAnime> {
@@ -555,11 +555,6 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
 
     private fun LinkData.toJsonString(): String {
         return json.encodeToString(this)
-    }
-
-    private inline fun <reified T> Response.parseAs(transform: (String) -> String = { it }): T {
-        val responseBody = use { transform(it.body.string()) }
-        return json.decodeFromString(responseBody)
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

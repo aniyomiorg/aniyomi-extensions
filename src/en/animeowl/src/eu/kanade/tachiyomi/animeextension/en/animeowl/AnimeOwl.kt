@@ -28,14 +28,12 @@ import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -51,8 +49,6 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val json: Json by injectLazy()
 
@@ -85,11 +81,11 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
     // =============================== Search ===============================
-    override fun fetchSearchAnime(
+    override suspend fun getSearchAnime(
         page: Int,
         query: String,
         filters: AnimeFilterList,
-    ): Observable<AnimesPage> {
+    ): AnimesPage {
         val limit = 30
         val mediaType = "application/json; charset=utf-8".toMediaType()
         val body = """{"limit":$limit,"page":${page - 1},"pageCount":0,"value":"$query","sort":4,"selected":{"type":[],"genre":[],"year":[],"country":[],"season":[],"status":[],"sort":[],"language":[]}}""".toRequestBody(mediaType)
@@ -108,17 +104,17 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-        return Observable.just(AnimesPage(animes, nextPage))
+        return AnimesPage(animes, nextPage)
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request =
-        throw Exception("Not Used")
+        throw UnsupportedOperationException()
 
-    override fun searchAnimeSelector(): String = throw Exception("Not Used")
+    override fun searchAnimeSelector(): String = throw UnsupportedOperationException()
 
-    override fun searchAnimeNextPageSelector(): String = throw Exception("Not Used")
+    override fun searchAnimeNextPageSelector(): String = throw UnsupportedOperationException()
 
-    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("Not Used")
+    override fun searchAnimeFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
@@ -167,12 +163,12 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }.reversed()
     }
 
-    override fun episodeListSelector(): String = throw Exception("Not Used")
+    override fun episodeListSelector(): String = throw UnsupportedOperationException()
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not Used")
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val urlJson = json.decodeFromString<JsonObject>(episode.url)
         val videoList = mutableListOf<Video>()
         urlJson.mapNotNull { (key, value) ->
@@ -198,14 +194,14 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
         }
-        return Observable.just(videoList.sort())
+        return videoList.sort()
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoListSelector(): String = throw Exception("Not Used")
+    override fun videoListSelector(): String = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
     private fun extractOwlVideo(link: String, files: List<Pair<String, Headers>>, lang: String): List<Video> {
@@ -262,7 +258,7 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = client.newCall(GET(url)).execute().asJsoup()
 
         // Vidstreaming:
-        GogoCdnExtractor(network.client, json).videosFromUrl(url).map {
+        GogoCdnExtractor(client, json).videosFromUrl(url).map {
             videoList.add(
                 Video(
                     it.url,

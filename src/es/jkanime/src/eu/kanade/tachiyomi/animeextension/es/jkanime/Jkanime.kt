@@ -18,7 +18,6 @@ import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -35,8 +34,6 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "es"
 
     override val supportsLatest = true
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -113,9 +110,9 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episodes.reversed()
     }
 
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = throw UnsupportedOperationException()
 
-    override fun episodeFromElement(element: Element) = throw Exception("not used")
+    override fun episodeFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
@@ -146,9 +143,9 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videos
     }
 
-    override fun videoListSelector() = throw Exception("not used")
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
@@ -236,9 +233,9 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(animeList, hasNextPage)
     }
 
-    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("not used")
-    override fun searchAnimeNextPageSelector(): String = throw Exception("not used")
-    override fun searchAnimeSelector(): String = throw Exception("not used")
+    override fun searchAnimeFromElement(element: Element): SAnime = throw UnsupportedOperationException()
+    override fun searchAnimeNextPageSelector(): String = throw UnsupportedOperationException()
+    override fun searchAnimeSelector(): String = throw UnsupportedOperationException()
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()

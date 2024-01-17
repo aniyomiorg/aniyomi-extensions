@@ -18,18 +18,15 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
-import kotlinx.serialization.decodeFromString
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.Response
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import kotlin.Exception
 
 class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -43,11 +40,9 @@ class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val supportsLatest = false
 
-    private val cfClient = network.cloudflareClient
-
     override val client by lazy {
         network.client.newBuilder()
-            .addInterceptor(AOAPIInterceptor(cfClient))
+            .addInterceptor(AOAPIInterceptor(network.client))
             .build()
     }
 
@@ -74,8 +69,8 @@ class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int) = throw Exception("not used")
-    override fun latestUpdatesParse(response: Response) = throw Exception("not used")
+    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException()
+    override fun latestUpdatesParse(response: Response) = throw UnsupportedOperationException()
 
     // =============================== Search ===============================
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) =
@@ -88,15 +83,9 @@ class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        return client.newCall(GET("$apiUrl/content/${anime.url}/extensive"))
-            .asObservableSuccess()
-            .map { response ->
-                animeDetailsParse(response).apply { initialized = true }
-            }
-    }
+    override fun animeDetailsRequest(anime: SAnime) = GET("$apiUrl/content/${anime.url}/extensive")
 
-    override fun animeDetailsRequest(anime: SAnime) = GET("$baseUrl/details/${anime.url}")
+    override fun getAnimeUrl(anime: SAnime) = "$baseUrl/details/${anime.url}"
 
     override fun animeDetailsParse(response: Response) = SAnime.create().apply {
         val details = response.parseAs<AnimeDetails>()
@@ -143,7 +132,7 @@ class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun videoListRequest(episode: SEpisode) = GET("$apiUrl/content/${episode.url}")
 
-    override fun videoUrlParse(response: Response) = throw Exception("not used")
+    override fun videoUrlParse(response: Response) = throw UnsupportedOperationException()
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -165,10 +154,6 @@ class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <reified T> Response.parseAs(): T {
-        return use { it.body.string() }.let(json::decodeFromString)
-    }
-
     private fun parseStatus(statusString: String?): Int {
         return when (statusString?.trim()) {
             "finished_airing" -> SAnime.COMPLETED

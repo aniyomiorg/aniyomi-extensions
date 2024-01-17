@@ -1,15 +1,7 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'Hstream'
-    pkgNameSuffix = 'en.hstream'
     extClass = '.Hstream'
     extVersionCode = 7
-    libVersion = '13'
     containsNsfw = true
 }
 

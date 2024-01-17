@@ -18,16 +18,14 @@ import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
@@ -38,7 +36,6 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang: String = "id"
     override val name: String = "NeoNime"
     override val supportsLatest: Boolean = true
-    override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -126,11 +123,11 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return GET("$baseUrl/list-anime/")
     }
 
-    override fun searchAnimeSelector() = throw Exception("Not Used")
+    override fun searchAnimeSelector() = throw UnsupportedOperationException()
 
     private fun generateSelector(query: String): String = "div.letter-section > ul > li > a:contains($query)"
 
-    override fun searchAnimeParse(response: Response) = throw Exception("Not Used")
+    override fun searchAnimeParse(response: Response) = throw UnsupportedOperationException()
 
     private fun searchQueryParse(response: Response, query: String): AnimesPage {
         val document = response.asJsoup()
@@ -154,11 +151,11 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return retElements
     }
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         val returnedSearch = searchAnimeRequest(page, query, filters)
         return client.newCall(returnedSearch)
-            .asObservableSuccess()
-            .map { response ->
+            .awaitSuccess()
+            .use { response ->
                 searchQueryParse(response, query)
             }
     }
@@ -201,7 +198,7 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListSelector() = "div > ul >ul > li >a:nth-child(6)"
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()

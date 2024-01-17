@@ -1,13 +1,7 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
-
 ext {
     extName = 'hanime.tv'
-    pkgNameSuffix = 'en.hanime'
     extClass = '.Hanime'
     extVersionCode = 17
-    libVersion = '13'
     containsNsfw = true
 }
 

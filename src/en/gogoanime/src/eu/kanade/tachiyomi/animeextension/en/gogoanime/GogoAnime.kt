@@ -19,17 +19,13 @@ import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 
 class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -43,8 +39,6 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
-
-    override val client = network.cloudflareClient
 
     override fun headersBuilder() = super.headersBuilder()
         .add("Origin", baseUrl)
@@ -163,12 +157,12 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
 
-        return document.select("div.anime_muti_link > ul > li").parallelCatchingFlatMap { server ->
+        return document.select("div.anime_muti_link > ul > li").parallelCatchingFlatMapBlocking { server ->
             val className = server.className()
-            if (!hosterSelection.contains(className)) return@parallelCatchingFlatMap emptyList()
+            if (!hosterSelection.contains(className)) return@parallelCatchingFlatMapBlocking emptyList()
             val serverUrl = server.selectFirst("a")
                 ?.attr("abs:data-video")
-                ?: return@parallelCatchingFlatMap emptyList()
+                ?: return@parallelCatchingFlatMapBlocking emptyList()
 
             getHosterVideos(className, serverUrl)
         }
@@ -187,11 +181,11 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun videoListSelector() = throw Exception("not used")
+    override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
     private fun Document.getInfo(text: String): String? {
@@ -221,15 +215,6 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> SAnime.UNKNOWN
         }
     }
-
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map {
-                async(Dispatchers.Default) {
-                    runCatching { f(it) }.getOrElse { emptyList() }
-                }
-            }.awaitAll().flatten()
-        }
 
     companion object {
         private const val AJAX_URL = "https://ajax.gogo-load.com/ajax"

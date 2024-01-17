@@ -1,14 +1,10 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
-
 ext {
     extName = 'AnimeMovil'
-    pkgNameSuffix = 'es.animemovil'
     extClass = '.AnimeMovil'
-    extVersionCode = 6
-    libVersion = '13'
+    extVersionCode = 7
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-voe-extractor'))
@@ -25,5 +21,3 @@ dependencies {
     implementation(project(':lib-playlist-utils'))
     implementation(project(':lib-streamlare-extractor'))
 }
-
-apply from: "$rootDir/common.gradle"

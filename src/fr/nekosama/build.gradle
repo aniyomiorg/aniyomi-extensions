@@ -1,22 +1,13 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.serialization)
-}
-
 ext {
     extName = 'NekoSama'
-    pkgNameSuffix = 'fr.nekosama'
     extClass = '.NekoSama'
-    extVersionCode = 8
-    libVersion = '13'
+    extVersionCode = 9
     containsNsfw = true
 }
+
+apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-fusevideo-extractor'))
 }
-
-
-apply from: "$rootDir/common.gradle"
