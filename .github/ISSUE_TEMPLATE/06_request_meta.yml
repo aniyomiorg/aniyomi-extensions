@@ -33,7 +33,7 @@ body:
           required: true
         - label: If this is an issue with the app itself, I should be opening an issue in the [app repository](https://github.com/aniyomiorg/aniyomi/issues/new/choose).
           required: true
-        - label: I have updated the app to version **[0.15.2,2](https://github.com/aniyomiorg/aniyomi/releases/latest)**.
+        - label: I have updated the app to version **[0.15.2.2](https://github.com/aniyomiorg/aniyomi/releases/latest)**.
           required: true
         - label: I have updated all installed extensions.
           required: true
