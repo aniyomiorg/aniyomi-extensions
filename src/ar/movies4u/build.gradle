@@ -1,7 +1,0 @@
-ext {
-    extName = 'موفيز فور يو'
-    extClass = '.Movies4U'
-    extVersionCode = 4
-}
-
-apply from: "$rootDir/common.gradle"
