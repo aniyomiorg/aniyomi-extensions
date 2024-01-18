@@ -444,26 +444,6 @@
     ]
   },
   {
-    "name": "Aniyomi: AnimeTitans",
-    "pkg": "eu.kanade.tachiyomi.animeextension.ar.animetitans",
-    "apk": "aniyomi-ar.animetitans-v14.16.apk",
-    "lang": "ar",
-    "code": 16,
-    "version": "14.16",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "AnimeTitans",
-        "lang": "ar",
-        "id": "7993025151940830545",
-        "baseUrl": "https://animetitans.com",
-        "versionId": 1
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: ArabAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.arabanime",
     "apk": "aniyomi-ar.arabanime-v14.2.apk",
@@ -559,26 +539,6 @@
         "lang": "ar",
         "id": "1378291029586884571",
         "baseUrl": "https://www.faselhd.pro",
-        "versionId": 1
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: موفيز فور يو",
-    "pkg": "eu.kanade.tachiyomi.animeextension.ar.movies4u",
-    "apk": "aniyomi-ar.movies4u-v14.4.apk",
-    "lang": "ar",
-    "code": 4,
-    "version": "14.4",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "موفيز فور يو",
-        "lang": "ar",
-        "id": "2018276156457227484",
-        "baseUrl": "https://movies4u.cam",
         "versionId": 1
       }
     ]
