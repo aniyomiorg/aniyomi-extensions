@@ -1,7 +1,7 @@
 ext {
     extName = 'Oploverz'
     extClass = '.Oploverz'
-    extVersionCode = 20
+    extVersionCode = 21
 }
 
 apply from: "$rootDir/common.gradle"
