@@ -1,32 +1,39 @@
 package eu.kanade.tachiyomi.animeextension.en.nineanime.extractors
 
-import android.app.Application
-import android.os.Handler
-import android.os.Looper
-import android.webkit.JavascriptInterface
-import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
-import android.webkit.WebSettings
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.util.Base64
+import app.cash.quickjs.QuickJs
 import eu.kanade.tachiyomi.animeextension.en.nineanime.MediaResponseBody
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.parseAs
+import kotlinx.serialization.json.Json
+import okhttp3.CacheControl
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import uy.kohesive.injekt.injectLazy
-import java.io.ByteArrayInputStream
 import java.net.URLDecoder
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
+import javax.crypto.Cipher
+import javax.crypto.spec.SecretKeySpec
 
 class VidsrcExtractor(private val client: OkHttpClient, private val headers: Headers) {
 
+    private val json: Json by injectLazy()
+
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
+
+    private val cacheControl = CacheControl.Builder().noStore().build()
+    private val noCacheClient = client.newBuilder()
+        .cache(null)
+        .build()
+
+    private val keys by lazy {
+        noCacheClient.newCall(
+            GET("https://raw.githubusercontent.com/KillerDogeEmpire/vidplay-keys/keys/keys.json", cache = cacheControl),
+        ).execute().parseAs<List<String>>()
+    }
 
     fun videosFromUrl(embedLink: String, name: String, type: String): List<Video> {
         val hosterName = when (name) {
@@ -34,9 +41,7 @@ class VidsrcExtractor(private val client: OkHttpClient, private val headers: Hea
             else -> "MyCloud"
         }
         val host = embedLink.toHttpUrl().host
-        val apiSlug = runCatching {
-            extractFromUrl(embedLink)
-        }.getOrElse { return emptyList() }
+        val apiUrl = getApiUrl(embedLink, keys)
 
         val apiHeaders = headers.newBuilder().apply {
             add("Accept", "application/json, text/javascript, */*; q=0.01")
@@ -46,10 +51,20 @@ class VidsrcExtractor(private val client: OkHttpClient, private val headers: Hea
         }.build()
 
         val response = client.newCall(
-            GET("https://$host/$apiSlug", apiHeaders),
+            GET(apiUrl, apiHeaders),
         ).execute()
 
-        val data = response.parseAs<MediaResponseBody>()
+        val data = runCatching {
+            response.parseAs<MediaResponseBody>()
+        }.getOrElse { // Keys are out of date
+            val newKeys = noCacheClient.newCall(
+                GET("https://raw.githubusercontent.com/KillerDogeEmpire/vidplay-keys/keys/keys.json", cache = cacheControl),
+            ).execute().parseAs<List<String>>()
+            val newApiUrL = getApiUrl(embedLink, newKeys)
+            client.newCall(
+                GET(newApiUrL, apiHeaders),
+            ).execute().parseAs()
+        }
 
         return playlistUtils.extractFromHls(
             data.result.sources.first().file,
@@ -57,6 +72,69 @@ class VidsrcExtractor(private val client: OkHttpClient, private val headers: Hea
             videoNameGen = { q -> "$hosterName - $type - $q" },
             subtitleList = data.result.tracks.toTracks(),
         )
+    }
+
+    private fun getApiUrl(embedLink: String, keyList: List<String>): String {
+        val host = embedLink.toHttpUrl().host
+        val params = embedLink.toHttpUrl().let { url ->
+            url.queryParameterNames.map {
+                Pair(it, url.queryParameter(it) ?: "")
+            }
+        }
+        val vidId = embedLink.substringAfterLast("/").substringBefore("?")
+        val encodedID = encodeID(vidId, keyList)
+        val apiSlug = callFromFuToken(host, encodedID)
+
+        return buildString {
+            append("https://")
+            append(host)
+            append("/")
+            append(apiSlug)
+            if (params.isNotEmpty()) {
+                append("?")
+                append(
+                    params.joinToString("&") {
+                        "${it.first}=${it.second}"
+                    },
+                )
+            }
+        }
+    }
+
+    private fun encodeID(videoID: String, keyList: List<String>): String {
+        val rc4Key1 = SecretKeySpec(keyList[0].toByteArray(), "RC4")
+        val rc4Key2 = SecretKeySpec(keyList[1].toByteArray(), "RC4")
+        val cipher1 = Cipher.getInstance("RC4")
+        val cipher2 = Cipher.getInstance("RC4")
+        cipher1.init(Cipher.DECRYPT_MODE, rc4Key1, cipher1.parameters)
+        cipher2.init(Cipher.DECRYPT_MODE, rc4Key2, cipher2.parameters)
+        var encoded = videoID.toByteArray()
+
+        encoded = cipher1.doFinal(encoded)
+        encoded = cipher2.doFinal(encoded)
+        encoded = Base64.encode(encoded, Base64.DEFAULT)
+        return encoded.toString(Charsets.UTF_8).replace("/", "_").trim()
+    }
+
+    private fun callFromFuToken(host: String, data: String): String {
+        val fuTokenScript = client.newCall(
+            GET("https://$host/futoken"),
+        ).execute().use { it.body.string() }
+
+        val js = buildString {
+            append("(function")
+            append(
+                fuTokenScript.substringAfter("window")
+                    .substringAfter("function")
+                    .replace("jQuery.ajax(", "")
+                    .substringBefore("+location.search"),
+            )
+            append("}(\"$data\"))")
+        }
+
+        return QuickJs.create().use {
+            it.evaluate(js)?.toString()!!
+        }
     }
 
     private fun List<MediaResponseBody.Result.SubTrack>.toTracks(): List<Track> {
@@ -70,83 +148,5 @@ class VidsrcExtractor(private val client: OkHttpClient, private val headers: Hea
                 )
             }.getOrNull()
         }
-    }
-
-    private val context: Application by injectLazy()
-    private val handler by lazy { Handler(Looper.getMainLooper()) }
-
-    class JsObject(private val latch: CountDownLatch) {
-        var payload: String = ""
-
-        @JavascriptInterface
-        fun passPayload(passedPayload: String) {
-            payload = passedPayload
-            latch.countDown()
-        }
-    }
-
-    fun extractFromUrl(episodeUrl: String): String {
-        val latch = CountDownLatch(1)
-
-        var webView: WebView? = null
-
-        val jsinterface = JsObject(latch)
-
-        handler.post {
-            val webview = WebView(context)
-
-            webView = webview
-            with(webview.settings) {
-                javaScriptEnabled = true
-                domStorageEnabled = true
-                databaseEnabled = true
-                useWideViewPort = false
-                loadWithOverviewMode = false
-                cacheMode = WebSettings.LOAD_NO_CACHE
-            }
-
-            webview.addJavascriptInterface(jsinterface, "ihatetheantichrist")
-            webview.webViewClient = object : WebViewClient() {
-                override fun onPageFinished(view: WebView?, url: String?) {
-                    view?.clearCache(true)
-                    view?.clearFormData()
-                }
-
-                override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
-                    val reqUrl = request.url.toString()
-                    if ("futoken" in reqUrl) {
-                        return patchScript(reqUrl)
-                    }
-                    return super.shouldInterceptRequest(view, request)
-                }
-            }
-
-            webview.loadUrl(episodeUrl)
-        }
-
-        latch.await(5, TimeUnit.SECONDS)
-
-        handler.post {
-            webView?.stopLoading()
-            webView?.destroy()
-            webView = null
-        }
-
-        return jsinterface.payload
-    }
-
-    private fun patchScript(scriptUrl: String): WebResourceResponse {
-        val scriptBody = client.newCall(GET(scriptUrl)).execute().use { it.body.string() }
-        val newBody = scriptBody.replace("return", "ihatetheantichrist.passPayload('mediainfo/'+a.join(',')+location.search);return")
-        return WebResourceResponse(
-            "application/javascript", // mimeType
-            "utf-8", // encoding
-            200, // status code
-            "ok", // reason phrase
-            mapOf( // response headers
-                "server" to "cloudflare",
-            ),
-            ByteArrayInputStream(newBody.toByteArray()), // data
-        )
     }
 }

@@ -63,7 +63,7 @@ body:
       description: |
         You can find your Aniyomi version in **More → About**.
       placeholder: |
-        Example: "0.12.3.10" or "Preview r6691"
+        Example: "0.15.2.2" or "Preview r7473"
     validations:
       required: true
 
