@@ -49,7 +49,7 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val vrfHelper by lazy { FMoviesHelper(client, headers) }
+    private val utils by lazy { FmoviesUtils() }
 
     // ============================== Popular ===============================
 
@@ -126,8 +126,7 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val id = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
             .selectFirst("div[data-id]")!!.attr("data-id")
 
-        val vrf = vrfHelper.getVrf(id)
-
+        val vrf = utils.vrfEncrypt(id)
         val vrfHeaders = headers.newBuilder().apply {
             add("Accept", "application/json, text/javascript, */*; q=0.01")
             add("Host", baseUrl.toHttpUrl().host)
@@ -189,7 +188,7 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListRequest(episode: SEpisode): Request {
         val data = json.decodeFromString<EpisodeInfo>(episode.url)
-        val vrf = vrfHelper.getVrf(data.id)
+        val vrf = utils.vrfEncrypt(data.id)
 
         val vrfHeaders = headers.newBuilder()
             .add("Accept", "application/json, text/javascript, */*; q=0.01")
@@ -217,7 +216,7 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (!hosterSelection.contains(name)) return@parallelCatchingFlatMap emptyList()
 
             // Get decrypted url
-            val vrf = vrfHelper.getVrf(server.attr("data-link-id"))
+            val vrf = utils.vrfEncrypt(server.attr("data-link-id"))
 
             val vrfHeaders = headers.newBuilder()
                 .add("Accept", "application/json, text/javascript, */*; q=0.01")
@@ -229,8 +228,7 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 GET("$baseUrl/ajax/server/${server.attr("data-link-id")}?vrf=$vrf", headers = vrfHeaders),
             ).await().parseAs<AjaxServerResponse>().result.url
 
-            val decrypted = vrfHelper.decrypt(encrypted)
-
+            val decrypted = utils.vrfDecrypt(encrypted)
             when (name) {
                 "Vidplay", "MyCloud" -> vidsrcExtractor.videosFromUrl(decrypted, name)
                 "Filemoon" -> filemoonExtractor.videosFromUrl(decrypted, headers = headers)
