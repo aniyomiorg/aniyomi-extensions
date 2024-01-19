@@ -1804,6 +1804,26 @@
     ]
   },
   {
+    "name": "Aniyomi: NollyVerse",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.nollyverse",
+    "apk": "aniyomi-en.nollyverse-v14.3.apk",
+    "lang": "en",
+    "code": 3,
+    "version": "14.3",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "NollyVerse",
+        "lang": "en",
+        "id": "2737010507830123625",
+        "baseUrl": "https://www.thenollyverse.com",
+        "versionId": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: NoobSubs",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.noobsubs",
     "apk": "aniyomi-en.noobsubs-v14.1.apk",
