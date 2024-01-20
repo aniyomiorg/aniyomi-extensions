@@ -2,9 +2,9 @@ package eu.kanade.tachiyomi.animeextension.en.seez
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.en.seez.extractors.VidsrcExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
+import eu.kanade.tachiyomi.lib.vidsrcextractor.VidsrcExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
@@ -27,8 +28,11 @@ import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.net.URLDecoder
 import java.text.SimpleDateFormat
 import java.util.Locale
+import javax.crypto.Cipher
+import javax.crypto.spec.SecretKeySpec
 
 class Seez : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -47,8 +51,6 @@ class Seez : ConfigurableAnimeSource, AnimeHttpSource() {
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
-
-    private val vrfHelper by lazy { VrfHelper(client, headers) }
 
     private val apiKey by lazy {
         val jsUrl = client.newCall(GET(baseUrl, headers)).execute().asJsoup()
@@ -301,14 +303,13 @@ class Seez : ConfigurableAnimeSource, AnimeHttpSource() {
                 GET("$embedUrl/ajax/embed/source/${it.id}", headers = sourcesHeaders),
             ).execute().parseAs<EmbedUrlResponse>().result.url
 
-            Pair(vrfHelper.decrypt(encrypted), it.title)
+            Pair(decrypt(encrypted), it.title)
         }
 
         return urlList.parallelCatchingFlatMapBlocking {
             val url = it.first
-            val name = it.second
 
-            when (name) {
+            when (val name = it.second) {
                 "Vidplay" -> vidsrcExtractor.videosFromUrl(url, name)
                 "Filemoon" -> filemoonExtractor.videosFromUrl(url)
                 else -> emptyList()
@@ -344,10 +345,22 @@ class Seez : ConfigurableAnimeSource, AnimeHttpSource() {
             .getOrNull() ?: 0L
     }
 
+    private fun decrypt(encrypted: String): String {
+        var vrf = encrypted.toByteArray()
+        vrf = Base64.decode(vrf, Base64.URL_SAFE)
+
+        val rc4Key = SecretKeySpec("8z5Ag5wgagfsOuhz".toByteArray(), "RC4")
+        val cipher = Cipher.getInstance("RC4")
+        cipher.init(Cipher.DECRYPT_MODE, rc4Key, cipher.parameters)
+        vrf = cipher.doFinal(vrf)
+
+        return URLDecoder.decode(vrf.toString(Charsets.UTF_8), "utf-8")
+    }
+
     companion object {
         private val TMDB_URL = "https://api.themoviedb.org/3".toHttpUrl()
-        private val IMG_URL = "https://image.tmdb.org/t/p/w300/"
-        private val FALLBACK_IMG = "https://seez.su/fallback.png"
+        private const val IMG_URL = "https://image.tmdb.org/t/p/w300/"
+        private const val FALLBACK_IMG = "https://seez.su/fallback.png"
 
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)

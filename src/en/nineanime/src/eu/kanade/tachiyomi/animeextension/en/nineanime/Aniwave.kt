@@ -7,7 +7,6 @@ import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
-import eu.kanade.tachiyomi.animeextension.en.nineanime.extractors.VidsrcExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -17,19 +16,18 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.vidsrcextractor.VidsrcExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelFlatMapBlocking
 import eu.kanade.tachiyomi.util.parallelMapBlocking
 import eu.kanade.tachiyomi.util.parseAs
-import kotlinx.serialization.json.Json
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -46,8 +44,6 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
-
-    private val json: Json by injectLazy()
 
     private val utils by lazy { AniwaveUtils() }
 
@@ -269,7 +265,13 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val parsed = response.parseAs<ServerResponse>()
             val embedLink = utils.vrfDecrypt(parsed.result.url)
             when (server.serverName) {
-                "vidplay", "mycloud" -> vidsrcExtractor.videosFromUrl(embedLink, server.serverName, server.type)
+                "vidplay", "mycloud" -> {
+                    val hosterName = when (server.serverName) {
+                        "vidplay" -> "VidPlay"
+                        else -> "MyCloud"
+                    }
+                    vidsrcExtractor.videosFromUrl(embedLink, hosterName, server.type)
+                }
                 "filemoon" -> filemoonExtractor.videosFromUrl(embedLink, "Filemoon - ${server.type} - ")
                 "streamtape" -> streamtapeExtractor.videoFromUrl(embedLink, "StreamTape - ${server.type}")?.let(::listOf) ?: emptyList()
                 "mp4upload" -> mp4uploadExtractor.videosFromUrl(embedLink, headers, suffix = " - ${server.type}")
