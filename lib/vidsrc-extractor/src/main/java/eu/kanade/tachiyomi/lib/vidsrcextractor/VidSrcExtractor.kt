@@ -1,13 +1,14 @@
-package eu.kanade.tachiyomi.animeextension.en.fmovies.extractors
+package eu.kanade.tachiyomi.lib.vidsrcextractor
 
 import android.util.Base64
 import app.cash.quickjs.QuickJs
-import eu.kanade.tachiyomi.animeextension.en.fmovies.MediaResponseBody
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.parseAs
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
 import okhttp3.CacheControl
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -16,6 +17,7 @@ import java.net.URLDecoder
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 
+@OptIn(ExperimentalSerializationApi::class)
 class VidsrcExtractor(private val client: OkHttpClient, private val headers: Headers) {
 
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
@@ -25,13 +27,14 @@ class VidsrcExtractor(private val client: OkHttpClient, private val headers: Hea
         .cache(null)
         .build()
 
+
     private val keys by lazy {
         noCacheClient.newCall(
             GET("https://raw.githubusercontent.com/KillerDogeEmpire/vidplay-keys/keys/keys.json", cache = cacheControl),
         ).execute().parseAs<List<String>>()
     }
 
-    fun videosFromUrl(embedLink: String, hosterName: String): List<Video> {
+    fun videosFromUrl(embedLink: String, hosterName: String, type: String = "" ): List<Video> {
         val host = embedLink.toHttpUrl().host
         val apiUrl = getApiUrl(embedLink, keys)
 
@@ -61,7 +64,7 @@ class VidsrcExtractor(private val client: OkHttpClient, private val headers: Hea
         return playlistUtils.extractFromHls(
             data.result.sources.first().file,
             referer = "https://$host/",
-            videoNameGen = { q -> "$hosterName - $q" },
+            videoNameGen = { q -> hosterName + (if(type.isBlank()) "" else " - $type") + " - $q" },
             subtitleList = data.result.tracks.toTracks(),
         )
     }
@@ -140,5 +143,29 @@ class VidsrcExtractor(private val client: OkHttpClient, private val headers: Hea
                 )
             }.getOrNull()
         }
+    }
+}
+
+@Serializable
+data class MediaResponseBody(
+    val status: Int,
+    val result: Result,
+) {
+    @Serializable
+    data class Result(
+        val sources: ArrayList<Source>,
+        val tracks: ArrayList<SubTrack> = ArrayList(),
+    ) {
+        @Serializable
+        data class Source(
+            val file: String,
+        )
+
+        @Serializable
+        data class SubTrack(
+            val file: String,
+            val label: String = "",
+            val kind: String,
+        )
     }
 }
