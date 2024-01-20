@@ -1,7 +1,11 @@
 ext {
     extName = 'PutLocker'
     extClass = '.PutLocker'
-    extVersionCode = 3
+    extVersionCode = 4
 }
 
 apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation project(':lib-playlist-utils')
+}
