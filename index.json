@@ -198,10 +198,10 @@
   {
     "name": "Aniyomi: Jellyfin",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.jellyfin",
-    "apk": "aniyomi-all.jellyfin-v14.11.apk",
+    "apk": "aniyomi-all.jellyfin-v14.12.apk",
     "lang": "all",
-    "code": 11,
-    "version": "14.11",
+    "code": 12,
+    "version": "14.12",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
