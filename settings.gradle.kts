@@ -29,34 +29,14 @@ if (System.getenv("CI") == null || System.getenv("CI_MODULE_GEN") == "true") {
     include(":multisrc")
     project(":multisrc").projectDir = File("multisrc")
 
-    // Loads all extensions
-    File(rootDir, "src").eachDir { dir ->
-        dir.eachDir { subdir ->
-            val name = ":extensions:individual:${dir.name}:${subdir.name}"
-            include(name)
-            project(name).projectDir = File("src/${dir.name}/${subdir.name}")
-        }
-    }
-    // Loads all generated extensions from multisrc
-    File(rootDir, "generated-src").eachDir { dir ->
-        dir.eachDir { subdir ->
-            val name = ":extensions:multisrc:${dir.name}:${subdir.name}"
-            include(name)
-            project(name).projectDir = File("generated-src/${dir.name}/${subdir.name}")
-        }
-    }
-
     /**
-     * If you're developing locally and only want to work with a single module,
-     * comment out the parts above and uncomment below.
+     * Add or remove modules to load as needed for local development here.
+     * To generate multisrc extensions first, run the `:multisrc:generateExtensions` task first.
      */
-//    val lang = "all"
-//    val name = "mangadex"
-//    val projectName = ":extensions:individual:$lang:$name"
-//    val projectName = ":extensions:multisrc:$lang:$name"
-//    include(projectName)
-//    project(projectName).projectDir = File("src/${lang}/${name}")
-//    project(projectName).projectDir = File("generated-src/${lang}/${name}")
+    loadAllIndividualExtensions()
+    loadAllGeneratedMultisrcExtensions()
+    // loadIndividualExtension("all", "jellyfin")
+    // loadGeneratedMultisrcExtension("en", "aniwatch")
 } else {
     // Running in CI (GitHub Actions)
 
@@ -68,22 +48,45 @@ if (System.getenv("CI") == null || System.getenv("CI_MODULE_GEN") == "true") {
         include(":multisrc")
         project(":multisrc").projectDir = File("multisrc")
 
-        // Loads all generated extensions from multisrc
+        // Loads generated extensions from multisrc
         File(rootDir, "generated-src").getChunk(chunk, chunkSize)?.forEach {
-            val name = ":extensions:multisrc:${it.parentFile.name}:${it.name}"
-            println(name)
-            include(name)
-            project(name).projectDir = File("generated-src/${it.parentFile.name}/${it.name}")
+            loadGeneratedMultisrcExtension(it.parentFile.name, it.name, log = true)
         }
     } else {
         // Loads individual extensions
         File(rootDir, "src").getChunk(chunk, chunkSize)?.forEach {
-            val name = ":extensions:individual:${it.parentFile.name}:${it.name}"
-            println(name)
-            include(name)
-            project(name).projectDir = File("src/${it.parentFile.name}/${it.name}")
+            loadIndividualExtension(it.parentFile.name, it.name, log = true)
         }
     }
+}
+
+fun loadAllIndividualExtensions() {
+    File(rootDir, "src").eachDir { lang ->
+        lang.eachDir { extension ->
+            loadIndividualExtension(lang.name, extension.name)
+        }
+    }
+}
+fun loadAllGeneratedMultisrcExtensions() {
+    File(rootDir, "generated-src").eachDir { lang ->
+        lang.eachDir { extension ->
+            loadGeneratedMultisrcExtension(lang.name, extension.name)
+        }
+    }
+}
+
+fun loadIndividualExtension(lang: String, name: String, log: Boolean = false) {
+    val projectName = ":extensions:individual:$lang:$name"
+    if (log) println(projectName)
+    include(projectName)
+    project(projectName).projectDir = File("src/$lang/$name")
+}
+
+fun loadGeneratedMultisrcExtension(lang: String, name: String, log: Boolean = false) {
+    val projectName = ":extensions:multisrc:$lang:$name"
+    if (log) println(projectName)
+    include(projectName)
+    project(projectName).projectDir = File("generated-src/$lang/$name")
 }
 
 fun File.getChunk(chunk: Int, chunkSize: Int): List<File>? {
