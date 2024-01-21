@@ -13,7 +13,7 @@ android {
         minSdk = AndroidConfig.minSdk
     }
 
-    namespace = "eu.kanade.tachiyomi.lib.${name.removePrefix("lib-").replace("-", "")}"
+    namespace = "eu.kanade.tachiyomi.lib.${name.replace("-", "")}"
 }
 
 val libs = the<LibrariesForLibs>()
