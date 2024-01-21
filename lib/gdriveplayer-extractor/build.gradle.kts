@@ -3,6 +3,6 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":lib-cryptoaes"))
-    implementation(project(":lib-unpacker"))
+    implementation(project(":lib:cryptoaes"))
+    implementation(project(":lib:unpacker"))
 }

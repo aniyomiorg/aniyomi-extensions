@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":lib-unpacker"))
+    implementation(project(":lib:unpacker"))
 }

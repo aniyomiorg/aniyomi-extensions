@@ -1,4 +1,4 @@
 dependencies {
-    implementation(project(":lib-gdriveplayer-extractor"))
-    implementation(project(":lib-unpacker"))
+    implementation(project(":lib:gdriveplayer-extractor"))
+    implementation(project(":lib:unpacker"))
 }

@@ -7,7 +7,7 @@ ext {
 apply from: "$rootDir/common.gradle"
 
 dependencies {
-    implementation(project(':lib-dood-extractor'))
-    implementation(project(':lib-mixdrop-extractor'))
-    implementation(project(':lib-streamwish-extractor'))
+    implementation(project(':lib:dood-extractor'))
+    implementation(project(':lib:mixdrop-extractor'))
+    implementation(project(':lib:streamwish-extractor'))
 }

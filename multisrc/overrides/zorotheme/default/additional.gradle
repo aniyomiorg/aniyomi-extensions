@@ -1,4 +1,4 @@
 dependencies {
-    implementation(project(":lib-megacloud-extractor"))
-    implementation(project(':lib-streamtape-extractor'))
+    implementation(project(":lib:megacloud-extractor"))
+    implementation(project(':lib:streamtape-extractor'))
 }
