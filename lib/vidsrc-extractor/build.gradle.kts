@@ -1,20 +1,7 @@
 plugins {
-    id("com.android.library")
-    kotlin("android")
-    id("kotlinx-serialization")
-}
-
-android {
-    compileSdk = AndroidConfig.compileSdk
-    namespace = "eu.kanade.tachiyomi.lib.vidsrcextractor"
-
-    defaultConfig {
-        minSdk = AndroidConfig.minSdk
-    }
+    id("lib-android")
 }
 
 dependencies {
-    compileOnly(libs.bundles.common)
     implementation(project(":lib-playlist-utils"))
 }
-// BUMPS: 0

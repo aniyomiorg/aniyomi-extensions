@@ -1,16 +1,5 @@
 plugins {
-    id("com.android.library")
-    id("kotlinx-serialization")
-    kotlin("android")
-}
-
-android {
-    compileSdk = AndroidConfig.compileSdk
-    namespace = "eu.kanade.tachiyomi.lib.filemoonextractor"
-
-    defaultConfig {
-        minSdk = AndroidConfig.minSdk
-    }
+    id("lib-android")
 }
 
 dependencies {
@@ -18,5 +7,4 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk8")
     }
     implementation(project(":lib-playlist-utils"))
-    compileOnly(libs.bundles.common)
 }

@@ -1,17 +1,7 @@
-dependencyResolutionManagement {
-    repositories {
-        mavenCentral()
-        google()
-        maven(url = "https://jitpack.io")
-    }
-}
+apply(from = "repositories.gradle.kts")
 
 pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        google()
-        mavenCentral()
-    }
+    includeBuild("build-plugins")
 }
 
 include(":core")
