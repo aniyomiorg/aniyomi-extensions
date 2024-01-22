@@ -1,4 +1,4 @@
 dependencies {
-    implementation(project(':lib-voe-extractor'))
-    implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib:voe-extractor'))
+    implementation(project(':lib:dood-extractor'))
 }

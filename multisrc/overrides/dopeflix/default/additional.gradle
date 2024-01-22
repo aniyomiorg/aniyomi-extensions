@@ -1,5 +1,5 @@
 dependencies {
-    implementation(project(":lib-dood-extractor"))
-    implementation(project(":lib-cryptoaes"))
-    implementation(project(":lib-playlist-utils"))
+    implementation(project(":lib:dood-extractor"))
+    implementation(project(":lib:cryptoaes"))
+    implementation(project(":lib:playlist-utils"))
 }

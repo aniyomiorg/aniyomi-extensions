@@ -72,7 +72,7 @@ bumpVersion() {
 
 findAndBump() {
     for lib in $@; do
-        for file in $(grep -l -R ":lib-$lib" --include "build.gradle" --include "additional.gradle"); do
+        for file in $(grep -l -R ":lib:$lib" --include "build.gradle" --include "additional.gradle"); do
             # prevent bumping the same extension multiple times
             if [[ ! $bumpedFiles =~ ( |^)$file( |$) ]]; then
                 if [[ $file =~ ^multisrc ]]; then
