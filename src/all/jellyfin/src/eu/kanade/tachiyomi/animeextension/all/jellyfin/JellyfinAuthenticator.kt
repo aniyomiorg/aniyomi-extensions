@@ -4,6 +4,8 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.util.Log
 import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.animeextension.all.jellyfin.Jellyfin.Companion.APIKEY_KEY
+import eu.kanade.tachiyomi.animeextension.all.jellyfin.Jellyfin.Companion.USERID_KEY
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.encodeToString
@@ -27,8 +29,8 @@ class JellyfinAuthenticator(
     fun login(username: String, password: String): Pair<String?, String?> {
         return runCatching {
             val authResult = authenticateWithPassword(username, password)
-            val key = authResult.AccessToken
-            val userId = authResult.SessionInfo.UserId
+            val key = authResult.accessToken
+            val userId = authResult.sessionInfo.userId
             saveLogin(key, userId)
             Pair(key, userId)
         }.getOrElse {
@@ -37,7 +39,7 @@ class JellyfinAuthenticator(
         }
     }
 
-    private fun authenticateWithPassword(username: String, password: String): LoginResponse {
+    private fun authenticateWithPassword(username: String, password: String): LoginDto {
         var deviceId = getPrefDeviceId()
         if (deviceId.isNullOrEmpty()) {
             deviceId = getRandomString()
@@ -69,8 +71,8 @@ class JellyfinAuthenticator(
 
     private fun saveLogin(key: String, userId: String) {
         preferences.edit()
-            .putString(JFConstants.APIKEY_KEY, key)
-            .putString(JFConstants.USERID_KEY, userId)
+            .putString(APIKEY_KEY, key)
+            .putString(USERID_KEY, userId)
             .apply()
     }
 

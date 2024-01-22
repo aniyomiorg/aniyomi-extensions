@@ -1,5 +1,5 @@
 dependencies {
-    implementation(project(":lib-playlist-utils"))
-    implementation(project(":lib-blogger-extractor"))
+    implementation(project(":lib:playlist-utils"))
+    implementation(project(":lib:blogger-extractor"))
     implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
 }
