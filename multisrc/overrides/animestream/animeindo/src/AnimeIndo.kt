@@ -29,13 +29,13 @@ class AnimeIndo : AnimeStream(
     "AnimeIndo",
     "https://animeindo.skin",
 ) {
-    override val animeListUrl = "$baseUrl/animelist"
+    override val animeListUrl = "$baseUrl/browse"
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int) = GET("$animeListUrl/page/$page/?order=popular")
+    override fun popularAnimeRequest(page: Int) = GET("$animeListUrl/browse?sort=view&page=$page")
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int) = GET("$animeListUrl/page/$page/?order=update")
+    override fun latestUpdatesRequest(page: Int) = GET("$animeListUrl/browse?sort=created_at&page=$page")
 
     // =============================== Search ===============================
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -46,7 +46,7 @@ class AnimeIndo : AnimeStream(
             if (params.studios.isNotEmpty()) append(params.studios + "&")
         }
 
-        return GET("$animeListUrl/page/$page/?title=$query&$multiString&status=${params.status}&type=${params.type}&order=${params.order}")
+        return GET("$animeListUrl/browse?page=$page&title=$query&$multiString&status=${params.status}&type=${params.type}&order=${params.order}")
     }
 
     override fun searchAnimeSelector() = "div.animepost > div > a"
