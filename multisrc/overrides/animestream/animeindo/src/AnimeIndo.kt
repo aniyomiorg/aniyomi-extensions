@@ -29,7 +29,7 @@ class AnimeIndo : AnimeStream(
     "AnimeIndo",
     "https://animeindo.skin",
 ) {
-    override val animeListUrl = "$baseUrl/browse"
+    override val animeListUrl = "$baseUrl"
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET("$animeListUrl/browse?sort=view&page=$page")
