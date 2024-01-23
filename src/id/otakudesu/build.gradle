@@ -7,6 +7,6 @@ ext {
 apply from: "$rootDir/common.gradle"
 
 dependencies {
-    implementation(project(":lib-yourupload-extractor"))
-    implementation(project(":lib-streamwish-extractor"))
+    implementation(project(":lib:yourupload-extractor"))
+    implementation(project(":lib:streamwish-extractor"))
 }

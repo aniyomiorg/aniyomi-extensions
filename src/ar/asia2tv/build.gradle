@@ -7,10 +7,10 @@ ext {
 apply from: "$rootDir/common.gradle"
 
 dependencies {
-    implementation(project(':lib-dood-extractor'))
-    implementation(project(':lib-okru-extractor'))
-    implementation(project(':lib-streamtape-extractor'))
-    implementation(project(':lib-streamwish-extractor'))
-    implementation(project(':lib-uqload-extractor'))
-    implementation(project(':lib-vidbom-extractor'))
+    implementation(project(':lib:dood-extractor'))
+    implementation(project(':lib:okru-extractor'))
+    implementation(project(':lib:streamtape-extractor'))
+    implementation(project(':lib:streamwish-extractor'))
+    implementation(project(':lib:uqload-extractor'))
+    implementation(project(':lib:vidbom-extractor'))
 }
