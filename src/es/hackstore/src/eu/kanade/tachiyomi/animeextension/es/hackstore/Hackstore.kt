@@ -8,7 +8,6 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
-import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -203,30 +202,30 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val server = serverElement.text()
             val url = linkElement.attr("href")
 
-            val isLatino = server.contains("latino", ignoreCase = true)
-            val isSub = server.contains("subtitulado", ignoreCase = true)
+            val isLatino = server.contains("latino")
+            val isSub = server.contains("subtitulado")
 
             when {
                 server.contains("streamtape") -> {
-                    val video = StreamTapeExtractor(client).videoFromUrl(url, getServerName(server, isLatino, isSub))
+                    val video = StreamTapeExtractor(client).videoFromUrl(url, if (isLatino) "StreamTape Latino" else if (isSub) "StreamTape Subtitulado" else "StreamTape Castellano")
                     if (video != null) {
                         videoList.add(video)
                     }
                 }
                 server.contains("voe") -> {
-                    val video = VoeExtractor(client).videosFromUrl(url, getServerName(server, isLatino, isSub))
+                    val video = VoeExtractor(client).videosFromUrl(url, if (isLatino) "VOE Latino" else if (isSub) "VOE Subtitulado" else "VOE Castellano")
                     videoList.addAll(video)
                 }
                 server.contains("filemoon") -> {
-                    val video = FilemoonExtractor(client).videosFromUrl(url, getServerName(server, isLatino, isSub))
+                    val video = FilemoonExtractor(client).videosFromUrl(url, if (isLatino) "Filemoon Latino" else if (isSub) "Filemoon Subtitulado" else "Filemoon Castellano")
                     videoList.addAll(video)
                 }
                 server.contains("streamwish") -> {
-                    val video = StreamWishExtractor(client, headers).videosFromUrl(url, getServerName(server, isLatino, isSub))
+                    val video = StreamWishExtractor(client, headers).videosFromUrl(url, if (isLatino) "StreamWish Latino" else if (isSub) "StreamWish Subtitulado" else "StreamWish Castellano")
                     videoList.addAll(video)
                 }
                 server.contains("dood") -> {
-                    val video = DoodExtractor(client).videosFromUrl(url, getServerName(server, isLatino, isSub))
+                    val video = DoodExtractor(client).videosFromUrl(url, if (isLatino) "Dood Latino" else if (isSub) "Dood Subtitulado" else "Dood Castellano")
                     videoList.addAll(video)
                 }
             }
@@ -234,15 +233,6 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return videoList
     }
-
-    private fun getServerName(server: String, isLatino: Boolean, isSub: Boolean): String {
-        return when {
-            isLatino -> "$server Latino"
-            isSub -> "$server Subtitulado"
-            else -> "$server Castellano"
-        }
-    }
-
     override fun videoListSelector(): String = "#onpn > table > tbody > tr > td.link-td > a"
 
     override fun videoFromElement(element: Element): Video { throw UnsupportedOperationException() }
