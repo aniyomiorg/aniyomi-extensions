@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -18,7 +19,6 @@ import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Request
 import okhttp3.Response
@@ -68,20 +68,24 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesSelector() = popularAnimeSelector()
 
     // =============================== Search ===============================
-    override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
-        return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
-            val id = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/peliculas/$id"))
-                .awaitSuccess()
-                .use(::searchAnimeByIdParse)
-        } else {
-            super.getSearchAnime(page, query, filters)
-        }
-    }
 
-    private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.use { it.asJsoup() })
-        return AnimesPage(listOf(details), false)
+    override fun getFilterList(): AnimeFilterList = AnimeFilterList(
+        AnimeFilter.Header("La busqueda por texto ignora el filtro"),
+        GenreFilter(),
+    )
+
+    private class GenreFilter : UriPartFilter(
+        "Géneros",
+        arrayOf(
+            Pair("<Selecionar>", ""),
+            Pair("Peliculas", "peliculas"),
+            Pair("Series", "series"),
+            Pair("Anime", "anime"),
+        ),
+    )
+    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
+        AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
+        fun toUriPart() = vals[state].second
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
@@ -92,7 +96,15 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request { throw UnsupportedOperationException() }
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val filterList = if (filters.isEmpty()) getFilterList() else filters
+        val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
+        return when {
+            query.isNotBlank() -> GET("$baseUrl/page/$page/?s=$query")
+            genreFilter.state != 0 -> GET("$baseUrl/${genreFilter.toUriPart()}/page/$page/")
+            else -> popularAnimeRequest(page)
+        }
+    }
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
@@ -114,19 +126,65 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val episodeList = mutableListOf<SEpisode>()
-        val ep = SEpisode.create()
-        ep.setUrlWithoutDomain(response.request.url.toString())
-        ep.name = "PELÍCULA"
-        ep.episode_number = 1f
+        val document = response.asJsoup()
 
-        episodeList.add(ep)
+        val episodeList = mutableListOf<SEpisode>()
+        val ismovie = response.request.url.toString().contains("/peliculas/")
+        val isserie = response.request.url.toString().contains("/series/")
+        val isanime = response.request.url.toString().contains("/animes/")
+        if (ismovie) {
+            val ep = SEpisode.create()
+            ep.setUrlWithoutDomain(response.request.url.toString())
+            ep.name = "PELÍCULA"
+            ep.episode_number = 1f
+            episodeList.add(ep)
+        } else if (isserie) {
+            document.select(".movie-thumbnail").forEach { thumbnail ->
+                val episode = SEpisode.create()
+
+                // Obtener el número de temporada y episodio desde el enlace
+                val episodeLink = thumbnail.select("a").attr("href")
+                val seasonMatch = Regex("-(\\d+)x(\\d+)/$").find(episodeLink)
+                val seasonNumber = seasonMatch?.groups?.get(1)?.value?.toInt() ?: 0
+                val episodeNumber = seasonMatch?.groups?.get(2)?.value?.toInt() ?: 0
+
+                // Configurar la información del episodio
+                episode.name = "T$seasonNumber - E$episodeNumber"
+                episode.episode_number = episodeNumber.toFloat()
+                episode.setUrlWithoutDomain(episodeLink)
+
+                // Agregar el episodio a la lista
+                episodeList.add(episode)
+            }
+        } else if (isanime) {
+            document.select(".movie-thumbnail").forEach { thumbnail ->
+                val episode = SEpisode.create()
+
+                // Obtener el número de temporada y episodio desde el enlace
+                val episodeLink = thumbnail.select("a").attr("href")
+                val seasonMatch = Regex("-(\\d+)x(\\d+)/$").find(episodeLink)
+                val seasonNumber = seasonMatch?.groups?.get(1)?.value?.toInt() ?: 0
+                val episodeNumber = seasonMatch?.groups?.get(2)?.value?.toInt() ?: 0
+
+                // Configurar la información del episodio
+                episode.name = "T$seasonNumber - E$episodeNumber"
+                episode.episode_number = episodeNumber.toFloat()
+                episode.setUrlWithoutDomain(episodeLink)
+
+                // Agregar el episodio a la lista
+                episodeList.add(episode)
+            }
+        }
 
         return episodeList
     }
 
     // ============================== Episodes ==============================
     override fun episodeListSelector() = "uwu"
+
+    private fun getNumberFromString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
+    }
 
     override fun episodeFromElement(element: Element): SEpisode { throw UnsupportedOperationException() }
 
@@ -145,36 +203,44 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val server = serverElement.text()
             val url = linkElement.attr("href")
 
-            val isLatino = server.contains("latino")
-            val isSub = server.contains("subtitulado")
+            val isLatino = server.contains("latino", ignoreCase = true)
+            val isSub = server.contains("subtitulado", ignoreCase = true)
 
             when {
                 server.contains("streamtape") -> {
-                    val video = StreamTapeExtractor(client).videoFromUrl(url, if (isLatino) "StreamTape Latino" else if (isSub) "StreamTape Subtitulado" else "StreamTape Castellano")
+                    val video = StreamTapeExtractor(client).videoFromUrl(url, getServerName(server, isLatino, isSub))
                     if (video != null) {
                         videoList.add(video)
                     }
                 }
                 server.contains("voe") -> {
-                    val video = VoeExtractor(client).videosFromUrl(url, if (isLatino) "VOE Latino" else if (isSub) "VOE Subtitulado" else "VOE Castellano")
+                    val video = VoeExtractor(client).videosFromUrl(url, getServerName(server, isLatino, isSub))
                     videoList.addAll(video)
                 }
                 server.contains("filemoon") -> {
-                    val video = FilemoonExtractor(client).videosFromUrl(url, if (isLatino) "Filemoon Latino" else if (isSub) "Filemoon Subtitulado" else "Filemoon Castellano")
+                    val video = FilemoonExtractor(client).videosFromUrl(url, getServerName(server, isLatino, isSub))
                     videoList.addAll(video)
                 }
                 server.contains("streamwish") -> {
-                    val video = StreamWishExtractor(client, headers).videosFromUrl(url, if (isLatino) "StreamWish Latino" else if (isSub) "StreamWish Subtitulado" else "StreamWish Castellano")
+                    val video = StreamWishExtractor(client, headers).videosFromUrl(url, getServerName(server, isLatino, isSub))
                     videoList.addAll(video)
                 }
                 server.contains("dood") -> {
-                    val video = DoodExtractor(client).videosFromUrl(url, if (isLatino) "Dood Latino" else if (isSub) "Dood Subtitulado" else "Dood Castellano")
+                    val video = DoodExtractor(client).videosFromUrl(url, getServerName(server, isLatino, isSub))
                     videoList.addAll(video)
                 }
             }
         }
 
         return videoList
+    }
+
+    private fun getServerName(server: String, isLatino: Boolean, isSub: Boolean): String {
+        return when {
+            isLatino -> "$server Latino"
+            isSub -> "$server Subtitulado"
+            else -> "$server Castellano"
+        }
     }
 
     override fun videoListSelector(): String = "#onpn > table > tbody > tr > td.link-td > a"
