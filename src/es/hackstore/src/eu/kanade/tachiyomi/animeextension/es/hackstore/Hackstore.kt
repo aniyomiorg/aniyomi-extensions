@@ -117,7 +117,6 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
-        // si es a pelicula
         val ismovie = getFilterList().find { it is GenreFilter }?.let { it as GenreFilter }?.toUriPart() == "peliculas"
         if (ismovie) {
             val anime = SAnime.create()
