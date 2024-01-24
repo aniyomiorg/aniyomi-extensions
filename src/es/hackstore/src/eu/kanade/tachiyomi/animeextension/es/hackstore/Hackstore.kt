@@ -34,7 +34,7 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "es"
 
-    override val supportsLatest = false
+    override val supportsLatest = false // currently not supported
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -50,6 +50,7 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.setUrlWithoutDomain(element.select("div.movie-thumbnail > div.movie-back > a").attr("href"))
         anime.title = element.select("h3 > a.movie-title").attr("title")
         anime.thumbnail_url = element.select("div.movie-back > a > div.poster-pad > img.imghacks").attr("data-src")
+
         anime.description = ""
         return anime
     }
@@ -58,11 +59,20 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =============================== Latest ===============================
 
-    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
+    override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
 
-    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
+    override fun latestUpdatesFromElement(element: Element): SAnime {
+        val anime = SAnime.create()
 
-    override fun latestUpdatesRequest(page: Int) = popularAnimeRequest(page)
+        anime.setUrlWithoutDomain(element.select("div.movie-thumbnail > div.movie-back > a").attr("href"))
+        anime.title = element.select("h3 > a.movie-title").attr("title")
+        anime.thumbnail_url = element.select("div.movie-thumbnail > div.movie-back > div > div.poster-pad > a > img").attr("data-src")
+        anime.description = ""
+
+        return anime
+    }
+
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/page/$page/?s")
 
     override fun latestUpdatesSelector() = popularAnimeSelector()
 
@@ -74,12 +84,12 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     )
 
     private class GenreFilter : UriPartFilter(
-        "Géneros",
+        "Tipos",
         arrayOf(
             Pair("<Selecionar>", ""),
             Pair("Peliculas", "peliculas"),
             Pair("Series", "series"),
-            Pair("Anime", "anime"),
+            Pair("Animes", "animes"),
         ),
     )
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -107,17 +117,37 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        anime.description = document.selectFirst("#main-content > div > div.content-area.twelve.columns > div.watch-content > center > div > p:nth-child(1)")!!.text().removeSurrounding("\"")
-        document.select("#main-content > div > div.content-area.twelve.columns > div.watch-content > center > div > p").map {
-            val textContent = it.text()
-            val tempContent = textContent.lowercase()
-            if (tempContent.contains("titulo latino")) anime.title = textContent.replace("Titulo Latino:", "").trim()
-            if (tempContent.contains("genero")) anime.genre = textContent.replace("Genero:", "").trim()
-            if (tempContent.contains("Director")) anime.author = textContent.replace("Director:", "").trim()
-            textContent.replace("en 1 Link", "").trim()
+        // si es a pelicula
+        val ismovie = getFilterList().find { it is GenreFilter }?.let { it as GenreFilter }?.toUriPart() == "peliculas"
+        if (ismovie) {
+            val anime = SAnime.create()
+            anime.description = document.selectFirst("#main-content > div > div.content-area.twelve.columns > div.watch-content > center > div > p:nth-child(1)")!!.text().removeSurrounding("\"")
+            document.select("#main-content > div > div.content-area.twelve.columns > div.watch-content > center > div > p").map {
+                val textContent = it.text()
+                val tempContent = textContent.lowercase()
+                if (tempContent.contains("titulo latino")) anime.title = textContent.replace("Titulo Latino:", "").trim()
+                if (tempContent.contains("genero")) anime.genre = textContent.replace("Genero:", "").trim()
+                if (tempContent.contains("Director")) anime.author = textContent.replace("Director:", "").trim()
+                textContent.replace("en 1 Link", "").trim()
+            }
+            return anime
+        } else {
+            val anime = SAnime.create()
+
+            anime.description = document.selectFirst("#pcontent > p")?.text()?.trim() ?: document.selectFirst("#zcontent > p")?.text()?.trim() ?: ""
+
+            document.select("#zcontent, #pcontent > p").forEach { infoElement ->
+                val textContent = infoElement.text().trim().lowercase()
+
+                when {
+                    "titulo original" in textContent -> anime.title = textContent.replace("titulo original:", "").trim()
+                    "generos" in textContent -> anime.genre = textContent.replace("generos:", "").trim()
+                    "director" in textContent -> anime.author = textContent.replace("director:", "").trim()
+                }
+            }
+
+            return anime
         }
-        return anime
     }
 
     private fun externalOrInternalImg(url: String): String {
@@ -129,48 +159,25 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val episodeList = mutableListOf<SEpisode>()
         val ismovie = response.request.url.toString().contains("/peliculas/")
-        val isserie = response.request.url.toString().contains("/series/")
-        val isanime = response.request.url.toString().contains("/animes/")
         if (ismovie) {
             val ep = SEpisode.create()
             ep.setUrlWithoutDomain(response.request.url.toString())
             ep.name = "PELÍCULA"
             ep.episode_number = 1f
             episodeList.add(ep)
-        } else if (isserie) {
+        } else {
             document.select(".movie-thumbnail").forEach { thumbnail ->
                 val episode = SEpisode.create()
 
-                // Obtener el número de temporada y episodio desde el enlace
                 val episodeLink = thumbnail.select("a").attr("href")
                 val seasonMatch = Regex("-(\\d+)x(\\d+)/$").find(episodeLink)
                 val seasonNumber = seasonMatch?.groups?.get(1)?.value?.toInt() ?: 0
                 val episodeNumber = seasonMatch?.groups?.get(2)?.value?.toInt() ?: 0
 
-                // Configurar la información del episodio
                 episode.name = "T$seasonNumber - E$episodeNumber"
                 episode.episode_number = episodeNumber.toFloat()
                 episode.setUrlWithoutDomain(episodeLink)
 
-                // Agregar el episodio a la lista
-                episodeList.add(episode)
-            }
-        } else if (isanime) {
-            document.select(".movie-thumbnail").forEach { thumbnail ->
-                val episode = SEpisode.create()
-
-                // Obtener el número de temporada y episodio desde el enlace
-                val episodeLink = thumbnail.select("a").attr("href")
-                val seasonMatch = Regex("-(\\d+)x(\\d+)/$").find(episodeLink)
-                val seasonNumber = seasonMatch?.groups?.get(1)?.value?.toInt() ?: 0
-                val episodeNumber = seasonMatch?.groups?.get(2)?.value?.toInt() ?: 0
-
-                // Configurar la información del episodio
-                episode.name = "T$seasonNumber - E$episodeNumber"
-                episode.episode_number = episodeNumber.toFloat()
-                episode.setUrlWithoutDomain(episodeLink)
-
-                // Agregar el episodio a la lista
                 episodeList.add(episode)
             }
         }
