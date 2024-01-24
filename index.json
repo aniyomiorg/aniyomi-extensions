@@ -2411,6 +2411,26 @@
     ]
   },
   {
+    "name": "Aniyomi: Hackstore",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.hackstore",
+    "apk": "aniyomi-es.hackstore-v14.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "14.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Hackstore",
+        "lang": "es",
+        "id": "1202443264869837465",
+        "baseUrl": "https://hackstore.rs",
+        "versionId": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Hentaijk",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.hentaijk",
     "apk": "aniyomi-es.hentaijk-v14.12.apk",
