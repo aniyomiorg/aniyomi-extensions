@@ -2046,10 +2046,10 @@
   {
     "name": "Aniyomi: Wcofun",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.wcofun",
-    "apk": "aniyomi-en.wcofun-v14.12.apk",
+    "apk": "aniyomi-en.wcofun-v14.13.apk",
     "lang": "en",
-    "code": 12,
-    "version": "14.12",
+    "code": 13,
+    "version": "14.13",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2058,7 +2058,7 @@
         "name": "Wcofun",
         "lang": "en",
         "id": "1677488626877212634",
-        "baseUrl": "https://www.wcofun.tv",
+        "baseUrl": "https://www.wcofun.net",
         "versionId": 1
       }
     ]
@@ -4108,10 +4108,10 @@
   {
     "name": "Aniyomi: HDFilmCehennemi",
     "pkg": "eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi",
-    "apk": "aniyomi-tr.hdfilmcehennemi-v14.8.apk",
+    "apk": "aniyomi-tr.hdfilmcehennemi-v14.9.apk",
     "lang": "tr",
-    "code": 8,
-    "version": "14.8",
+    "code": 9,
+    "version": "14.9",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -4120,7 +4120,7 @@
         "name": "HDFilmCehennemi",
         "lang": "tr",
         "id": "7053678650145882822",
-        "baseUrl": "https://www.hdfilmcehennemi.de",
+        "baseUrl": "https://www.hdfilmcehennemi.fun",
         "versionId": 1
       }
     ]
