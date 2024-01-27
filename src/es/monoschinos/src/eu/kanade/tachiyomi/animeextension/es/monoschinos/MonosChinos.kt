@@ -13,8 +13,10 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -90,6 +92,14 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 url.contains("mp4upload") -> {
                     val videos = Mp4uploadExtractor(client).videosFromUrl(url, headers)
+                    videoList.addAll(videos)
+                }
+                url.contains("streamtape") -> {
+                    val videos = StreamTapeExtractor(client).videosFromUrl(url)
+                    videoList.addAll(videos)
+                }
+                url.contains("filemoon") -> {
+                    val videos = FilemoonExtractor(client).videosFromUrl(url)
                     videoList.addAll(videos)
                 }
             }
@@ -255,6 +265,8 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Okru:240p", // Okru
             "SolidFiles",
             "Upload", // video servers without resolution
+            "StreamTape",
+            "FileMoon",
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
