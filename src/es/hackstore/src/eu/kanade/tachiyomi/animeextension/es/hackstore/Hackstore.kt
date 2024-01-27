@@ -117,7 +117,7 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
-        val ismovie = getFilterList().find { it is GenreFilter }?.let { it as GenreFilter }?.toUriPart() == "peliculas"
+        val ismovie = document.selectFirst("#main-content > div > div.content-area.twelve.columns > div.watch-content > center > div > p:nth-child(1)") != null
         if (ismovie) {
             val anime = SAnime.create()
             anime.description = document.selectFirst("#main-content > div > div.content-area.twelve.columns > div.watch-content > center > div > p:nth-child(1)")!!.text().removeSurrounding("\"")
@@ -175,6 +175,7 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                 episode.name = "T$seasonNumber - E$episodeNumber"
                 episode.episode_number = episodeNumber.toFloat()
+                episodeList.add(0, episode)
                 episode.setUrlWithoutDomain(episodeLink)
 
                 episodeList.add(episode)
