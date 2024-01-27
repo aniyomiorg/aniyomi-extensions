@@ -1,7 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.pt.betteranime
 
-import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.betteranime.dto.LivewireResponseDto
@@ -30,8 +28,6 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 
@@ -51,9 +47,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
-    private val preferences: SharedPreferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
+    private val preferences by lazy { getSourcePreferences() }
 
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", baseUrl)
@@ -64,58 +58,34 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // so we use the latest added anime page instead.
     override fun popularAnimeParse(response: Response) = latestUpdatesParse(response)
 
-    override fun popularAnimeRequest(page: Int): Request =
-        GET("$baseUrl/ultimosAdicionados?page=$page")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/ultimosAdicionados?page=$page", headers)
 
     override fun popularAnimeSelector() = TODO()
     override fun popularAnimeFromElement(element: Element) = TODO()
     override fun popularAnimeNextPageSelector() = TODO()
 
-    // ============================== Episodes ==============================
-    override fun episodeListSelector(): String = "ul#episodesList > li.list-group-item-action > a"
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/ultimosLancamentos?page=$page", headers)
 
-    override fun episodeListParse(response: Response) =
-        super.episodeListParse(response).reversed()
+    override fun latestUpdatesSelector() = "div.list-animes article"
 
-    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
-        val episodeName = element.text()
-        setUrlWithoutDomain(element.attr("href"))
-        name = episodeName
-        episode_number = episodeName.substringAfterLast(" ").toFloatOrNull() ?: 0F
+    override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
+        val img = element.selectFirst("img")!!
+        val url = element.selectFirst("a")?.attr("href")!!
+        setUrlWithoutDomain(url)
+        title = element.selectFirst("h3")?.text()!!
+        thumbnail_url = "https:" + img.attr("src")
     }
 
-    // ============================ Video Links =============================
-    override fun videoListParse(response: Response): List<Video> {
-        val html = response.body.string()
-        val extractor = BetterAnimeExtractor(client, baseUrl, json)
-        return extractor.videoListFromHtml(html)
-    }
-
-    override fun videoListSelector() = throw UnsupportedOperationException()
-    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
-    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
+    override fun latestUpdatesNextPageSelector() = "ul.pagination li.page-item:contains(›):not(.disabled)"
 
     // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
-    override fun searchAnimeSelector() = latestUpdatesSelector()
-    override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
-
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        val body = response.body.string()
-        val data = json.decodeFromString<LivewireResponseDto>(body)
-        val html = data.effects.html?.unescape().orEmpty()
-        val document = Jsoup.parse(html)
-        val animes = document.select(searchAnimeSelector()).map { element ->
-            searchAnimeFromElement(element)
-        }
-        val hasNext = document.selectFirst(searchAnimeNextPageSelector()) != null
-        return AnimesPage(animes, hasNext)
-    }
+    override fun getFilterList(): AnimeFilterList = BAFilters.FILTER_LIST
 
     override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH_PATH)) {
             val path = query.removePrefix(PREFIX_SEARCH_PATH)
-            client.newCall(GET("$baseUrl/$path"))
+            client.newCall(GET("$baseUrl/$path", headers))
                 .awaitSuccess()
                 .use(::searchAnimeByPathParse)
         } else {
@@ -153,13 +123,29 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     params.year to "byYear",
                     params.language to "byLanguage",
                     query to "searchTerm",
-                ).forEach { it.first.toPayloadData(it.second)?.let(::add) }
+                ).forEach { it.first.toPayloadData(it.second)?.also(::add) }
             }
 
             addAll(data.map { PayloadItem(it, "syncInput") })
         }
         return wireRequest("anime-search", searchParams)
     }
+
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        val body = response.body.string()
+        val data = json.decodeFromString<LivewireResponseDto>(body)
+        val html = data.effects.html?.unescape().orEmpty()
+        val document = Jsoup.parse(html)
+        val animes = document.select(searchAnimeSelector()).map(::searchAnimeFromElement)
+        val hasNext = document.selectFirst(searchAnimeNextPageSelector()) != null
+        return AnimesPage(animes, hasNext)
+    }
+
+    override fun searchAnimeSelector() = latestUpdatesSelector()
+
+    override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
+
+    override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
@@ -182,24 +168,34 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    // =============================== Latest ===============================
-    override fun latestUpdatesNextPageSelector() = "ul.pagination li.page-item:contains(›):not(.disabled)"
-    override fun latestUpdatesSelector() = "div.list-animes article"
+    // ============================== Episodes ==============================
+    override fun episodeListSelector() = "ul#episodesList > li.list-group-item-action > a"
 
-    override fun latestUpdatesRequest(page: Int): Request =
-        GET("$baseUrl/ultimosLancamentos?page=$page")
+    override fun episodeListParse(response: Response) =
+        super.episodeListParse(response).reversed()
 
-    override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
-        val img = element.selectFirst("img")!!
-        val url = element.selectFirst("a")?.attr("href")!!
-        setUrlWithoutDomain(url)
-        title = element.selectFirst("h3")?.text()!!
-        thumbnail_url = "https:" + img.attr("src")
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        val episodeName = element.text()
+        setUrlWithoutDomain(element.attr("href"))
+        name = episodeName
+        episode_number = episodeName.substringAfterLast(" ").toFloatOrNull() ?: 0F
     }
+
+    // ============================ Video Links =============================
+    private val extractor by lazy { BetterAnimeExtractor(client, baseUrl, json) }
+
+    override fun videoListParse(response: Response): List<Video> {
+        val html = response.body.string()
+        return extractor.videoListFromHtml(html)
+    }
+
+    override fun videoListSelector() = throw UnsupportedOperationException()
+    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
+    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
             entries = PREF_QUALITY_ENTRIES
@@ -212,11 +208,8 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
     }
-
-    override fun getFilterList(): AnimeFilterList = BAFilters.FILTER_LIST
 
     // ============================= Utilities ==============================
     private fun loginInterceptor(chain: Interceptor.Chain): Response {
@@ -231,7 +224,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
     private fun getRealDoc(document: Document): Document {
         return document.selectFirst("div.anime-title a")?.let { link ->
-            client.newCall(GET(link.attr("href")))
+            client.newCall(GET(link.attr("href"), headers))
                 .execute()
                 .asJsoup()
         } ?: document
@@ -259,7 +252,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun wireRequest(path: String, updates: List<PayloadItem>): Request {
         if (wireToken.isBlank()) {
-            updateInitialData(GET("$baseUrl/pesquisa"))
+            updateInitialData(GET("$baseUrl/pesquisa", headers))
         }
 
         val url = "$baseUrl/livewire/message/$path"
