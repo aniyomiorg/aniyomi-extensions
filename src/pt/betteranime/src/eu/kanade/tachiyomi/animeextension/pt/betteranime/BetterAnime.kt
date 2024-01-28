@@ -3,9 +3,8 @@ package eu.kanade.tachiyomi.animeextension.pt.betteranime
 import android.app.Application
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.pt.betteranime.dto.LivewireResponseDto
+import eu.kanade.tachiyomi.animeextension.pt.betteranime.dto.ComponentsDto
 import eu.kanade.tachiyomi.animeextension.pt.betteranime.dto.PayloadData
-import eu.kanade.tachiyomi.animeextension.pt.betteranime.dto.PayloadItem
 import eu.kanade.tachiyomi.animeextension.pt.betteranime.extractors.BetterAnimeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -18,9 +17,14 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -83,7 +87,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector() = "ul.pagination li.page-item:contains(›):not(.disabled)"
 
     // =============================== Search ===============================
-    override fun getFilterList(): AnimeFilterList = BAFilters.FILTER_LIST
+    override fun getFilterList() = BAFilters.FILTER_LIST
 
     override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH_PATH)) {
@@ -102,10 +106,12 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val searchParams = buildList {
-            add(PayloadItem(PayloadData(method = "search"), "callMethod"))
+        val calls = buildJsonArray {
+            val payloadSerializer = PayloadData.serializer()
+            add(json.encodeToJsonElement(payloadSerializer, PayloadData(method = "search")))
             add(
-                PayloadItem(
+                json.encodeToJsonElement(
+                    payloadSerializer,
                     PayloadData(
                         method = "gotoPage",
                         params = listOf(
@@ -113,31 +119,63 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             JsonPrimitive("page"),
                         ),
                     ),
-                    "callMethod",
                 ),
             )
-
-            val params = BAFilters.getSearchParameters(filters)
-            val data = buildList {
-                if (params.genres.size > 1) {
-                    add(PayloadData(name = "byGenres", value = params.genres))
-                }
-                listOf(
-                    params.year to "byYear",
-                    params.language to "byLanguage",
-                    query to "searchTerm",
-                ).forEach { it.first.toPayloadData(it.second)?.also(::add) }
-            }
-
-            addAll(data.map { PayloadItem(it, "syncInput") })
         }
-        return wireRequest("anime-search", searchParams)
+
+        val params = BAFilters.getSearchParameters(filters)
+        val updates = buildJsonObject {
+            if (params.genres.isNotEmpty()) {
+                putJsonArray("byGenres") {
+                    params.genres.forEach { add(JsonPrimitive(it)) }
+                }
+            }
+            listOf(
+                params.year to "byYear",
+                params.language to "byLanguage",
+                query to "searchTerm",
+            ).forEach { if (it.first.isNotEmpty()) put(it.second, it.first) }
+        }
+
+        if (wireToken.isBlank()) {
+            updateSnapshot(GET("$baseUrl/pesquisa", headers))
+        }
+
+        val data = buildJsonObject {
+            put("_token", wireToken)
+            putJsonArray("components") {
+                add(
+                    buildJsonObject {
+                        put("calls", calls)
+                        put("snapshot", snapshot)
+                        put("updates", updates)
+                    },
+                )
+            }
+        }
+        val reqBody = json.encodeToString(JsonObject.serializer(), data).toRequestBody("application/json".toMediaType())
+
+        val headers = headersBuilder()
+            .add("x-livewire", "true")
+            .add("x-csrf-token", wireToken)
+            .build()
+        return POST("$baseUrl/livewire/update", headers, reqBody)
+    }
+
+    private var snapshot = ""
+    private var wireToken = ""
+
+    private fun updateSnapshot(request: Request) {
+        val document = client.newCall(request).execute().asJsoup()
+        val wireElement = document.selectFirst("[wire:snapshot]")!!
+        snapshot = wireElement.attr("wire:snapshot")
+        wireToken = document.selectFirst("script[data-csrf]")!!.attr("data-csrf")
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         val body = response.body.string()
-        val data = json.decodeFromString<LivewireResponseDto>(body)
-        val html = data.effects.html?.unescape().orEmpty()
+        val data = json.decodeFromString<ComponentsDto>(body)
+        val html = data.components.firstOrNull()?.effects?.html?.unescape().orEmpty()
         val document = Jsoup.parse(html)
         val animes = document.select(searchAnimeSelector()).map(::searchAnimeFromElement)
         val hasNext = document.selectFirst(searchAnimeNextPageSelector()) != null
@@ -230,47 +268,10 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    private var initialData: String = ""
-    private var wireToken: String = ""
-
-    private fun updateInitialData(request: Request) {
-        val document = client.newCall(request).execute().asJsoup()
-        val wireElement = document.selectFirst("[wire:id]")
-        wireToken = document.html()
-            .substringAfter("livewire_token")
-            .substringAfter("'")
-            .substringBefore("'")
-        initialData = wireElement!!.attr("wire:initial-data").dropLast(1)
-    }
-
-    private fun wireRequest(path: String, updates: List<PayloadItem>): Request {
-        if (wireToken.isBlank()) {
-            updateInitialData(GET("$baseUrl/pesquisa", headers))
-        }
-
-        val url = "$baseUrl/livewire/message/$path"
-        val items = updates.joinToString(",") { json.encodeToString(it) }
-        val data = "$initialData, \"updates\": [$items]}"
-        val reqBody = data.toRequestBody("application/json".toMediaType())
-
-        val headers = headersBuilder()
-            .add("x-livewire", "true")
-            .add("x-csrf-token", wireToken)
-            .build()
-        return POST(url, headers, reqBody)
-    }
-
     private fun Element.getInfo(key: String): String? {
         return selectFirst("p:containsOwn($key) > span")
             ?.text()
             ?.trim()
-    }
-
-    private fun String.toPayloadData(name: String): PayloadData? {
-        return when {
-            isNotBlank() -> PayloadData(name = name, value = listOf(this))
-            else -> null
-        }
     }
 
     override fun List<Video>.sort(): List<Video> {
