@@ -1,12 +1,66 @@
 package eu.kanade.tachiyomi.animeextension.en.fmovies
 
 import android.util.Base64
+import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parseAs
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttpClient
 import java.net.URLDecoder
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 
-class FmoviesUtils {
+class FmoviesUtils(private val client: OkHttpClient, private val headers: Headers) {
 
+    // ===================== Media Detail ================================
+
+    private val tmdbURL = "https://api.themoviedb.org/3".toHttpUrl()
+
+    private val seez = "https://seez.su"
+
+    private val apiKey by lazy {
+        val jsUrl = client.newCall(GET(seez, headers)).execute().asJsoup()
+            .select("script[defer][src]")[1].attr("abs:src")
+
+        val jsBody = client.newCall(GET(jsUrl, headers)).execute().use { it.body.string() }
+        Regex("""f="(\w{20,})"""").find(jsBody)!!.groupValues[1]
+    }
+
+    private val apiHeaders = headers.newBuilder().apply {
+        add("Accept", "application/json, text/javascript, */*; q=0.01")
+        add("Host", "api.themoviedb.org")
+        add("Origin", seez)
+        add("Referer", "$seez/")
+    }.build()
+
+    fun getDetail(mediaTitle: String): TmdbDetailsResponse? =
+        runCatching {
+            val searchUrl = tmdbURL.newBuilder().apply {
+                addPathSegment("search")
+                addPathSegment("multi")
+                addQueryParameter("query", mediaTitle)
+                addQueryParameter("api_key", apiKey)
+            }.build().toString()
+            val searchResp = client.newCall(GET(searchUrl, headers = apiHeaders))
+                .execute()
+                .parseAs<TmdbResponse>()
+
+            val media = searchResp.results.first()
+
+            val detailUrl = tmdbURL.newBuilder().apply {
+                addPathSegment(media.mediaType)
+                addPathSegment(media.id.toString())
+                addQueryParameter("api_key", apiKey)
+            }.build().toString()
+            client.newCall(GET(detailUrl, headers = apiHeaders))
+                .execute()
+                .parseAs<TmdbDetailsResponse>()
+        }.getOrNull()
+
+    // ===================== Encryption ================================
     fun vrfEncrypt(input: String): String {
         val rc4Key = SecretKeySpec("FWsfu0KQd9vxYGNB".toByteArray(), "RC4")
         val cipher = Cipher.getInstance("RC4")
@@ -52,4 +106,33 @@ class FmoviesUtils {
         }
         return vrf
     }
+}
+
+@Serializable
+data class TmdbResponse(
+    val results: List<TmdbResult>,
+) {
+    @Serializable
+    data class TmdbResult(
+        val id: Int,
+        @SerialName("media_type")
+        val mediaType: String = "tv",
+    )
+}
+
+@Serializable
+data class TmdbDetailsResponse(
+    val status: String,
+    val overview: String? = null,
+    @SerialName("next_episode_to_air")
+    val nextEpisode: NextEpisode? = null,
+) {
+    @Serializable
+    data class NextEpisode(
+        val name: String? = "",
+        @SerialName("episode_number")
+        val epNumber: Int,
+        @SerialName("air_date")
+        val airDate: String,
+    )
 }
