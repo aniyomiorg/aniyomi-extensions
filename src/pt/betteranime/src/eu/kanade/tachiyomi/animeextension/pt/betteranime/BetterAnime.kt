@@ -20,7 +20,6 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
-import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -29,7 +28,6 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
-import java.io.IOException
 
 class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -42,7 +40,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override val client = network.client.newBuilder()
-        .addInterceptor(::loginInterceptor)
+        .addInterceptor(LoginInterceptor(network.client, baseUrl, headers))
         .build()
 
     private val json: Json by injectLazy()
@@ -212,16 +210,6 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private fun loginInterceptor(chain: Interceptor.Chain): Response {
-        val response = chain.proceed(chain.request())
-
-        if ("/dmca" in response.request.url.toString()) {
-            response.close()
-            throw IOException(ERROR_LOGIN_MISSING)
-        }
-
-        return response
-    }
     private fun getRealDoc(document: Document): Document {
         return document.selectFirst("div.anime-title a")?.let { link ->
             client.newCall(GET(link.attr("href"), headers))
@@ -290,9 +278,6 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     companion object {
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
         const val PREFIX_SEARCH_PATH = "path:"
-
-        private const val ERROR_LOGIN_MISSING = "Login necessário. " +
-            "Abra a WebView, insira os dados de sua conta e realize o login."
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
