@@ -30,7 +30,7 @@ object MyKdramaFilters {
 
         return FilterSearchParams(
             filters.parseCheckbox<GenresFilter>(GENRES_LIST, "genre"),
-            filters.parseCheckbox<CountryFilter>(GENRES_LIST, "country"),
+            filters.parseCheckbox<CountryFilter>(COUNTRY_LIST, "country"),
             filters.asQueryPart<StatusFilter>(),
             filters.asQueryPart<TypeFilter>(),
             filters.asQueryPart<OrderFilter>(),

@@ -42,7 +42,7 @@ class MyKdrama : AnimeStream(
         return if (query.isNotEmpty()) {
             GET("$baseUrl/page/$page/?s=$query")
         } else {
-            val queryParams = params.run { listOf(genres) }
+            val queryParams = params.run { listOf(genres, countries) }
                 .filter(String::isNotBlank)
                 .joinToString("&")
             val url = "$animeListUrl/?$queryParams".toHttpUrl().newBuilder()
@@ -51,7 +51,7 @@ class MyKdrama : AnimeStream(
                 .addIfNotBlank("type", params.type)
                 .addIfNotBlank("order", params.order)
                 .build()
-            GET(url.toString(), headers)
+            GET(url, headers)
         }
     }
 
@@ -73,10 +73,6 @@ class MyKdrama : AnimeStream(
         }
     }
 
-    // =========================== Anime Details ============================
-
-    // ============================== Episodes ==============================
-
     // ============================ Video Links =============================
     override val prefQualityValues = arrayOf("1080p", "720p", "480p", "360p", "240p", "144p")
     override val prefQualityEntries = prefQualityValues
@@ -88,7 +84,7 @@ class MyKdrama : AnimeStream(
             val url = getHosterUrl(element)
             getVideoList(url, name)
         }.ifEmpty {
-            return doc.select(".gov-the-embed").parallelCatchingFlatMapBlocking { element ->
+            doc.select(".gov-the-embed").parallelCatchingFlatMapBlocking { element ->
                 val name = element.text()
                 val pageUrl = element.attr("onClick").substringAfter("'").substringBefore("'")
                 val url = client.newCall(GET(pageUrl)).execute().use { it.asJsoup().select("#pembed iframe").attr("src") }
