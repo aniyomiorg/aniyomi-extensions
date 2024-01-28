@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.betteranime
 
+import android.app.Application
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.betteranime.dto.LivewireResponseDto
@@ -27,6 +28,8 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 
 class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -45,7 +48,9 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
-    private val preferences by lazy { getSourcePreferences() }
+    private val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", baseUrl)
