@@ -33,14 +33,14 @@ class VidGuardExtractor(private val client: OkHttpClient) {
     }
 
     fun videosFromUrl(url: String): List<Video> {
-        val doc = client.newCall(GET(url)).execute().use { it.asJsoup() }
+        val doc = client.newCall(GET(url)).execute().asJsoup()
         val scriptUrl = doc.selectFirst("script[src*=ad/plugin]")
             ?.absUrl("src")
             ?: return emptyList()
 
         val headers = Headers.headersOf("Referer", url)
         val script = client.newCall(GET(scriptUrl, headers)).execute()
-            .use { it.body.string() }
+            .body.string()
 
         val sources = getSourcesFromScript(script, url)
             .takeIf { it.isNotBlank() && it != "undefined" }

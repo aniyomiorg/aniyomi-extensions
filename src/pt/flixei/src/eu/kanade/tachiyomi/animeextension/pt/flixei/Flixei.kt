@@ -105,7 +105,7 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun searchAnimeByPathParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.use { it.asJsoup() })
+        val details = animeDetailsParse(response.asJsoup())
         return AnimesPage(listOf(details), false)
     }
 
@@ -156,13 +156,13 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val docUrl = response.use { it.asJsoup() }.selectFirst("div#playButton")!!
+        val docUrl = response.asJsoup().selectFirst("div#playButton")!!
             .attr("onclick")
             .substringAfter("'")
             .substringBefore("'")
         return if (response.request.url.toString().contains("/serie/")) {
             client.newCall(GET(docUrl)).execute()
-                .use { it.asJsoup() }
+                .asJsoup()
                 .select("div#seasons div.item[data-load-episodes]")
                 .flatMap(::getSeasonEps)
                 .reversed()
@@ -196,7 +196,7 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val body = response.use { it.body.string() }
+        val body = response.body.string()
         // Pair<Language, Query>
         val items = if (body.startsWith("{")) {
             val data = json.decodeFromString<ApiResultsDto<PlayersDto>>(body)
@@ -242,7 +242,7 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } else {
             client.newCall(GET("$WAREZ_URL/embed/getPlay.php$query", headers))
                 .execute()
-                .use { it.body.string() }
+                .body.string()
                 .substringAfter("location.href=\"")
                 .substringBefore("\";")
         }

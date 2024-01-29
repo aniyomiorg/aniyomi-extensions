@@ -13,7 +13,7 @@ class Mp4uploadExtractor(private val client: OkHttpClient) {
             .set("referer", REFERER)
             .build()
 
-        val doc = client.newCall(GET(url, newHeaders)).execute().use { it.asJsoup() }
+        val doc = client.newCall(GET(url, newHeaders)).execute().asJsoup()
 
         val script = doc.selectFirst("script:containsData(eval):containsData(p,a,c,k,e,d)")?.data()
             ?.let(JsUnpacker::unpackAndCombine)

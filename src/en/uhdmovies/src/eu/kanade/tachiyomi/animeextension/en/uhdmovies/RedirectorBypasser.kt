@@ -17,7 +17,7 @@ import org.jsoup.nodes.Document
 class RedirectorBypasser(private val client: OkHttpClient, private val headers: Headers) {
     fun bypass(url: String): String? {
         val lastDoc = client.newCall(GET(url, headers)).execute()
-            .use { recursiveDoc(it.asJsoup()) }
+            .let { recursiveDoc(it.asJsoup()) }
 
         val script = lastDoc.selectFirst("script:containsData(/?go=):containsData(href)")
             ?.data()
@@ -33,7 +33,7 @@ class RedirectorBypasser(private val client: OkHttpClient, private val headers: 
         val doc = runBlocking(Dispatchers.IO) {
             MUTEX.withLock { // Mutex to prevent overwriting cookies from parallel requests
                 client.cookieJar.saveFromResponse(httpUrl, listOf(cookie))
-                client.newCall(GET(nextUrl, headers)).execute().use { it.asJsoup() }
+                client.newCall(GET(nextUrl, headers)).execute().asJsoup()
             }
         }
 
@@ -54,7 +54,7 @@ class RedirectorBypasser(private val client: OkHttpClient, private val headers: 
             .set("referer", doc.location())
             .build()
 
-        return client.newCall(POST(url, headers, body)).execute().use {
+        return client.newCall(POST(url, headers, body)).execute().let {
             recursiveDoc(it.asJsoup())
         }
     }

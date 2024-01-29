@@ -21,7 +21,7 @@ class XBetExtractor(
 
     fun videosFromUrl(url: String): List<Video> {
         val doc = client.newCall(GET(url, headers)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
 
         val script = doc.selectFirst("script:containsData(playerConfigs =)")?.data()
             ?: return emptyList()
@@ -42,7 +42,7 @@ class XBetExtractor(
         return postRes.flatMap { video ->
             runCatching {
                 val playlistUrl = client.newCall(POST(host + video.path, postHeaders)).execute()
-                    .use { it.body.string() }
+                    .body.string()
 
                 playlistUtils.extractFromHls(
                     playlistUrl,

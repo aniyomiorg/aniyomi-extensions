@@ -138,7 +138,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         return document.select("span.server a").flatMap {
             runCatching { extractVideos(it) }.getOrElse { emptyList() }
         }
@@ -152,7 +152,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return when {
             ".vid4up" in url || "Blkom" in element.text() -> {
                 val videoDoc = client.newCall(GET(url, headers)).execute()
-                    .use { it.asJsoup() }
+                    .asJsoup()
                 videoDoc.select(videoListSelector()).map(::videoFromElement)
             }
             "ok.ru" in url -> okruExtractor.videosFromUrl(url)

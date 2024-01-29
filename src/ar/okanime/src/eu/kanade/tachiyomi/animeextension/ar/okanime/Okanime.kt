@@ -135,7 +135,7 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
-        return response.use { it.asJsoup() }
+        return response.asJsoup()
             .select("a.ep-link")
             .parallelCatchingFlatMapBlocking { element ->
                 val quality = element.selectFirst("span")?.text().orEmpty().let {

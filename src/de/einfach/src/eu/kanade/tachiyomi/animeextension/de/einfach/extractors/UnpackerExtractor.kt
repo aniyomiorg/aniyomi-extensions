@@ -13,7 +13,7 @@ class UnpackerExtractor(private val client: OkHttpClient, private val headers: H
 
     fun videosFromUrl(url: String, hoster: String): List<Video> {
         val doc = client.newCall(GET(url, headers)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
 
         val script = doc.selectFirst("script:containsData(eval)")
             ?.data()

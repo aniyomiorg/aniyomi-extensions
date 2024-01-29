@@ -132,7 +132,7 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val document = client.newCall(POST(baseUrl + episode.url, body = requestBody))
             .await()
-            .use { it.asJsoup() }
+            .asJsoup()
         return document.select(videoListSelector()).parallelCatchingFlatMap {
             val url = it.attr("data-link")
             extractVideos(url)

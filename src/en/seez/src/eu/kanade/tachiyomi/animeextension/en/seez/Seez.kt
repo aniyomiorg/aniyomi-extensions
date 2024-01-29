@@ -57,7 +57,7 @@ class Seez : ConfigurableAnimeSource, AnimeHttpSource() {
         val jsUrl = client.newCall(GET(baseUrl, headers)).execute().asJsoup()
             .select("script[defer][src]")[1].attr("abs:src")
 
-        val jsBody = client.newCall(GET(jsUrl, headers)).execute().use { it.body.string() }
+        val jsBody = client.newCall(GET(jsUrl, headers)).execute().body.string()
         Regex("""f="(\w{20,})"""").find(jsBody)!!.groupValues[1]
     }
 
@@ -308,7 +308,7 @@ class Seez : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
 
         val sourcesHeaders = headers.newBuilder().apply {
             add("Accept", "application/json, text/javascript, */*; q=0.01")

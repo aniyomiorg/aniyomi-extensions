@@ -34,7 +34,7 @@ class DailymotionExtractor(private val client: OkHttpClient, private val headers
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
 
     fun videosFromUrl(url: String, prefix: String = "Dailymotion - ", baseUrl: String = "", password: String? = null): List<Video> {
-        val htmlString = client.newCall(GET(url)).execute().use { it.body.string() }
+        val htmlString = client.newCall(GET(url)).execute().body.string()
 
         val internalData = htmlString.substringAfter("\"dmInternalData\":").substringBefore("</script>")
         val ts = internalData.substringAfter("\"ts\":").substringBefore(",")

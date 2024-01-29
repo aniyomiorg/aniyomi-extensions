@@ -134,7 +134,7 @@ abstract class DataLifeEngine(
     override suspend fun getAnimeDetails(anime: SAnime): SAnime {
         return client.newCall(animeDetailsRequest(anime))
             .awaitSuccess()
-            .use { response ->
+            .let { response ->
                 animeDetailsParse(response, anime).apply { initialized = true }
             }
     }

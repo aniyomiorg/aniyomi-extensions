@@ -44,7 +44,7 @@ class AnimesHouse : DooPlay(
             .build()
         return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", headers, body))
             .execute()
-            .use { it.asJsoup().selectFirst("iframe")!!.attr("src") }
+            .asJsoup().selectFirst("iframe")!!.attr("src")
             .let {
                 when {
                     it.contains("/redplay") -> {
@@ -57,7 +57,7 @@ class AnimesHouse : DooPlay(
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val players = response.use { it.asJsoup().select("ul#playeroptionsul li") }
+        val players = response.asJsoup().select("ul#playeroptionsul li")
         return players.flatMap { player ->
             runCatching {
                 val url = getPlayerUrl(player)
@@ -74,7 +74,7 @@ class AnimesHouse : DooPlay(
 
     private fun getPlayerVideos(url: String): List<Video> {
         val iframeBody = client.newCall(GET(url, headers)).execute()
-            .use { it.body.string() }
+            .body.string()
 
         val unpackedBody = JsUnpacker.unpack(iframeBody)
 

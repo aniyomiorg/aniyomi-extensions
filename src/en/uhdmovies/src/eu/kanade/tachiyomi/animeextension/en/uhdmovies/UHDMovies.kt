@@ -13,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import kotlinx.coroutines.Dispatchers
@@ -46,7 +47,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     client.newBuilder()
                         .followRedirects(false)
                         .build()
-                        .newCall(GET("$baseUrl/")).execute().use { resp ->
+                        .newCall(GET("$baseUrl/")).await().use { resp ->
                             when (resp.code) {
                                 301 -> {
                                     (resp.headers["location"]?.substringBeforeLast("/") ?: baseUrl).also {
@@ -123,7 +124,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         find(text)?.groupValues?.get(1)?.let { Pair(text, it) }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val episodeElements = doc.select(episodeListSelector())
             .asSequence()
 
@@ -259,7 +260,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             client.newCall(GET(url)).execute()
         } else { return null }
 
-        val path = mediaResponse.use { it.body.string() }.substringAfter("replace(\"").substringBefore("\"")
+        val path = mediaResponse.body.string().substringAfter("replace(\"").substringBefore("\"")
 
         if (path == "/404") return null
 
@@ -274,7 +275,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun extractWorkerLinks(mediaUrl: String, quality: String, type: Int): List<Video> {
         val reqLink = mediaUrl.replace("/file/", "/wfile/") + "?type=$type"
-        val resp = client.newCall(GET(reqLink)).execute().use { it.asJsoup() }
+        val resp = client.newCall(GET(reqLink)).execute().asJsoup()
         val sizeMatch = SIZE_REGEX.find(resp.select("div.card-header").text().trim())
         val size = sizeMatch?.groups?.get(1)?.value?.let { " - $it" } ?: ""
         return resp.select("div.card-body div.mb-4 > a").mapIndexed { index, linkElement ->
@@ -294,7 +295,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun getDirectLink(url: String, action: String = "direct", newPath: String = "/file/"): String? {
-        val doc = client.newCall(GET(url, headers)).execute().use { it.asJsoup() }
+        val doc = client.newCall(GET(url, headers)).execute().asJsoup()
         val script = doc.selectFirst("script:containsData(async function taskaction)")
             ?.data()
             ?: return url
@@ -311,18 +312,18 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val req = client.newCall(POST(url.replace("/file/", newPath), headers, form)).execute()
         return runCatching {
-            json.decodeFromString<DriveLeechDirect>(req.use { it.body.string() }).url
+            json.decodeFromString<DriveLeechDirect>(req.body.string()).url
         }.getOrNull()
     }
 
     private fun extractGDriveLink(mediaUrl: String, quality: String): List<Video> {
         val neoUrl = getDirectLink(mediaUrl) ?: mediaUrl
-        val response = client.newCall(GET(neoUrl)).execute().use { it.asJsoup() }
+        val response = client.newCall(GET(neoUrl)).execute().asJsoup()
         val gdBtn = response.selectFirst("div.card-body a.btn")!!
         val gdLink = gdBtn.attr("href")
         val sizeMatch = SIZE_REGEX.find(gdBtn.text())
         val size = sizeMatch?.groups?.get(1)?.value?.let { " - $it" } ?: ""
-        val gdResponse = client.newCall(GET(gdLink)).execute().use { it.asJsoup() }
+        val gdResponse = client.newCall(GET(gdLink)).execute().asJsoup()
         val link = gdResponse.select("form#download-form")
         return if (link.isNullOrEmpty()) {
             emptyList()

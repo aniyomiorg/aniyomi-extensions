@@ -7,7 +7,7 @@ import okhttp3.OkHttpClient
 class AnimesOnlinePlayerExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String): List<Video> {
         return client.newCall(GET(url)).execute()
-            .use { it.body.string() }
+            .body.string()
             .substringAfter("sources: [")
             .substringBefore("]")
             .split("{")

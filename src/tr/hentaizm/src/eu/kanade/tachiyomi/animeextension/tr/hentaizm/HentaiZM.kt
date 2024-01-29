@@ -115,7 +115,7 @@ class HentaiZM : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.use { it.asJsoup() })
+        val details = animeDetailsParse(response.asJsoup())
         return AnimesPage(listOf(details), false)
     }
 
@@ -162,11 +162,11 @@ class HentaiZM : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     private val videaExtractor by lazy { VideaExtractor(client) }
 
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val videaItem = doc.selectFirst("div.alternatif a:contains(Videa)")!!
         val path = videaItem.attr("onclick").substringAfter("../../").substringBefore("'")
         val req = client.newCall(GET("$baseUrl/$path", headers)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
         val videaUrl = req.selectFirst("iframe")!!.attr("abs:src")
         return videaExtractor.videosFromUrl(videaUrl)
     }

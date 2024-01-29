@@ -31,7 +31,7 @@ class AnimePlayer : DooPlay(
     private val bloggerExtractor by lazy { BloggerExtractor(client) }
 
     override fun videoListParse(response: Response): List<Video> {
-        val playerUrl = response.use { it.asJsoup() }
+        val playerUrl = response.asJsoup()
             .selectFirst("div.playex iframe")
             ?.attr("abs:src")
             ?.toHttpUrlOrNull()

@@ -104,7 +104,7 @@ class AnimeUI : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun animeDetailsRequest(anime: SAnime) = GET(baseUrl + anime.url, docHeaders)
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val data = document.selectFirst("script#__NEXT_DATA__")?.data() ?: return SAnime.create()
 
         return json.decodeFromString<AnimeData>(data).props.pageProps.animeData.toSAnime()
@@ -115,7 +115,7 @@ class AnimeUI : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun episodeListRequest(anime: SAnime): Request = animeDetailsRequest(anime)
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val data = document.selectFirst("script#__NEXT_DATA__")?.data() ?: return emptyList()
 
         return json.decodeFromString<AnimeData>(data).props.pageProps.animeData.episodes.map {
@@ -128,7 +128,7 @@ class AnimeUI : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun videoListRequest(episode: SEpisode): Request = GET(baseUrl + episode.url, headers = docHeaders)
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val data = document.selectFirst("script#__NEXT_DATA__")?.data() ?: return emptyList()
         val parsed = json.decodeFromString<EpisodeData>(data).props.pageProps.episodeData
 

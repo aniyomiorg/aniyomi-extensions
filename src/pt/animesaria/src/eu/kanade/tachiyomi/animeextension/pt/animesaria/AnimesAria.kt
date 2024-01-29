@@ -69,7 +69,7 @@ class AnimesAria : ParsedAnimeHttpSource() {
     }
 
     private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.use { it.asJsoup() })
+        val details = animeDetailsParse(response.asJsoup())
         return AnimesPage(listOf(details), false)
     }
 

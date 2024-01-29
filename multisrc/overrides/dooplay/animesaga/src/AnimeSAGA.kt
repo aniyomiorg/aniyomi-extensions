@@ -21,7 +21,7 @@ class AnimeSAGA : DooPlay(
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val playerUrls = response.use { it.asJsoup() }
+        val playerUrls = response.asJsoup()
             .select("ul#playeroptionsul li:not([id=player-option-trailer])")
             .map(::getPlayerUrl)
 
@@ -51,9 +51,9 @@ class AnimeSAGA : DooPlay(
 
         return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", headers, body))
             .execute()
-            .use { response ->
+            .let { response ->
                 response
-                    .use { it.body.string() }
+                    .body.string()
                     .substringAfter("\"embed_url\":\"")
                     .substringBefore("\",")
                     .replace("\\", "")

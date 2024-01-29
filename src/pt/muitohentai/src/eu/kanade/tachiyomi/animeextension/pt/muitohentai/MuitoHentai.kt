@@ -95,10 +95,10 @@ class MuitoHentai : ParsedAnimeHttpSource() {
     override fun videoListSelector() = "div.playex > div#option-0 > iframe"
 
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val idplay = doc.selectFirst(videoListSelector())!!.attr("src").substringAfter("?idplay=")
         val res = client.newCall(GET("https://www.hentaitube.online/players_sites/mt/index.php?idplay=$idplay")).execute()
-        val pdoc = res.use { it.asJsoup() }
+        val pdoc = res.asJsoup()
         return pdoc
             .select("source")
             .map(::videoFromElement)

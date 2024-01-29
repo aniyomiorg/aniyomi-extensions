@@ -158,7 +158,7 @@ class AnimesOrion : ParsedAnimeHttpSource() {
     }
 
     private fun extractVideoFromResponse(response: Response): Video {
-        val decodedBody = LinkfunBypasser.decodeAtob(response.use { it.body.string() })
+        val decodedBody = LinkfunBypasser.decodeAtob(response.body.string())
         val url = decodedBody
             .substringAfter("sources")
             .substringAfter("file: \"")
@@ -185,7 +185,7 @@ class AnimesOrion : ParsedAnimeHttpSource() {
 
         return document.selectFirst("div.epsdsnv > a:has(i.fa-indent)")?.let {
             client.newCall(GET(it.attr("href"), headers)).execute()
-                .use { req -> req.asJsoup() }
+                .asJsoup()
         } ?: document
     }
 

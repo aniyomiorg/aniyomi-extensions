@@ -186,7 +186,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> headers
         }
         val doc = client.newCall(GET(url, newHeaders)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
         return doc.select(".OD li").flatMap { element ->
             val videoUrl = element.attr("onclick").substringAfter("go_to_player('")
                 .substringBefore("')")

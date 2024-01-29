@@ -15,8 +15,8 @@ class RedplayBypasser(
 ) {
 
     fun fromUrl(url: String): String {
-        val linkUrl = client.newCall(GET(url, headers)).execute()
-            .use { it.asJsoup().selectFirst("a")!!.attr("href") }
+        val linkUrl = client.newCall(GET(url, headers)).execute().asJsoup()
+            .selectFirst("a")!!.attr("href")
 
         val newHeaders = headers.newBuilder().set("Referer", linkUrl).build()
 
@@ -24,25 +24,23 @@ class RedplayBypasser(
         return getIframeUrl(response, newHeaders)
     }
 
-    private fun getIframeUrl(response: Response, newHeaders: Headers): String {
-        return response.use { page ->
-            val document = page.asJsoup(decodeAtob(page.body.string()))
-            val iframe = document.selectFirst("iframe")
-            if (iframe != null) {
-                iframe.attr("src")
-            } else {
-                val formUrl = document.selectFirst("form")!!.attr("action")
+    private fun getIframeUrl(page: Response, newHeaders: Headers): String {
+        val document = page.asJsoup(decodeAtob(page.body.string()))
+        val iframe = document.selectFirst("iframe")
+        return if (iframe != null) {
+            iframe.attr("src")
+        } else {
+            val formUrl = document.selectFirst("form")!!.attr("action")
 
-                val formBody = FormBody.Builder().apply {
-                    document.select("input[name]").forEach {
-                        add(it.attr("name"), it.attr("value"))
-                    }
-                }.build()
+            val formBody = FormBody.Builder().apply {
+                document.select("input[name]").forEach {
+                    add(it.attr("name"), it.attr("value"))
+                }
+            }.build()
 
-                client.newCall(POST(formUrl, newHeaders, formBody))
-                    .execute()
-                    .let { getIframeUrl(it, newHeaders) }
-            }
+            client.newCall(POST(formUrl, newHeaders, formBody))
+                .execute()
+                .let { getIframeUrl(it, newHeaders) }
         }
     }
 

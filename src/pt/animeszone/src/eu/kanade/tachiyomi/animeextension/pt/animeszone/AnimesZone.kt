@@ -195,7 +195,7 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
 
         val singleVideo = document.selectFirst("div.anime__video__player")
 
@@ -221,7 +221,7 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                     while (nextPageUrl != null) {
                         val seasonDocument = client.newCall(GET(nextPageUrl)).execute()
-                            .use { it.asJsoup() }
+                            .asJsoup()
 
                         seasonDocument.select(episodeListSelector()).forEach { seasonEp ->
                             add(episodeFromElement(seasonEp, size + 1, name))
@@ -259,7 +259,7 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
 
         val videoList = document.select("div#playeroptions li[data-post]").flatMap { vid ->
             val jsonHeaders = headersBuilder()
@@ -281,7 +281,7 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.startsWith("https://dood") -> DoodExtractor(client).videosFromUrl(url, vid.text().trim())
                 "https://gojopoolt" in url -> {
                     client.newCall(GET(url, headers)).execute()
-                        .use { it.asJsoup() }
+                        .asJsoup()
                         .selectFirst("script:containsData(sources:)")
                         ?.data()
                         ?.let(BloggerJWPlayerExtractor::videosFromScript)
@@ -298,7 +298,7 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun videosFromInternalUrl(url: String): List<Video> {
         val videoDocument = client.newCall(GET(url, headers)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
 
         val script = videoDocument.selectFirst("script:containsData(decodeURIComponent)")?.data()
             ?.let(::getDecrypted)
@@ -316,7 +316,7 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun extractBloggerVideos(url: String, name: String): List<Video> {
         return client.newCall(GET(url, headers)).execute()
-            .use { it.body.string() }
+            .body.string()
             .takeIf { !it.contains("errorContainer") }
             .let { it ?: return emptyList() }
             .substringAfter("\"streams\":[")

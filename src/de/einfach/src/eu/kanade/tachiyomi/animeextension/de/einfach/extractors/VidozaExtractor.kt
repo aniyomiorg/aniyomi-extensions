@@ -9,7 +9,7 @@ class VidozaExtractor(private val client: OkHttpClient) {
 
     fun videosFromUrl(url: String): List<Video> {
         val doc = client.newCall(GET(url)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
 
         val script = doc.selectFirst("script:containsData(sourcesCode: [)")
             ?.data()

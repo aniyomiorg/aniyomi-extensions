@@ -73,9 +73,7 @@ class AnimeLek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
 
     // ============================ Video Links =============================
-    override fun videoListParse(response: Response): List<Video> {
-        return response.use { videosFromElement(it.asJsoup()) }
-    }
+    override fun videoListParse(response: Response) = videosFromElement(response.asJsoup())
 
     override fun videoListSelector() = "ul#episode-servers li.watch a"
 

@@ -102,7 +102,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.use { it.asJsoup() })
+        val details = animeDetailsParse(response.asJsoup())
         return AnimesPage(listOf(details), false)
     }
 
@@ -174,7 +174,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val episodeId = doc.selectFirst("input#EpisodeId")!!.attr("value")
 
         val allFansubs = PREF_FANSUB_SELECTION_ENTRIES
@@ -194,7 +194,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
                 client.newCall(POST("$baseUrl/api/fansubSources", headers, body))
                     .execute()
-                    .use { it.asJsoup() }
+                    .asJsoup()
                     .select("li.sourceBtn")
                     .toList()
                     .filter { it.selectFirst("p")?.ownText().orEmpty() in chosenHosts }
@@ -227,7 +227,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     private fun getVideosFromId(id: String): List<Video> {
         val url = client.newCall(POST("$baseUrl/api/sourcePlayer/$id")).execute()
-            .use { it.body.string() }
+            .body.string()
             .substringAfter("src=")
             .substringAfter('"')
             .substringAfter("/embed2/?id=")

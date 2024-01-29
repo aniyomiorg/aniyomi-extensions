@@ -93,7 +93,7 @@ class SupJav(override val lang: String = "en") : ConfigurableAnimeSource, Parsed
     }
 
     private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.use { it.asJsoup() })
+        val details = animeDetailsParse(response.asJsoup())
         return AnimesPage(listOf(details), false)
     }
 
@@ -143,7 +143,7 @@ class SupJav(override val lang: String = "en") : ConfigurableAnimeSource, Parsed
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
 
         val players = doc.select("div.btnst > a").toList()
             .filter { it.text() in SUPPORTED_PLAYERS }
@@ -176,7 +176,7 @@ class SupJav(override val lang: String = "en") : ConfigurableAnimeSource, Parsed
             "VOE" -> voeExtractor.videosFromUrl(url)
             "FST" -> streamwishExtractor.videosFromUrl(url)
             "TV" -> {
-                val body = client.newCall(GET(url)).execute().use { it.body.string() }
+                val body = client.newCall(GET(url)).execute().body.string()
                 val playlistUrl = body.substringAfter("var urlPlay = '", "")
                     .substringBefore("';")
                     .takeUnless(String::isEmpty)

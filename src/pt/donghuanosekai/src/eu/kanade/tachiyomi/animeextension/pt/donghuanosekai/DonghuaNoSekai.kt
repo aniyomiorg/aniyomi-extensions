@@ -105,7 +105,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val searchToken by lazy {
         client.newCall(GET("$baseUrl/donghuas", headers)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
             .selectFirst("div.menu_filter_box")!!
             .attr("data-secury")
     }
@@ -187,7 +187,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = response.use { getRealDoc(it.asJsoup()) }
+        val doc = getRealDoc(response.asJsoup())
         return doc.select(episodeListSelector()).map(::episodeFromElement)
     }
 
@@ -205,11 +205,11 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
     private val extractor by lazy { DonghuaNoSekaiExtractor(client, headers) }
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
 
         return doc.select("div.slideItem[data-video-url]").parallelCatchingFlatMapBlocking {
             client.newCall(GET(it.attr("data-video-url"), headers)).await()
-                .use { it.asJsoup() }
+                .asJsoup()
                 .let(extractor::videosFromDocument)
         }
     }
@@ -250,7 +250,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return document.selectFirst("div.controles li.list-ep > a")?.let { link ->
             client.newCall(GET(link.attr("href")))
                 .execute()
-                .use { it.asJsoup() }
+                .asJsoup()
         } ?: document
     }
 

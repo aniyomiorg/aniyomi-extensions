@@ -18,9 +18,9 @@ class FusevideoExtractor(private val client: OkHttpClient, private val headers: 
                 .set("Host", url.toHttpUrl().host)
                 .set("Accept-Language", "en-US,en;q=0.5")
                 .build()
-            val document = client.newCall(GET(url, newHeaders)).execute().use { it.asJsoup() }
+            val document = client.newCall(GET(url, newHeaders)).execute().asJsoup()
             val dataUrl = document.selectFirst("script[src~=f/u/u/u/u]")?.attr("src")!!
-            val dataDoc = client.newCall(GET(dataUrl, newHeaders)).execute().use { it.body.string() }
+            val dataDoc = client.newCall(GET(dataUrl, newHeaders)).execute().body.string()
             val encoded = Regex("atob\\(\"(.*?)\"\\)").find(dataDoc)?.groupValues?.get(1)!!
             val data = Base64.decode(encoded, Base64.DEFAULT).toString(Charsets.UTF_8)
             val jsonData = data.split("|||")[1].replace("\\", "")

@@ -14,7 +14,7 @@ class VidYardExtractor(private val client: OkHttpClient, private val headers: He
         val id = url.substringAfter("com/").substringBefore("?")
         val playerUrl = "$VIDYARD_URL/player/$id.json"
         val callPlayer = client.newCall(GET(playerUrl, newHeaders)).execute()
-            .use { it.body.string() }
+            .body.string()
 
         val data = callPlayer.substringAfter("hls\":[").substringBefore("]")
         val sources = data.split("profile\":\"").drop(1)

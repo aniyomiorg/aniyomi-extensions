@@ -24,7 +24,7 @@ class FilemoonExtractor(private val client: OkHttpClient) {
                 .set("Origin", "https://${httpUrl.host}")
                 .build()
 
-            val doc = client.newCall(GET(url, videoHeaders)).execute().use { it.asJsoup() }
+            val doc = client.newCall(GET(url, videoHeaders)).execute().asJsoup()
             val jsEval = doc.selectFirst("script:containsData(eval):containsData(m3u8)")!!.data()
             val unpacked = JsUnpacker.unpackAndCombine(jsEval).orEmpty()
             val masterUrl = unpacked.takeIf(String::isNotBlank)
@@ -42,7 +42,7 @@ class FilemoonExtractor(private val client: OkHttpClient) {
                 if (subUrl != null) {
                     runCatching { // to prevent failures on serialization errors
                         client.newCall(GET(subUrl, videoHeaders)).execute()
-                            .use { it.body.string() }
+                            .body.string()
                             .let { json.decodeFromString<List<SubtitleDto>>(it) }
                             .forEach { add(Track(it.file, it.label)) }
                     }

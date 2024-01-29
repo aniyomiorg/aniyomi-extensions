@@ -45,7 +45,7 @@ class Cinemathek : DooPlay(
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val players = response.use { it.asJsoup().select("ul#playeroptionsul li") }
+        val players = response.asJsoup().select("ul#playeroptionsul li")
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
         return players.parallelCatchingFlatMapBlocking { player ->
             val url = getPlayerUrl(player).takeUnless(String::isEmpty)!!
@@ -60,7 +60,7 @@ class Cinemathek : DooPlay(
         if (num == "trailer") return ""
         return client.newCall(GET("$baseUrl/wp-json/dooplayer/v2/$id/$type/$num"))
             .await()
-            .use { it.body.string() }
+            .body.string()
             .substringAfter("\"embed_url\":\"")
             .substringBefore("\",")
             .replace("\\", "")

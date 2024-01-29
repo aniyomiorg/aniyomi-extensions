@@ -12,7 +12,7 @@ import javax.crypto.spec.SecretKeySpec
 
 class VideaExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String): List<Video> {
-        val body = client.newCall(GET(url)).execute().use { it.body.string() }
+        val body = client.newCall(GET(url)).execute().body.string()
         val nonce = NONCE_REGEX.find(body)?.groupValues?.elementAt(1) ?: return emptyList()
         val paramL = nonce.substring(0, 32)
         val paramS = nonce.substring(32)
@@ -31,7 +31,7 @@ class VideaExtractor(private val client: OkHttpClient) {
 
         val headers = Headers.headersOf("referer", url, "origin", "https://videa.hu")
         val response = client.newCall(GET(requestUrl.toString(), headers)).execute()
-        val doc = response.use { it.body.string() }.let {
+        val doc = response.body.string().let {
             when {
                 it.startsWith("<?xml") -> Jsoup.parse(it)
                 else -> {

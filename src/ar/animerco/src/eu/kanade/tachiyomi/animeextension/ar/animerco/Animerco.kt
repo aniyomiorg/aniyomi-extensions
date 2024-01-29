@@ -116,7 +116,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListSelector() = "ul.chapters-list li a:has(h3)"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         if (document.location().contains("/movies/")) {
             return listOf(
                 SEpisode.create().apply {
@@ -129,7 +129,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return document.select(episodeListSelector()).flatMap { el ->
             val doc = client.newCall(GET(el.attr("abs:href"), headers)).execute()
-                .use { it.asJsoup() }
+                .asJsoup()
             val seasonName = doc.selectFirst("div.media-title h1")!!.text()
             val seasonNum = seasonName.substringAfterLast(" ").toIntOrNull() ?: 1
             doc.select(episodeListSelector()).map {
@@ -151,7 +151,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val players = document.select(videoListSelector())
         return players.parallelCatchingFlatMapBlocking(::getPlayerVideos)
     }
@@ -200,7 +200,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", headers, body))
             .execute()
-            .use { response ->
+            .let { response ->
                 response.body.string()
                     .substringAfter("\"embed_url\":\"")
                     .substringBefore("\",")

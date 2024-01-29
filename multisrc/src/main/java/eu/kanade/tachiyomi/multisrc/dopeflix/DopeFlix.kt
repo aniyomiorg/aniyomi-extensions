@@ -128,7 +128,7 @@ abstract class DopeFlix(
     override fun episodeListSelector() = throw UnsupportedOperationException()
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val infoElement = document.selectFirst("div.detail_page-watch")!!
         val id = infoElement.attr("data-id")
         val dataType = infoElement.attr("data-type") // Tv = 2 or movie = 1
@@ -139,7 +139,7 @@ abstract class DopeFlix(
                     seasonUrl,
                     headers = Headers.headersOf("Referer", document.location()),
                 ),
-            ).execute().use { it.asJsoup() }
+            ).execute().asJsoup()
             seasonsHtml
                 .select("a.dropdown-item.ss-item")
                 .flatMap(::parseEpisodesFromSeries)
@@ -161,7 +161,7 @@ abstract class DopeFlix(
         val seasonName = element.text()
         val episodesUrl = "$baseUrl/ajax/v2/season/episodes/$seasonId"
         val episodesHtml = client.newCall(GET(episodesUrl)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
         val episodeElements = episodesHtml.select("div.eps-item")
         return episodeElements.map { episodeFromElement(it, seasonName) }
     }
@@ -190,7 +190,7 @@ abstract class DopeFlix(
                 val id = server.attr("data-id")
                 val url = "$baseUrl/ajax/sources/$id"
                 val reqBody = client.newCall(GET(url, episodeReferer)).execute()
-                    .use { it.body.string() }
+                    .body.string()
                 val sourceUrl = reqBody.substringAfter("\"link\":\"")
                     .substringBefore("\"")
                 when {

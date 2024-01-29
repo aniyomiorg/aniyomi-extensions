@@ -41,7 +41,7 @@ class GoAnimes : DooPlay(
         val url = season.attr("href")
         return client.newCall(GET(url, headers))
             .execute()
-            .use { it.asJsoup() }
+            .asJsoup()
             .let(::getSeasonEpisodes)
     }
 
@@ -55,7 +55,7 @@ class GoAnimes : DooPlay(
                     doc.selectFirst(episodeListNextPageSelector)?.let {
                         val url = it.attr("abs:href")
                         doc = client.newCall(GET(url, headers)).execute()
-                            .use { it.asJsoup() }
+                            .asJsoup()
                     }
                 }
                 addAll(super.getSeasonEpisodes(doc))
@@ -74,7 +74,7 @@ class GoAnimes : DooPlay(
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val players = document.select("ul#playeroptionsul li")
         return players.parallelCatchingFlatMapBlocking(::getPlayerVideos)
     }
@@ -93,7 +93,7 @@ class GoAnimes : DooPlay(
                     .build()
 
                 val script = client.newCall(GET(url, headers)).await()
-                    .use { it.body.string() }
+                    .body.string()
                     .let { JsDecoder.decodeScript(it, false).ifBlank { it } }
 
                 script.substringAfter("sources: [")
@@ -128,7 +128,7 @@ class GoAnimes : DooPlay(
             }
             listOf("/bloggerjwplayer", "/m3u8", "/multivideo").any { it in url } -> {
                 val script = client.newCall(GET(url)).await()
-                    .use { it.body.string() }
+                    .body.string()
                     .let(JsDecoder::decodeScript)
                 when {
                     "/bloggerjwplayer" in url ->
@@ -155,7 +155,7 @@ class GoAnimes : DooPlay(
         val num = player.attr("data-nume")
         val url = client.newCall(GET("$baseUrl/wp-json/dooplayer/v2/$id/$type/$num"))
             .await()
-            .use { it.body.string() }
+            .body.string()
             .substringAfter("\"embed_url\":\"")
             .substringBefore("\",")
             .replace("\\", "")
@@ -163,7 +163,7 @@ class GoAnimes : DooPlay(
         return when {
             "/protetorlinks/" in url -> {
                 val link = client.newCall(GET(url)).await()
-                    .use { it.asJsoup() }
+                    .asJsoup()
                     .selectFirst("a[href]")!!.attr("href")
 
                 client.newCall(GET(link)).await()

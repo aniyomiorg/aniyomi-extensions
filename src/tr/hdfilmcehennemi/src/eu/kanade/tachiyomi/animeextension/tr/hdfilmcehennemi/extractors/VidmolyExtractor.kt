@@ -11,7 +11,7 @@ class VidmolyExtractor(private val client: OkHttpClient, private val headers: He
 
     fun videosFromUrl(url: String): List<Video> {
         val body = client.newCall(GET(url, headers)).execute()
-            .use { it.body.string() }
+            .body.string()
 
         val playlistUrl = body.substringAfter("file:\"", "").substringBefore('"', "")
             .takeIf(String::isNotBlank)

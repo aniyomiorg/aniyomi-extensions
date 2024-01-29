@@ -38,7 +38,7 @@ object JavCoverFetcher {
             return response
         }
 
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val targetUrl = document.selectFirst("#black-curtain-yes-button a")?.attr("abs:href")
             ?: throw IOException("Failed to bypass Amazon Age Gate")
 
@@ -93,14 +93,14 @@ object JavCoverFetcher {
 
         val response = CLIENT.newCall(request).execute()
 
-        var document = response.use { it.asJsoup() }
+        var document = response.asJsoup()
 
         // possibly multiple results or none
         if (response.request.url.pathSegments.contains("vl_searchbyid.php")) {
             val targetUrl = document.selectFirst(".videos a[href*=\"?v=\"]")?.attr("abs:href")
                 ?: return null
 
-            document = CLIENT.newCall(GET(targetUrl, HEADERS)).execute().use { it.asJsoup() }
+            document = CLIENT.newCall(GET(targetUrl, HEADERS)).execute().asJsoup()
         }
 
         val dirtyTitle = document.selectFirst(".post-title")?.text()
@@ -121,7 +121,7 @@ object JavCoverFetcher {
 
         val response = CLIENT.newCall(request).execute()
 
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
 
         return document.selectFirst("a.result-link")?.attr("href")
     }
@@ -131,7 +131,7 @@ object JavCoverFetcher {
 
         val response = CLIENT.newCall(request).execute()
 
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
 
         val smallImage = document.selectFirst("#landingImage")?.attr("src")
 

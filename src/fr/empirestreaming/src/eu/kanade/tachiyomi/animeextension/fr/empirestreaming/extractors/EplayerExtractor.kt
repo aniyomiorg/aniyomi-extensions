@@ -26,16 +26,16 @@ class EplayerExtractor(private val client: OkHttpClient) {
             EPLAYER_HOST,
         )
 
-        val masterUrl = client.newCall(POST(postUrl, headers, body = body)).execute().use {
-            it.body.string()
-                .substringAfter("videoSource\":\"")
-                .substringBefore('"')
-                .replace("\\", "")
-        }
+        val masterUrl = client.newCall(POST(postUrl, headers, body = body)).execute()
+            .body.string()
+            .substringAfter("videoSource\":\"")
+            .substringBefore('"')
+            .replace("\\", "")
 
+        // TODO: Use playlist-utils
         val separator = "#EXT-X-STREAM-INF"
         return client.newCall(GET(masterUrl, headers)).execute()
-            .use { it.body.string() }
+            .body.string()
             .substringAfter(separator)
             .split(separator)
             .map {

@@ -111,7 +111,7 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     override fun searchAnimeNextPageSelector() = null
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val elements = document.select(searchAnimeSelector())
 
         val anime = elements.map(::searchAnimeFromElement).distinctBy { it.title }
@@ -154,7 +154,7 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         return buildList {
             doc.select(episodeListSelector())
                 .map(::episodeFromElement)
@@ -184,7 +184,7 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val script = doc.selectFirst("script:containsData(var availableres)")!!.data()
         val subtitles = doc.select("track[kind=captions]").map {
             Track(it.attr("src"), it.attr("label"))

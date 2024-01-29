@@ -94,7 +94,7 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     ): AnimesPage {
         return client.newCall(searchAnimeRequest(page, query, filters))
             .awaitSuccess()
-            .use { response ->
+            .let { response ->
                 searchAnimeParse(response, query)
             }
     }

@@ -92,7 +92,7 @@ class AnimesGames : ParsedAnimeHttpSource() {
 
     private val searchToken by lazy {
         client.newCall(GET("$baseUrl/lista-de-animes", headers)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
             .selectFirst("div.menu_filter_box")!!
             .attr("data-secury")
     }
@@ -176,7 +176,7 @@ class AnimesGames : ParsedAnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        return getRealDoc(response.use { it.asJsoup() })
+        return getRealDoc(response.asJsoup())
             .select(episodeListSelector())
             .map(::episodeFromElement)
             .reversed()
@@ -196,13 +196,13 @@ class AnimesGames : ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
     private val bloggerExtractor by lazy { BloggerExtractor(client) }
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val url = doc.selectFirst("div.Link > a")
             ?.attr("href")
             ?: return emptyList()
 
         val playerDoc = client.newCall(GET(url, headers)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
 
         val iframe = playerDoc.selectFirst("iframe")
         return when {
@@ -227,7 +227,7 @@ class AnimesGames : ParsedAnimeHttpSource() {
             playlistUrl.endsWith("m3u8") -> {
                 val separator = "#EXT-X-STREAM-INF:"
                 client.newCall(GET(playlistUrl, headers)).execute()
-                    .use { it.body.string() }
+                    .body.string()
                     .substringAfter(separator)
                     .split(separator)
                     .map {
@@ -260,7 +260,7 @@ class AnimesGames : ParsedAnimeHttpSource() {
 
         return document.selectFirst("div.linksEP > a:has(li.episodio)")?.let {
             client.newCall(GET(it.attr("href"), headers)).execute()
-                .use { req -> req.asJsoup() }
+                .asJsoup()
         } ?: document
     }
 

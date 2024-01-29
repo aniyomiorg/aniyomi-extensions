@@ -155,7 +155,7 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val returnedSearch = searchAnimeRequest(page, query, filters)
         return client.newCall(returnedSearch)
             .awaitSuccess()
-            .use { response ->
+            .let { response ->
                 searchQueryParse(response, query)
             }
     }

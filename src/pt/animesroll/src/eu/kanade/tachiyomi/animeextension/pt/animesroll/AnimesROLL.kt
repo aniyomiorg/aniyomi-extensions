@@ -48,7 +48,7 @@ class AnimesROLL : AnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lancamentos")
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        val parsed = response.use { it.asJsoup() }.parseAs<LatestAnimeDto>()
+        val parsed = response.asJsoup().parseAs<LatestAnimeDto>()
         val animes = parsed.episodes.map { it.episode.anime!!.toSAnime() }
         return AnimesPage(animes, false)
     }
@@ -81,7 +81,7 @@ class AnimesROLL : AnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(response: Response): SAnime {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val anime = when {
             doc.location().contains("/f/") -> doc.parseAs<MovieInfoDto>().movieData
             else -> doc.parseAs<AnimeDataDto>()
@@ -102,7 +102,7 @@ class AnimesROLL : AnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val originalUrl = doc.location()
         return if ("/f/" in originalUrl) {
             val od = doc.parseAs<MovieInfoDto>().movieData.od

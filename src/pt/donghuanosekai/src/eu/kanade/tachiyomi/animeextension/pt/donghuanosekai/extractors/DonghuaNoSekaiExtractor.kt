@@ -45,27 +45,25 @@ class DonghuaNoSekaiExtractor(
     private fun getVideosFromIframeUrl(iframeUrl: String, playerName: String): List<Video> {
         return when {
             iframeUrl.contains("playerB.php") -> {
-                client.newCall(GET(iframeUrl, headers)).execute().use {
-                    it.body.string()
-                        .substringAfter("sources:")
-                        .substringBefore("]")
-                        .split("{")
-                        .drop(1)
-                        .map { line ->
-                            val url = line.substringAfter("file: \"").substringBefore('"')
-                            val quality = line.substringAfter("label: \"")
-                                .substringBefore('"')
-                                .run {
-                                    when (this) {
-                                        "SD" -> "480p"
-                                        "HD" -> "720p"
-                                        "FHD", "FULLHD" -> "1080p"
-                                        else -> this
-                                    }
+                client.newCall(GET(iframeUrl, headers)).execute().body.string()
+                    .substringAfter("sources:")
+                    .substringBefore("]")
+                    .split("{")
+                    .drop(1)
+                    .map { line ->
+                        val url = line.substringAfter("file: \"").substringBefore('"')
+                        val quality = line.substringAfter("label: \"")
+                            .substringBefore('"')
+                            .run {
+                                when (this) {
+                                    "SD" -> "480p"
+                                    "HD" -> "720p"
+                                    "FHD", "FULLHD" -> "1080p"
+                                    else -> this
                                 }
-                            Video(url, "$playerName - $quality", url, headers)
-                        }
-                }
+                            }
+                        Video(url, "$playerName - $quality", url, headers)
+                    }
             }
             else -> emptyList()
         }

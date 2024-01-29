@@ -166,7 +166,7 @@ class NimeGami : ParsedAnimeHttpSource() {
 
                 contains("berkasdrive") || contains("drive.nimegami") -> {
                     client.newCall(GET(url, headers)).execute()
-                        .use { it.asJsoup() }
+                        .asJsoup()
                         .selectFirst("source[src]")
                         ?.attr("src")
                         ?.let {
@@ -181,7 +181,7 @@ class NimeGami : ParsedAnimeHttpSource() {
                     }
 
                     client.newCall(GET(embedUrl, headers)).execute()
-                        .use { it.asJsoup() }
+                        .asJsoup()
                         .selectFirst("script:containsData(eval):containsData(p,a,c,k,e,d)")
                         ?.data()
                         ?.let(JsUnpacker::unpackAndCombine)
@@ -196,7 +196,7 @@ class NimeGami : ParsedAnimeHttpSource() {
                 contains("bunga.nimegami") -> {
                     val episodeUrl = url.replace("select_eps", "eps=$episodeIndex")
                     client.newCall(GET(episodeUrl, headers)).execute()
-                        .use { it.asJsoup() }
+                        .asJsoup()
                         .select("div.server_list ul > li")
                         .map { it.attr("url") to it.text() }
                         .filter { it.first.contains("uservideo") } // naniplay is absurdly slow
@@ -214,12 +214,12 @@ class NimeGami : ParsedAnimeHttpSource() {
 
     private suspend fun extractUserVideo(pair: Pair<String, String>): List<Video> {
         val (url, quality) = pair
-        val doc = client.newCall(GET(url, headers)).await().use { it.asJsoup() }
+        val doc = client.newCall(GET(url, headers)).await().asJsoup()
         val scriptUrl = doc.selectFirst("script[src*=/s/?data]")?.attr("src")
             ?: return emptyList()
 
         return client.newCall(GET(scriptUrl, headers)).await()
-            .use { it.body.string() }
+            .body.string()
             .let(Synchrony::deobfuscateScript)
             ?.let(urlPartRegex::findAll)
             ?.map { it.groupValues.drop(1) }

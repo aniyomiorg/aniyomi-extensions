@@ -83,15 +83,14 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.use { it.asJsoup() })
+        val details = animeDetailsParse(response.asJsoup())
         return AnimesPage(listOf(details), false)
     }
 
     private val searchToken by lazy {
-        client.newCall(GET("$baseUrl/animes-legendado")).execute()
-            .use {
-                it.asJsoup().selectFirst("div.menu_filter_box")!!.attr("data-secury")
-            }
+        client.newCall(GET("$baseUrl/animes-legendado")).execute().asJsoup()
+            .selectFirst("div.menu_filter_box")!!
+            .attr("data-secury")
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -170,7 +169,7 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = getRealDoc(response.use { it.asJsoup() })
+        val doc = getRealDoc(response.asJsoup())
         val pagination = doc.selectFirst("ul.content-pagination")
         return if (pagination != null) {
             val episodes = mutableListOf<SEpisode>()
@@ -179,7 +178,7 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             for (i in 2..lastPage) {
                 val request = GET(doc.location() + "/page/$i", headers)
                 val res = client.newCall(request).execute()
-                val pageDoc = res.use { it.asJsoup() }
+                val pageDoc = res.asJsoup()
                 episodes += pageDoc.select(episodeListSelector()).map(::episodeFromElement)
             }
             episodes
@@ -206,7 +205,7 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val player = response.use { it.asJsoup() }.selectFirst("div#player")!!
+        val player = response.asJsoup().selectFirst("div#player")!!
         return player.select("div.tab-video").flatMap { div ->
             div.select(videoListSelector()).flatMap { element ->
                 runCatching {
@@ -227,7 +226,7 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         }
                     }
                 client.newCall(GET(url, headers)).execute()
-                    .use { it.asJsoup() }
+                    .asJsoup()
                     .select(videoListSelector())
                     .flatMap(::videosFromElement)
             }
@@ -301,7 +300,7 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return document.selectFirst("div.subitem > a:contains(menu)")?.let { link ->
             client.newCall(GET(link.attr("href")))
                 .execute()
-                .use { it.asJsoup() }
+                .asJsoup()
         } ?: document
     }
 

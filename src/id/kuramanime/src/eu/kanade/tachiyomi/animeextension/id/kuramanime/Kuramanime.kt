@@ -105,7 +105,7 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
 
         val html = document.selectFirst(episodeListSelector())?.attr("data-content")
             ?: return emptyList()
@@ -156,7 +156,7 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
 
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
 
         val scriptData = doc.selectFirst("[data-js]")?.attr("data-js")
             ?.let(::getScriptData)
@@ -187,7 +187,7 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     .build()
 
                 val hash = client.newCall(GET("$baseUrl/" + scriptData.authPath, newHeaders)).execute()
-                    .use { it.body.string() }
+                    .body.string()
                     .trim('"')
 
                 val newUrl = episodeUrl.newBuilder()
@@ -196,7 +196,7 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     .build()
 
                 val playerDoc = client.newCall(GET(newUrl.toString(), headers)).execute()
-                    .use { it.asJsoup() }
+                    .asJsoup()
 
                 if (server == "streamtape") {
                     val url = playerDoc.selectFirst("div.video-content iframe")!!.attr("src")
@@ -214,7 +214,7 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun getScriptData(scriptName: String): ScriptDataDto? {
         val scriptUrl = "$baseUrl/assets/js/$scriptName.js"
         val scriptCode = client.newCall(GET(scriptUrl, headers)).execute()
-            .use { it.body.string() }
+            .body.string()
 
         // Trust me, I hate this too.
         val scriptJson = scriptCode.lines()

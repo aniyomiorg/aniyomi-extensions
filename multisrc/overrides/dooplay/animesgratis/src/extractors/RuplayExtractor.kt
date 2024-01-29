@@ -8,7 +8,7 @@ import okhttp3.OkHttpClient
 class RuplayExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String): List<Video> {
         return client.newCall(GET(url)).execute()
-            .use { it.body.string() }
+            .body.string()
             .substringAfter("Playerjs({")
             .substringAfter("file:\"")
             .substringBefore("\"")

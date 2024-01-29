@@ -237,7 +237,7 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val parsed = json.decodeFromString<LinkData>(anime.url)
         return client.newCall(GET(baseUrl + parsed.url, headers = headers))
             .awaitSuccess()
-            .use { response ->
+            .let { response ->
                 animeDetailsParse(response, parsed.title, parsed.thumbnailUrl).apply { initialized = true }
             }
     }

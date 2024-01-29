@@ -17,7 +17,7 @@ class McpExtractor(
         val epId = regexEpId.find(js)!!.groupValues[1]
         val videoUrl = client.newCall(GET("$apiUrl/s_control.php?mid=$epId", headers))
             .execute()
-            .use { req ->
+            .let { req ->
                 val reqBody = req.body.string()
                 regexVideoUrl.find(reqBody)!!.groupValues
                     .get(1)

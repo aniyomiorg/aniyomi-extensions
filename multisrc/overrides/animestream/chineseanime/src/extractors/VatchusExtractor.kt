@@ -14,7 +14,7 @@ class VatchusExtractor(private val client: OkHttpClient, private val headers: He
 
     fun videosFromUrl(url: String, prefix: String): List<Video> {
         val doc = client.newCall(GET(url, headers)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
 
         val script = doc.selectFirst("script:containsData(document.write)")
             ?.data()

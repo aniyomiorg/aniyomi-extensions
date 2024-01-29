@@ -15,7 +15,7 @@ class StreamTapeExtractor(private val client: OkHttpClient) {
             baseUrl + id
         } else { url }
 
-        val document = client.newCall(GET(newUrl)).execute().use { it.asJsoup() }
+        val document = client.newCall(GET(newUrl)).execute().asJsoup()
         val targetLine = "document.getElementById('robotlink')"
         val script = document.selectFirst("script:containsData($targetLine)")
             ?.data()

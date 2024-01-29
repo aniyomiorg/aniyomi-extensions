@@ -126,7 +126,7 @@ class TRAnimeCI : AnimeStream(
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val script = doc.selectFirst("script:containsData(let video_source)")!!.data()
         return script.substringAfter("[").substringBefore("]")
             .split("{")

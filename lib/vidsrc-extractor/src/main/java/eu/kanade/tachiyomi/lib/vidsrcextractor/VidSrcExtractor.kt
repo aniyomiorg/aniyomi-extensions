@@ -27,14 +27,13 @@ class VidsrcExtractor(private val client: OkHttpClient, private val headers: Hea
         .cache(null)
         .build()
 
-
     private val keys by lazy {
         noCacheClient.newCall(
             GET("https://raw.githubusercontent.com/KillerDogeEmpire/vidplay-keys/keys/keys.json", cache = cacheControl),
         ).execute().parseAs<List<String>>()
     }
 
-    fun videosFromUrl(embedLink: String, hosterName: String, type: String = "" ): List<Video> {
+    fun videosFromUrl(embedLink: String, hosterName: String, type: String = ""): List<Video> {
         val host = embedLink.toHttpUrl().host
         val apiUrl = getApiUrl(embedLink, keys)
 
@@ -64,7 +63,7 @@ class VidsrcExtractor(private val client: OkHttpClient, private val headers: Hea
         return playlistUtils.extractFromHls(
             data.result.sources.first().file,
             referer = "https://$host/",
-            videoNameGen = { q -> hosterName + (if(type.isBlank()) "" else " - $type") + " - $q" },
+            videoNameGen = { q -> hosterName + (if (type.isBlank()) "" else " - $type") + " - $q" },
             subtitleList = data.result.tracks.toTracks(),
         )
     }
@@ -114,7 +113,7 @@ class VidsrcExtractor(private val client: OkHttpClient, private val headers: Hea
     private fun callFromFuToken(host: String, data: String): String {
         val fuTokenScript = client.newCall(
             GET("https://$host/futoken"),
-        ).execute().use { it.body.string() }
+        ).execute().body.string()
 
         val js = buildString {
             append("(function")

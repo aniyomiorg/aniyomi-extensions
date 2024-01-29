@@ -129,7 +129,7 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         return if (urlFilter.state.isEmpty()) {
             val req = searchAnimeRequest(page, query, filters)
             client.newCall(req).awaitSuccess()
-                .use { response ->
+                .let { response ->
                     searchAnimeParse(response, req.url.toString())
                 }
         } else {

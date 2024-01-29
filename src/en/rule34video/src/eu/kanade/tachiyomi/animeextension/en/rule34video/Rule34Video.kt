@@ -80,7 +80,7 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val url = "$baseUrl/search_ajax.php?tag=${tagFilter.ifBlank { "." }}"
         val response = client.newCall(GET(url, headers)).execute()
-        tagDocument = response.use { it.asJsoup() }
+        tagDocument = response.asJsoup()
 
         val tagSearch = filters.getUriPart<TagSearch>()
 
@@ -156,7 +156,7 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 add("Accept-Language", "en-US,en;q=0.5")
             }.build()
 
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
 
         return document.select("div.label:contains(Download) ~ a.tag_item")
             .mapNotNull { element ->

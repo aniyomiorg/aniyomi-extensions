@@ -74,7 +74,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         return SAnime.create().apply {
             title = document.selectFirst("div.title-wrapper > h1 > span")!!.text()
             author = document.selectFirst("div.col-sm-4.anime-info p:contains(Studio:)")
@@ -187,7 +187,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val downloadLinks = document.select("div#pickDownload > a")
         return document.select("div#resolutionMenu > button").mapIndexed { index, btn ->
             val kwikLink = btn.attr("data-src")
@@ -307,7 +307,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun fetchSession(title: String, animeId: String): String {
         return client.newCall(GET("$baseUrl/api?m=search&q=$title"))
             .execute()
-            .use { it.body.string() }
+            .body.string()
             .substringAfter("\"id\":$animeId")
             .substringAfter("\"session\":\"")
             .substringBefore("\"")

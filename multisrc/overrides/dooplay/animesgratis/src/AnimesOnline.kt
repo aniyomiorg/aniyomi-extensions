@@ -100,7 +100,7 @@ class AnimesOnline : DooPlay(
 
         return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", headers, body))
             .execute()
-            .use { response ->
+            .let { response ->
                 response.body.string()
                     .substringAfter("\"embed_url\":\"")
                     .substringBefore("\",")
@@ -140,7 +140,7 @@ class AnimesOnline : DooPlay(
 
         return document.selectFirst("div.pag_episodes div.item > a:has(i.fa-th)")?.let {
             client.newCall(GET(it.attr("href"), headers)).execute()
-                .use { req -> req.asJsoup() }
+                .asJsoup()
         } ?: document
     }
 }

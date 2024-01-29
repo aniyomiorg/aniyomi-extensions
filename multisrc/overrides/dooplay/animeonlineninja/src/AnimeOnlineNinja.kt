@@ -135,7 +135,7 @@ class AnimeOnlineNinja : DooPlay(
                 uqloadExtractor.videosFromUrl(url)
             "wolfstream" in url -> {
                 client.newCall(GET(url, headers)).execute()
-                    .use { it.asJsoup() }
+                    .asJsoup()
                     .selectFirst("script:containsData(sources)")
                     ?.data()
                     ?.let { jsData ->
@@ -176,7 +176,7 @@ class AnimeOnlineNinja : DooPlay(
         val num = player.attr("data-nume")
         return client.newCall(GET("$baseUrl/wp-json/dooplayer/v1/post/$id?type=$type&source=$num"))
             .execute()
-            .use { response ->
+            .let { response ->
                 response.body.string()
                     .substringAfter("\"embed_url\":\"")
                     .substringBefore("\",")

@@ -44,7 +44,7 @@ class GoogleDriveExtractor(private val client: OkHttpClient, private val headers
             return videoFromRedirect(itemUrl, videoName, "", cookieJar)
         }
 
-        val document = docResp.use { it.asJsoup() }
+        val document = docResp.asJsoup()
 
         val itemSize = document.selectFirst("span.uc-name-size")
             ?.let { " ${it.ownText().trim()} " }

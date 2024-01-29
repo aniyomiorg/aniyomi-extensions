@@ -12,7 +12,7 @@ class SendvidExtractor(private val client: OkHttpClient, private val headers: He
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
 
     fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
-        val document = client.newCall(GET(url, headers)).execute().use { it.asJsoup() }
+        val document = client.newCall(GET(url, headers)).execute().asJsoup()
         val masterUrl = document.selectFirst("source#video_source")?.attr("src") ?: return emptyList()
 
         return if (masterUrl.contains(".m3u8")) {

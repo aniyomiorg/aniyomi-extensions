@@ -22,7 +22,7 @@ class StreamPlayExtractor(private val client: OkHttpClient, private val headers:
     fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
         val document = client.newCall(
             GET(url, headers),
-        ).execute().use { it.asJsoup() }
+        ).execute().asJsoup()
 
         val apiUrl = document.selectFirst("script:containsData(/api/)")
             ?.data()

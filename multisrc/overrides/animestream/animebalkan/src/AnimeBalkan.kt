@@ -51,7 +51,7 @@ class AnimeBalkan : AnimeStream(
                 gdriveExtractor.videosFromUrl(newUrl)
             }
             "Server AB" in name && baseUrl in url -> {
-                val doc = client.newCall(GET(url)).execute().use { it.asJsoup() }
+                val doc = client.newCall(GET(url)).execute().asJsoup()
                 val videoUrl = doc.selectFirst("source")?.attr("src")
                     ?: return emptyList()
                 listOf(Video(videoUrl, "Server AB - Default", videoUrl))

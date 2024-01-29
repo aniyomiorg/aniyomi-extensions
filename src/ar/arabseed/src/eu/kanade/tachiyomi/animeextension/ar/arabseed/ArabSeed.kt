@@ -107,7 +107,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return when {
             "reviewtech" in url || "reviewrate" in url -> {
                 val iframeResponse = client.newCall(GET(url)).execute()
-                    .use { it.asJsoup() }
+                    .asJsoup()
                 val videoUrl = iframeResponse.selectFirst("source")!!.attr("abs:src")
                 listOf(Video(videoUrl, quality + "p", videoUrl))
             }

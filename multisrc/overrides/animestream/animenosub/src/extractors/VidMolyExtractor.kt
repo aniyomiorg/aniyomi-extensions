@@ -11,11 +11,11 @@ class VidMolyExtractor(private val client: OkHttpClient) {
 
     fun getVideoList(url: String, lang: String): List<Video> {
         val body = client.newCall(GET(url)).execute()
-            .use { it.body.string() }
+            .body.string()
         val playlistUrl = regexPlaylist.find(body)!!.groupValues.get(1)
         val headers = Headers.headersOf("Referer", "https://vidmoly.to")
         val playlistData = client.newCall(GET(playlistUrl, headers)).execute()
-            .use { it.body.string() }
+            .body.string()
 
         val separator = "#EXT-X-STREAM-INF:"
         return playlistData.substringAfter(separator).split(separator).map {

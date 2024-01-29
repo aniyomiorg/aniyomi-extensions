@@ -89,7 +89,7 @@ class PutServerExtractor(private val client: OkHttpClient) {
             .addQueryParameter("a", cipher.iv)
             .addQueryParameter("t", cipher.salt)
             .build().toString()
-        return client.newCall(GET(vidUrl, referer)).execute().use { it.body.string() }
+        return client.newCall(GET(vidUrl, referer)).execute().body.string()
     }
 
     private fun extractVideoLinks(source: VidSource, vidReferer: String, subsList: List<Track>, serverId: String): List<Video> {

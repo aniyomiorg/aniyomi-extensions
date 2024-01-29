@@ -16,7 +16,7 @@ class MyStreamExtractor(private val client: OkHttpClient, private val headers: H
 
         return runCatching {
             val response = client.newCall(GET(url, headers)).execute()
-            val body = response.use { it.body.string() }
+            val body = response.body.string()
 
             val codePart = body
                 .substringAfter("sniff(") // Video function

@@ -64,7 +64,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int) = GET(HOST_URL, headers)
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val animes = doc.select("div > article.episode").map {
             SAnime.create().apply {
                 val ahref = it.selectFirst("h3 > a.episode-info-title-orange")!!

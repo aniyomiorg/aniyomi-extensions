@@ -43,7 +43,7 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private val database by lazy {
         client.newCall(GET("$baseUrl/catalogue/listing_all.php", headers)).execute()
-            .use { it.asJsoup().select(".cardListAnime") }
+            .asJsoup().select(".cardListAnime")
     }
 
     // ============================== Popular ===============================
@@ -55,7 +55,7 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
         val seasons = chunks.getOrNull(page - 1)?.flatMap {
             val animeUrl = "$baseUrl/catalogue/${it.groupValues[1]}"
             fetchAnimeSeasons(animeUrl)
-        }?.toList() ?: emptyList()
+        }?.toList().orEmpty()
         return AnimesPage(seasons, page < chunks.size)
     }
 
@@ -173,7 +173,7 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
                 val moviesUrl = "$animeUrl/$seasonStem"
                 val movies = fetchPlayers(moviesUrl).ifEmpty { return@flatMapIndexed emptyList() }
                 val movieNameRegex = Regex("^\\s*newSPF\\(\"(.*)\"\\);", RegexOption.MULTILINE)
-                val moviesDoc = client.newCall(GET(moviesUrl)).execute().use { it.body.string() }
+                val moviesDoc = client.newCall(GET(moviesUrl)).execute().body.string()
                 val matches = movieNameRegex.findAll(moviesDoc).toList()
                 List(movies.size) { i ->
                     val title = when {
@@ -216,9 +216,12 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun fetchPlayers(url: String): List<List<String>> {
         val docUrl = "$url/episodes.js"
         val players = mutableListOf<List<String>>()
-        val doc = client.newCall(GET(docUrl)).execute().use {
-            if (it.code != 200) return listOf()
-            it.body.string()
+        val doc = client.newCall(GET(docUrl)).execute().run {
+            if (code != 200) {
+                close()
+                return listOf()
+            }
+            body.string()
         }
         val sanitizedDoc = sanitizeEpisodesJs(doc)
         for (i in 1..8) {

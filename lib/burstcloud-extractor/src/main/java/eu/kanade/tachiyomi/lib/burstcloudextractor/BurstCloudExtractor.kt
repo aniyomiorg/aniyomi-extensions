@@ -18,7 +18,7 @@ class BurstCloudExtractor(private val client: OkHttpClient) {
         val newHeaders = headers.newBuilder().set("referer", BURSTCLOUD_URL).build()
         return runCatching {
             val response = client.newCall(GET(url, newHeaders)).execute()
-            val document = response.use { it.asJsoup() }
+            val document = response.asJsoup()
             val videoId = document.selectFirst("div#player")!!.attr("data-file-id")
 
             val formBody = FormBody.Builder()
@@ -27,7 +27,7 @@ class BurstCloudExtractor(private val client: OkHttpClient) {
 
             val jsonHeaders = headers.newBuilder().set("referer", document.location()).build()
             val request = POST("$BURSTCLOUD_URL/file/play-request/", jsonHeaders, formBody)
-            val jsonString = client.newCall(request).execute().use { it.body.string() }
+            val jsonString = client.newCall(request).execute().body.string()
 
             val jsonObj = json.decodeFromString<BurstCloudDto>(jsonString)
             val videoUrl = jsonObj.purchase.cdnUrl

@@ -143,7 +143,7 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val videoElement = document.selectFirst("video#my-video")
         return if (videoElement != null) {
             AnimeFireExtractor(client, json).videoListFromElement(videoElement)

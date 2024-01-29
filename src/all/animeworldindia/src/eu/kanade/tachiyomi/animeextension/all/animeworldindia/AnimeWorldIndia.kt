@@ -129,7 +129,7 @@ class AnimeWorldIndia(
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val isMovie = document.selectFirst("nav li > a[href*=\"type/movies/\"]") != null
 
         val seasonsJson = json.decodeFromString<List<SeasonDto>>(
@@ -189,7 +189,7 @@ class AnimeWorldIndia(
     private val mystreamExtractor by lazy { MyStreamExtractor(client, headers) }
 
     override fun videoListParse(response: Response): List<Video> {
-        val body = response.use { it.body.string() }
+        val body = response.body.string()
         val documentTrimmed = body
             .substringAfterLast("\"players\":")
             .substringBefore(",\"noplayer\":")

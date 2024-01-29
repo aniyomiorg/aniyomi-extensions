@@ -14,7 +14,7 @@ class GoAnimesExtractor(private val client: OkHttpClient, private val headers: H
 
     fun videosFromUrl(url: String, name: String): List<Video> {
         val body = client.newCall(GET(url, headers)).execute()
-            .use { it.body.string() }
+            .body.string()
         return when {
             "better-go.fun/player.php" in url || "/profix/player.php" in url ->
                 PlaylistExtractor.videosFromScript(body, name.split('-').first().trim())

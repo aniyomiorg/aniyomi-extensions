@@ -23,7 +23,7 @@ class FastreamExtractor(private val client: OkHttpClient, private val headers: H
 
     fun videosFromUrl(url: String, prefix: String = "Fastream:", needsSleep: Boolean = true): List<Video> {
         return runCatching {
-            val firstDoc = client.newCall(GET(url, videoHeaders)).execute().use { it.asJsoup() }
+            val firstDoc = client.newCall(GET(url, videoHeaders)).execute().asJsoup()
 
             if (needsSleep) Thread.sleep(5100L) // 5s is the minimum
 
@@ -33,7 +33,7 @@ class FastreamExtractor(private val client: OkHttpClient, private val headers: H
                         add(it.attr("name"), it.attr("value"))
                     }
                 }.build()
-                val doc = client.newCall(POST(url, videoHeaders, body = form)).execute().use { it.asJsoup() }
+                val doc = client.newCall(POST(url, videoHeaders, body = form)).execute().asJsoup()
                 doc.selectFirst("script:containsData(jwplayer):containsData(vplayer)") ?: return emptyList()
             } else {
                 firstDoc.selectFirst("script:containsData(jwplayer):containsData(vplayer)") ?: return emptyList()

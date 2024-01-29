@@ -30,7 +30,7 @@ class AincradExtractor(
             .set("X-Requested-With", "XMLHttpRequest")
             .build()
         val req = POST("$DOMAIN/player/index.php?data=$hash&do=getVideo", headers, body)
-        val res = client.newCall(req).execute().use { it.body.string() }
+        val res = client.newCall(req).execute().body.string()
         return runCatching {
             val data = json.decodeFromString<ResponseDto>(res)
             playlistUtils.extractFromHls(

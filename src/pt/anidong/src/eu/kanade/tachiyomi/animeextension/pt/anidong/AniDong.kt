@@ -75,7 +75,7 @@ class AniDong : ParsedAnimeHttpSource() {
     }
 
     private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.use { it.asJsoup() })
+        val details = animeDetailsParse(response.asJsoup())
         return AnimesPage(listOf(details), false)
     }
 
@@ -83,7 +83,7 @@ class AniDong : ParsedAnimeHttpSource() {
 
     private val nonce by lazy {
         client.newCall(GET("$baseUrl/?js_global=1&ver=6.2.2")).execute()
-            .use { it.body.string() }
+            .body.string()
             .substringAfter("search_nonce")
             .substringAfter("'")
             .substringBefore("'")
@@ -108,7 +108,7 @@ class AniDong : ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val searchData: SearchResultDto = response.use { it.body.string() }
+        val searchData: SearchResultDto = response.body.string()
             .takeIf { it.trim() != "402" }
             ?.let(json::decodeFromString)
             ?: return AnimesPage(emptyList(), false)
@@ -179,7 +179,7 @@ class AniDong : ParsedAnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = getRealDoc(response.use { it.asJsoup() })
+        val doc = getRealDoc(response.asJsoup())
 
         val id = doc.selectFirst("link[rel=shortlink]")!!.attr("href").substringAfter("=")
         val body = FormBody.Builder()
@@ -188,7 +188,7 @@ class AniDong : ParsedAnimeHttpSource() {
             .build()
 
         val res = client.newCall(POST("$baseUrl/api", apiHeaders, body)).execute()
-            .use { it.body.string() }
+            .body.string()
         val data = json.decodeFromString<EpisodeListDto>(res)
 
         return buildList {
@@ -207,7 +207,7 @@ class AniDong : ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         return doc.select("div.player_option").flatMap {
             val url = it.attr("data-playerlink")
             val playerName = it.text().trim()
@@ -217,7 +217,7 @@ class AniDong : ParsedAnimeHttpSource() {
 
     private fun videosFromUrl(url: String, playerName: String): List<Video> {
         val scriptData = client.newCall(GET(url, apiHeaders)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
             .selectFirst("script:containsData(sources)")
             ?.data() ?: return emptyList()
 
@@ -250,7 +250,7 @@ class AniDong : ParsedAnimeHttpSource() {
 
         return document.selectFirst(".episodioControleItem:has(i.ri-grid-fill)")?.let {
             client.newCall(GET(it.attr("href"), headers)).execute()
-                .use { req -> req.asJsoup() }
+                .asJsoup()
         } ?: document
     }
 

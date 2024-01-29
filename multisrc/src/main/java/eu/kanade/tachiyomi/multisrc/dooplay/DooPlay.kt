@@ -101,7 +101,7 @@ abstract class DooPlay(
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = response.use { getRealAnimeDoc(it.asJsoup()) }
+        val doc = getRealAnimeDoc(response.asJsoup())
         val seasonList = doc.select(seasonListSelector)
         return if (seasonList.size < 1) {
             SEpisode.create().apply {
