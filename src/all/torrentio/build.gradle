@@ -1,0 +1,7 @@
+ext {
+    extName = 'Torrentio (Torrent / Debird)'
+    extClass = '.Torrentio'
+    extVersionCode = 1
+}
+
+apply from: "$rootDir/common.gradle"
