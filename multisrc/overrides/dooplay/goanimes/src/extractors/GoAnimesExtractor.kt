@@ -12,12 +12,12 @@ import okhttp3.OkHttpClient
 class GoAnimesExtractor(private val client: OkHttpClient, private val headers: Headers) {
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
 
-    fun videosFromUrl(url: String): List<Video> {
+    fun videosFromUrl(url: String, name: String): List<Video> {
         val body = client.newCall(GET(url, headers)).execute()
             .body.string()
         return when {
-            "/profix/player.php" in url ->
-                PlaylistExtractor.videosFromScript(body, PLAYER_NAME)
+            "better-go.fun/player.php" in url || "/profix/player.php" in url ->
+                PlaylistExtractor.videosFromScript(body, name.split('-').first().trim())
             "/proxy/v.php" in url -> {
                 val playlistUrl = JsUnpacker.unpackAndCombine(body)
                     ?.substringAfterLast("player(\\'", "")
@@ -25,7 +25,7 @@ class GoAnimesExtractor(private val client: OkHttpClient, private val headers: H
                     ?.takeIf(String::isNotEmpty)
                     ?: return emptyList()
 
-                playlistUtils.extractFromHls(playlistUrl, url, videoNameGen = { "$PLAYER_NAME - $it" })
+                playlistUtils.extractFromHls(playlistUrl, url, videoNameGen = { "$name - $it" })
             }
             "/proxy/api3/" in url -> {
                 val playlistUrl = body.substringAfter("sources:", "")
@@ -43,7 +43,7 @@ class GoAnimesExtractor(private val client: OkHttpClient, private val headers: H
                 }
 
                 val referer = url.toHttpUrl().queryParameter("url") ?: url
-                playlistUtils.extractFromHls(fixedUrl, referer, videoNameGen = { "$PLAYER_NAME - $it" })
+                playlistUtils.extractFromHls(fixedUrl, referer, videoNameGen = { "$name - $it" })
             }
             else -> emptyList()
         }
