@@ -49,7 +49,7 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val utils by lazy { FmoviesUtils() }
+    private val utils by lazy { FmoviesUtils(client, headers) }
 
     // ============================== Popular ===============================
 
@@ -107,15 +107,36 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val desc = descElement?.selectFirst("div[data-name=full]")?.ownText() ?: descElement?.ownText() ?: ""
         val extraInfo = detail?.select("> div")?.joinToString("\n") { it.text() } ?: ""
 
+        val mediaTitle = info.selectFirst("h1.name")!!.text()
+        val mediaDetail = utils.getDetail(mediaTitle)
+
         return SAnime.create().apply {
-            title = info.selectFirst("h1.name")!!.text()
-            thumbnail_url = document.selectFirst("section#w-info > div.poster img")!!.attr("src")
-            description = if (desc.isBlank()) extraInfo else "$desc\n\n$extraInfo"
-            genre = detail?.let {
-                it.select("> div:has(> div:contains(Genre:)) span").joinToString(", ") { it.text() }
+            title = mediaTitle
+            status = when (mediaDetail?.status) {
+                "Ended", "Released" -> SAnime.COMPLETED
+                "In Production" -> SAnime.LICENSED
+                "Canceled" -> SAnime.CANCELLED
+                "Returning Series" -> {
+                    mediaDetail.nextEpisode?.let { SAnime.ONGOING } ?: SAnime.ON_HIATUS
+                }
+                else -> SAnime.UNKNOWN
             }
-            author = detail?.let {
-                it.select("> div:has(> div:contains(Production:)) span").joinToString(", ") { it.text() }
+            thumbnail_url = document.selectFirst("section#w-info > div.poster img")!!.attr("src")
+            description = buildString {
+                appendLine(desc.ifBlank { mediaDetail?.overview })
+                appendLine()
+                mediaDetail?.nextEpisode?.let {
+                    appendLine("Next: Ep ${it.epNumber} - ${it.name}")
+                    appendLine("Air Date: ${it.airDate}")
+                    appendLine()
+                }
+                appendLine(extraInfo)
+            }
+            genre = detail?.let { dtl ->
+                dtl.select("> div:has(> div:contains(Genre:)) span").joinToString { it.text() }
+            }
+            author = detail?.let { dtl ->
+                dtl.select("> div:has(> div:contains(Production:)) span").joinToString { it.text() }
             }
         }
     }
