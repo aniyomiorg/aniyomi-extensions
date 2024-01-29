@@ -53,20 +53,19 @@ class AnimesFoxBR : DooPlay(
     }
 
     private fun extractVideos(url: String, language: String): List<Video> {
-        return client.newCall(GET(url, headers)).execute()
-            .use { response ->
-                response.body.string()
-                    .substringAfter("sources:[")
-                    .substringBefore("]")
-                    .split("},")
-                    .mapNotNull {
-                        val videoUrl = it.substringAfter("file: \"")
-                            .substringBefore('"')
-                            .ifBlank { return@mapNotNull null }
-                        val quality = it.substringAfter("label:\"").substringBefore('"')
-                        Video(videoUrl, "$language($quality)", videoUrl, headers = headers)
-                    }
-            }
+        return client.newCall(GET(url, headers)).execute().let { response ->
+            response.body.string()
+                .substringAfter("sources:[")
+                .substringBefore("]")
+                .split("},")
+                .mapNotNull {
+                    val videoUrl = it.substringAfter("file: \"")
+                        .substringBefore('"')
+                        .ifBlank { return@mapNotNull null }
+                    val quality = it.substringAfter("label:\"").substringBefore('"')
+                    Video(videoUrl, "$language($quality)", videoUrl, headers = headers)
+                }
+        }
     }
 
     private fun getPlayerUrl(player: Element): String {
@@ -79,7 +78,7 @@ class AnimesFoxBR : DooPlay(
 
         return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", headers, body))
             .execute()
-            .use { response ->
+            .let { response ->
                 response.body.string()
                     .substringAfter("\"embed_url\":\"")
                     .substringBefore("\",")

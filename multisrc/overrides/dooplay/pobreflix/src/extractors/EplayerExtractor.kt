@@ -30,12 +30,11 @@ class EplayerExtractor(private val client: OkHttpClient) {
             .add("r", "")
             .build()
 
-        val masterUrl = client.newCall(POST(postUrl, headers, body = body)).execute().use {
-            it.body.string()
-                .substringAfter("videoSource\":\"")
-                .substringBefore('"')
-                .replace("\\", "")
-        }
+        val masterUrl = client.newCall(POST(postUrl, headers, body = body)).execute()
+            .body.string()
+            .substringAfter("videoSource\":\"")
+            .substringBefore('"')
+            .replace("\\", "")
 
         return playlistUtils.extractFromHls(masterUrl, videoNameGen = { "[$lang] EmbedPlayer - $it" })
     }

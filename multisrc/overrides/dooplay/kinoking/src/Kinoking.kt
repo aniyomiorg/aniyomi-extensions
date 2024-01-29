@@ -54,7 +54,7 @@ class Kinoking : DooPlay(
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val players = response.use { it.asJsoup().select("li.dooplay_player_option") }
+        val players = response.asJsoup().select("li.dooplay_player_option")
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
         return players.flatMap { player ->
             runCatching {
@@ -73,7 +73,7 @@ class Kinoking : DooPlay(
             .build()
         return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", headers, body))
             .execute()
-            .use { response ->
+            .let { response ->
                 response.body.string()
                     .substringAfter("\"embed_url\":\"")
                     .substringBefore("\",")

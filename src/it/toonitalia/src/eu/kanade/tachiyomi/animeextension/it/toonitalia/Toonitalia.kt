@@ -65,7 +65,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =============================== Search ===============================
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
 
         val isNormalSearch = document.location().contains("/?s=")
         val animes = if (isNormalSearch) {
@@ -135,7 +135,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val episodeNumRegex by lazy { Regex("\\s(\\d+x\\d+)\\s?") }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val url = doc.location()
 
         if ("/film-anime/" in url) {
@@ -169,7 +169,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val episodeNumber = response.request.url.fragment!!.toInt()
 
         val episode = document.select(episodeListSelector())
@@ -279,7 +279,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================= Utilities ==============================
     private fun bypassUprot(url: String): String? =
         client.newCall(GET(url, headers)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
             .selectFirst("a:has(button.button.is-info)")
             ?.attr("href")
 

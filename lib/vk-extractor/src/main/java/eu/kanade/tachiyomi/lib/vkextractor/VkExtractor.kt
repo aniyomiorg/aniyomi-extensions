@@ -22,7 +22,7 @@ class VkExtractor(private val client: OkHttpClient, private val headers: Headers
 
     fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
         val data = client.newCall(GET(url, documentHeaders)).execute()
-            .use { it.body.string() }
+            .body.string()
 
         return REGEX_VIDEO.findAll(data).map {
             val quality = it.groupValues[1]

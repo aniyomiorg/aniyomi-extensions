@@ -9,31 +9,29 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 
 class LinkfunBypasser(private val client: OkHttpClient) {
-    fun getIframeUrl(response: Response): String {
-        return response.use { page ->
-            val docString = page.body.string()
-            val document = if (docString.startsWith("<script")) {
-                page.asJsoup(decodeAtob(docString))
-            } else { page.asJsoup(docString) }
+    fun getIframeUrl(page: Response): String {
+        val docString = page.body.string()
+        val document = if (docString.startsWith("<script")) {
+            page.asJsoup(decodeAtob(docString))
+        } else { page.asJsoup(docString) }
 
-            val newHeaders = Headers.headersOf("Referer", document.location())
+        val newHeaders = Headers.headersOf("Referer", document.location())
 
-            val iframe = document.selectFirst("iframe[src]")
+        val iframe = document.selectFirst("iframe[src]")
 
-            if (iframe != null) {
-                iframe.attr("src")
-            } else {
-                val formBody = FormBody.Builder().apply {
-                    document.select("input[name]").forEach {
-                        add(it.attr("name"), it.attr("value"))
-                    }
-                }.build()
+        return if (iframe != null) {
+            iframe.attr("src")
+        } else {
+            val formBody = FormBody.Builder().apply {
+                document.select("input[name]").forEach {
+                    add(it.attr("name"), it.attr("value"))
+                }
+            }.build()
 
-                val formUrl = document.selectFirst("form")!!.attr("action")
-                client.newCall(POST(formUrl, newHeaders, formBody))
-                    .execute()
-                    .use(::getIframeUrl)
-            }
+            val formUrl = document.selectFirst("form")!!.attr("action")
+            client.newCall(POST(formUrl, newHeaders, formBody))
+                .execute()
+                .let(::getIframeUrl)
         }
     }
 

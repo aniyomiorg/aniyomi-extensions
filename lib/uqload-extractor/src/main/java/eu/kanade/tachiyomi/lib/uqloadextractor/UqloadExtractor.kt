@@ -8,7 +8,7 @@ import okhttp3.OkHttpClient
 
 class UqloadExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
-        val doc = client.newCall(GET(url)).execute().use { it.asJsoup() }
+        val doc = client.newCall(GET(url)).execute().asJsoup()
         val script = doc.selectFirst("script:containsData(sources:)")?.data()
             ?: return emptyList()
 

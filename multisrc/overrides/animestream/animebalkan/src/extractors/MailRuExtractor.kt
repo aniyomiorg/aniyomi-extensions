@@ -17,7 +17,7 @@ class MailRuExtractor(private val client: OkHttpClient, private val headers: Hea
 
     fun videosFromUrl(url: String): List<Video> {
         val document = client.newCall(GET(url, headers)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
 
         val metaUrl = document.selectFirst("script:containsData(metadataUrl)")
             ?.data()
@@ -35,7 +35,7 @@ class MailRuExtractor(private val client: OkHttpClient, private val headers: Hea
         val metaResponse = client.newCall(GET(metaUrl, metaHeaders)).execute()
 
         val metaJson = json.decodeFromString<MetaResponse>(
-            metaResponse.use { it.body.string() },
+            metaResponse.body.string(),
         )
 
         val videoKey = metaResponse.headers.firstOrNull {

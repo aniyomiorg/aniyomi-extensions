@@ -90,7 +90,7 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.use { it.asJsoup() })
+        val details = animeDetailsParse(response.asJsoup())
         return AnimesPage(listOf(details), false)
     }
 
@@ -131,7 +131,7 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val episode = SEpisode.create().apply {
             date_upload = doc.selectFirst("a:has(i.fa-upload)")?.ownText().toDate()
             setUrlWithoutDomain(doc.location())
@@ -153,7 +153,7 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
 
         val token = client.cookieJar.loadForRequest(response.request.url)
             .first { it.name.equals("XSRF-TOKEN") }

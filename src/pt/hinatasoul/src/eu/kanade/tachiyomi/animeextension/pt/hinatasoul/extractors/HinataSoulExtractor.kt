@@ -8,7 +8,7 @@ import okhttp3.Response
 class HinataSoulExtractor(private val headers: Headers) {
 
     fun getVideoList(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val hasFHD = doc.selectFirst("div.abaItem:contains(FULLHD)") != null
         val serverUrl = doc.selectFirst("meta[itemprop=contentURL]")!!
             .attr("content")

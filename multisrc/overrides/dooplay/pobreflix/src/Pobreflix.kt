@@ -34,7 +34,7 @@ class Pobreflix : DooPlay(
     private val superflixExtractor by lazy { SuperFlixExtractor(client, headers, ::genericExtractor) }
 
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         return doc.select("div.source-box > a").flatMap {
             runCatching {
                 val data = it.attr("href").toHttpUrl().queryParameter("auth")

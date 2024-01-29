@@ -28,12 +28,12 @@ class ShittyProtectionInterceptor(private val client: OkHttpClient) : Intercepto
     }
 
     private fun bypassProtection(request: Request, response: Response): Request {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
 
         val script = doc.selectFirst("script:containsData(slowAES)")!!.data()
 
         val slowAES = doc.selectFirst("script[src*=min.js]")!!.attr("abs:src").let { url ->
-            client.newCall(GET(url)).execute().use { it.body.string() }
+            client.newCall(GET(url)).execute().body.string()
         }
 
         val patchedScript = slowAES + "\n" + ADDITIONAL_FUNCTIONS + script

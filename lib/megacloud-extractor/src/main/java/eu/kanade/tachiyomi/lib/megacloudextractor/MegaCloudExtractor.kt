@@ -71,7 +71,7 @@ class MegaCloudExtractor(
         }
         val script = noCacheClient.newCall(GET(scriptUrl, cache = cacheControl))
             .execute()
-            .use { it.body.string() }
+            .body.string()
         val regex =
             Regex("case\\s*0x[0-9a-f]+:(?![^;]*=partKey)\\s*\\w+\\s*=\\s*(\\w+)\\s*,\\s*\\w+\\s*=\\s*(\\w+);")
         val matches = regex.findAll(script).toList()
@@ -147,7 +147,7 @@ class MegaCloudExtractor(
             .substringBefore("?", "").ifEmpty { throw Exception("I HATE THE ANTICHRIST") }
         val srcRes = client.newCall(GET(SERVER_URL[type] + SOURCES_URL[type] + id))
             .execute()
-            .use { it.body.string() }
+            .body.string()
 
         val data = json.decodeFromString<SourceResponseDto>(srcRes)
 

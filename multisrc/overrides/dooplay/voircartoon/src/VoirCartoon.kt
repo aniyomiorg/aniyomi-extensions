@@ -76,7 +76,7 @@ class VoirCartoon : DooPlay(
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val episodeList = doc.select(episodeListSelector())
         return if (episodeList.size < 1) {
             SEpisode.create().apply {
@@ -106,7 +106,7 @@ class VoirCartoon : DooPlay(
     private val comedyshowExtractor by lazy { ComedyShowExtractor(client) }
 
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val id = doc.selectFirst("input[name=idpost]")?.attr("value") ?: return emptyList()
 
         val players = doc.select("nav.player select > option").toList()
@@ -115,7 +115,7 @@ class VoirCartoon : DooPlay(
 
         val urls = players.map {
             client.newCall(GET("$baseUrl/ajax-get-link-stream/?server=$it&filmId=$id", headers)).execute()
-                .use { it.body.string() }
+                .body.string()
         }.distinct()
 
         return urls.flatMap { url ->

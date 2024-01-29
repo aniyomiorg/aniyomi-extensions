@@ -140,7 +140,7 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                 "wolfstream" in url && hosterSelection.contains("wolf") -> {
                     client.newCall(GET(url, headers)).execute()
-                        .use { it.asJsoup() }
+                        .asJsoup()
                         .selectFirst("script:containsData(sources)")
                         ?.data()
                         ?.let { jsData ->

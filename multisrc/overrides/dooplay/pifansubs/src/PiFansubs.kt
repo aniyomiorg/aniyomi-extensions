@@ -27,7 +27,7 @@ class PiFansubs : DooPlay(
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val players = document.select("div.source-box:not(#source-player-trailer) iframe")
         return players.map(::getPlayerUrl).flatMap(::getPlayerVideos)
     }

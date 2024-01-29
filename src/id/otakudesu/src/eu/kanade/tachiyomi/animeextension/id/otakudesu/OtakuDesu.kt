@@ -172,7 +172,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "div.mirrorstream ul li > a"
 
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val script = doc.selectFirst("script:containsData({action:)")!!
             .data()
 
@@ -209,7 +209,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val doc = client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = form))
             .execute()
-            .use { it.body.string() }
+            .body.string()
             .substringAfter(":\"")
             .substringBefore('"')
             .b64Decode()
@@ -234,7 +234,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 yourUploadExtractor.videoFromUrl(url, headers, "YourUpload - $quality")
             }
             "desustream" in link -> {
-                client.newCall(GET(link, headers)).execute().use {
+                client.newCall(GET(link, headers)).execute().let {
                     val doc = it.asJsoup()
                     val script = doc.selectFirst("script:containsData(sources)")!!.data()
                     val videoUrl = script.substringAfter("sources:[{")
@@ -244,7 +244,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
             "mp4upload" in link -> {
-                client.newCall(GET(link, headers)).execute().use {
+                client.newCall(GET(link, headers)).execute().let {
                     val doc = it.asJsoup()
                     val script = doc.selectFirst("script:containsData(player.src)")!!.data()
                     val videoUrl = script.substringAfter("src: \"").substringBefore('"')
@@ -259,9 +259,9 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val form = FormBody.Builder().add("action", action).build()
         return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = form))
             .execute()
-            .use {
-                it.body.string().substringAfter(":\"").substringBefore('"')
-            }
+            .body.string()
+            .substringAfter(":\"")
+            .substringBefore('"')
     }
 
     override fun videoFromElement(element: Element) = throw UnsupportedOperationException()

@@ -7,7 +7,7 @@ import okhttp3.OkHttpClient
 
 class VoeExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(url: String, quality: String? = null, prefix: String = ""): Video? {
-        val document = client.newCall(GET(url)).execute().use { it.asJsoup() }
+        val document = client.newCall(GET(url)).execute().asJsoup()
         val script = document.selectFirst("script:containsData(const sources), script:containsData(var sources)")
             ?.data()
             ?: return null

@@ -108,13 +108,13 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
     override fun videoListRequest(episode: SEpisode): Request {
         val document = client.newCall(GET(baseUrl + episode.url)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
         val iframe = document.selectFirst("iframe")!!.attr("abs:src")
         return GET(iframe)
     }
 
     override fun videoListParse(response: Response): List<Video> =
-        response.use { it.asJsoup() } // document
+        response.asJsoup() // document
             .select(videoListSelector()) // players
             .flatMap(::videosFromElement) // videos
 

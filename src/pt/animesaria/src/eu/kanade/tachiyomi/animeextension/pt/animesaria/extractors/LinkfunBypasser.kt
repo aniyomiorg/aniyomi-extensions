@@ -10,28 +10,25 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 
 class LinkfunBypasser(private val client: OkHttpClient) {
-    fun getIframeResponse(response: Response): Response {
-        return response.use { page ->
-            val document = page.asJsoup(decodeAtob(page.body.string()))
-            val newHeaders = Headers.headersOf("Referer", response.request.url.toString())
+    fun getIframeResponse(page: Response): Response {
+        val document = page.asJsoup(decodeAtob(page.body.string()))
+        val newHeaders = Headers.headersOf("Referer", document.location())
 
-            val iframe = document.selectFirst("iframe")
+        val iframe = document.selectFirst("iframe")
 
-            if (iframe != null) {
-                client.newCall(GET(iframe.attr("src"), newHeaders))
-                    .execute()
-            } else {
-                val formBody = FormBody.Builder().apply {
-                    document.select("input[name]").forEach {
-                        add(it.attr("name"), it.attr("value"))
-                    }
-                }.build()
+        return if (iframe != null) {
+            client.newCall(GET(iframe.attr("src"), newHeaders)).execute()
+        } else {
+            val formBody = FormBody.Builder().apply {
+                document.select("input[name]").forEach {
+                    add(it.attr("name"), it.attr("value"))
+                }
+            }.build()
 
-                val formUrl = document.selectFirst("form")!!.attr("action")
-                client.newCall(POST(formUrl, newHeaders, formBody))
-                    .execute()
-                    .use(::getIframeResponse)
-            }
+            val formUrl = document.selectFirst("form")!!.attr("action")
+            client.newCall(POST(formUrl, newHeaders, formBody))
+                .execute()
+                .let(::getIframeResponse)
         }
     }
 

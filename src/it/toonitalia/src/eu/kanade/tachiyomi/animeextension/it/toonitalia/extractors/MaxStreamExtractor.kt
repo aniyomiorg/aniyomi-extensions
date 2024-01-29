@@ -13,7 +13,7 @@ class MaxStreamExtractor(private val client: OkHttpClient, private val headers: 
 
     fun videosFromUrl(url: String): List<Video> {
         val doc = client.newCall(GET(url, headers)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
 
         val location = doc.location()
         if (location.contains("/dd/")) return videosFromCast(location.replace("/dd/", "/cast3/"))
@@ -36,7 +36,7 @@ class MaxStreamExtractor(private val client: OkHttpClient, private val headers: 
 
     private fun videosFromCast(url: String): List<Video> {
         val script = client.newCall(GET(url, headers)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
             .selectFirst("script:containsData(document.write)")
             ?.data()
             ?: return emptyList()
@@ -54,7 +54,7 @@ class MaxStreamExtractor(private val client: OkHttpClient, private val headers: 
         val newHeaders = headers.newBuilder().set("Referer", url).build()
         val newUrl = decodedData.substringAfter("get('").substringBefore("'")
         val docBody = client.newCall(GET(newUrl, newHeaders)).execute()
-            .use { it.body.string() }
+            .body.string()
 
         val videoUrl = docBody.substringAfter(".cast('").substringBefore("'")
         return listOf(Video(videoUrl, "MaxStream CAST Scarica", videoUrl, newHeaders))

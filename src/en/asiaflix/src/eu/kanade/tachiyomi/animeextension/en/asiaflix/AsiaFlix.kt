@@ -177,7 +177,7 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
     private val mixDropExtractor by lazy { MixDropExtractor(client) }
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
 
         val hostUrls = document.select("ul.list-server-items li").map {
             it.attr("data-video")

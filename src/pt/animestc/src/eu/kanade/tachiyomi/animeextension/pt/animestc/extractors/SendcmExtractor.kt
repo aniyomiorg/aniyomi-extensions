@@ -10,7 +10,7 @@ class SendcmExtractor(private val client: OkHttpClient) {
     private val playerName = "Sendcm"
 
     fun videosFromUrl(url: String, quality: String): List<Video> {
-        val doc = client.newCall(GET(url)).execute().use { it.asJsoup() }
+        val doc = client.newCall(GET(url)).execute().asJsoup()
         val videoUrl = doc.selectFirst("video#vjsplayer > source")?.attr("src")
         return videoUrl?.let {
             val headers = Headers.headersOf("Referer", url)

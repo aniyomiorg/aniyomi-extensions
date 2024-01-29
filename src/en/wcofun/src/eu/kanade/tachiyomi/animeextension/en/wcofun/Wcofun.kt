@@ -135,7 +135,7 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val iframeDomain = "https://" + iframeLink.toHttpUrl().host
 
         val playerHtml = client.newCall(GET(iframeLink, headers)).execute()
-            .use { it.body.string() }
+            .body.string()
 
         val getVideoLink = playerHtml.substringAfter("\$.getJSON(\"").substringBefore("\"")
 

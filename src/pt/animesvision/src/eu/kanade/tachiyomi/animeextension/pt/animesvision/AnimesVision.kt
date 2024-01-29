@@ -166,7 +166,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListSelector() = "div.container div.screen-items > div.item"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        var doc = getRealDoc(response.use { it.asJsoup() })
+        var doc = getRealDoc(response.asJsoup())
 
         return buildList {
             do {
@@ -174,7 +174,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val nextUrl = doc.selectFirst(nextPageSelector())!!
                         .selectFirst("a")!!
                         .attr("href")
-                    doc = client.newCall(GET(nextUrl)).execute().use { it.asJsoup() }
+                    doc = client.newCall(GET(nextUrl)).execute().asJsoup()
                 }
                 doc.select(episodeListSelector())
                     .map(::episodeFromElement)
@@ -193,7 +193,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val body = response.use { it.body.string() }
+        val body = response.body.string()
         val internalVideos = GlobalVisionExtractor()
             .videoListFromHtml(body)
             .toMutableList()
@@ -229,7 +229,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val reqBody = body.toRequestBody()
             val url = "$baseUrl/livewire/message/components.episodio.player-episodio-component"
             val response = client.newCall(POST(url, headers, reqBody)).await()
-            val responseBody = response.use { it.body.string() }
+            val responseBody = response.body.string()
             val resJson = json.decodeFromString<AVResponseDto>(responseBody)
             (resJson.serverMemo?.data?.framePlay ?: resJson.effects?.html)
                 ?.let(::parsePlayerData).orEmpty()
@@ -291,7 +291,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if ("/episodio-" in originalUrl || "/filme-" in originalUrl) {
             val url = document.selectFirst("h2.film-name > a")!!.attr("href")
             val req = client.newCall(GET(url)).execute()
-            return req.use { it.asJsoup() }
+            return req.asJsoup()
         }
         return document
     }

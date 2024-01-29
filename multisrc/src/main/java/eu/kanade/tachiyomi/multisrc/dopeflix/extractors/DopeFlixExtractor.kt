@@ -31,7 +31,7 @@ class DopeFlixExtractor(private val client: OkHttpClient) {
     }
 
     private fun generateIndexPairs(): List<List<Int>> {
-        val script = client.newCall(GET(SCRIPT_URL)).execute().use { it.body.string() }
+        val script = client.newCall(GET(SCRIPT_URL)).execute().body.string()
         return script.substringAfter("const ")
             .substringBefore("()")
             .substringBeforeLast(",")

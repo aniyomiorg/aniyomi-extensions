@@ -24,7 +24,7 @@ class RapidrameExtractor(
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
 
     fun videosFromUrl(url: String): List<Video> {
-        val doc = client.newCall(GET(url, headers)).execute().use { it.asJsoup() }
+        val doc = client.newCall(GET(url, headers)).execute().asJsoup()
         val script = doc.selectFirst("script:containsData(eval):containsData(file_link)")?.data()
             ?: return emptyList()
 

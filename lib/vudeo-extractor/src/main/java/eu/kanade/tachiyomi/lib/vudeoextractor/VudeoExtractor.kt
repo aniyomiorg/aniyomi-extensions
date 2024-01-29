@@ -10,7 +10,7 @@ import okhttp3.OkHttpClient
 class VudeoExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
         val doc = client.newCall(GET(url)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
 
         val sources = doc.selectFirst("script:containsData(sources: [)")?.data()
             ?: return emptyList()

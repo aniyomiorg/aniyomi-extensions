@@ -84,7 +84,7 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
         val masterHeaders = masterHeadersGen(headers, referer)
 
         val masterPlaylist = client.newCall(GET(playlistUrl, masterHeaders)).execute()
-            .use { it.body.string() }
+            .body.string()
 
         // Check if there isn't multiple streams available
         if (PLAYLIST_SEPARATOR !in masterPlaylist) {
@@ -290,7 +290,7 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
         val mpdHeaders = mpdHeadersGen(headers, referer)
 
         val doc = client.newCall(GET(mpdUrl, mpdHeaders)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
 
         // Get audio tracks
         val audioTracks = audioList + doc.select("Representation[mimetype~=audio]").map { audioSrc ->

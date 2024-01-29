@@ -161,7 +161,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override suspend fun getEpisodeList(anime: SAnime): List<SEpisode> {
         val document = client.newCall(GET(baseUrl + anime.url)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
 
         val seasonList = document.select("div.inline > h3:contains(Season),div.thecontent > h3:contains(Season)")
 
@@ -177,7 +177,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                     val url = it.selectFirst("a")!!.attr("href")
                     val episodesDocument = client.newCall(GET(url)).execute()
-                        .use { it.asJsoup() }
+                        .asJsoup()
                     episodesDocument.select("div.entry-content > h3 > a").map {
                         EpUrl(quality, it.attr("href"), "Season $seasonNumber ${it.text()}")
                     }
@@ -194,7 +194,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             // Load episodes
             val serversList = driveList.map { drive ->
                 val episodesDocument = client.newCall(GET(drive.first)).execute()
-                    .use { it.asJsoup() }
+                    .asJsoup()
                 episodesDocument.select("div.entry-content > h3 > a").map {
                     EpUrl(drive.second, it.attr("href"), it.text())
                 }
@@ -225,14 +225,14 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val leechUrls = urls.map {
             val firstLeech = client.newCall(GET(it.url)).execute()
-                .use { it.asJsoup() }
+                .asJsoup()
                 .selectFirst("script:containsData(downlaod_button)")!!
                 .data()
                 .substringAfter("<a href=\"")
                 .substringBefore("\">")
 
             val path = client.newCall(GET(firstLeech)).execute()
-                .use { it.body.string() }
+                .body.string()
                 .substringAfter("replace(\"")
                 .substringBefore("\"")
 
@@ -277,7 +277,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun extractWorkerLinks(mediaUrl: String, quality: String, type: Int): List<Video> {
         val reqLink = mediaUrl.replace("/file/", "/wfile/") + "?type=$type"
-        val resp = client.newCall(GET(reqLink)).execute().use { it.asJsoup() }
+        val resp = client.newCall(GET(reqLink)).execute().asJsoup()
         val sizeMatch = SIZE_REGEX.find(resp.select("div.card-header").text().trim())
         val size = sizeMatch?.groups?.get(1)?.value?.let { " - $it" } ?: ""
         return resp.select("div.card-body div.mb-4 > a").mapIndexed { index, linkElement ->
@@ -297,7 +297,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun getDirectLink(url: String, action: String = "direct", newPath: String = "/file/"): String? {
-        val doc = client.newCall(GET(url, headers)).execute().use { it.asJsoup() }
+        val doc = client.newCall(GET(url, headers)).execute().asJsoup()
         val script = doc.selectFirst("script:containsData(async function taskaction)")
             ?.data()
             ?: return url
@@ -314,18 +314,18 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val req = client.newCall(POST(url.replace("/file/", newPath), headers, form)).execute()
         return runCatching {
-            json.decodeFromString<DriveLeechDirect>(req.use { it.body.string() }).url
+            json.decodeFromString<DriveLeechDirect>(req.body.string()).url
         }.getOrNull()
     }
 
     private fun extractGDriveLink(mediaUrl: String, quality: String): List<Video> {
         val neoUrl = getDirectLink(mediaUrl) ?: mediaUrl
-        val response = client.newCall(GET(neoUrl)).execute().use { it.asJsoup() }
+        val response = client.newCall(GET(neoUrl)).execute().asJsoup()
         val gdBtn = response.selectFirst("div.card-body a.btn")!!
         val gdLink = gdBtn.attr("href")
         val sizeMatch = SIZE_REGEX.find(gdBtn.text())
         val size = sizeMatch?.groups?.get(1)?.value?.let { " - $it" } ?: ""
-        val gdResponse = client.newCall(GET(gdLink)).execute().use { it.asJsoup() }
+        val gdResponse = client.newCall(GET(gdLink)).execute().asJsoup()
         val link = gdResponse.select("form#download-form")
         return if (link.isNullOrEmpty()) {
             emptyList()

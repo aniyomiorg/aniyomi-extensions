@@ -43,7 +43,7 @@ class SuperFlixExtractor(
             .set("origin", API_DOMAIN)
             .build()
 
-        val doc = client.newCall(GET(url, headers)).await().use { it.asJsoup() }
+        val doc = client.newCall(GET(url, headers)).await().asJsoup()
 
         val baseUrl = "https://" + httpUrl.host
         val apiUrl = "$baseUrl/ajax_sources.php"
@@ -65,7 +65,7 @@ class SuperFlixExtractor(
                 .build()
 
             val req = client.newCall(POST(apiUrl, apiHeaders, formBody)).await()
-                .use { it.body.string() }
+                .body.string()
 
             runCatching {
                 val iframeUrl = json.decodeFromString<PlayerLinkDto>(req).iframe!!
@@ -82,7 +82,7 @@ class SuperFlixExtractor(
     data class PlayerLinkDto(val iframe: String? = null)
 
     private fun linksFromUrl(url: String): List<Pair<String, String>> {
-        val doc = client.newCall(GET(url, defaultHeaders)).execute().use { it.asJsoup() }
+        val doc = client.newCall(GET(url, defaultHeaders)).execute().asJsoup()
 
         val items = doc.select("div.select_language").mapNotNull {
             val target = it.attr("data-target")
@@ -113,7 +113,7 @@ class SuperFlixExtractor(
             .build()
 
         val res = client.newCall(POST("$API_DOMAIN/api", headers, body)).execute()
-            .use { it.body.string() }
+            .body.string()
 
         return json.decodeFromString<ApiResponseDto>(res).data?.video_url
     }

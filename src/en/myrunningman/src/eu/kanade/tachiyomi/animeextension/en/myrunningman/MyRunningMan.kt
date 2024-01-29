@@ -73,7 +73,7 @@ class MyRunningMan : ParsedAnimeHttpSource() {
     }
 
     private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.use { it.asJsoup() })
+        val details = animeDetailsParse(response.asJsoup())
         return AnimesPage(listOf(details), false)
     }
 
@@ -133,7 +133,7 @@ class MyRunningMan : ParsedAnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         return listOf(
             SEpisode.create().apply {
                 setUrlWithoutDomain(doc.location())
@@ -166,7 +166,7 @@ class MyRunningMan : ParsedAnimeHttpSource() {
     private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
 
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
 
         return doc.select("a.changePlayer")
             .mapNotNull { getUrlById(it.attr("data-url")) }

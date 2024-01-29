@@ -242,7 +242,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             val params = KickAssAnimeFilters.getSearchParameters(filters)
             return client.newCall(searchAnimeRequest(page, query, params))
                 .awaitSuccess()
-                .use { response ->
+                .let { response ->
                     searchAnimeParse(response, page)
                 }
         }

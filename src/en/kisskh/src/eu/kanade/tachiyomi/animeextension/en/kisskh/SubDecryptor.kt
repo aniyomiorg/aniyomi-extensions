@@ -21,7 +21,7 @@ class SubDecryptor(private val client: OkHttpClient, private val headers: Header
 
         val subtitleData = client.newCall(
             GET(subUrl, subHeaders),
-        ).execute().use { it.body.string() }
+        ).execute().body.string()
 
         val chunks = subtitleData.split(CHUNK_REGEX)
             .filter(String::isNotBlank)

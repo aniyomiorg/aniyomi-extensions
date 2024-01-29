@@ -126,7 +126,7 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.use { it.asJsoup() })
+        val details = animeDetailsParse(response.asJsoup())
         return AnimesPage(listOf(details), false)
     }
 
@@ -184,7 +184,7 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     data class ResponseDto(val data: String)
 
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
 
         val fansubUrls = doc.select("div#fansec > a")
             .filterSubs()

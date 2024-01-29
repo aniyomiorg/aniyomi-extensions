@@ -67,7 +67,7 @@ class ArabAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int) = GET(baseUrl)
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        val latestEpisodes = response.use { it.asJsoup() }.select("div.as-episode")
+        val latestEpisodes = response.asJsoup().select("div.as-episode")
         val animeList = latestEpisodes.map {
             SAnime.create().apply {
                 val ahref = it.selectFirst("a.as-info")!!
@@ -98,7 +98,7 @@ class ArabAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         return if (response.body.contentType() == "application/json".toMediaType()) {
             popularAnimeParse(response)
         } else {
-            val searchResult = response.use { it.asJsoup() }.select("div.show")
+            val searchResult = response.asJsoup().select("div.show")
             val animeList = searchResult.map {
                 SAnime.create().apply {
                     setUrlWithoutDomain(it.selectFirst("a")!!.attr("href"))
@@ -138,7 +138,7 @@ class ArabAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(response: Response): SAnime {
-        val showData = response.use { it.asJsoup() }.selectFirst("div#data")!!
+        val showData = response.asJsoup().selectFirst("div#data")!!
             .text()
             .decodeBase64()
 
@@ -159,7 +159,7 @@ class ArabAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val showData = response.use { it.asJsoup() }.selectFirst("div#data")
+        val showData = response.asJsoup().selectFirst("div#data")
             ?.text()
             ?.decodeBase64()
             ?: return emptyList()
@@ -176,7 +176,7 @@ class ArabAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val watchData = response.use { it.asJsoup() }.selectFirst("div#datawatch")
+        val watchData = response.asJsoup().selectFirst("div#datawatch")
             ?.text()
             ?.decodeBase64()
             ?: return emptyList()
@@ -184,13 +184,13 @@ class ArabAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         val serversJson = json.decodeFromString<Episode>(watchData)
         val selectServer = serversJson.ep_info[0].stream_servers[0].decodeBase64()
 
-        val watchPage = client.newCall(GET(selectServer)).execute().use { it.asJsoup() }
+        val watchPage = client.newCall(GET(selectServer)).execute().asJsoup()
         return watchPage.select("option")
             .map { it.text() to it.attr("data-src").decodeBase64() } // server : url
             .filter { it.second.contains("$baseUrl/embed") } // filter urls
             .flatMap { (name, url) ->
                 client.newCall(GET(url)).execute()
-                    .use { it.asJsoup() }
+                    .asJsoup()
                     .select("source")
                     .mapNotNull { source ->
                         val videoUrl = source.attr("src")

@@ -96,7 +96,7 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val animes = document.select(searchAnimeSelector()).map(::searchAnimeFromElement)
         val hasNext = hasNextPage(document)
         return AnimesPage(animes, hasNext)
@@ -131,12 +131,12 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
     override fun episodeListSelector() = "div.aniContainer a"
     override fun episodeListParse(response: Response): List<SEpisode> {
-        var doc = getRealDoc(response.use { it.asJsoup() })
+        var doc = getRealDoc(response.asJsoup())
         val totalEpisodes = buildList {
             do {
                 if (isNotEmpty()) {
                     val url = doc.selectFirst("div.mwidth > a:containsOwn(»)")!!.absUrl("href")
-                    doc = client.newCall(GET(url, headers)).execute().use { it.asJsoup() }
+                    doc = client.newCall(GET(url, headers)).execute().asJsoup()
                 }
                 doc.select(episodeListSelector())
                     .map(::episodeFromElement)
@@ -208,7 +208,7 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return document.selectFirst(animeMenuSelector)?.let {
             client.newCall(GET(it.attr("href"), headers)).execute()
-                .use { r -> r.asJsoup() }
+                .asJsoup()
         } ?: document
     }
 

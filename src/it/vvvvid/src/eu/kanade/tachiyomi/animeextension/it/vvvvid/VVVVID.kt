@@ -406,7 +406,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
         val (request, videoId) = videoListRequestPair(episode)
         return client.newCall(request)
             .awaitSuccess()
-            .use { response ->
+            .let { response ->
                 videoListParse(response, videoId).sort()
             }
     }

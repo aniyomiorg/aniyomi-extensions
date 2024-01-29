@@ -117,7 +117,7 @@ abstract class AnimeStream(
     }
 
     protected open fun searchAnimeByPathParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.use { it.asJsoup() })
+        val details = animeDetailsParse(response.asJsoup())
         return AnimesPage(listOf(details), false)
     }
 
@@ -162,7 +162,7 @@ abstract class AnimeStream(
             AnimeStreamFilters.filterElements = runBlocking {
                 withContext(Dispatchers.IO) {
                     client.newCall(GET(animeListUrl)).execute()
-                        .use { it.asJsoup() }
+                        .asJsoup()
                         .select(filtersSelector)
                 }
             }
@@ -285,7 +285,7 @@ abstract class AnimeStream(
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         return doc.select(episodeListSelector()).map(::episodeFromElement)
     }
 
@@ -315,7 +315,7 @@ abstract class AnimeStream(
     override fun videoListSelector() = "select.mirror > option[data-index], ul.mirror a[data-em]"
 
     override fun videoListParse(response: Response): List<Video> {
-        val items = response.use { it.asJsoup() }.select(videoListSelector())
+        val items = response.asJsoup().select(videoListSelector())
         return items.parallelCatchingFlatMapBlocking { element ->
             val name = element.text()
             val url = getHosterUrl(element)
@@ -340,7 +340,7 @@ abstract class AnimeStream(
                 .let(::String) // bytearray -> string
                 .let(Jsoup::parse) // string -> document
         } else {
-            client.newCall(GET(encodedData, headers)).execute().use { it.asJsoup() }
+            client.newCall(GET(encodedData, headers)).execute().asJsoup()
         }
 
         return doc.selectFirst("iframe[src~=.]")?.safeUrl()

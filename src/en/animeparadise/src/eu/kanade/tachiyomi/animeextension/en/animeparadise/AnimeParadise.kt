@@ -118,7 +118,7 @@ class AnimeParadise : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val data = document.selectFirst("script#__NEXT_DATA__")?.data() ?: return SAnime.create()
 
         return json.decodeFromString<AnimeDetails>(data).props.pageProps.data.toSAnime()
@@ -141,7 +141,7 @@ class AnimeParadise : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun videoListRequest(episode: SEpisode): Request = GET(baseUrl + episode.url, headers = docHeaders)
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val data = json.decodeFromString<VideoData>(
             document.selectFirst("script#__NEXT_DATA__")!!.data(),
         ).props.pageProps

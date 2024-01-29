@@ -13,7 +13,7 @@ class MinoplresExtractor(private val client: OkHttpClient, private val headers: 
     fun videosFromUrl(url: String, name: String): List<Video> {
         val newHeaders = headers.newBuilder().set("Referer", url).build()
         val doc = client.newCall(GET(url, newHeaders)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
         val script = doc.selectFirst("script:containsData(sources:)")?.data()
             ?: return emptyList()
 

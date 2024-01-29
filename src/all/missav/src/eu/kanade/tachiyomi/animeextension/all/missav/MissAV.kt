@@ -48,7 +48,7 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
         GET("$baseUrl/en/today-hot?page=$page", headers)
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
 
         val entries = document.select("div.thumbnail").map { element ->
             SAnime.create().apply {
@@ -95,7 +95,7 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
     override fun searchAnimeParse(response: Response) = popularAnimeParse(response)
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
 
         val jpTitle = document.select("div.text-secondary span:contains(title) + span").text()
         val siteCover = document.selectFirst("video.player")?.attr("abs:data-poster")
@@ -143,7 +143,7 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
 
         val playlists = document.selectFirst("script:containsData(function(p,a,c,k,e,d))")
             ?.data()

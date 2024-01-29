@@ -171,13 +171,13 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
         }.build()
         return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = form))
             .execute()
-            .use { Pair(it.asJsoup().selectFirst(".playeriframe")!!.attr("src"), "") }
+            .let { Pair(it.asJsoup().selectFirst(".playeriframe")!!.attr("src"), "") }
     }
 
     private fun getVideosFromEmbed(link: String): List<Video> {
         return when {
             "blogger" in link -> {
-                client.newCall(GET(link)).execute().use { it.body.string() }.let {
+                client.newCall(GET(link)).execute().body.string().let {
                     val json = JSONObject(it.substringAfter("= ").substringBefore("<"))
                     val streams = json.getJSONArray("streams")
                     val videoList = mutableListOf<Video>()

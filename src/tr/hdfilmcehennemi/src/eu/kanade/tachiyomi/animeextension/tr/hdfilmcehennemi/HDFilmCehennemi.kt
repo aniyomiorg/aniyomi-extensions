@@ -92,7 +92,7 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.use { it.asJsoup() })
+        val details = animeDetailsParse(response.asJsoup())
         return AnimesPage(listOf(details), false)
     }
 
@@ -229,11 +229,11 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val xbetExtractor by lazy { XBetExtractor(client, headers, json) }
 
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
 
         return doc.select("div.card-body > nav > a:not([href^=#])")
             .drop(1)
-            .parallelMapBlocking { client.newCall(GET(it.absUrl("href") + "/")).await().use { it.asJsoup() } }
+            .parallelMapBlocking { client.newCall(GET(it.absUrl("href") + "/")).await().asJsoup() }
             .let { listOf(doc) + it }
             .mapNotNull { it.selectFirst("div.card-video > iframe")?.attr("data-src") }
             .filter(String::isNotBlank)

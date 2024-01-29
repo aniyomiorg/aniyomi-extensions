@@ -127,7 +127,7 @@ class Tokuzilla : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
     override fun episodeListSelector() = "ul.pagination.post-tape a"
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
 
         val episodes = document.select(episodeListSelector())
         return if (episodes.isNotEmpty()) {
@@ -152,7 +152,7 @@ class Tokuzilla : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val frameLink = document.selectFirst("iframe[id=frame]")!!.attr("src")
         return ChillxExtractor(client, headers).videoFromUrl(frameLink, baseUrl)
     }

@@ -77,13 +77,13 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListRequest(episode: SEpisode): Request {
         val document = client.newCall(GET(baseUrl + episode.url)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
         val link = document.selectFirst("div.loop-episode a.current")!!.attr("href")
         return GET(link)
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         return document.select(videoListSelector()).parallelCatchingFlatMapBlocking {
             val url = it.attr("data-server")
             getVideosFromUrl(url)
@@ -106,7 +106,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "uqload" in url -> uqloadExtractor.videosFromUrl(url)
             VID_BOM_DOMAINS.any(url::contains) -> vidbomExtractor.videosFromUrl(url)
             "youdbox" in url || "yodbox" in url -> {
-                client.newCall(GET(url)).execute().use {
+                client.newCall(GET(url)).execute().let {
                     val doc = it.asJsoup()
                     val videoUrl = doc.selectFirst("source")?.attr("abs:src")
                     when (videoUrl) {

@@ -78,7 +78,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =========================== Anime Details ============================
     override fun animeDetailsRequest(anime: SAnime): Request {
         if (anime.url.contains("-episode-") && anime.url.endsWith(".html")) {
-            val doc = client.newCall(GET(baseUrl + anime.url)).execute().use { it.asJsoup() }
+            val doc = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
             anime.setUrlWithoutDomain(doc.selectFirst("div.category a")!!.attr("href"))
         }
         return GET(baseUrl + anime.url)
@@ -119,9 +119,9 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "ul.list-server-items li"
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val iframeUrl = document.selectFirst("iframe")?.absUrl("src") ?: return emptyList()
-        val iframeDoc = client.newCall(GET(iframeUrl)).execute().use { it.asJsoup() }
+        val iframeDoc = client.newCall(GET(iframeUrl)).execute().asJsoup()
 
         return iframeDoc.select(videoListSelector()).flatMap(::videosFromElement)
     }

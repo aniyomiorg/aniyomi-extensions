@@ -7,7 +7,7 @@ import okhttp3.OkHttpClient
 
 class StreamDavExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
-        val document = client.newCall(GET(url)).execute().use { it.asJsoup() }
+        val document = client.newCall(GET(url)).execute().asJsoup()
         return document.select("source").map {
             val videoUrl = it.attr("src")
             val quality = it.attr("label")

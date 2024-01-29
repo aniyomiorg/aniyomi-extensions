@@ -177,10 +177,10 @@ class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
         }.build()
         return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = form))
             .execute()
-            .use {
-                val server = element.selectFirst("span")!!.text()
+            .let {
                 val link = it.body.string().substringAfter("src=\"").substringBefore("\"")
-                return@use Pair(server, link)
+                val server = element.selectFirst("span")!!.text()
+                Pair(server, link)
             }
     }
 
@@ -195,7 +195,7 @@ class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
             }
 
             "krakenfiles" in link -> {
-                client.newCall(GET(link)).execute().use {
+                client.newCall(GET(link)).execute().let {
                     val doc = it.asJsoup()
                     val getUrl = doc.selectFirst("source")!!.attr("src")
                     val videoUrl = "https:${getUrl.replace("&amp;", "&")}"
@@ -204,7 +204,7 @@ class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
             }
 
             "blogger" in link -> {
-                client.newCall(GET(link)).execute().use {
+                client.newCall(GET(link)).execute().let {
                     val videoUrl =
                         it.body.string().substringAfter("play_url\":\"").substringBefore("\"")
                     listOf(Video(videoUrl, server, videoUrl, headers))

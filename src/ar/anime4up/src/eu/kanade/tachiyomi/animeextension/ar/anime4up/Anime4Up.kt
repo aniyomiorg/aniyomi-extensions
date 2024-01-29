@@ -146,7 +146,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     )
 
     override fun videoListParse(response: Response): List<Video> {
-        val base64 = response.use { it.asJsoup() }.selectFirst("input[name=wl]")
+        val base64 = response.asJsoup().selectFirst("input[name=wl]")
             ?.attr("value")
             ?.let { String(Base64.decode(it, Base64.DEFAULT)) }
             ?: return emptyList()

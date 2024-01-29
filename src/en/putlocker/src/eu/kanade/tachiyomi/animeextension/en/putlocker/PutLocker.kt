@@ -126,7 +126,7 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         GET("$baseUrl${anime.url}/watching.html")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val (type, mediaId) = doc.selectFirst("script:containsData(total_episode)")
             ?.data()
             ?.let {
@@ -160,7 +160,7 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 client.newCall(
                     GET("$baseUrl/ajax/movie/seasons/$mediaId"),
                 ).execute()
-                    .use { it.body.string() }
+                    .body.string()
                     .parseHtml()
                     .select("div.dropdown-menu > a")
                     .mapNotNull { it.attr("data-id") }
@@ -169,7 +169,7 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         client.newCall(
                             GET("$baseUrl/ajax/movie/season/episodes/${mediaId}_$season"),
                         ).execute()
-                            .use { it.body.string() }
+                            .body.string()
                             .parseHtml()
                             .select("a")
                             .mapNotNull { elem ->
@@ -203,7 +203,7 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return client.newCall(
             GET("$baseUrl/ajax/movie/episode/servers/${media.mediaId}_${media.dataId}"),
         ).execute()
-            .use { it.body.string() }
+            .body.string()
             .parseHtml()
             .select("a")
             .mapNotNull { elem ->

@@ -82,7 +82,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val searchItems by lazy {
         client.newCall(GET("$baseUrl/api/views/contenitem", headers)).execute()
-            .use {
+            .let {
                 json.decodeFromString<SearchResultsDto>(it.body.string()).items
             }
     }
@@ -164,7 +164,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private suspend fun videosFromPath(path: String, hoster: String): List<Video> {
         val url = client.newCall(GET("$baseUrl/player_submit/$path", headers)).await()
-            .use { it.body.string() }
+            .body.string()
             .substringAfter("window.location.href = \"")
             .substringBefore('"')
 

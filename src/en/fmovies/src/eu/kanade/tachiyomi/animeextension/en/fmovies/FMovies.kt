@@ -181,7 +181,7 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
         return client.newCall(videoListRequest(episode))
             .awaitSuccess()
-            .use { response ->
+            .let { response ->
                 videoListParse(response, episode).sort()
             }
     }

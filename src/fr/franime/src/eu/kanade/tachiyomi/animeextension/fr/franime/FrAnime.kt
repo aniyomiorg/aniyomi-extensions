@@ -42,7 +42,7 @@ class FrAnime : AnimeHttpSource() {
 
     private val database by lazy {
         client.newCall(GET("$baseApiUrl/animes/", headers)).execute()
-            .use { it.body.string() }
+            .body.string()
             .let { json.decodeFromString<List<Anime>>(it) }
     }
 

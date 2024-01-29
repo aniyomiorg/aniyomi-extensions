@@ -27,7 +27,7 @@ class GogoStreamExtractor(private val client: OkHttpClient) {
 
     fun videosFromUrl(serverUrl: String): List<Video> {
         return runCatching {
-            val document = client.newCall(GET(serverUrl)).execute().use { it.asJsoup() }
+            val document = client.newCall(GET(serverUrl)).execute().asJsoup()
             val iv = document.selectFirst("div.wrapper")!!.getBytesAfter("container-")
             val secretKey = document.selectFirst("body[class]")!!.getBytesAfter("container-")
             val decryptionKey = document.selectFirst("div.videocontent")!!.getBytesAfter("videocontent-")
@@ -54,7 +54,7 @@ class GogoStreamExtractor(private val client: OkHttpClient) {
                         "XMLHttpRequest",
                     ),
                 ),
-            ).execute().use { it.body.string() }
+            ).execute().body.string()
 
             val data = json.decodeFromString<EncryptedDataDto>(jsonResponse).data
             val sourceList = cryptoHandler(data, iv, decryptionKey, false)

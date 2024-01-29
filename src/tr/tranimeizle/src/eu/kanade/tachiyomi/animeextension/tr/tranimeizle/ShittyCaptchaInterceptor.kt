@@ -32,7 +32,7 @@ class ShittyCaptchaInterceptor(private val baseUrl: String, private val headers:
             .build()
 
         val imagesIDs = chain.proceed(POST("$baseUrl/api/Captcha/", newHeaders, body))
-            .use { it.body.string() }
+            .body.string()
             .removeSurrounding("[", "]")
             .split(',')
             .map { it.removeSurrounding("\"") }

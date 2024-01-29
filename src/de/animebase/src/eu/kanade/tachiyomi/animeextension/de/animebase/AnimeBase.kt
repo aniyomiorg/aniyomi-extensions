@@ -67,7 +67,7 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val searchToken by lazy {
         client.newCall(GET("$baseUrl/searching", headers)).execute()
-            .use { it.asJsoup() }
+            .asJsoup()
             .selectFirst("form > input[name=_token]")!!
             .attr("value")
     }
@@ -96,7 +96,7 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
 
         return when {
             doc.location().contains("/searching") -> {
@@ -186,7 +186,7 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val selector = response.request.url.queryParameter("selector")
             ?: return emptyList()
 

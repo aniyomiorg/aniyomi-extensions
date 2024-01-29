@@ -223,7 +223,7 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
     private val vudeoExtractor by lazy { VudeoExtractor(client) }
 
     override fun videoListParse(response: Response): List<Video> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val iframeUrl = doc.selectFirst("div.episode-player-box > iframe")
             ?.attr("src")
             ?: doc.selectFirst("script:containsData(embedUrl)")

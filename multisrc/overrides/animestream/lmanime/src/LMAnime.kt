@@ -22,7 +22,7 @@ class LMAnime : AnimeStream(
     override val prefQualityEntries = prefQualityValues
 
     override fun videoListParse(response: Response): List<Video> {
-        val items = response.use { it.asJsoup() }.select(videoListSelector())
+        val items = response.asJsoup().select(videoListSelector())
         val allowed = preferences.getStringSet(PREF_ALLOWED_LANGS_KEY, PREF_ALLOWED_LANGS_DEFAULT)!!
         return items
             .filter { element ->

@@ -52,7 +52,7 @@ class Multimovies : DooPlay(
     override val seasonListSelector = "div#seasons > div:not(:contains(no episodes this season))"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = response.use { getRealAnimeDoc(it.asJsoup()) }
+        val doc = getRealAnimeDoc(response.asJsoup())
         val seasonList = doc.select(seasonListSelector)
         return if ("/movies/" in doc.location()) {
             SEpisode.create().apply {
@@ -105,7 +105,7 @@ class Multimovies : DooPlay(
 
         return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", headers, body))
             .execute()
-            .use { response ->
+            .let { response ->
                 response.body.string()
                     .substringAfter("\"embed_url\":\"")
                     .substringBefore("\",")

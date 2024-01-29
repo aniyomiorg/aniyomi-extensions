@@ -177,7 +177,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val seasons = doc.select("div#seasonsList div.item[data-season-id]")
         return if (seasons.size > 0) {
             seasons.flatMap(::getSeasonEps).reversed()
@@ -206,7 +206,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val body = response.use { it.body.string() }
+        val body = response.body.string()
         val videoObjectList = if (body.startsWith("{")) {
             json.decodeFromString<VideoLanguagesDto>(body).videos
         } else {
@@ -291,7 +291,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================= Utilities ==============================
     private fun getPlayerUrl(id: String, name: String): String {
         val req = GET("$baseUrl/embed/getPlay.php?id=$id&sv=$name")
-        val body = client.newCall(req).execute().use { it.body.string() }
+        val body = client.newCall(req).execute().body.string()
         return body.substringAfter("location.href=\"").substringBefore("\";")
     }
 

@@ -54,7 +54,7 @@ class Aniking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListSelector() = throw UnsupportedOperationException()
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         return if (document.selectFirst("#movie-js-extra") == null) {
             val episodeElement = document.selectFirst("script[id=\"tv-js-after\"]")!!
             episodeElement.data()

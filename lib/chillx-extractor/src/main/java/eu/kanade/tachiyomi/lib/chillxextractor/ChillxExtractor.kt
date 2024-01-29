@@ -35,7 +35,7 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
             .set("Accept-Language", "en-US,en;q=0.5")
             .build()
 
-        val body = client.newCall(GET(url, newHeaders)).execute().use { it.body.string() }
+        val body = client.newCall(GET(url, newHeaders)).execute().body.string()
 
         val master = REGEX_MASTER_JS.find(body)?.groupValues?.get(1) ?: return emptyList()
         val aesJson = json.decodeFromString<CryptoInfo>(master)

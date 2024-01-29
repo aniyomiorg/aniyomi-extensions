@@ -228,7 +228,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val newDocument = client.newCall(
             POST(postUrl, body = postBody, headers = postHeaders),
-        ).execute().use { it.asJsoup() }
+        ).execute().asJsoup()
 
         val iframeUrl = newDocument.selectFirst("iframe")?.attr("src") ?: error("Failed to extract iframe")
 
@@ -289,7 +289,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val postResponse = client.newCall(
             POST("https://${iframeUrl.toHttpUrl().host}/player/index.php?data=$hash&do=getVideo", body = videoPostBody, headers = videoPostHeaders),
-        ).execute().use { it.body.string() }
+        ).execute().body.string()
 
         val parsed = json.decodeFromString<IframeResponse>(postResponse)
 

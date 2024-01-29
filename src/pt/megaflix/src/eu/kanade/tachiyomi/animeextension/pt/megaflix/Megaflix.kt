@@ -117,7 +117,7 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun seasonListSelector() = "section.episodes div.choose-season > a"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = response.use { it.asJsoup() }
+        val doc = response.asJsoup()
         val seasons = doc.select(seasonListSelector())
         return when {
             seasons.isEmpty() -> listOf(
@@ -134,7 +134,7 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private suspend fun episodesFromSeason(seasonElement: Element): List<SEpisode> {
         return seasonElement.attr("href").let { url ->
             client.newCall(GET(url, headers)).await()
-                .use { it.asJsoup() }
+                .asJsoup()
                 .select(episodeListSelector())
                 .map(::episodeFromElement)
         }
@@ -154,7 +154,7 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val items = response.use { it.asJsoup() }.select(videoListSelector())
+        val items = response.asJsoup().select(videoListSelector())
         return items
             .parallelCatchingFlatMapBlocking { element ->
                 val language = element.text().substringAfter("-")

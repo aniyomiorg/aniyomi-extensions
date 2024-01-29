@@ -80,7 +80,7 @@ class HentaisTube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val animeList by lazy {
         val headers = headersBuilder().add("X-Requested-With", "XMLHttpRequest").build()
         client.newCall(GET("$baseUrl/json-lista-capas.php", headers)).execute()
-            .use { it.body.string() }
+            .body.string()
             .let { json.decodeFromString<ItemsListDto>(it) }
             .items
             .asSequence()
@@ -161,10 +161,10 @@ class HentaisTube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        return response.use { it.asJsoup() }.select(videoListSelector())
+        return response.asJsoup().select(videoListSelector())
             .parallelCatchingFlatMapBlocking {
-                client.newCall(GET(it.attr("src"), headers)).await().use { res ->
-                    extractVideosFromIframe(res.use { it.asJsoup() })
+                client.newCall(GET(it.attr("src"), headers)).await().let { res ->
+                    extractVideosFromIframe(res.asJsoup())
                 }
             }
     }
@@ -186,7 +186,7 @@ class HentaisTube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             url.contains("/player.php") -> {
                 val ahref = iframe.selectFirst("a")!!.attr("href")
-                val internal = client.newCall(GET(ahref, headers)).execute().use { it.asJsoup() }
+                val internal = client.newCall(GET(ahref, headers)).execute().asJsoup()
                 val videoUrl = internal.selectFirst("video > source")!!.attr("src")
                 listOf(Video(videoUrl, "Alternativo", videoUrl, headers))
             }

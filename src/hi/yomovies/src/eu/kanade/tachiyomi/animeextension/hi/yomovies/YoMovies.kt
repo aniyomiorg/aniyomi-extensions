@@ -102,7 +102,7 @@ class YoMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
 
         val seasonList = document.select("div#seasons > div.tvseason")
@@ -143,7 +143,7 @@ class YoMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
 
         val videoList = document.select("div[id*=tab]:has(div.movieplay > iframe)")
             .parallelCatchingFlatMapBlocking { server ->

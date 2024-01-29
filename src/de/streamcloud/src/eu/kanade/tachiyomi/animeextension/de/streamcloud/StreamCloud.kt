@@ -85,7 +85,7 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val episode = SEpisode.create().apply {
             name = document.selectFirst("#title span.title")!!.text()
             episode_number = 1F
@@ -104,11 +104,11 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val mixdropExtractor by lazy { MixDropExtractor(client) }
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val iframeurl = document.selectFirst("div.player-container-wrap > iframe")
             ?.attr("src")
             ?: error("No videos!")
-        val iframeDoc = client.newCall(GET(iframeurl)).execute().use { it.asJsoup() }
+        val iframeDoc = client.newCall(GET(iframeurl)).execute().asJsoup()
 
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
         val items = iframeDoc.select("div._player ul._player-mirrors li")

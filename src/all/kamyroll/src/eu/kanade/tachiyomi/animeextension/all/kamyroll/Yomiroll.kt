@@ -80,7 +80,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val parsed = json.decodeFromString<AnimeResult>(response.use { it.body.string() })
+        val parsed = json.decodeFromString<AnimeResult>(response.body.string())
         val animeList = parsed.data.mapNotNull { it.toSAnimeOrNull() }
         val position = response.request.url.queryParameter("start")?.toIntOrNull() ?: 0
         return AnimesPage(animeList, position + 36 < parsed.total)
@@ -110,7 +110,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val bod = response.use { it.body.string() }
+        val bod = response.body.string()
         val total: Int
         val items =
             if (response.request.url.encodedPath.contains("search")) {
@@ -162,7 +162,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
         val response = noTokenClient.newCall(
             POST("https://graphql.anilist.co", body = requestBody),
-        ).execute().use { it.body.string() }
+        ).execute().body.string()
 
         val responseParsed = json.decodeFromString<AnilistResult>(response)
 
@@ -183,7 +183,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             } else {
                 GET("$crApiUrl/cms/movie_listings/${mediaId.id}?locale=en-US")
             },
-        ).execute().use { it.body.string() }
+        ).execute().body.string()
         val info = json.decodeFromString<AnimeResult>(resp)
         return info.data.first().toSAnimeOrNull(anime) ?: anime
     }
@@ -202,7 +202,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val seasons = json.decodeFromString<SeasonResult>(response.use { it.body.string() })
+        val seasons = json.decodeFromString<SeasonResult>(response.body.string())
         val series = response.request.url.encodedPath.contains("series/")
         val chunkSize = Runtime.getRuntime().availableProcessors()
         return if (series) {
@@ -224,7 +224,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun getEpisodes(seasonData: SeasonResult.Season): List<SEpisode> {
         val body =
             client.newCall(GET("$crApiUrl/cms/seasons/${seasonData.id}/episodes"))
-                .execute().use { it.body.string() }
+                .execute().body.string()
         val episodes = json.decodeFromString<EpisodeResult>(body)
 
         return episodes.data.sortedBy { it.episode_number }.mapNotNull EpisodeMap@{ ep ->
@@ -278,7 +278,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun extractVideo(media: Pair<String, String>): List<Video> {
         val (mediaId, aud) = media
-        val response = client.newCall(getVideoRequest(mediaId)).execute().use { it.body.string() }
+        val response = client.newCall(getVideoRequest(mediaId)).execute().body.string()
         val streams = json.decodeFromString<VideoStreams>(response)
 
         val subLocale = preferences.getString(PREF_SUB_KEY, PREF_SUB_DEFAULT)!!.getLocale()
@@ -308,7 +308,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             runCatching {
                 val playlist = client.newCall(GET(stream.url)).execute()
                 if (playlist.code != 200) return@parallelMapNotNullBlocking null
-                playlist.use { it.body.string() }.substringAfter("#EXT-X-STREAM-INF:")
+                playlist.body.string().substringAfter("#EXT-X-STREAM-INF:")
                     .split("#EXT-X-STREAM-INF:").map {
                         val hardsub = stream.hardsub_locale.let { hs ->
                             if (hs.isNotBlank()) " - HardSub: $hs" else ""

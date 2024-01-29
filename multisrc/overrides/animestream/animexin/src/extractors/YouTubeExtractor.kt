@@ -31,7 +31,7 @@ class YouTubeExtractor(private val client: OkHttpClient) {
 
         val document = client.newCall(GET(url.replace("/embed/", "/watch?v=")))
             .execute()
-            .use { it.asJsoup() }
+            .asJsoup()
 
         val ytcfg = document.selectFirst("script:containsData(window.ytcfg=window.ytcfg)")
             ?.data() ?: run {
@@ -81,7 +81,7 @@ class YouTubeExtractor(private val client: OkHttpClient) {
         }.build()
 
         val ytResponse = client.newCall(POST(playerUrl, headers, body)).execute()
-            .use { json.decodeFromString<YoutubeResponse>(it.body.string()) }
+            .let { json.decodeFromString<YoutubeResponse>(it.body.string()) }
 
         val formats = ytResponse.streamingData.adaptiveFormats
 
