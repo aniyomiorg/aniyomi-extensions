@@ -162,8 +162,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
             else -> false
         }
 
-        val animeList = mutableListOf<SAnime>()
-        mediaList.forEach { media ->
+        val animeList = mediaList.map { media ->
             val anime = SAnime.create()
             anime.url = media?.id.toString()
             anime.title = media?.title?.romaji.toString()
@@ -192,7 +191,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
             anime.author = studiosList.sorted().joinToString(", ")
 
             anime.initialized = true
-            animeList.add(anime)
+            anime
         }
 
         return AnimesPage(animeList, hasNextPage)
