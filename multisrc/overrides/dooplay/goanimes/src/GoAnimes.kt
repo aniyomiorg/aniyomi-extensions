@@ -139,7 +139,7 @@ class GoAnimes : DooPlay(
                         script.substringAfter("attr")
                             .substringAfter(" \"")
                             .substringBefore('"')
-                            .let { (goanimesExtractor::videosFromUrl)(it, name) }
+                            .let { goanimesExtractor.videosFromUrl(it, name) }
 
                     else -> emptyList<Video>()
                 }
