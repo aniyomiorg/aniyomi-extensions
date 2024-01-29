@@ -29,6 +29,7 @@ import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -41,6 +42,8 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
     override val lang = "all"
 
     override val supportsLatest = true
+
+    private val json: Json by injectLazy()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -142,9 +145,9 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
         val jsonData = jsonLine ?: return AnimesPage(emptyList(), false)
 
         val metaData: Any = if (!isLatestQuery) {
-            Json.decodeFromString<AnilistMeta>(jsonData)
+            json.decodeFromString<AnilistMeta>(jsonData)
         } else {
-            Json.decodeFromString<AnilistMetaLatest>(jsonData)
+            json.decodeFromString<AnilistMetaLatest>(jsonData)
         }
 
         val mediaList = when (metaData) {
@@ -274,7 +277,6 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val responseString = response.body.string()
-        val json = Json { ignoreUnknownKeys = true }
         val episodeList = json.decodeFromString<EpisodeList>(responseString)
 
         return when (episodeList.meta?.type) {
@@ -360,7 +362,6 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val responseString = response.body.string()
 
-        val json = Json { ignoreUnknownKeys = true }
         val streamList = json.decodeFromString<StreamDataTorrent>(responseString)
 
         val debridProvider = preferences.getString(PREF_DEBIRD_KEY, null)
