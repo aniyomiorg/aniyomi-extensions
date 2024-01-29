@@ -30,6 +30,7 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.net.URLDecoder
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
@@ -89,11 +90,11 @@ class Seez : ConfigurableAnimeSource, AnimeHttpSource() {
             SAnime.create().apply {
                 title = name
                 url = LinkData(ani.id, "movie").toJsonString()
-                thumbnail_url = ani.poster_path?.let { IMG_URL + it } ?: FALLBACK_IMG
+                thumbnail_url = ani.posterPath?.let { IMG_URL + it } ?: FALLBACK_IMG
             }
         }
 
-        return AnimesPage(animeList, data.page < data.total_pages)
+        return AnimesPage(animeList, data.page < data.totalPages)
     }
 
     // =============================== Latest ===============================
@@ -140,12 +141,13 @@ class Seez : ConfigurableAnimeSource, AnimeHttpSource() {
 
             SAnime.create().apply {
                 title = name
-                url = LinkData(ani.id, ani.media_type).toJsonString()
-                thumbnail_url = ani.poster_path?.let { IMG_URL + it } ?: FALLBACK_IMG
+                url = LinkData(ani.id, ani.mediaType).toJsonString()
+                thumbnail_url = ani.posterPath?.let { IMG_URL + it } ?: FALLBACK_IMG
+                status = if (ani.mediaType == "movie") SAnime.COMPLETED else SAnime.UNKNOWN
             }
         }
 
-        return AnimesPage(animeList, data.page < data.total_pages)
+        return AnimesPage(animeList, data.page < data.totalPages)
     }
 
     // ============================== Filters ===============================
@@ -197,9 +199,8 @@ class Seez : ConfigurableAnimeSource, AnimeHttpSource() {
         val data = json.decodeFromString<LinkData>(anime.url)
 
         val url = TMDB_URL.newBuilder().apply {
-            addPathSegment(data.media_type)
+            addPathSegment(data.mediaType)
             addPathSegment(data.id.toString())
-            addQueryParameter("append_to_response", "videos,credits,recommendations")
         }.buildAPIUrl()
 
         return GET(url, headers = apiHeaders)
@@ -209,15 +210,34 @@ class Seez : ConfigurableAnimeSource, AnimeHttpSource() {
         val data = response.parseAs<TmdbDetailsResponse>()
 
         return SAnime.create().apply {
-            genre = data.genres?.joinToString(", ") { it.name }
-            description = buildString {
-                if (data.overview != null) {
-                    append(data.overview)
-                    append("\n\n")
+            author = data.productions?.joinToString { it.name }
+            genre = data.genres?.joinToString { it.name }
+            status = when (data.status) {
+                "Ended", "Released" -> SAnime.COMPLETED
+                "In Production" -> SAnime.LICENSED
+                "Canceled" -> SAnime.CANCELLED
+                "Returning Series" -> {
+                    data.nextEpisode?.let { SAnime.ONGOING } ?: SAnime.ON_HIATUS
                 }
-                if (data.release_date != null) append("Release date: ${data.release_date}")
-                if (data.first_air_date != null) append("\nFirst air date: ${data.first_air_date}")
-                if (data.last_air_date != null) append("\nLast air date: ${data.last_air_date}")
+                else -> SAnime.UNKNOWN
+            }
+            description = buildString {
+                data.overview?.let {
+                    appendLine(it)
+                    appendLine()
+                }
+                data.nextEpisode?.let {
+                    appendLine("Next: Ep ${it.epNumber} - ${it.name}")
+                    appendLine("Air Date: ${it.airDate}")
+                    appendLine()
+                }
+                data.releaseDate?.let { appendLine("Release date: $it") }
+                data.firstAirDate?.let { appendLine("First air date: $it") }
+                data.lastAirDate?.let { appendLine("Last air date: $it") }
+                data.languages?.let { langs ->
+                    append("Languages: ")
+                    appendLine(langs.joinToString { "${it.engName} (${it.name})" })
+                }
             }
         }
     }
@@ -234,31 +254,35 @@ class Seez : ConfigurableAnimeSource, AnimeHttpSource() {
             episodeList.add(
                 SEpisode.create().apply {
                     name = "Movie"
-                    date_upload = parseDate(data.release_date!!)
+                    date_upload = parseDate(data.releaseDate!!)
                     episode_number = 1F
                     url = "/movie/${data.id}"
                 },
             )
         } else {
-            data.seasons.filter { t -> t.season_number != 0 }.forEach { season ->
+            data.seasons.filter { t -> t.seasonNumber != 0 }.forEach { season ->
                 val seasonUrl = TMDB_URL.newBuilder().apply {
                     addPathSegment("tv")
                     addPathSegment(data.id.toString())
                     addPathSegment("season")
-                    addPathSegment(season.season_number.toString())
+                    addPathSegment(season.seasonNumber.toString())
                 }.buildAPIUrl()
 
                 val seasonData = client.newCall(
                     GET(seasonUrl, headers = apiHeaders),
                 ).execute().parseAs<TmdbSeasonResponse>()
 
-                seasonData.episodes.forEach { ep ->
+                seasonData.episodes.filter { ep ->
+                    ep.airDate?.let {
+                        DATE_FORMATTER.parse(it)!! <= DATE_FORMATTER.parse(DATE_FORMATTER.format(Date()))
+                    } ?: false
+                }.forEach { ep ->
                     episodeList.add(
                         SEpisode.create().apply {
-                            name = "Season ${season.season_number} Ep. ${ep.episode_number} - ${ep.name}"
-                            date_upload = ep.air_date?.let(::parseDate) ?: 0L
-                            episode_number = ep.episode_number.toFloat()
-                            url = "/tv/${data.id}/${season.season_number}/${ep.episode_number}"
+                            name = "Season ${season.seasonNumber} Ep. ${ep.epNumber} - ${ep.name}"
+                            date_upload = ep.airDate?.let(::parseDate) ?: 0L
+                            episode_number = ep.epNumber.toFloat()
+                            url = "/tv/${data.id}/${season.seasonNumber}/${ep.epNumber}"
                         },
                     )
                 }
