@@ -55,12 +55,10 @@ object BAFilters {
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
         if (filters.isEmpty()) return FilterSearchParams()
 
-        val genres = listOf(" ") + filters.parseCheckbox<GenresFilter>(BAFiltersData.GENRES)
-
         return FilterSearchParams(
             filters.asQueryPart<LanguageFilter>(),
             filters.asQueryPart<YearFilter>(),
-            genres,
+            filters.parseCheckbox<GenresFilter>(BAFiltersData.GENRES),
         )
     }
 
@@ -73,7 +71,7 @@ object BAFilters {
             Pair("Dublado", "dublado"),
         )
 
-        val YEARS = arrayOf(EVERY) + (2023 downTo 1976).map {
+        val YEARS = arrayOf(EVERY) + (2024 downTo 1976).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
