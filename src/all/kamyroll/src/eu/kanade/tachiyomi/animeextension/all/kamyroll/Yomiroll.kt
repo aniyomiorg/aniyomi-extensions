@@ -354,7 +354,6 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         Pair("en-IN", "English (India)"),
         Pair("es-419", "Spanish (América Latina)"),
         Pair("es-ES", "Spanish (España)"),
-        Pair("es-LA", "Spanish (América Latina)"),
         Pair("fr-FR", "French"),
         Pair("ja-JP", "Japanese"),
         Pair("hi-IN", "Hindi"),
@@ -414,7 +413,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 }
             } ?: SAnime.UNKNOWN
             author = content_provider
-            description = anime?.description ?: StringBuilder().apply {
+            description = StringBuilder().apply {
                 appendLine(this@toSAnime.description)
                 appendLine()
 
