@@ -17,7 +17,6 @@ data class AnilistPageData(
 
 @Serializable
 data class AnilistPage(
-    @SerialName("pageInfo")
     val pageInfo: AnilistPageInfo? = null,
     val media: List<AnilistMedia>? = null,
 )
@@ -36,7 +35,6 @@ data class AnilistPageDataLatest(
 
 @Serializable
 data class AnilistPageLatest(
-    @SerialName("pageInfo")
     val pageInfo: AnilistPageInfo? = null,
     val airingSchedules: List<AnilistAiringSchedule>? = null, // Change this line
 )
@@ -48,26 +46,23 @@ data class AnilistAiringSchedule(
 
 @Serializable
 data class AnilistPageInfo(
-    @SerialName("currentPage")
     val currentPage: Int = 0,
-
-    @SerialName("hasNextPage")
     val hasNextPage: Boolean = false,
 )
 
 @Serializable
 data class AnilistMedia(
     val id: Int? = null,
-    @SerialName("siteUrl")
     val siteUrl: String? = null,
     val title: AnilistTitle? = null,
-    @SerialName("coverImage")
     val coverImage: AnilistCoverImage? = null,
     val description: String? = null,
     val status: String? = null,
     val tags: List<AnilistTag>? = null,
     val genres: List<String>? = null,
     val studios: AnilistStudios? = null,
+    val countryOfOrigin: String? = null,
+    val isAdult: Boolean = false,
 )
 
 @Serializable
@@ -79,7 +74,6 @@ data class AnilistTitle(
 
 @Serializable
 data class AnilistCoverImage(
-    @SerialName("extraLarge")
     val extraLarge: String? = null,
     val large: String? = null,
 )
@@ -124,7 +118,6 @@ data class BehaviorHints(
 
 @Serializable
 data class EpisodeList(
-    @SerialName("meta")
     val meta: EpisodeMeta? = null,
 )
 
@@ -132,9 +125,7 @@ data class EpisodeList(
 data class EpisodeMeta(
     @SerialName("id")
     val kitsuId: String? = null,
-    @SerialName("type")
     val type: String? = null,
-    @SerialName("videos")
     val videos: List<EpisodeVideo>? = null,
 )
 
@@ -142,12 +133,8 @@ data class EpisodeMeta(
 data class EpisodeVideo(
     @SerialName("id")
     val videoId: String? = null,
-    @SerialName("season")
     val season: Int? = null,
-    @SerialName("episode")
     val episode: Int? = null,
-    @SerialName("released")
     val released: String? = null,
-    @SerialName("title")
     val title: String? = null,
 )

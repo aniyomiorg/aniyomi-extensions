@@ -93,13 +93,15 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                                 name
                             }
                         }
+                        countryOfOrigin
+                        isAdult
                     }
                 }
             }
         """.trimIndent()
     }
 
-    private fun anilistLastestQuery(): String {
+    private fun anilistLatestQuery(): String {
         return """
             query (${"$"}page: Int, ${"$"}perPage: Int, ${"$"}sort: [AiringSort]) {
               Page(page: ${"$"}page, perPage: ${"$"}perPage) {
@@ -134,6 +136,8 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                             name
                         }
                     }
+                    countryOfOrigin
+                    isAdult
                   }
                 }
               }
@@ -143,7 +147,6 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun parseSearchJson(jsonLine: String?, isLatestQuery: Boolean = false): AnimesPage {
         val jsonData = jsonLine ?: return AnimesPage(emptyList(), false)
-
         val metaData: Any = if (!isLatestQuery) {
             json.decodeFromString<AnilistMeta>(jsonData)
         } else {
@@ -162,37 +165,41 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
             else -> false
         }
 
-        val animeList = mediaList.map { media ->
-            val anime = SAnime.create()
-            anime.url = media?.id.toString()
-            anime.title = media?.title?.romaji.toString()
-            anime.thumbnail_url = media?.coverImage?.extraLarge
-            anime.description = media?.description
-                ?.replace(Regex("<br><br>"), "\n")
-                ?.replace(Regex("<.*?>"), "")
-                ?: "No Description"
+        val animeList = mediaList
+            .filterNot { it?.countryOfOrigin == "CN" }
+            .filterNot { it?.isAdult == true }
+            .map { media ->
+                val anime = SAnime.create().apply {
+                    url = media?.id.toString()
+                    title = media?.title?.romaji.toString()
+                    thumbnail_url = media?.coverImage?.extraLarge
+                    description = media?.description
+                        ?.replace(Regex("<br><br>"), "\n")
+                        ?.replace(Regex("<.*?>"), "")
+                        ?: "No Description"
 
-            anime.status = when ((media?.status ?: "")) {
-                "RELEASING" -> SAnime.ONGOING
-                "FINISHED" -> SAnime.COMPLETED
-                "HIATUS" -> SAnime.ON_HIATUS
-                "NOT_YET_RELEASED" -> SAnime.LICENSED
-                else -> SAnime.UNKNOWN
+                    status = when (media?.status) {
+                        "RELEASING" -> SAnime.ONGOING
+                        "FINISHED" -> SAnime.COMPLETED
+                        "HIATUS" -> SAnime.ON_HIATUS
+                        "NOT_YET_RELEASED" -> SAnime.LICENSED
+                        else -> SAnime.UNKNOWN
+                    }
+
+                    // Extracting tags
+                    val tagsList = media?.tags?.mapNotNull { it.name }.orEmpty()
+                    // Extracting genres
+                    val genresList = media?.genres.orEmpty()
+                    genre = (tagsList + genresList).toSet().sorted().joinToString()
+
+                    // Extracting studios
+                    val studiosList = media?.studios?.nodes?.mapNotNull { it.name }.orEmpty()
+                    author = studiosList.sorted().joinToString()
+
+                    initialized = true
+                }
+                anime
             }
-
-            // Extracting tags
-            val tagsList = media?.tags?.map { it.name.orEmpty() } ?: emptyList()
-            // Extracting genres
-            val genresList = media?.genres ?: emptyList()
-            anime.genre = (tagsList + genresList).toSet().sorted().joinToString(", ")
-
-            // Extracting studios
-            val studiosList = media?.studios?.nodes?.map { it.name.orEmpty() } ?: emptyList()
-            anime.author = studiosList.sorted().joinToString(", ")
-
-            anime.initialized = true
-            anime
-        }
 
         return AnimesPage(animeList, hasNextPage)
     }
@@ -224,7 +231,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         """.trimIndent()
 
-        return makeGraphQLRequest(anilistLastestQuery(), variables)
+        return makeGraphQLRequest(anilistLatestQuery(), variables)
     }
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
@@ -284,19 +291,14 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                     SEpisode.create().apply {
                         episode_number = video.episode?.toFloat() ?: 0.0F
                         url = "/stream/series/${video.videoId}.json"
-                        date_upload = video.released?.let {
-                            SimpleDateFormat(
-                                "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-                                Locale.getDefault(),
-                            ).parse(it)?.time
-                        } ?: 0
+                        date_upload = video.released?.let { parseDate(it) } ?: 0L
                         name = "Episode ${video.episode} : ${
                             video.title?.removePrefix("Episode ")
                                 ?.replaceFirst("\\d+\\s*".toRegex(), "")
                                 ?.trim()
                         }"
                     }
-                } ?: emptyList()
+                }.orEmpty().reversed()
             }
 
             "movie" -> {
@@ -308,11 +310,15 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                         url = "/stream/movie/$movieId.json"
                         name = "Movie"
                     },
-                )
+                ).reversed()
             }
 
             else -> emptyList()
-        }.reversed()
+        }
+    }
+    private fun parseDate(dateStr: String): Long {
+        return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
+            .getOrNull() ?: 0L
     }
 
     // ============================ Video Links =============================
@@ -352,9 +358,8 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                 }
                 !token.isNullOrBlank() && debridProvider != "none" -> append("$debridProvider=$token|")
             }
-
             append(episode.url)
-        }.removeSuffix("|") // Remove trailing "|"
+        }.removeSuffix("|")
         return GET(mainURL)
     }
 
@@ -371,7 +376,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                     "http://127.0.0.1:8090/stream?link=${stream.infoHash}&index=${stream.fileIdx}&play"
                 } else stream.url ?: ""
             Video(urlOrHash, stream.title ?: "", urlOrHash)
-        } ?: emptyList()
+        }.orEmpty()
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -711,5 +716,9 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
         )
 
         private val PREF_LANG_DEFAULT = setOf<String>()
+
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+        }
     }
 }

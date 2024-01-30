@@ -2,6 +2,7 @@ ext {
     extName = 'Torrentio (Torrent / Debird)'
     extClass = '.Torrentio'
     extVersionCode = 1
+    containsNsfw = false
 }
 
 apply from: "$rootDir/common.gradle"
