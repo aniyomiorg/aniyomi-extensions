@@ -94,6 +94,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                             }
                         }
                         countryOfOrigin
+                        isAdult
                     }
                 }
             }
@@ -165,8 +166,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         val animeList = mediaList
-            .filterNot { it?.countryOfOrigin == "CN" && isLatestQuery }
-            .filterNot { it?.isAdult == true }
+            .filterNot { (it?.countryOfOrigin == "CN" || it?.isAdult == true) && isLatestQuery }
             .map { media ->
                 val anime = SAnime.create().apply {
                     url = media?.id.toString()
@@ -371,10 +371,40 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
 
         val debridProvider = preferences.getString(PREF_DEBIRD_KEY, null)
 
+        val animeTrackers = """http://nyaa.tracker.wf:7777/announce,
+            http://anidex.moe:6969/announce,http://tracker.anirena.com:80/announce,
+            udp://tracker.uw0.xyz:6969/announce,
+            http://share.camoe.cn:8080/announce,
+            http://t.nyaatracker.com:80/announce,
+            udp://47.ip-51-68-199.eu:6969/announce,
+            udp://9.rarbg.me:2940,
+            udp://9.rarbg.to:2820,
+            udp://exodus.desync.com:6969/announce,
+            udp://explodie.org:6969/announce,
+            udp://ipv4.tracker.harry.lu:80/announce,
+            udp://open.stealth.si:80/announce,
+            udp://opentor.org:2710/announce,
+            udp://opentracker.i2p.rocks:6969/announce,
+            udp://retracker.lanta-net.ru:2710/announce,
+            udp://tracker.cyberia.is:6969/announce,
+            udp://tracker.dler.org:6969/announce,
+            udp://tracker.ds.is:6969/announce,
+            udp://tracker.internetwarriors.net:1337,
+            udp://tracker.openbittorrent.com:6969/announce,
+            udp://tracker.opentrackr.org:1337/announce,
+            udp://tracker.tiny-vps.com:6969/announce,
+            udp://tracker.torrent.eu.org:451/announce,
+            udp://valakas.rollo.dnsabr.com:2710/announce,
+            udp://www.torrent.eu.org:451/announce
+        """.trimIndent()
+
         return streamList.streams?.map { stream ->
             val urlOrHash =
                 if (debridProvider == "none") {
-                    "http://127.0.0.1:8090/stream?link=${stream.infoHash}&index=${stream.fileIdx}&play"
+                    val trackerList = animeTrackers.split(",").map { it.trim() }.filter { it.isNotBlank() }.joinToString("&tr=")
+                    "magnet:?xt=urn:btih:${stream.infoHash}&dn=${stream.infoHash}&tr=$trackerList&index=${stream.fileIdx}"
+                    //Do not delete for future use.
+                    //"http://127.0.0.1:8090/stream?link=${stream.infoHash}&index=${stream.fileIdx}&play"
                 } else stream.url ?: ""
             Video(urlOrHash, stream.title ?: "", urlOrHash)
         }.orEmpty()
