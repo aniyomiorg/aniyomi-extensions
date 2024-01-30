@@ -188,7 +188,8 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         return info.data.first().toSAnimeOrNull(anime) ?: anime
     }
 
-    override fun animeDetailsParse(response: Response): SAnime = throw UnsupportedOperationException()
+    override fun animeDetailsParse(response: Response): SAnime =
+        throw UnsupportedOperationException()
 
     // ============================== Episodes ==============================
 
@@ -287,10 +288,8 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 val sub = json.decodeFromString<Subtitle>(value.jsonObject.toString())
                 Track(sub.url, sub.locale.getLocale())
             }?.sortedWith(
-                compareBy(
-                    { it.lang },
-                    { it.lang.contains(subLocale) },
-                ),
+                compareByDescending<Track> { it.lang.contains(subLocale) }
+                    .thenBy { it.lang },
             )
         }.getOrNull() ?: emptyList()
 
