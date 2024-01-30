@@ -71,7 +71,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                         currentPage
                         hasNextPage
                     }
-                    media(type: ANIME, sort: ${"$"}sort, search: ${"$"}search, status_in:[RELEASING,FINISHED], isAdult:false) {
+                    media(type: ANIME, sort: ${"$"}sort, search: ${"$"}search, status_in:[RELEASING,FINISHED]) {
                         id
                         title {
                             romaji
@@ -94,7 +94,6 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                             }
                         }
                         countryOfOrigin
-                        isAdult
                     }
                 }
             }
