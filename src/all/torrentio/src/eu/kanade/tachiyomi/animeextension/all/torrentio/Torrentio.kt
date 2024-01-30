@@ -287,7 +287,9 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
 
         return when (episodeList.meta?.type) {
             "series" -> {
-                episodeList.meta.videos?.map { video ->
+                episodeList.meta.videos?.filter { video ->
+                    (video.released?.let { parseDate(it) } ?: 0L) <= System.currentTimeMillis()
+                }?.map { video ->
                     SEpisode.create().apply {
                         episode_number = video.episode?.toFloat() ?: 0.0F
                         url = "/stream/series/${video.videoId}.json"
@@ -718,7 +720,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
         private val PREF_LANG_DEFAULT = setOf<String>()
 
         private val DATE_FORMATTER by lazy {
-            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH)
         }
     }
 }
