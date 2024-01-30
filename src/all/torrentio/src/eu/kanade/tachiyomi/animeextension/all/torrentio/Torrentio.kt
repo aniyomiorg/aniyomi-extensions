@@ -166,7 +166,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         val animeList = mediaList
-            .filterNot { it?.countryOfOrigin == "CN" }
+            .filterNot { it?.countryOfOrigin == "CN" && isLatestQuery }
             .filterNot { it?.isAdult == true }
             .map { media ->
                 val anime = SAnime.create().apply {
