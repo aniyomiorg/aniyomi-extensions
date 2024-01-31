@@ -188,7 +188,8 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         return info.data.first().toSAnimeOrNull(anime) ?: anime
     }
 
-    override fun animeDetailsParse(response: Response): SAnime = throw UnsupportedOperationException()
+    override fun animeDetailsParse(response: Response): SAnime =
+        throw UnsupportedOperationException()
 
     // ============================== Episodes ==============================
 
@@ -287,10 +288,8 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 val sub = json.decodeFromString<Subtitle>(value.jsonObject.toString())
                 Track(sub.url, sub.locale.getLocale())
             }?.sortedWith(
-                compareBy(
-                    { it.lang },
-                    { it.lang.contains(subLocale) },
-                ),
+                compareByDescending<Track> { it.lang.contains(subLocale) }
+                    .thenBy { it.lang },
             )
         }.getOrNull() ?: emptyList()
 
@@ -355,7 +354,6 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         Pair("en-IN", "English (India)"),
         Pair("es-419", "Spanish (América Latina)"),
         Pair("es-ES", "Spanish (España)"),
-        Pair("es-LA", "Spanish (América Latina)"),
         Pair("fr-FR", "French"),
         Pair("ja-JP", "Japanese"),
         Pair("hi-IN", "Hindi"),
@@ -415,7 +413,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 }
             } ?: SAnime.UNKNOWN
             author = content_provider
-            description = anime?.description ?: StringBuilder().apply {
+            description = StringBuilder().apply {
                 appendLine(this@toSAnime.description)
                 appendLine()
 
