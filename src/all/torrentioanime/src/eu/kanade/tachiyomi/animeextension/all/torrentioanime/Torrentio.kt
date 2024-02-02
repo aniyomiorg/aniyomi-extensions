@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.all.torrentio
+package eu.kanade.tachiyomi.animeextension.all.torrentioanime
 
 import android.app.Application
 import android.content.SharedPreferences
@@ -9,11 +9,11 @@ import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.all.torrentio.dto.AnilistMeta
-import eu.kanade.tachiyomi.animeextension.all.torrentio.dto.AnilistMetaLatest
-import eu.kanade.tachiyomi.animeextension.all.torrentio.dto.DetailsById
-import eu.kanade.tachiyomi.animeextension.all.torrentio.dto.EpisodeList
-import eu.kanade.tachiyomi.animeextension.all.torrentio.dto.StreamDataTorrent
+import eu.kanade.tachiyomi.animeextension.all.torrentioanime.dto.AnilistMeta
+import eu.kanade.tachiyomi.animeextension.all.torrentioanime.dto.AnilistMetaLatest
+import eu.kanade.tachiyomi.animeextension.all.torrentioanime.dto.DetailsById
+import eu.kanade.tachiyomi.animeextension.all.torrentioanime.dto.EpisodeList
+import eu.kanade.tachiyomi.animeextension.all.torrentioanime.dto.StreamDataTorrent
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage

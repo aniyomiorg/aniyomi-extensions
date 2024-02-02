@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.all.torrentio.dto
+package eu.kanade.tachiyomi.animeextension.all.torrentioanime.dto
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

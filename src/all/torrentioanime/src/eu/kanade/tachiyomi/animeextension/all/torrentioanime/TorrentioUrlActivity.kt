@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.all.torrentio
+package eu.kanade.tachiyomi.animeextension.all.torrentioanime
 
 import android.app.Activity
 import android.content.ActivityNotFoundException
