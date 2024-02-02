@@ -11,6 +11,7 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.all.torrentio.dto.AnilistMeta
 import eu.kanade.tachiyomi.animeextension.all.torrentio.dto.AnilistMetaLatest
+import eu.kanade.tachiyomi.animeextension.all.torrentio.dto.DetailsById
 import eu.kanade.tachiyomi.animeextension.all.torrentio.dto.EpisodeList
 import eu.kanade.tachiyomi.animeextension.all.torrentio.dto.StreamDataTorrent
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -170,7 +171,12 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
             .map { media ->
                 val anime = SAnime.create().apply {
                     url = media?.id.toString()
-                    title = media?.title?.romaji.toString()
+                    title = when (preferences.getString(PREF_TITLE_KEY, "romaji")) {
+                        "romaji" -> media?.title?.romaji.toString()
+                        "english" -> (media?.title?.english?.takeIf { it.isNotBlank() } ?: media?.title?.romaji).toString()
+                        "native" -> media?.title?.native.toString()
+                        else -> ""
+                    }
                     thumbnail_url = media?.coverImage?.extraLarge
                     description = media?.description
                         ?.replace(Regex("<br><br>"), "\n")
@@ -209,7 +215,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
             {
                 "page": $page,
                 "perPage": 30,
-                "sort": "POPULARITY_DESC"
+                "sort": "TRENDING_DESC"
             }
         """.trimIndent()
 
@@ -273,7 +279,73 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun animeDetailsParse(response: Response): SAnime = throw UnsupportedOperationException()
 
-    override suspend fun getAnimeDetails(anime: SAnime): SAnime = anime
+    override suspend fun getAnimeDetails(anime: SAnime): SAnime {
+        val query = """
+        query(${"$"}id: Int){
+            Media(id: ${"$"}id){
+                id
+                title {
+                    romaji
+                    english
+                    native
+                }
+                coverImage {
+                   extraLarge
+                   large
+                }
+                description
+                status
+                tags{
+                    name
+                }
+                genres
+                studios {
+                    nodes {
+                        name
+                    }
+                }
+                countryOfOrigin
+                isAdult
+            }
+        }
+        """.trimIndent()
+
+        val variables = """{"id": ${anime.url}}"""
+
+        val metaData = runCatching {
+            json.decodeFromString<DetailsById>(client.newCall(makeGraphQLRequest(query, variables)).execute().body.string())
+        }.getOrNull()?.data?.media
+
+        anime.title = metaData?.title?.let { title ->
+            when (preferences.getString(PREF_TITLE_KEY, "romaji")) {
+                "romaji" -> title.romaji
+                "english" -> (metaData.title.english?.takeIf { it.isNotBlank() } ?: metaData.title.romaji).toString()
+                "native" -> title.native
+                else -> ""
+            }
+        } ?: ""
+
+        anime.thumbnail_url = metaData?.coverImage?.extraLarge
+        anime.description = metaData?.description?.replace(Regex("<br><br>|<.*?>"), "\n") ?: "No Description"
+
+        anime.status = when (metaData?.status) {
+            "RELEASING" -> SAnime.ONGOING
+            "FINISHED" -> SAnime.COMPLETED
+            "HIATUS" -> SAnime.ON_HIATUS
+            "NOT_YET_RELEASED" -> SAnime.LICENSED
+            else -> SAnime.UNKNOWN
+        }
+
+        // Extracting tags, genres, and studios
+        val tagsList = metaData?.tags?.mapNotNull { it.name } ?: emptyList()
+        val genresList = metaData?.genres ?: emptyList()
+        val studiosList = metaData?.studios?.nodes?.mapNotNull { it.name } ?: emptyList()
+
+        anime.genre = (tagsList + genresList).toSet().sorted().joinToString()
+        anime.author = studiosList.sorted().joinToString()
+
+        return anime
+    }
 
     // ============================== Episodes ==============================
     override fun episodeListRequest(anime: SAnime): Request {
@@ -366,9 +438,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val responseString = response.body.string()
-
         val streamList = json.decodeFromString<StreamDataTorrent>(responseString)
-
         val debridProvider = preferences.getString(PREF_DEBIRD_KEY, null)
 
         val animeTrackers = """http://nyaa.tracker.wf:7777/announce,
@@ -403,8 +473,6 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                 if (debridProvider == "none") {
                     val trackerList = animeTrackers.split(",").map { it.trim() }.filter { it.isNotBlank() }.joinToString("&tr=")
                     "magnet:?xt=urn:btih:${stream.infoHash}&dn=${stream.infoHash}&tr=$trackerList&index=${stream.fileIdx}"
-                    //Do not delete for future use.
-                    //"http://127.0.0.1:8090/stream?link=${stream.infoHash}&index=${stream.fileIdx}&play"
                 } else stream.url ?: ""
             Video(urlOrHash, stream.title ?: "", urlOrHash)
         }.orEmpty()
@@ -494,6 +562,22 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
             entryValues = PREF_SORT_VALUES
             setDefaultValue("quality")
             summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        // Title handler
+        ListPreference(screen.context).apply {
+            key = PREF_TITLE_KEY
+            title = "Preferred Title"
+            entries = PREF_TITLE_ENTRIES
+            entryValues = PREF_TITLE_VALUES
+            setDefaultValue("romaji")
 
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -747,6 +831,19 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
         )
 
         private val PREF_LANG_DEFAULT = setOf<String>()
+
+        // Title
+        private const val PREF_TITLE_KEY = "pref_title"
+        private val PREF_TITLE_ENTRIES = arrayOf(
+            "Romaji",
+            "English",
+            "Native",
+        )
+        private val PREF_TITLE_VALUES = arrayOf(
+            "romaji",
+            "english",
+            "native",
+        )
 
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH)

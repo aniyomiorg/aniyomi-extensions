@@ -50,6 +50,19 @@ data class AnilistPageInfo(
     val hasNextPage: Boolean = false,
 )
 
+// For Details
+@Serializable
+data class DetailsById(
+    val data: DetailsByIdData? = null,
+)
+
+@Serializable
+data class DetailsByIdData(
+    @SerialName("Media")
+    val media: AnilistMedia? = null,
+)
+
+// Re-usable Media
 @Serializable
 data class AnilistMedia(
     val id: Int? = null,
