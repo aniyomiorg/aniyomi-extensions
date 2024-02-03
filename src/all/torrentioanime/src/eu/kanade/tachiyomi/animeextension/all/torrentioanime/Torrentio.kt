@@ -36,7 +36,7 @@ import java.util.Locale
 
 class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
 
-    override val name = "Torrentio (Torrent / Debird)"
+    override val name = "Torrentio Anime (Torrent / Debird)"
 
     override val baseUrl = "https://torrentio.strem.fun"
 
