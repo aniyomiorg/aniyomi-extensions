@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.it.aniplay
 
+import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.PopularResponseDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -8,6 +9,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
+import eu.kanade.tachiyomi.util.parseAs
 import okhttp3.Request
 import okhttp3.Response
 
@@ -21,13 +23,25 @@ class AniPlay : AnimeHttpSource() {
 
     override val supportsLatest = false
 
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Referer", "$baseUrl/")
+        .add("origin", baseUrl)
+
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int): Request {
-        throw UnsupportedOperationException()
-    }
+    override fun popularAnimeRequest(page: Int) =
+        GET("$API_URL/advancedSearch?sort=7&page=$page&origin=,,,,,,", headers)
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        throw UnsupportedOperationException()
+        val parsed = response.parseAs<PopularResponseDto>()
+        val animes = parsed.data.map {
+            SAnime.create().apply {
+                url = "/series/${it.id}"
+                title = it.title
+                thumbnail_url = it.thumbnailUrl
+            }
+        }
+
+        return AnimesPage(animes, parsed.pagination.hasNextPage)
     }
 
     // =============================== Latest ===============================
@@ -86,5 +100,7 @@ class AniPlay : AnimeHttpSource() {
 
     companion object {
         const val PREFIX_SEARCH = "id:"
+
+        private const val API_URL = "https://api.aniplay.co/api/series"
     }
 }
