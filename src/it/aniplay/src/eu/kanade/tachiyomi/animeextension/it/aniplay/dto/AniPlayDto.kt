@@ -58,3 +58,11 @@ data class EpisodeDto(
     val number: String? = null,
     val release_date: String? = null,
 )
+
+@Serializable
+data class VideoDto(
+    private val download_link: String? = null,
+    private val streaming_link: String? = null,
+) {
+    val videoLink = streaming_link ?: download_link!!
+}

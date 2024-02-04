@@ -5,12 +5,14 @@ import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.EpisodeDto
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.LatestItemDto
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.PopularAnimeDto
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.PopularResponseDto
+import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.VideoDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
@@ -144,12 +146,17 @@ class AniPlay : AnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    override fun videoListRequest(episode: SEpisode): Request {
-        throw UnsupportedOperationException()
-    }
+    private val playlistUtils by lazy { PlaylistUtils(client, headers) }
 
     override fun videoListParse(response: Response): List<Video> {
-        throw UnsupportedOperationException()
+        val script = response.getPageScript()
+        val jsonString = script.substringAfter("{episode:").substringBefore(",views") + "}"
+        val videoUrl = jsonString.fixJsonString().parseAs<VideoDto>().videoLink
+
+        return when {
+            videoUrl.contains(".m3u8") -> playlistUtils.extractFromHls(videoUrl)
+            else -> listOf(Video(videoUrl, "Default", videoUrl, headers = headers))
+        }
     }
 
     // ============================= Utilities ==============================
