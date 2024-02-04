@@ -42,7 +42,7 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", "$baseUrl/")
-        .add("origin", baseUrl)
+        .add("Origin", baseUrl)
 
     override val versionId = 2 // Source was rewritten in Svelte
 
