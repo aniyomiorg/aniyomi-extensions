@@ -50,3 +50,11 @@ data class AnimeInfoDto(
 
 @Serializable
 data class NameDto(val name: String)
+
+@Serializable
+data class EpisodeDto(
+    val id: Int,
+    val title: String? = null,
+    val number: String? = null,
+    val release_date: String? = null,
+)

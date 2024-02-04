@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.it.aniplay
 
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.AnimeInfoDto
+import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.EpisodeDto
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.LatestItemDto
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.PopularAnimeDto
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.PopularResponseDto
@@ -18,6 +19,8 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class AniPlay : AnimeHttpSource() {
 
@@ -94,7 +97,7 @@ class AniPlay : AnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(response: Response) = SAnime.create().apply {
-        val script = response.asJsoup().selectFirst("script:containsData(const data = )")!!.data()
+        val script = response.getPageScript()
         val jsonString = script.substringAfter("{serie:").substringBefore(",tags") + "}"
         val parsed = jsonString.fixJsonString().parseAs<AnimeInfoDto>()
 
@@ -126,7 +129,18 @@ class AniPlay : AnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        throw UnsupportedOperationException()
+        val script = response.getPageScript()
+        val jsonString = script.substringAfter(",episodes:").substringBefore("]},") + "]"
+        val parsed = jsonString.fixJsonString().parseAs<List<EpisodeDto>>()
+
+        return parsed.map {
+            SEpisode.create().apply {
+                episode_number = it.number?.toFloatOrNull() ?: 1F
+                url = "/watch/${it.id}"
+                name = it.title ?: "Episodio ${it.number}"
+                date_upload = it.release_date.toDate()
+            }
+        }.reversed()
     }
 
     // ============================ Video Links =============================
@@ -150,11 +164,24 @@ class AniPlay : AnimeHttpSource() {
         "\"${it.groupValues[1]}\":${it.groupValues[2]}"
     }
 
+    private fun Response.getPageScript() =
+        asJsoup().selectFirst("script:containsData(const data = )")!!.data()
+
+    private fun String?.toDate(): Long {
+        if (this == null) return 0L
+        return runCatching { DATE_FORMATTER.parse(trim())?.time }
+            .getOrNull() ?: 0L
+    }
+
     companion object {
         const val PREFIX_SEARCH = "id:"
 
         private const val API_URL = "https://api.aniplay.co/api/series"
 
         private val WRONG_KEY_REGEX by lazy { Regex("([a-zA-Z_]+):\\s?([\"|0-9|f|t|n|\\[|\\{])") }
+
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
+        }
     }
 }
