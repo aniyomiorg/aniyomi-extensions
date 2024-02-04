@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.it.aniplay
 
+import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.LatestItemDto
+import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.PopularAnimeDto
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.PopularResponseDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -21,7 +23,7 @@ class AniPlay : AnimeHttpSource() {
 
     override val lang = "it"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", "$baseUrl/")
@@ -33,24 +35,17 @@ class AniPlay : AnimeHttpSource() {
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val parsed = response.parseAs<PopularResponseDto>()
-        val animes = parsed.data.map {
-            SAnime.create().apply {
-                url = "/series/${it.id}"
-                title = it.title
-                thumbnail_url = it.thumbnailUrl
-            }
-        }
-
+        val animes = parsed.data.map(PopularAnimeDto::toSAnime)
         return AnimesPage(animes, parsed.pagination.hasNextPage)
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int): Request {
-        throw UnsupportedOperationException()
-    }
+    override fun latestUpdatesRequest(page: Int) = GET("$API_URL/latest-episodes?page=$page&type=All")
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        throw UnsupportedOperationException()
+        val items = response.parseAs<List<LatestItemDto>>()
+        val animes = items.mapNotNull { it.serie.firstOrNull()?.toSAnime() }
+        return AnimesPage(animes, items.size == 20)
     }
 
     // =============================== Search ===============================
