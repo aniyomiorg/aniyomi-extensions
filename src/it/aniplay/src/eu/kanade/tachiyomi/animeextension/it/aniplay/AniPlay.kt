@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.it.aniplay
 
+import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.AnimeInfoDto
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.LatestItemDto
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.PopularAnimeDto
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.PopularResponseDto
@@ -11,6 +12,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
+import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parseAs
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -91,8 +93,35 @@ class AniPlay : AnimeHttpSource() {
     override fun searchAnimeParse(response: Response) = popularAnimeParse(response)
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(response: Response): SAnime {
-        throw UnsupportedOperationException()
+    override fun animeDetailsParse(response: Response) = SAnime.create().apply {
+        val script = response.asJsoup().selectFirst("script:containsData(const data = )")!!.data()
+        val jsonString = script.substringAfter("{serie:").substringBefore(",tags") + "}"
+        val parsed = jsonString.fixJsonString().parseAs<AnimeInfoDto>()
+
+        title = parsed.title
+        genre = parsed.genres.joinToString { it.name }
+        artist = parsed.studios.joinToString { it.name }
+        thumbnail_url = parsed.thumbnailUrl
+        status = when (parsed.status) {
+            "Completato" -> SAnime.COMPLETED
+            "In corso" -> SAnime.ONGOING
+            "Sospeso" -> SAnime.ON_HIATUS
+            else -> SAnime.UNKNOWN
+        }
+
+        description = buildString {
+            parsed.description?.also {
+                append(it, "\n\n")
+            }
+
+            listOf(
+                "Titolo Alternativo" to parsed.alternative,
+                "Origine" to parsed.origin,
+                "Giorno di lancio" to parsed.release_day,
+            ).forEach { (title, value) ->
+                if (value != null) append(title, ": ", value, "\n")
+            }
+        }
     }
 
     // ============================== Episodes ==============================
@@ -116,9 +145,16 @@ class AniPlay : AnimeHttpSource() {
         }
     }
 
+    // {key:"value"} -> {"key":"value"}
+    private fun String.fixJsonString() = replace(WRONG_KEY_REGEX) {
+        "\"${it.groupValues[1]}\":${it.groupValues[2]}"
+    }
+
     companion object {
         const val PREFIX_SEARCH = "id:"
 
         private const val API_URL = "https://api.aniplay.co/api/series"
+
+        private val WRONG_KEY_REGEX by lazy { Regex("([a-zA-Z_]+):\\s?([\"|0-9|f|t|n|\\[|\\{])") }
     }
 }

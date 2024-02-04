@@ -31,3 +31,22 @@ data class PaginationDto(val page: Int, val pageCount: Int) {
 
 @Serializable
 data class LatestItemDto(val serie: List<PopularAnimeDto>)
+
+@Serializable
+data class AnimeInfoDto(
+    val title: String,
+    val description: String? = null,
+    val alternative: String? = null,
+    val status: String? = null,
+    val origin: String? = null,
+    val release_day: String? = null,
+    val genres: List<NameDto> = emptyList(),
+    val studios: List<NameDto> = emptyList(),
+    private val cover: String? = null,
+    private val main_image: String? = null,
+) {
+    val thumbnailUrl = cover ?: main_image
+}
+
+@Serializable
+data class NameDto(val name: String)
