@@ -12,6 +12,8 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.parseAs
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 
@@ -49,6 +51,8 @@ class AniPlay : AnimeHttpSource() {
     }
 
     // =============================== Search ===============================
+    override fun getFilterList() = AniPlayFilters.FILTER_LIST
+
     override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val id = query.removePrefix(PREFIX_SEARCH)
@@ -67,12 +71,24 @@ class AniPlay : AnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        throw UnsupportedOperationException()
+        val params = AniPlayFilters.getSearchParameters(filters)
+        val url = "$API_URL/advancedSearch".toHttpUrl().newBuilder()
+            .addQueryParameter("page", page.toString())
+            .addQueryParameter("origin", ",,,,,,")
+            .addQueryParameter("sort", params.order)
+            .addIfNotBlank("_q", query)
+            .addIfNotBlank("genres", params.genres)
+            .addIfNotBlank("country", params.countries)
+            .addIfNotBlank("types", params.types)
+            .addIfNotBlank("studios", params.studios)
+            .addIfNotBlank("status", params.status)
+            .addIfNotBlank("subbed", params.languages)
+            .build()
+
+        return GET(url, headers)
     }
 
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        throw UnsupportedOperationException()
-    }
+    override fun searchAnimeParse(response: Response) = popularAnimeParse(response)
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(response: Response): SAnime {
@@ -91,6 +107,13 @@ class AniPlay : AnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         throw UnsupportedOperationException()
+    }
+
+    // ============================= Utilities ==============================
+    private fun HttpUrl.Builder.addIfNotBlank(query: String, value: String) = apply {
+        if (value.isNotBlank()) {
+            addQueryParameter(query, value)
+        }
     }
 
     companion object {
