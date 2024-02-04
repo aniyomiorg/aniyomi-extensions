@@ -44,6 +44,8 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
         .add("Referer", "$baseUrl/")
         .add("origin", baseUrl)
 
+    override val versionId = 2 // Source was rewritten in Svelte
+
     private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
