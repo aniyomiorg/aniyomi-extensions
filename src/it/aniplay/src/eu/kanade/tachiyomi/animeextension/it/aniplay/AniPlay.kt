@@ -1,11 +1,15 @@
 package eu.kanade.tachiyomi.animeextension.it.aniplay
 
+import android.app.Application
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.AnimeInfoDto
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.EpisodeDto
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.LatestItemDto
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.PopularAnimeDto
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.PopularResponseDto
 import eu.kanade.tachiyomi.animeextension.it.aniplay.dto.VideoDto
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -21,10 +25,12 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class AniPlay : AnimeHttpSource() {
+class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "AniPlay"
 
@@ -37,6 +43,10 @@ class AniPlay : AnimeHttpSource() {
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", "$baseUrl/")
         .add("origin", baseUrl)
+
+    private val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) =
@@ -159,6 +169,33 @@ class AniPlay : AnimeHttpSource() {
         }
     }
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
+    }
+
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+    }
+
     // ============================= Utilities ==============================
     private fun HttpUrl.Builder.addIfNotBlank(query: String, value: String) = apply {
         if (value.isNotBlank()) {
@@ -190,5 +227,10 @@ class AniPlay : AnimeHttpSource() {
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
         }
+
+        private const val PREF_QUALITY_KEY = "pref_quality_key"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "540p", "480p", "360p", "244p", "144p")
     }
 }
