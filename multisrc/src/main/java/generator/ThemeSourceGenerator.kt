@@ -51,7 +51,7 @@ interface ThemeSourceGenerator {
             return listOf("eu", "kanade", "tachiyomi", "multisrc", themePkg).joinToString(separator)
         }
 
-        private fun writeGradle(gradle: File, source: ThemeSourceData, themePkg: String, baseVersionCode: Int, defaultAdditionalGradlePath: String, additionalGradleOverridePath: String) {
+        private fun writeGradle(gradle: File, source: ThemeSourceData, baseVersionCode: Int, defaultAdditionalGradlePath: String, additionalGradleOverridePath: String) {
             fun File.readTextOrEmptyString(): String = if (exists()) readText(Charsets.UTF_8) else ""
 
             val defaultAdditionalGradleText = File(defaultAdditionalGradlePath).readTextOrEmptyString()
@@ -72,7 +72,6 @@ interface ThemeSourceGenerator {
                 |ext {
                 |    extName = '${source.name}'
                 |    extClass = '.${source.className}'
-                |    extFactory = '$themePkg'
                 |    extVersionCode = ${baseVersionCode + source.overrideVersionCode + MULTISRC_LIBRARY_VERSION}
                 |    ${if (source.isNsfw) "containsNsfw = true\n" else ""}
                 |}
@@ -125,7 +124,7 @@ interface ThemeSourceGenerator {
                 projectRootFile.deleteRecursively()
                 projectRootFile.mkdirs()
 
-                writeGradle(projectGradleFile, source, themePkg, baseVersionCode, defaultAdditionalGradlePath, additionalGradleOverridePath)
+                writeGradle(projectGradleFile, source, baseVersionCode, defaultAdditionalGradlePath, additionalGradleOverridePath)
                 writeAndroidManifest(projectAndroidManifestFile, manifestOverridePath, defaultAndroidManifestPath)
 
                 writeSourceClasses(projectSrcPath, srcOverridePath, source, themePkg, themeClass)
