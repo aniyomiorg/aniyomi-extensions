@@ -3,6 +3,9 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlinx-serialization'
 apply plugin: 'org.jmailen.kotlinter'
 
+assert !ext.has("pkgNameSuffix")
+assert !ext.has("libVersion")
+
 android {
     compileSdkVersion AndroidConfig.compileSdk
     namespace AndroidConfig.namespace
@@ -26,14 +29,15 @@ android {
         targetSdkVersion AndroidConfig.targetSdk
         applicationIdSuffix project.parent.name + "." + project.name
         versionCode extVersionCode
-        versionName project.ext.properties.getOrDefault("libVersion", "14") + ".$extVersionCode"
+        versionName "14.$extVersionCode"
         base {
             archivesName = "aniyomi-$applicationIdSuffix-v$versionName"
         }
+        assert extClass.startsWith(".")
         manifestPlaceholders = [
                 appName : "Aniyomi: $extName",
                 extClass: extClass,
-                nsfw: project.ext.properties.getOrDefault("containsNsfw", false) ? 1 : 0,
+                nsfw: project.ext.find("containsNsfw") ? 1 : 0,
         ]
     }
 
