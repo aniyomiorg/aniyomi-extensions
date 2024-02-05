@@ -14,7 +14,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="wwww.animestc.net"
+                    android:host="www.animestc.net"
                     android:pathPattern="/animes/..*"
                     android:scheme="https" />
             </intent-filter>

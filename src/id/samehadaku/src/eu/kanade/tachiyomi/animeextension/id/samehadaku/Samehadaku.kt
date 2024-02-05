@@ -28,7 +28,7 @@ import java.util.Locale
 
 class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
     override val name: String = "Samehadaku"
-    override val baseUrl: String = "https://samehadaku.guru"
+    override val baseUrl: String = "https://samehadaku.gold"
     override val lang: String = "id"
     override val supportsLatest: Boolean = true
 

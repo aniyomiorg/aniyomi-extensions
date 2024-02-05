@@ -28,7 +28,7 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Anime Fire"
 
-    override val baseUrl = "https://animefire.net"
+    override val baseUrl = "https://animefire.plus"
 
     override val lang = "pt-BR"
 
@@ -146,7 +146,7 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val videoElement = document.selectFirst("video#my-video")
         return if (videoElement != null) {
-            AnimeFireExtractor(client, json).videoListFromElement(videoElement)
+            AnimeFireExtractor(client, json).videoListFromElement(videoElement, headers)
         } else {
             IframeExtractor(client).videoListFromDocument(document, headers)
         }

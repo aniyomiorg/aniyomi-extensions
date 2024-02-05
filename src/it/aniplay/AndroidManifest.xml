@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
     <application>
         <activity
-            android:name=".pt.animefire.AFUrlActivity"
+            android:name=".it.aniplay.AniPlayUrlActivity"
             android:excludeFromRecents="true"
             android:exported="true"
             android:theme="@android:style/Theme.NoDisplay">
@@ -14,8 +13,8 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="animefire.plus"
-                    android:pathPattern="/animes/..*"
+                    android:host="aniplay.co"
+                    android:pathPattern="/series/..*"
                     android:scheme="https" />
             </intent-filter>
         </activity>
