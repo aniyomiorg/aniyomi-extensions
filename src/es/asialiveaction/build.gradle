@@ -1,7 +1,7 @@
 ext {
     extName = 'AsiaLiveAction'
     extClass = '.AsiaLiveAction'
-    extVersionCode = 25
+    extVersionCode = 26
 }
 
 apply from: "$rootDir/common.gradle"

@@ -1,7 +1,7 @@
 ext {
     extName = 'Türk Anime TV'
     extClass = '.TurkAnime'
-    extVersionCode = 20
+    extVersionCode = 21
 }
 
 apply from: "$rootDir/common.gradle"
