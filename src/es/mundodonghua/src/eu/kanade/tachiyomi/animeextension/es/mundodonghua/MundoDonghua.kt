@@ -106,7 +106,7 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (unpack.contains("amagi_tab")) {
                         fetchUrls(unpack).map { url ->
                             try {
-                                VoeExtractor(client).videoFromUrl(url, "VoeCDN")?.let { videoList.add(it) }
+                                VoeExtractor(client).videosFromUrl(url).also(videoList::addAll)
                             } catch (_: Exception) {}
                         }
                     }

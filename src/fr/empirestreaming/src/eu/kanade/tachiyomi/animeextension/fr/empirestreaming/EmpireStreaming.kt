@@ -170,7 +170,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return when (hoster) {
             "doodstream" -> DoodExtractor(client).videosFromUrl(url)
-            "voe" -> VoeExtractor(client).videoFromUrl(url)?.let(::listOf)
+            "voe" -> VoeExtractor(client).videosFromUrl(url)
             "Eplayer" -> EplayerExtractor(client).videosFromUrl(url)
             else -> null
         } ?: emptyList()

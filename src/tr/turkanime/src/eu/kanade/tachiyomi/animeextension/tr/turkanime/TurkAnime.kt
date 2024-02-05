@@ -308,7 +308,7 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     VkExtractor(client, headers).videosFromUrl(vkUrl, prefix = "$subber: ")
                 }
                 "VOE" -> {
-                    VoeExtractor(client).videoFromUrl(hosterLink, "$subber: VOE")?.let(::listOf)
+                    VoeExtractor(client).videosFromUrl(hosterLink, "($subber) ")
                 }
                 "VTUBE" -> {
                     VTubeExtractor(client, headers).videosFromUrl(hosterLink, baseUrl, prefix = "$subber: ")

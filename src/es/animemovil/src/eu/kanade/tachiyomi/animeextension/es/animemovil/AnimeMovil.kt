@@ -234,7 +234,7 @@ class AnimeMovil : ConfigurableAnimeSource, AnimeHttpSource() {
         val embedUrl = url.lowercase()
         try {
             if (embedUrl.contains("voe")) {
-                VoeExtractor(client).videoFromUrl(url, prefix = "Voe:")?.let { videoList.add(it) }
+                VoeExtractor(client).videosFromUrl(url).also(videoList::addAll)
             }
             if (embedUrl.contains("filemoon") || embedUrl.contains("moonplayer")) {
                 FilemoonExtractor(client).videosFromUrl(url, prefix = "Filemoon:").also(videoList::addAll)

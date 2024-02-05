@@ -197,10 +197,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
                     }
                 }
                 link.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
-                    val video = VoeExtractor(client).videoFromUrl(link, quality)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
+                    videoList.addAll(VoeExtractor(client).videosFromUrl(link, "(${stream.lang}) "))
                 }
                 link.contains("https://streamlare") && hosterSelection?.contains("slare") == true -> {
                     videoList.addAll(StreamlareExtractor(client).videosFromUrl(link, suffix = stream.lang ?: "Unknown language"))

@@ -221,7 +221,7 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val url = hosterSettings.get(hoster)!! + urlpart
         return when (hoster) {
             "Streamwish" -> streamWishExtractor.videosFromUrl(url)
-            "Voe.SX" -> voeExtractor.videoFromUrl(url)?.let(::listOf)
+            "Voe.SX" -> voeExtractor.videosFromUrl(url)
             "VTube", "Lulustream" -> unpackerExtractor.videosFromUrl(url, hoster)
             "VidGuard" -> vidguardExtractor.videosFromUrl(url)
             else -> null

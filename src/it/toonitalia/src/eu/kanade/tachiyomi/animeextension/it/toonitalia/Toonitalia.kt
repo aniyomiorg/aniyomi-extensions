@@ -195,7 +195,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun extractVideos(url: String): List<Video> =
         when {
-            "https://voe.sx" in url -> voeExtractor.videoFromUrl(url)?.let(::listOf)
+            "https://voe.sx" in url -> voeExtractor.videosFromUrl(url)
             "https://streamtape" in url -> streamTapeExtractor.videoFromUrl(url)?.let(::listOf)
             "https://maxstream" in url -> maxStreamExtractor.videosFromUrl(url)
             "https://streamz" in url || "streamz.cc" in url -> {

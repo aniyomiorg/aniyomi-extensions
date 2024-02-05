@@ -238,15 +238,11 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (hosterSelection != null) {
                 when {
                     hoster.contains("VOE") && hosterSelection.contains(AWConstants.NAME_VOE) -> {
-                        val quality = "Voe $language"
                         var url = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
                         if (url.contains("payload") || url.contains(redirectgs)) {
                             url = recapbypass(jsInterceptor, redirectgs)
                         }
-                        val video = VoeExtractor(client).videoFromUrl(url, quality)
-                        if (video != null) {
-                            videoList.add(video)
-                        }
+                        videoList.addAll(VoeExtractor(client).videosFromUrl(url, "($language) "))
                     }
 
                     hoster.contains("Doodstream") && hosterSelection.contains(AWConstants.NAME_DOOD) -> {

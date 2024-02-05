@@ -171,8 +171,7 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 okruExtractor.videosFromUrl(url)
             }
             "voe.sx" in url && selection.contains("Voe") -> {
-                voeExtractor.videoFromUrl(url, "VoeSX ($quality)")
-                    ?.let(::listOf)
+                voeExtractor.videosFromUrl(url)
             }
             VID_BOM_DOMAINS.any(url::contains) && selection.contains("VidBom") -> {
                 vidBomExtractor.videosFromUrl(url)

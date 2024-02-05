@@ -277,7 +277,7 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
             "sibnet" in url -> sibnetExtractor.videosFromUrl(url)
             "streamlare" in url -> streamlareExtractor.videosFromUrl(url)
             "uqload" in url -> uqloadExtractor.videosFromUrl(url)
-            "voe." in url -> voeExtractor.videoFromUrl(url)?.let(::listOf)
+            "voe." in url -> voeExtractor.videosFromUrl(url)
             "vudeo." in url -> vudeoExtractor.videosFromUrl(url)
             else -> null
         } ?: emptyList()
