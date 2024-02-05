@@ -1,5 +1,5 @@
 ext {
-    extName = 'أكوام'
+    extName = 'Akwam'
     extClass = '.Akwam'
     extVersionCode = 9
 }

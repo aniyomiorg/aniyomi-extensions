@@ -1,5 +1,5 @@
 ext {
-    extName = 'توك توك سينما'
+    extName = 'Tuktuk Cinema'
     extClass = '.Tuktukcinema'
     extVersionCode = 16
 }

@@ -1,5 +1,5 @@
 ext {
-    extName = 'عرب سيد'
+    extName = 'Arab Seed'
     extClass = '.ArabSeed'
     extVersionCode = 10
 }
