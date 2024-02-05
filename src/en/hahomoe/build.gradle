@@ -2,7 +2,7 @@ ext {
     extName = 'haho.moe'
     extClass = '.HahoMoe'
     extVersionCode = 10
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

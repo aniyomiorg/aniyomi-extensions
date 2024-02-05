@@ -1,5 +1,5 @@
 ext {
-    extName = 'فاصل اعلاني'
+    extName = 'FASELHD'
     extClass = '.FASELHD'
     extVersionCode = 14
 }
