@@ -251,12 +251,12 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================= Utilities ==============================
     private fun Response.getAnimeDto(): AnimeDto {
-        val responseBody = use { it.body.string() }
+        val jsonString = body.string()
         return try {
-            parseAs<AnimeDto> { responseBody }
+            jsonString.parseAs<AnimeDto>()
         } catch (e: Exception) {
             // URL intent handler moment
-            parseAs<ResponseDto<AnimeDto>> { responseBody }.items.first()
+            jsonString.parseAs<ResponseDto<AnimeDto>>().items.first()
         }
     }
 

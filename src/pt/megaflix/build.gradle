@@ -2,7 +2,7 @@ ext {
     extName = 'Megaflix'
     extClass = '.Megaflix'
     extVersionCode = 12
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

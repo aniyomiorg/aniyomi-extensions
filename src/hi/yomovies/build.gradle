@@ -2,7 +2,7 @@ ext {
     extName = 'YoMovies'
     extClass = '.YoMovies'
     extVersionCode = 8
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

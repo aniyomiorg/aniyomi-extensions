@@ -2,7 +2,7 @@ ext {
     extName = 'hanime.tv'
     extClass = '.Hanime'
     extVersionCode = 17
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

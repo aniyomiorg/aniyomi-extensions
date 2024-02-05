@@ -2,7 +2,7 @@ ext {
     extName = 'HentaiZM'
     extClass = '.HentaiZM'
     extVersionCode = 1
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"
