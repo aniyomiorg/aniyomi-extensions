@@ -2,7 +2,7 @@ ext {
     extName = 'HDFilmCehennemi'
     extClass = '.HDFilmCehennemi'
     extVersionCode = 9
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

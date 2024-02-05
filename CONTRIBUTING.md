@@ -227,7 +227,7 @@ ext {
     extName = '<My source name>'
     extClass = '.<MySourceName>'
     extVersionCode = 1
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"
@@ -238,7 +238,7 @@ apply from: "$rootDir/common.gradle"
 | `extName` | The name of the extension. Should be romanized if site name is not in English.|
 | `extClass` | Points to the class that implements `AnimeSource`. You can use a relative path starting with a dot (the package name is the base path). This is used to find and instantiate the source(s). |
 | `extVersionCode` | The extension version code. This must be a positive integer and incremented with any change to the code. |
-| `containsNsfw` | (Optional, defaults to `false`) Flag to indicate that a source contains NSFW content. |
+| `isNsfw` | (Optional, defaults to `false`) Flag to indicate that a source contains NSFW content. |
 
 The extension's version name is generated automatically by concatenating `14` and `extVersionCode`. With the example used above, the version would be `14.1`.
 
@@ -707,6 +707,6 @@ Please **do test your changes by compiling it through Android Studio** before su
 - Update `extVersionCode` value in `build.gradle` for individual extensions
 - Update `overrideVersionCode` or `baseVersionCode` as needed for all multisrc extensions
 - Reference all related issues in the PR body (e.g. "Closes #xyz")
-- Add the `containsNsfw = true` flag in `build.gradle` when appropriate
+- Add the `isNsfw = true` flag in `build.gradle` when appropriate
 - Explicitly kept the `id` if a source's name or language were changed
 - Test the modifications by compiling and running the extension through Android Studio

@@ -2,7 +2,6 @@ ext {
     extName = 'Anime-Sama'
     extClass = '.AnimeSama'
     extVersionCode = 8
-    containsNsfw = false
 }
 
 apply from: "$rootDir/common.gradle"

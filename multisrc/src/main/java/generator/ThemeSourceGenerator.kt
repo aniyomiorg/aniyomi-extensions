@@ -73,7 +73,7 @@ interface ThemeSourceGenerator {
                 |    extName = '${source.name}'
                 |    extClass = '.${source.className}'
                 |    extVersionCode = ${baseVersionCode + source.overrideVersionCode + MULTISRC_LIBRARY_VERSION}
-                |    ${if (source.isNsfw) "containsNsfw = true\n" else ""}
+                |    ${if (source.isNsfw) "isNsfw = true\n" else ""}
                 |}
                 |
                 |apply from: "${'$'}rootDir/common.gradle"

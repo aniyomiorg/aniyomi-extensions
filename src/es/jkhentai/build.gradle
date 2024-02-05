@@ -2,7 +2,7 @@ ext {
     extName = 'Jkhentai'
     extClass = '.Jkhentai'
     extVersionCode = 9
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

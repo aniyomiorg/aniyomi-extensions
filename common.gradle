@@ -37,7 +37,7 @@ android {
         manifestPlaceholders = [
                 appName : "Aniyomi: $extName",
                 extClass: extClass,
-                nsfw: project.ext.find("containsNsfw") ? 1 : 0,
+                nsfw: project.ext.find("isNsfw") ? 1 : 0,
         ]
     }
 

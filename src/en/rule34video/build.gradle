@@ -2,7 +2,7 @@ ext {
     extName = 'Rule34Video'
     extClass = '.Rule34Video'
     extVersionCode = 8
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"
