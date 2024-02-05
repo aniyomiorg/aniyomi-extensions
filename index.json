@@ -143,7 +143,7 @@
     "code": 14,
     "version": "14.14",
     "nsfw": 0,
-    "hasReadme": 1,
+    "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
@@ -324,7 +324,7 @@
     ]
   },
   {
-    "name": "Aniyomi: أكوام",
+    "name": "Aniyomi: Akwam",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.akwam",
     "apk": "aniyomi-ar.akwam-v14.9.apk",
     "lang": "ar",
@@ -364,7 +364,7 @@
     ]
   },
   {
-    "name": "Aniyomi: أنمي بالكوم",
+    "name": "Aniyomi: Anime Blkom",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.animeblkom",
     "apk": "aniyomi-ar.animeblkom-v14.17.apk",
     "lang": "ar",
@@ -464,7 +464,7 @@
     ]
   },
   {
-    "name": "Aniyomi: عرب سيد",
+    "name": "Aniyomi: Arab Seed",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.arabseed",
     "apk": "aniyomi-ar.arabseed-v14.10.apk",
     "lang": "ar",
@@ -524,7 +524,7 @@
     ]
   },
   {
-    "name": "Aniyomi: فاصل اعلاني",
+    "name": "Aniyomi: FASELHD",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.faselhd",
     "apk": "aniyomi-ar.faselhd-v14.14.apk",
     "lang": "ar",
@@ -584,7 +584,7 @@
     ]
   },
   {
-    "name": "Aniyomi: توك توك سينما",
+    "name": "Aniyomi: Tuktuk Cinema",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.tuktukcinema",
     "apk": "aniyomi-ar.tuktukcinema-v14.16.apk",
     "lang": "ar",
@@ -1611,7 +1611,7 @@
     "code": 11,
     "version": "14.11",
     "nsfw": 0,
-    "hasReadme": 1,
+    "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
@@ -1891,7 +1891,7 @@
     "code": 11,
     "version": "14.11",
     "nsfw": 0,
-    "hasReadme": 1,
+    "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
@@ -3161,10 +3161,10 @@
   {
     "name": "Aniyomi: Oploverz",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.oploverz",
-    "apk": "aniyomi-id.oploverz-v14.22.apk",
+    "apk": "aniyomi-id.oploverz-v14.23.apk",
     "lang": "id",
-    "code": 22,
-    "version": "14.22",
+    "code": 23,
+    "version": "14.23",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3173,7 +3173,7 @@
         "name": "Oploverz",
         "lang": "id",
         "id": "2573103800968432770",
-        "baseUrl": "https://oploverz.wiki",
+        "baseUrl": "https://oploverz.guru",
         "versionId": 1
       }
     ]
@@ -3201,10 +3201,10 @@
   {
     "name": "Aniyomi: Samehadaku",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.samehadaku",
-    "apk": "aniyomi-id.samehadaku-v14.4.apk",
+    "apk": "aniyomi-id.samehadaku-v14.5.apk",
     "lang": "id",
-    "code": 4,
-    "version": "14.4",
+    "code": 5,
+    "version": "14.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3213,7 +3213,7 @@
         "name": "Samehadaku",
         "lang": "id",
         "id": "7446063017613536202",
-        "baseUrl": "https://samehadaku.guru",
+        "baseUrl": "https://samehadaku.gold",
         "versionId": 1
       }
     ]
@@ -3281,10 +3281,10 @@
   {
     "name": "Aniyomi: AniPlay",
     "pkg": "eu.kanade.tachiyomi.animeextension.it.aniplay",
-    "apk": "aniyomi-it.aniplay-v14.6.apk",
+    "apk": "aniyomi-it.aniplay-v14.7.apk",
     "lang": "it",
-    "code": 6,
-    "version": "14.6",
+    "code": 7,
+    "version": "14.7",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3292,9 +3292,9 @@
       {
         "name": "AniPlay",
         "lang": "it",
-        "id": "9017321674111133535",
+        "id": "9100732207446736332",
         "baseUrl": "https://aniplay.co",
-        "versionId": 1
+        "versionId": 2
       }
     ]
   },
@@ -3461,10 +3461,10 @@
   {
     "name": "Aniyomi: Anime Fire",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animefire",
-    "apk": "aniyomi-pt.animefire-v14.5.apk",
+    "apk": "aniyomi-pt.animefire-v14.6.apk",
     "lang": "pt-BR",
-    "code": 5,
-    "version": "14.5",
+    "code": 6,
+    "version": "14.6",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3473,7 +3473,7 @@
         "name": "Anime Fire",
         "lang": "pt-BR",
         "id": "2914332399101546717",
-        "baseUrl": "https://animefire.net",
+        "baseUrl": "https://animefire.plus",
         "versionId": 1
       }
     ]
@@ -3661,10 +3661,10 @@
   {
     "name": "Aniyomi: AnimesTC",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animestc",
-    "apk": "aniyomi-pt.animestc-v14.4.apk",
+    "apk": "aniyomi-pt.animestc-v14.5.apk",
     "lang": "pt-BR",
-    "code": 4,
-    "version": "14.4",
+    "code": 5,
+    "version": "14.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
