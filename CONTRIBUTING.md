@@ -184,7 +184,7 @@ The simplest extension structure looks like this:
 ```console
 $ tree src/<lang>/<mysourcename>/
 src/<lang>/<mysourcename>/
-├── AndroidManifest.xml
+├── AndroidManifest.xml (optional)
 ├── build.gradle
 ├── build.gradle
 ├── res
@@ -215,13 +215,14 @@ src/<lang>/<mysourcename>/
 should be adapted from the site name, and can only contain lowercase ASCII letters and digits.
 Your extension code must be placed in the package `eu.kanade.tachiyomi.animeextension.<lang>.<mysourcename>`.
 
-#### AndroidManifest.xml
-A minimal [Android manifest file](https://developer.android.com/guide/topics/manifest/manifest-intro) is needed for Android to recognize a extension when it's compiled into an APK file. You can also add intent filters inside this file (see [URL intent filter](#url-intent-filter) for more information).
+#### AndroidManifest.xml (optional)
+You only need to create this file if you want to add deep linking to your extension.
+See [URL intent filter](#url-intent-filter) for more information.
 
 #### build.gradle
 Make sure that your new extension's `build.gradle` file follows the following structure:
 
-```gradle
+```groovy
 ext {
     extName = '<My source name>'
     extClass = '.<MySourceName>'
@@ -250,31 +251,31 @@ Extensions rely on [extensions-lib](https://github.com/aniyomiorg/extensions-lib
 
 #### CryptoAES library
 
-The [`lib-cryptoaes`](https://github.com/aniyomiorg/aniyomi-extensions/tree/master/lib/cryptoaes) provides utilities for decrypting AES-encrypted data, like data encrypted with AES+EvpKDF (The key-derivation algorithm used by the [cryptojs](https://cryptojs.gitbook.io/docs/) library). It also includes some utilities to decrypt strings in the [jsfuck](https://jsfuck.com/) format.
+The [`cryptoaes`](https://github.com/aniyomiorg/aniyomi-extensions/tree/master/lib/cryptoaes) provides utilities for decrypting AES-encrypted data, like data encrypted with AES+EvpKDF (The key-derivation algorithm used by the [cryptojs](https://cryptojs.gitbook.io/docs/) library). It also includes some utilities to decrypt strings in the [jsfuck](https://jsfuck.com/) format.
 
-```gradle
+```groovy
 dependencies {
-    implementation(project(":lib-cryptoaes"))
+    implementation(project(":lib:cryptoaes"))
 }
 ```
 
 #### Unpacker library
 
-The [`lib-unpacker`](https://github.com/aniyomiorg/aniyomi-extensions/tree/master/lib/unpacker) library provides a deobfuscator(unpacker) for javascript code obfuscated with the [jspacker](http://dean.edwards.name/packer/) algorithm.
+The [`unpacker`](https://github.com/aniyomiorg/aniyomi-extensions/tree/master/lib/unpacker) library provides a deobfuscator(unpacker) for javascript code obfuscated with the [jspacker](http://dean.edwards.name/packer/) algorithm.
 
-```gradle
+```groovy
 dependencies {
-    implementation(project(":lib-unpacker"))
+    implementation(project(":lib:unpacker"))
 }
 ```
 
 #### Synchrony library
 
-[`lib-synchrony`](https://github.com/aniyomiorg/aniyomi-extensions/tree/master/lib/synchrony) is a library that bundles and runs the [synchrony](https://github.com/relative/synchrony) deobfuscator with your extension to help when deobfuscating obfuscated javascript. Useful to get data on highly obfuscated javascript code.
+[`synchrony`](https://github.com/aniyomiorg/aniyomi-extensions/tree/master/lib/synchrony) is a library that bundles and runs the [synchrony](https://github.com/relative/synchrony) deobfuscator with your extension to help when deobfuscating obfuscated javascript. Useful to get data on highly obfuscated javascript code.
 
-```gradle
+```groovy
 dependencies {
-    implementation(project(":lib-synchrony"))
+    implementation(project(":lib:synchrony"))
 }
 ```
 
