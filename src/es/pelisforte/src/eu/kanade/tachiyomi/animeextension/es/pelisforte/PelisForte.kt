@@ -180,7 +180,7 @@ open class PelisForte : ConfigurableAnimeSource, AnimeHttpSource() {
         val embedUrl = url.lowercase()
         try {
             if (embedUrl.contains("voe")) {
-                VoeExtractor(client).videoFromUrl(url, prefix = "${prefix}Voe:")?.let { videoList.add(it) }
+                VoeExtractor(client).videosFromUrl(url, prefix).also(videoList::addAll)
             }
             if (embedUrl.contains("ok.ru") || embedUrl.contains("okru")) {
                 OkruExtractor(client).videosFromUrl(url, prefix).also(videoList::addAll)

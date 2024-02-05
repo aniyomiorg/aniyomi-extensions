@@ -215,7 +215,7 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val embedUrl = url.lowercase()
         try {
             if (embedUrl.contains("voe")) {
-                VoeExtractor(client).videoFromUrl(url, prefix = "$prefix Voe:")?.let { videoList.add(it) }
+                VoeExtractor(client).videosFromUrl(url, prefix).also(videoList::addAll)
             }
             if ((embedUrl.contains("amazon") || embedUrl.contains("amz")) && !embedUrl.contains("disable")) {
                 val body = client.newCall(GET(url)).execute().asJsoup()

@@ -92,7 +92,7 @@ class Kinoking : DooPlay(
                 doodExtractor.videosFromUrl(link, quality, redirect)
             }
             link.contains("https://voe.sx") && hosterSelection.contains("voe") -> {
-                voeExtractor.videosFromUrl(link, "Voe")
+                voeExtractor.videosFromUrl(link)
             }
             link.contains("filehosted") && hosterSelection.contains("filehosted") -> {
                 listOf(Video(link, "Filehosted", link))

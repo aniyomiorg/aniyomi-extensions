@@ -206,10 +206,7 @@ class CineClix : ConfigurableAnimeSource, AnimeHttpSource() {
                         }
                     }
                     host.contains("VOE.SX") && hosterSelection?.contains("voe") == true -> {
-                        val video = VoeExtractor(client).videoFromUrl(eUrl)
-                        if (video != null) {
-                            videoList.add(video)
-                        }
+                        videoList.addAll(VoeExtractor(client).videosFromUrl(eUrl))
                     }
                 }
             }
@@ -246,10 +243,7 @@ class CineClix : ConfigurableAnimeSource, AnimeHttpSource() {
                         }
                     }
                     host.contains("VOE.SX") && hosterSelection?.contains("voe") == true -> {
-                        val video = VoeExtractor(client).videoFromUrl(fUrl)
-                        if (video != null) {
-                            videoList.add(video)
-                        }
+                        videoList.addAll(VoeExtractor(client).videosFromUrl(fUrl))
                     }
                 }
             }

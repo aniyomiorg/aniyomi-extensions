@@ -758,8 +758,7 @@ class AutoEmbedExtractor(private val client: OkHttpClient) {
                     MixDropExtractor(client).videoFromUrl(videoUrl, prefix = prefix)
                 }
                 videoUrl.contains("https://voe") -> {
-                    VoeExtractor(client).videoFromUrl(videoUrl, server.name)
-                        ?.let(::listOf)
+                    VoeExtractor(client).videosFromUrl(videoUrl)
                 }
                 videoUrl.contains("rabbitstream") -> {
                     RabbitStreamExtractor(client).videosFromUrl(videoUrl, headers = videoHeaders, prefix = prefix)

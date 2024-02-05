@@ -163,7 +163,7 @@ class EnNovelas : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             if (link.contains("voe")) {
                 try {
-                    VoeExtractor(client).videoFromUrl(link, "Voex")?.let { videoList.add(it) }
+                    VoeExtractor(client).videosFromUrl(link).also(videoList::addAll)
                 } catch (_: Exception) {}
             }
             if (link.contains("vudeo")) {

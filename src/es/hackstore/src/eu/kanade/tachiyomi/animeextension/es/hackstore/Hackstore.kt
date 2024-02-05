@@ -220,7 +220,7 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                 }
                 server.contains("voe") -> {
-                    val video = VoeExtractor(client).videosFromUrl(url, if (isLatino) "VOE Latino" else if (isSub) "VOE Subtitulado" else "VOE Castellano")
+                    val video = VoeExtractor(client).videosFromUrl(url, if (isLatino) "(Latino) " else if (isSub) "(Subtitulado) " else "(Castellano) ")
                     videoList.addAll(video)
                 }
                 server.contains("filemoon") -> {

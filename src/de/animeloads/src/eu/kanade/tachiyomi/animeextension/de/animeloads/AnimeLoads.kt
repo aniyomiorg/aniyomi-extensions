@@ -229,15 +229,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                             val link = client.newCall(GET(decode)).execute().request.url.toString()
                                                             when {
                                                                 hoster.contains("voesx") && hosterSelection?.contains("voe") == true -> {
-                                                                    val quality = "Voe Deutsch Sub"
-                                                                    val video = try {
-                                                                        VoeExtractor(client).videoFromUrl(link, quality)
-                                                                    } catch (e: Exception) {
-                                                                        null
-                                                                    }
-                                                                    if (video != null) {
-                                                                        videoList.add(video)
-                                                                    }
+                                                                    videoList.addAll(VoeExtractor(client).videosFromUrl(link, "(Deutsch Sub) "))
                                                                 }
 
                                                                 hoster.contains("streamtapecom") && hosterSelection?.contains("stape") == true -> {
@@ -267,15 +259,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                         } else {
                                                             when {
                                                                 hoster.contains("voesx") && hosterSelection?.contains("voe") == true -> {
-                                                                    val quality = "Voe Deutsch Sub"
-                                                                    val video = try {
-                                                                        VoeExtractor(client).videoFromUrl(leaveurl, quality)
-                                                                    } catch (e: Exception) {
-                                                                        null
-                                                                    }
-                                                                    if (video != null) {
-                                                                        videoList.add(video)
-                                                                    }
+                                                                    videoList.addAll(VoeExtractor(client).videosFromUrl(leaveurl, "(Deutsch Sub) "))
                                                                 }
 
                                                                 hoster.contains("streamtapecom") && hosterSelection?.contains("stape") == true -> {
@@ -358,15 +342,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                             val link = client.newCall(GET(decode)).execute().request.url.toString()
                                                             when {
                                                                 hoster.contains("voesx") && hosterSelection?.contains("voe") == true -> {
-                                                                    val quality = "Voe Deutsch Sub"
-                                                                    val video = try {
-                                                                        VoeExtractor(client).videoFromUrl(link, quality)
-                                                                    } catch (e: Exception) {
-                                                                        null
-                                                                    }
-                                                                    if (video != null) {
-                                                                        videoList.add(video)
-                                                                    }
+                                                                    videoList.addAll(VoeExtractor(client).videosFromUrl(link, "(Deutsch Sub) "))
                                                                 }
 
                                                                 hoster.contains("streamtapecom") && hosterSelection?.contains("stape") == true -> {
@@ -396,15 +372,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                         } else {
                                                             when {
                                                                 hoster.contains("voesx") && hosterSelection?.contains("voe") == true -> {
-                                                                    val quality = "Voe Deutsch Sub"
-                                                                    val video = try {
-                                                                        VoeExtractor(client).videoFromUrl(leaveurl, quality)
-                                                                    } catch (e: Exception) {
-                                                                        null
-                                                                    }
-                                                                    if (video != null) {
-                                                                        videoList.add(video)
-                                                                    }
+                                                                    videoList.addAll(VoeExtractor(client).videosFromUrl(leaveurl, "(Deutsch Sub) "))
                                                                 }
 
                                                                 hoster.contains("streamtapecom") && hosterSelection?.contains("stape") == true -> {
@@ -549,15 +517,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                             val link = client.newCall(GET(decode)).execute().request.url.toString()
                                                             when {
                                                                 hoster.contains("voesx") && hosterSelection?.contains("voe") == true -> {
-                                                                    val quality = "Voe Deutsch Dub"
-                                                                    val video = try {
-                                                                        VoeExtractor(client).videoFromUrl(link, quality)
-                                                                    } catch (e: Exception) {
-                                                                        null
-                                                                    }
-                                                                    if (video != null) {
-                                                                        videoList.add(video)
-                                                                    }
+                                                                    videoList.addAll(VoeExtractor(client).videosFromUrl(link, "(Deutsch Dub) "))
                                                                 }
 
                                                                 hoster.contains("streamtapecom") && hosterSelection?.contains("stape") == true -> {
@@ -587,15 +547,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                         } else {
                                                             when {
                                                                 hoster.contains("voesx") && hosterSelection?.contains("voe") == true -> {
-                                                                    val quality = "Voe Deutsch Dub"
-                                                                    val video = try {
-                                                                        VoeExtractor(client).videoFromUrl(leaveurl, quality)
-                                                                    } catch (e: Exception) {
-                                                                        null
-                                                                    }
-                                                                    if (video != null) {
-                                                                        videoList.add(video)
-                                                                    }
+                                                                    videoList.addAll(VoeExtractor(client).videosFromUrl(leaveurl, "(Deutsch Dub) "))
                                                                 }
 
                                                                 hoster.contains("streamtapecom") && hosterSelection?.contains("stape") == true -> {
@@ -678,15 +630,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                             val link = client.newCall(GET(decode)).execute().request.url.toString()
                                                             when {
                                                                 hoster.contains("voesx") && hosterSelection?.contains("voe") == true -> {
-                                                                    val quality = "Voe Deutsch Dub"
-                                                                    val video = try {
-                                                                        VoeExtractor(client).videoFromUrl(link, quality)
-                                                                    } catch (e: Exception) {
-                                                                        null
-                                                                    }
-                                                                    if (video != null) {
-                                                                        videoList.add(video)
-                                                                    }
+                                                                    videoList.addAll(VoeExtractor(client).videosFromUrl(link, "(Deutsch Dub) "))
                                                                 }
 
                                                                 hoster.contains("streamtapecom") && hosterSelection?.contains("stape") == true -> {
@@ -716,15 +660,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                         } else {
                                                             when {
                                                                 hoster.contains("voesx") && hosterSelection?.contains("voe") == true -> {
-                                                                    val quality = "Voe Deutsch Dub"
-                                                                    val video = try {
-                                                                        VoeExtractor(client).videoFromUrl(leaveurl, quality)
-                                                                    } catch (e: Exception) {
-                                                                        null
-                                                                    }
-                                                                    if (video != null) {
-                                                                        videoList.add(video)
-                                                                    }
+                                                                    videoList.addAll(VoeExtractor(client).videosFromUrl(leaveurl, "(Deutsch Dub) "))
                                                                 }
 
                                                                 hoster.contains("streamtapecom") && hosterSelection?.contains("stape") == true -> {

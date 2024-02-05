@@ -151,12 +151,7 @@ class AnimeToast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                     link.contains("https://voe.sx") && hosterSelection?.contains(
                                         "voe",
                                     ) == true -> {
-                                        val quality = "Voe"
-                                        val video =
-                                            VoeExtractor(client).videoFromUrl(link, quality)
-                                        if (video != null) {
-                                            videoList.add(video)
-                                        }
+                                        videoList.addAll(VoeExtractor(client).videosFromUrl(link))
                                     }
                                 }
                             }
@@ -217,11 +212,7 @@ class AnimeToast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         val link = element.select("a").attr("abs:href")
                         when {
                             link.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
-                                val quality = "Voe"
-                                val video = VoeExtractor(client).videoFromUrl(link, quality)
-                                if (video != null) {
-                                    videoList.add(video)
-                                }
+                                videoList.addAll(VoeExtractor(client).videosFromUrl(link))
                             }
                         }
                     }

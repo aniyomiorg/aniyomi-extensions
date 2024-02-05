@@ -388,10 +388,7 @@ class Kool : ConfigurableAnimeSource, AnimeHttpSource() {
                 item.jsonObject["url"]!!.jsonPrimitive.content.contains("https://voe") ||
                     item.jsonObject["url"]!!.jsonPrimitive.content.contains("scatch176duplicities") && hosterSelection?.contains("voe") == true -> {
                     val videoUrl = item.jsonObject["url"]!!.jsonPrimitive.content
-                    val video = VoeExtractor(client).videoFromUrl(videoUrl)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
+                    videoList.addAll(VoeExtractor(client).videosFromUrl(videoUrl))
                 }
                 item.jsonObject["url"]!!.jsonPrimitive.content.contains("https://clipboard") && hosterSelection?.contains("clip") == true -> {
                     val videoUrl = item.jsonObject["url"]!!.jsonPrimitive.content

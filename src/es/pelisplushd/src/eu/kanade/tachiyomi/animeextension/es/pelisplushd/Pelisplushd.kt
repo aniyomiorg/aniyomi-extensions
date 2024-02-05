@@ -171,7 +171,7 @@ open class Pelisplushd(override val name: String, override val baseUrl: String) 
         val embedUrl = url.lowercase()
         try {
             if (embedUrl.contains("voe")) {
-                VoeExtractor(client).videoFromUrl(url, prefix = "Voe:")?.let { videoList.add(it) }
+                VoeExtractor(client).videosFromUrl(url).also(videoList::addAll)
             }
             if ((embedUrl.contains("amazon") || embedUrl.contains("amz")) && !embedUrl.contains("disable")) {
                 val body = client.newCall(GET(url)).execute().asJsoup()

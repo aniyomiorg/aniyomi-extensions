@@ -186,7 +186,7 @@ class OtakuFR : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             host.contains("sendvid.com") -> sendvidExtractor.videosFromUrl(host)
             host.contains("ok.ru") -> okruExtractor.videosFromUrl(host)
             host.contains("upstream") -> upstreamExtractor.videosFromUrl(host)
-            host.startsWith("https://voe") -> voeExtractor.videoFromUrl(host, quality = "Voe")?.let(::listOf) ?: emptyList()
+            host.startsWith("https://voe") -> voeExtractor.videosFromUrl(host)
             else -> emptyList()
         }
     }

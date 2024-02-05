@@ -263,7 +263,7 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                 gdrivePlayerExtractor.videosFromUrl(newUrl, "GdrivePlayer", headers)
             }
             "uqload" in url -> uqloadExtractor.videosFromUrl(url)
-            "voe.sx" in url -> voeExtractor.videoFromUrl(url)?.let(::listOf)
+            "voe.sx" in url -> voeExtractor.videosFromUrl(url)
             "anizmplayer.com" in url -> aincradExtractor.videosFromUrl(url)
             else -> null
         } ?: emptyList()

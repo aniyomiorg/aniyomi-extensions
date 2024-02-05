@@ -178,7 +178,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             url.contains("ok.ru") -> okruExtractor.videosFromUrl(url)
             url.contains("mp4upload") -> mp4uploadExtractor.videosFromUrl(url, headers)
             url.contains("uqload") -> uqloadExtractor.videosFromUrl(url)
-            url.contains("voe") -> voeExtractor.videoFromUrl(url)?.let(::listOf)
+            url.contains("voe") -> voeExtractor.videosFromUrl(url)
             url.contains("shared") -> sharedExtractor.videosFromUrl(url)?.let(::listOf)
             DOOD_REGEX.containsMatchIn(url) -> doodExtractor.videosFromUrl(url, "Dood mirror")
             VIDBOM_REGEX.containsMatchIn(url) -> vidbomExtractor.videosFromUrl(url)

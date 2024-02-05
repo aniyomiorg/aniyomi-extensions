@@ -220,7 +220,7 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
             OkruExtractor(client).videosFromUrl(url, prefix, true).also(videoList::addAll)
         }
         if (embedUrl.contains("voe")) {
-            VoeExtractor(client).videoFromUrl(url, prefix = "$prefix Voe:")?.let { videoList.add(it) }
+            VoeExtractor(client).videosFromUrl(url, prefix).also(videoList::addAll)
         }
         if (embedUrl.contains("streamtape")) {
             StreamTapeExtractor(client).videoFromUrl(url, "$prefix StreamTape")?.let { videoList.add(it) }

@@ -250,7 +250,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             "sendvid.com" in url -> sendvidExtractor.videosFromUrl(url)
             "video.sibnet" in url -> sibnetExtractor.videosFromUrl(url)
             "streamlare.com" in url -> streamlareExtractor.videosFromUrl(url)
-            "voe.sx" in url -> voeExtractor.videoFromUrl(url)?.let(::listOf) ?: emptyList()
+            "voe.sx" in url -> voeExtractor.videosFromUrl(url)
             "//vudeo." in url -> vudeoExtractor.videosFromUrl(url)
             "yourupload.com" in url -> {
                 yourUploadExtractor.videoFromUrl(url, headers)

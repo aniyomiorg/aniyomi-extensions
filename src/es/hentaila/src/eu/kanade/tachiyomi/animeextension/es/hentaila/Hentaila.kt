@@ -212,8 +212,7 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
                     videoList.addAll(StreamWishExtractor(client, headers).videosFromUrl(urlServer, videoNameGen = { "StreamWish:$it" }))
                 }
                 "voe" -> {
-                    val video = VoeExtractor(client).videoFromUrl(urlServer, prefix = "Voe:")
-                    if (video != null) videoList.add(video)
+                    videoList.addAll(VoeExtractor(client).videosFromUrl(urlServer))
                 }
                 "arc" -> {
                     val videoUrl = urlServer.substringAfter("#")

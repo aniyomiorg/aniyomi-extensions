@@ -233,12 +233,8 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (hosterSelection != null) {
                 when {
                     hoster.contains("VOE") && hosterSelection.contains(SConstants.NAME_VOE) -> {
-                        val quality = "Voe $language"
                         val url = client.newCall(GET(redirectgs)).execute().request.url.toString()
-                        val video = VoeExtractor(client).videoFromUrl(url, quality)
-                        if (video != null) {
-                            videoList.add(video)
-                        }
+                        videoList.addAll(VoeExtractor(client).videosFromUrl(url, "($language) "))
                     }
 
                     hoster.contains("Doodstream") && hosterSelection.contains(SConstants.NAME_DOOD) -> {

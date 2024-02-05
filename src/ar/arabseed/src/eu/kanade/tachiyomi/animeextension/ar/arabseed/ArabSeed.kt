@@ -113,7 +113,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             "dood" in url -> doodExtractor.videosFromUrl(url)
             "fviplions" in url || "wish" in url -> streamwishExtractor.videosFromUrl(url)
-            "voe.sx" in url -> voeExtractor.videoFromUrl(url)?.let(::listOf)
+            "voe.sx" in url -> voeExtractor.videosFromUrl(url)
             else -> null
         } ?: emptyList()
     }
