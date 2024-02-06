@@ -36,7 +36,7 @@ import java.util.Locale
 
 class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
 
-    override val name = "Torrentio Anime (Torrent / Debird)"
+    override val name = "Torrentio Anime (Torrent / Debrid)"
 
     override val baseUrl = "https://torrentio.strem.fun"
 
@@ -326,7 +326,10 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
         } ?: ""
 
         anime.thumbnail_url = metaData?.coverImage?.extraLarge
-        anime.description = metaData?.description?.replace(Regex("<br><br>|<.*?>"), "\n") ?: "No Description"
+        anime.description = metaData?.description
+            ?.replace(Regex("<br><br>"), "\n")
+            ?.replace(Regex("<.*?>"), "")
+            ?: "No Description"
 
         anime.status = when (metaData?.status) {
             "RELEASING" -> SAnime.ONGOING
@@ -414,7 +417,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
             appendQueryParam("sort", sortKey?.let { setOf(it) })
 
             val token = preferences.getString(PREF_TOKEN_KEY, null)
-            val debridProvider = preferences.getString(PREF_DEBIRD_KEY, null)
+            val debridProvider = preferences.getString(PREF_DEBRID_KEY, null)
 
             when {
                 token.isNullOrBlank() && debridProvider != "none" -> {
@@ -439,7 +442,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val responseString = response.body.string()
         val streamList = json.decodeFromString<StreamDataTorrent>(responseString)
-        val debridProvider = preferences.getString(PREF_DEBIRD_KEY, null)
+        val debridProvider = preferences.getString(PREF_DEBRID_KEY, null)
 
         val animeTrackers = """http://nyaa.tracker.wf:7777/announce,
             http://anidex.moe:6969/announce,http://tracker.anirena.com:80/announce,
@@ -481,10 +484,10 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         // Debrid provider
         ListPreference(screen.context).apply {
-            key = PREF_DEBIRD_KEY
-            title = "Debird Provider"
-            entries = PREF_DEBIRD_ENTRIES
-            entryValues = PREF_DEBIRD_VALUES
+            key = PREF_DEBRID_KEY
+            title = "Debrid Provider"
+            entries = PREF_DEBRID_ENTRIES
+            entryValues = PREF_DEBRID_VALUES
             setDefaultValue("none")
             summary = "Select 'None' to use torrents. If you choose a Debrid provider, please enter your token key."
 
@@ -596,9 +599,9 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_TOKEN_DEFAULT = ""
         private const val PREF_TOKEN_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
 
-        // Debird
-        private const val PREF_DEBIRD_KEY = "debrid_provider"
-        private val PREF_DEBIRD_ENTRIES = arrayOf(
+        // Debrid
+        private const val PREF_DEBRID_KEY = "debrid_provider"
+        private val PREF_DEBRID_ENTRIES = arrayOf(
             "None",
             "RealDebrid",
             "Premiumize",
@@ -606,7 +609,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
             "DebridLink",
             "Offcloud",
         )
-        private val PREF_DEBIRD_VALUES = arrayOf(
+        private val PREF_DEBRID_VALUES = arrayOf(
             "none",
             "realdebrid",
             "premiumize",
