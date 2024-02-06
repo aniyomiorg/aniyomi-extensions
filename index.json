@@ -324,6 +324,26 @@
     ]
   },
   {
+    "name": "Aniyomi: Torrentio Anime (Torrent / Debrid)",
+    "pkg": "eu.kanade.tachiyomi.animeextension.all.torrentioanime",
+    "apk": "aniyomi-all.torrentioanime-v14.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "14.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Torrentio Anime (Torrent / Debrid)",
+        "lang": "all",
+        "id": "7490206640756700883",
+        "baseUrl": "https://torrentio.strem.fun",
+        "versionId": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Akwam",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.akwam",
     "apk": "aniyomi-ar.akwam-v14.9.apk",
@@ -3161,10 +3181,10 @@
   {
     "name": "Aniyomi: Oploverz",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.oploverz",
-    "apk": "aniyomi-id.oploverz-v14.23.apk",
+    "apk": "aniyomi-id.oploverz-v14.24.apk",
     "lang": "id",
-    "code": 23,
-    "version": "14.23",
+    "code": 24,
+    "version": "14.24",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3173,7 +3193,7 @@
         "name": "Oploverz",
         "lang": "id",
         "id": "2573103800968432770",
-        "baseUrl": "https://oploverz.guru",
+        "baseUrl": "https://oploverz.plus",
         "versionId": 1
       }
     ]
