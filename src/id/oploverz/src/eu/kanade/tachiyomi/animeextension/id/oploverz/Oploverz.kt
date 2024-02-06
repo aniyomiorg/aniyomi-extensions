@@ -28,7 +28,7 @@ import java.util.Locale
 
 class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
     override val name: String = "Oploverz"
-    override val baseUrl: String = "https://oploverz.guru"
+    override val baseUrl: String = "https://oploverz.plus"
     override val lang: String = "id"
     override val supportsLatest: Boolean = true
 
@@ -103,9 +103,11 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.asJsoup()
+        val parseUrl = response.request.url.toUrl()
+        val url = "${parseUrl.protocol}://${parseUrl.host}"
         return doc.select("#server > ul > li > div.east_player_option")
             .parallelMapNotNullBlocking {
-                runCatching { getEmbedLinks(it) }.getOrNull()
+                runCatching { getEmbedLinks(url, it) }.getOrNull()
             }
             .parallelCatchingFlatMapBlocking {
                 getVideosFromEmbed(it.first)
@@ -162,14 +164,14 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
-    private fun getEmbedLinks(element: Element): Pair<String, String> {
+    private fun getEmbedLinks(url: String, element: Element): Pair<String, String> {
         val form = FormBody.Builder().apply {
             add("action", "player_ajax")
             add("post", element.attr("data-post"))
             add("nume", element.attr("data-nume"))
             add("type", element.attr("data-type"))
         }.build()
-        return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = form))
+        return client.newCall(POST("$url/wp-admin/admin-ajax.php", body = form))
             .execute()
             .let { Pair(it.asJsoup().selectFirst(".playeriframe")!!.attr("src"), "") }
     }
