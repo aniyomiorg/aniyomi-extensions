@@ -13,7 +13,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="www.hdfilmcehennemi.de"
+                    android:host="www.hdfilmcehennemi.us"
                     android:pathPattern="/..*"
                     android:scheme="https" />
             </intent-filter>
