@@ -22,7 +22,6 @@ import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import eu.kanade.tachiyomi.util.parallelMapBlocking
 import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.MultipartBody
 import okhttp3.Request
@@ -31,7 +30,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -48,8 +46,6 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", "$baseUrl/")
         .add("Origin", baseUrl)
-
-    private val json: Json by injectLazy()
 
     private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -226,7 +222,7 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
     private val vidmolyExtractor by lazy { VidmolyExtractor(client, headers) }
     private val closeloadExtractor by lazy { CloseloadExtractor(client, headers) }
-    private val xbetExtractor by lazy { XBetExtractor(client, headers, json) }
+    private val xbetExtractor by lazy { XBetExtractor(client, headers) }
 
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.asJsoup()

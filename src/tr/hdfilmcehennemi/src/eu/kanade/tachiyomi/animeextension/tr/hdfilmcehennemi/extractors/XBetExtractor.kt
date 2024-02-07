@@ -8,7 +8,6 @@ import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -16,7 +15,6 @@ import okhttp3.OkHttpClient
 class XBetExtractor(
     private val client: OkHttpClient,
     private val headers: Headers,
-    private val json: Json,
 ) {
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
 
