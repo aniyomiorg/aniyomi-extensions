@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi.extractors.CloseloadExtractor
-import eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi.extractors.RapidrameExtractor
 import eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi.extractors.VidmolyExtractor
 import eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi.extractors.XBetExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -227,7 +226,6 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
     private val vidmolyExtractor by lazy { VidmolyExtractor(client, headers) }
     private val closeloadExtractor by lazy { CloseloadExtractor(client, headers) }
-    private val rapidrameExtractor by lazy { RapidrameExtractor(client, headers, json) }
     private val xbetExtractor by lazy { XBetExtractor(client, headers, json) }
 
     override fun videoListParse(response: Response): List<Video> {
@@ -244,7 +242,6 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 when {
                     url.contains("https://closeload") -> closeloadExtractor.videosFromUrl(url)
                     url.contains("vidmoly") -> vidmolyExtractor.videosFromUrl(url)
-                    url.contains("$baseUrl/playerr") -> rapidrameExtractor.videosFromUrl(url)
                     url.contains("trstx.org") -> xbetExtractor.videosFromUrl(url)
                     else -> emptyList()
                 }
@@ -283,7 +280,6 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
