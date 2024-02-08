@@ -207,7 +207,9 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val player = response.asJsoup().selectFirst("div#player")!!
         return player.select("div.tab-video").flatMap { div ->
-            div.select(videoListSelector()).flatMap { element ->
+            val noComment = div.outerHtml().replace("<!--", "").replace("-->", "")
+            val newDoc = Jsoup.parseBodyFragment(noComment)
+            newDoc.select(videoListSelector()).ifEmpty { newDoc.select("a") }.flatMap { element ->
                 runCatching {
                     videosFromElement(element)
                 }.onFailure { it.printStackTrace() }.getOrElse { emptyList() }
@@ -218,13 +220,8 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun videosFromElement(element: Element): List<Video> {
         return when (element.tagName()) {
             "iframe" -> {
-                val url = element.attr("data-lazy-src").ifEmpty { element.attr("src") }
-                    .let {
-                        when {
-                            it.startsWith("/") -> baseUrl + it
-                            else -> it
-                        }
-                    }
+                val url = element.absUrl("data-lazy-src").ifEmpty { element.absUrl("src") }
+
                 client.newCall(GET(url, headers)).execute()
                     .asJsoup()
                     .select(videoListSelector())
@@ -238,6 +235,18 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                 }.ifEmpty { null }?.replace("\\", "")
                 scriptData?.let(::videosFromScript).orEmpty()
+            }
+            "a" -> {
+                val url = element.attr("href").let {
+                    if (!it.startsWith("https")) "https:$it" else it
+                }.toHttpUrl()
+                val token = url.queryParameter("token")!!
+                val headers = headersBuilder().set("cookie", "token=$token;").build()
+                val host = "https://sabornutritivo.com"
+                val doc = client.newCall(GET("$host/social.php", headers)).execute().asJsoup()
+                val videoHeaders = headersBuilder().set("referer", doc.location()).build()
+                val iframeUrl = doc.selectFirst("iframe")!!.attr("src").trim()
+                listOf(Video(iframeUrl, "Animes Digital", iframeUrl, videoHeaders))
             }
             else -> emptyList()
         }
@@ -253,14 +262,19 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .map {
                 val quality = it.substringAfter("label", "")
                     .substringAfterKey()
+                    .trim()
                     .ifEmpty { name }
                 val url = it.substringAfter("file").substringAfter("src")
                     .substringAfterKey()
+                    .trim()
                 Video(url, quality, url, headers)
             }
     }
 
-    override fun videoListSelector() = "iframe, script:containsData(eval), script:containsData(player.src), script:containsData(this.src), script:containsData(sources:)"
+    private val scriptSelectors = listOf("eval", "player.src", "this.src", "sources:")
+        .joinToString { "script:containsData($it):not(:containsData(/bg.mp4))" }
+
+    override fun videoListSelector() = "iframe, $scriptSelectors"
 
     override fun videoFromElement(element: Element): Video {
         throw UnsupportedOperationException()
