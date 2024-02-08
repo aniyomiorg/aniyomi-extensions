@@ -109,7 +109,7 @@ class DebridIndex : ConfigurableAnimeSource, AnimeHttpSource() {
                 url = video.streams.firstOrNull()?.url.orEmpty()
                 date_upload = parseDate(video.released)
             }
-        } ?: emptyList<SEpisode>().reversed()
+        }?.reversed() ?: emptyList<SEpisode>()
     }
 
     private fun parseDate(dateStr: String): Long {
