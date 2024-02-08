@@ -2,8 +2,6 @@ package eu.kanade.tachiyomi.animeextension.all.debridindex
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.os.Handler
-import android.os.Looper
 import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
@@ -51,7 +49,7 @@ class DebridIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         when {
             tokenKey.isNullOrBlank() -> throw Exception("Please enter the token in extension settings.")
             else -> {
-                return GET("$baseUrl/$debridProvider=$tokenKey/catalog/other/torrentio-$debridProvider.json")
+                return GET("$baseUrl/${debridProvider!!.lowercase()}=$tokenKey/catalog/other/torrentio-${debridProvider.lowercase()}.json")
             }
         }
     }
@@ -100,7 +98,7 @@ class DebridIndex : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun episodeListRequest(anime: SAnime): Request {
         val tokenKey = preferences.getString(PREF_TOKEN_KEY, null)
         val debridProvider = preferences.getString(PREF_DEBRID_KEY, "RealDebrid")
-        return GET("$baseUrl/$debridProvider=$tokenKey/meta/other/${anime.url}.json")
+        return GET("$baseUrl/${debridProvider!!.lowercase()}=$tokenKey/meta/other/${anime.url}.json")
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -111,7 +109,7 @@ class DebridIndex : ConfigurableAnimeSource, AnimeHttpSource() {
                 url = video.streams.firstOrNull()?.url.orEmpty()
                 date_upload = parseDate(video.released)
             }
-        } ?: emptyList()
+        } ?: emptyList<SEpisode>().reversed()
     }
 
     private fun parseDate(dateStr: String): Long {
