@@ -3,6 +3,8 @@ package eu.kanade.tachiyomi.animeextension.pt.animesdigital
 import android.app.Application
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.pt.animesdigital.extractors.ProtectorExtractor
+import eu.kanade.tachiyomi.animeextension.pt.animesdigital.extractors.ScriptExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -10,14 +12,12 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.unpacker.Unpacker
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
@@ -27,7 +27,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
 
 class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -40,8 +39,6 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
-
-    private val json: Json by injectLazy()
 
     private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -126,7 +123,7 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeParse(response: Response): AnimesPage {
         return runCatching {
             val data = response.parseAs<SearchResponseDto>()
-            val animes = data.results.map(Jsoup::parse)
+            val animes = data.results.map(Jsoup::parseBodyFragment)
                 .mapNotNull { it.selectFirst(searchAnimeSelector()) }
                 .map(::searchAnimeFromElement)
             val hasNext = data.total_page > data.page
@@ -156,15 +153,15 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> SAnime.UNKNOWN
         }
 
-        val infos = doc.selectFirst("div.crw > div.dados")!!
+        with(doc.selectFirst("div.crw > div.dados")!!) {
+            artist = getInfo("Estúdio")
+            author = getInfo("Autor") ?: getInfo("Diretor")
 
-        artist = infos.getInfo("Estúdio")
-        author = infos.getInfo("Autor") ?: infos.getInfo("Diretor")
+            title = selectFirst("h1")!!.text()
+            genre = select("div.genre a").eachText().joinToString()
 
-        title = infos.selectFirst("h1")!!.text()
-        genre = infos.select("div.genre a").eachText().joinToString()
-
-        description = infos.selectFirst("div.sinopse")?.text()
+            description = selectFirst("div.sinopse")?.text()
+        }
     }
 
     // ============================== Episodes ==============================
@@ -195,9 +192,9 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode_number = epname.substringAfterLast(" ").toFloatOrNull() ?: 1F
         name = buildString {
             append(epname)
-            element.selectFirst("div.sub_title")?.text()?.let {
+            element.selectFirst("div.sub_title")?.text()?.also {
                 if (!it.contains("Ainda não tem um titulo oficial")) {
-                    append(" - $it")
+                    append(" - ", it)
                 }
             }
         }
@@ -217,6 +214,8 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
+    private val protectorExtractor by lazy { ProtectorExtractor(client) }
+
     private fun videosFromElement(element: Element): List<Video> {
         return when (element.tagName()) {
             "iframe" -> {
@@ -227,48 +226,10 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     .select(videoListSelector())
                     .flatMap(::videosFromElement)
             }
-            "script" -> {
-                val scriptData = element.data().let {
-                    when {
-                        "eval(function" in it -> Unpacker.unpack(it)
-                        else -> it
-                    }
-                }.ifEmpty { null }?.replace("\\", "")
-                scriptData?.let(::videosFromScript).orEmpty()
-            }
-            "a" -> {
-                val url = element.attr("href").let {
-                    if (!it.startsWith("https")) "https:$it" else it
-                }.toHttpUrl()
-                val token = url.queryParameter("token")!!
-                val headers = headersBuilder().set("cookie", "token=$token;").build()
-                val host = "https://sabornutritivo.com"
-                val doc = client.newCall(GET("$host/social.php", headers)).execute().asJsoup()
-                val videoHeaders = headersBuilder().set("referer", doc.location()).build()
-                val iframeUrl = doc.selectFirst("iframe")!!.attr("src").trim()
-                listOf(Video(iframeUrl, "Animes Digital", iframeUrl, videoHeaders))
-            }
+            "script" -> ScriptExtractor.videosFromScript(element.data(), headers)
+            "a" -> protectorExtractor.videosFromUrl(element.attr("href"))
             else -> emptyList()
         }
-    }
-
-    private fun videosFromScript(script: String): List<Video> {
-        return script.substringAfter("sources:").substringAfter(".src(")
-            .substringBefore(")")
-            .substringAfter("[")
-            .substringBefore("]")
-            .split("{")
-            .drop(1)
-            .map {
-                val quality = it.substringAfter("label", "")
-                    .substringAfterKey()
-                    .trim()
-                    .ifEmpty { name }
-                val url = it.substringAfter("file").substringAfter("src")
-                    .substringAfterKey()
-                    .trim()
-                Video(url, quality, url, headers)
-            }
     }
 
     private val scriptSelectors = listOf("eval", "player.src", "this.src", "sources:")
@@ -299,7 +260,7 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }.let(screen::addPreference)
+        }.also(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
@@ -325,12 +286,6 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .takeUnless { it.isBlank() || it == "?" }
         }
     }
-
-    private fun String.substringAfterKey() = substringAfter(":")
-        .substringAfter('"')
-        .substringBefore('"')
-        .substringAfter("'")
-        .substringBefore("'")
 
     companion object {
         const val PREFIX_SEARCH = "id:"
