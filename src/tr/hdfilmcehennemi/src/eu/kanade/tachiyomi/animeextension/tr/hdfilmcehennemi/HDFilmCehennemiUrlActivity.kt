@@ -8,7 +8,7 @@ import android.util.Log
 import kotlin.system.exitProcess
 
 /**
- * Springboard that accepts https://www.hdfilmcehennemi.de/<item> intents
+ * Springboard that accepts https://www.hdfilmcehennemi.us/<item> intents
  * and redirects them to the main Aniyomi process.
  */
 class HDFilmCehennemiUrlActivity : Activity() {

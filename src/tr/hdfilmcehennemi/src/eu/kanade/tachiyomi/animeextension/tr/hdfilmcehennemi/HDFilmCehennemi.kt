@@ -3,7 +3,7 @@ package eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi
 import android.app.Application
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi.extractors.RapidrameExtractor
+import eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi.extractors.CloseloadExtractor
 import eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi.extractors.VidmolyExtractor
 import eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi.extractors.XBetExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -22,7 +22,6 @@ import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import eu.kanade.tachiyomi.util.parallelMapBlocking
 import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.MultipartBody
 import okhttp3.Request
@@ -31,7 +30,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -39,7 +37,7 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "HDFilmCehennemi"
 
-    override val baseUrl = "https://www.hdfilmcehennemi.fun"
+    override val baseUrl = "https://www.hdfilmcehennemi.us"
 
     override val lang = "tr"
 
@@ -48,8 +46,6 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", "$baseUrl/")
         .add("Origin", baseUrl)
-
-    private val json: Json by injectLazy()
 
     private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -225,8 +221,8 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     private val vidmolyExtractor by lazy { VidmolyExtractor(client, headers) }
-    private val rapidrameExtractor by lazy { RapidrameExtractor(client, headers, json) }
-    private val xbetExtractor by lazy { XBetExtractor(client, headers, json) }
+    private val closeloadExtractor by lazy { CloseloadExtractor(client, headers) }
+    private val xbetExtractor by lazy { XBetExtractor(client, headers) }
 
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.asJsoup()
@@ -235,12 +231,13 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .drop(1)
             .parallelMapBlocking { client.newCall(GET(it.absUrl("href") + "/")).await().asJsoup() }
             .let { listOf(doc) + it }
-            .mapNotNull { it.selectFirst("div.card-video > iframe")?.attr("data-src") }
+            .mapNotNull { it.selectFirst("div.card-video > iframe") }
+            .map { it.attr("data-src").ifBlank { it.attr("src") } }
             .filter(String::isNotBlank)
             .parallelCatchingFlatMapBlocking { url ->
                 when {
+                    url.contains("https://closeload") -> closeloadExtractor.videosFromUrl(url)
                     url.contains("vidmoly") -> vidmolyExtractor.videosFromUrl(url)
-                    url.contains("$baseUrl/playerr") -> rapidrameExtractor.videosFromUrl(url)
                     url.contains("trstx.org") -> xbetExtractor.videosFromUrl(url)
                     else -> emptyList()
                 }
@@ -279,7 +276,6 @@ class HDFilmCehennemi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
