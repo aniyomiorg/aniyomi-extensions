@@ -58,7 +58,7 @@ object Unpacker {
         }
     }
 
-    private val wordRegex by lazy { Regex("""\w+""") }
+    private val wordRegex by lazy { Regex("""[0-9A-Za-z]+""") }
 
     private fun parseRadix62(str: String): Int {
         var result = 0
