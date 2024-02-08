@@ -417,7 +417,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
             appendQueryParam("sort", sortKey?.let { setOf(it) })
 
             val token = preferences.getString(PREF_TOKEN_KEY, null)
-            val debridProvider = preferences.getString(PREF_DEBRID_KEY, null)
+            val debridProvider = preferences.getString(PREF_DEBRID_KEY, "none")
 
             when {
                 token.isNullOrBlank() && debridProvider != "none" -> {
@@ -442,7 +442,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val responseString = response.body.string()
         val streamList = json.decodeFromString<StreamDataTorrent>(responseString)
-        val debridProvider = preferences.getString(PREF_DEBRID_KEY, null)
+        val debridProvider = preferences.getString(PREF_DEBRID_KEY, "none")
 
         val animeTrackers = """http://nyaa.tracker.wf:7777/announce,
             http://anidex.moe:6969/announce,http://tracker.anirena.com:80/announce,
