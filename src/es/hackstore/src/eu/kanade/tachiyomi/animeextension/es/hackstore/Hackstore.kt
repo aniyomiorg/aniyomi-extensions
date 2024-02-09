@@ -19,7 +19,6 @@ import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
@@ -199,7 +198,8 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
     private fun extractUrlFromDonFunction(fullUrl: String): String {
         val response = client.newCall(GET(fullUrl, headers)).execute()
-        val document = response.asJsoup()
+        val body = response.body.string()
+        val document = Jsoup.parse(body)
         val scriptElement = document.selectFirst("script:containsData(function don())")
         val urlPattern = Regex("window\\.location\\.href\\s*=\\s*'([^']+)'")
         val matchResult = scriptElement?.data()?.let { urlPattern.find(it) }
@@ -214,8 +214,9 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         tabs.forEach { tab ->
             val server = tab.select("a.playr").text()
-            val fullUrl = tab.select("a.playr").attr("abs:data-href")
+            val deco = tab.select("a.playr").attr("data-href")
             val langs = tab.select("a.playr").attr("data-lang")
+            val fullUrl = baseUrl + deco
             val url = extractUrlFromDonFunction(fullUrl)
             val isLatino = langs.contains("latino")
             val isSub = langs.contains("subtitulado") || langs.contains("sub") || langs.contains("japonés")
@@ -243,7 +244,6 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val video = DoodExtractor(client).videosFromUrl(url, if (isLatino) "Dood Latino" else if (isSub) "Dood Subtitulado" else "Dood Castellano")
                     videoList.addAll(video)
                 }
-
             }
         }
 
