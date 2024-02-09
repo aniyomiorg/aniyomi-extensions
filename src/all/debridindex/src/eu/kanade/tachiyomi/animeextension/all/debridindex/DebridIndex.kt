@@ -103,13 +103,14 @@ class DebridIndex : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val jsonData = response.body.string()
-        return json.decodeFromString<SubFiles>(jsonData).meta?.videos?.map { video ->
+        return json.decodeFromString<SubFiles>(jsonData).meta?.videos?.mapIndexed { index, video ->
             SEpisode.create().apply {
+                episode_number = (index + 1).toFloat()
                 name = video.title
                 url = video.streams.firstOrNull()?.url.orEmpty()
                 date_upload = parseDate(video.released)
             }
-        }?.reversed() ?: emptyList<SEpisode>()
+        }?.reversed() ?: emptyList()
     }
 
     private fun parseDate(dateStr: String): Long {
