@@ -21,6 +21,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
@@ -195,22 +196,30 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode { throw UnsupportedOperationException() }
 
     // ============================ Video Links =============================
+    private fun extractUrlFromDonFunction(fullUrl: String): String {
+        val response = client.newCall(GET(fullUrl, headers)).execute()
+        val body = response.body.string()
+        val document = Jsoup.parse(body)
+        val scriptElement = document.selectFirst("script:containsData(function don())")
+        val urlPattern = Regex("window\\.location\\.href\\s*=\\s*'([^']+)'")
+        val matchResult = scriptElement?.data()?.let { urlPattern.find(it) }
+        return matchResult?.groupValues?.get(1) ?: "url not found"
+    }
+
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
 
-        val table = document.select("table.episodes")
-        val rows = table.select("tbody tr.tabletr")
+        val tabs = document.select("ul.TbVideoNv li.pres")
 
-        rows.forEach { row ->
-            val serverElement = row.select("td:eq(0)")
-            val linkElement = row.select("td:eq(1) a")
-
-            val server = serverElement.text()
-            val url = linkElement.attr("href")
-
-            val isLatino = server.contains("latino")
-            val isSub = server.contains("subtitulado")
+        tabs.forEach { tab ->
+            val server = tab.select("a.playr").text()
+            val deco = tab.select("a.playr").attr("data-href")
+            val langs = tab.select("a.playr").attr("data-lang")
+            val fullUrl = baseUrl + deco
+            val url = extractUrlFromDonFunction(fullUrl)
+            val isLatino = langs.contains("latino")
+            val isSub = langs.contains("subtitulado") || langs.contains("sub") || langs.contains("japonés")
 
             when {
                 server.contains("streamtape") -> {
@@ -240,7 +249,7 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return videoList
     }
-    override fun videoListSelector(): String = "#onpn > table > tbody > tr > td.link-td > a"
+    override fun videoListSelector(): String = "ul.TbVideoNv li.pres a.playr"
 
     override fun videoFromElement(element: Element): Video { throw UnsupportedOperationException() }
 
@@ -273,7 +282,7 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         private const val PREF_SERVER_KEY = "preferred_server"
         private const val PREF_SERVER_DEFAULT = "DoodStream"
-        private val SERVER_LIST = arrayOf("DoodStream", "StreamTape", "VOE", "Filemoon", "StreamWish")
+        private val SERVER_LIST = arrayOf("DoodStream", "StreamTape", "Voe", "Filemoon", "StreamWish")
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
