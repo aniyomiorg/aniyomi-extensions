@@ -198,13 +198,9 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     private fun extractUrlFromDonFunction(fullUrl: String): String {
-        val client = OkHttpClient()
-
         val response = client.newCall(GET(fullUrl, headers)).execute()
         val body = response.body.string()
-
         val document = Jsoup.parse(body)
-
         val scriptElement = document.selectFirst("script:containsData(function don())")
         val urlPattern = Regex("window\\.location\\.href\\s*=\\s*'([^']+)'")
         val matchResult = scriptElement?.data()?.let { urlPattern.find(it) }
