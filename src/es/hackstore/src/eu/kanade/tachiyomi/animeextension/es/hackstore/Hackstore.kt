@@ -200,8 +200,7 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun extractUrlFromDonFunction(fullUrl: String): String {
         val client = OkHttpClient()
 
-        val request = Request.Builder().url(fullUrl).build()
-        val response = client.newCall(request).execute()
+        val response = client.newCall(GET(fullUrl, headers)).execute()
         val body = response.body.string()
 
         val document = Jsoup.parse(body)
