@@ -219,9 +219,8 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         tabs.forEach { tab ->
             val server = tab.select("a.playr").text()
-            val deco = tab.select("a.playr").attr("data-href")
+            val fullUrl = tab.select("a.playr").attr("abs:data-href")
             val langs = tab.select("a.playr").attr("data-lang")
-            val fullUrl = baseUrl + deco
             val url = extractUrlFromDonFunction(fullUrl)
             val isLatino = langs.contains("latino")
             val isSub = langs.contains("subtitulado") || langs.contains("sub") || langs.contains("japonés")
