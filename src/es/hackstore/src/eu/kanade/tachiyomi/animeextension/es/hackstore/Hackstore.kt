@@ -206,7 +206,7 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val document = Jsoup.parse(body)
 
-        val scriptElement = document.select("script:containsData(function don())").firstOrNull()
+        val scriptElement = document.selectFirst("script:containsData(function don())")
         val urlPattern = Regex("window\\.location\\.href\\s*=\\s*'([^']+)'")
         val matchResult = scriptElement?.data()?.let { urlPattern.find(it) }
         return matchResult?.groupValues?.get(1) ?: "url not found"
