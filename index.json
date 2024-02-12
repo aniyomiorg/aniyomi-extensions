@@ -3221,10 +3221,10 @@
   {
     "name": "Aniyomi: Samehadaku",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.samehadaku",
-    "apk": "aniyomi-id.samehadaku-v14.5.apk",
+    "apk": "aniyomi-id.samehadaku-v14.6.apk",
     "lang": "id",
-    "code": 5,
-    "version": "14.5",
+    "code": 6,
+    "version": "14.6",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3233,7 +3233,7 @@
         "name": "Samehadaku",
         "lang": "id",
         "id": "7446063017613536202",
-        "baseUrl": "https://samehadaku.gold",
+        "baseUrl": "https://samehadaku.show",
         "versionId": 1
       }
     ]
