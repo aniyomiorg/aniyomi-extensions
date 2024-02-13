@@ -12,6 +12,7 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.animesource.UnmeteredSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -31,16 +32,18 @@ import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.security.MessageDigest
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
-class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpSource() {
-
-    override val name = "Jellyfin$suffix"
+class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpSource(), UnmeteredSource {
+    override val baseUrl by lazy { getPrefBaseUrl() }
 
     override val lang = "all"
+
+    override val name by lazy { "Jellyfin (${getCustomLabel()})" }
 
     override val supportsLatest = true
 
@@ -82,11 +85,15 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
             .build()
     }
 
-    private val preferences: SharedPreferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    override val id by lazy {
+        val key = "jellyfin" + (if (suffix == "1") "" else " ($suffix)") + "/all/$versionId"
+        val bytes = MessageDigest.getInstance("MD5").digest(key.toByteArray())
+        (0..7).map { bytes[it].toLong() and 0xff shl 8 * (7 - it) }.reduce(Long::or) and Long.MAX_VALUE
     }
 
-    override var baseUrl = preferences.getHostUrl
+    internal val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     private var username = preferences.getUserName
     private var password = preferences.getPassword
@@ -100,7 +107,6 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
 
     private fun login(new: Boolean, context: Context? = null): Boolean? {
         if (apiKey == null || userId == null || new) {
-            baseUrl = preferences.getHostUrl
             username = preferences.getUserName
             password = preferences.getPassword
             if (username.isEmpty() || password.isEmpty()) {
@@ -108,7 +114,7 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
             }
             val (newKey, newUid) = runBlocking {
                 withContext(Dispatchers.IO) {
-                    JellyfinAuthenticator(preferences, baseUrl, client)
+                    JellyfinAuthenticator(preferences, getPrefBaseUrl(), client)
                         .login(username, password)
                 }
             }
@@ -398,6 +404,13 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
         const val APIKEY_KEY = "api_key"
         const val USERID_KEY = "user_id"
 
+        internal const val EXTRA_SOURCES_COUNT_KEY = "extraSourcesCount"
+        internal const val EXTRA_SOURCES_COUNT_DEFAULT = "3"
+        private val EXTRA_SOURCES_ENTRIES = (1..10).map { it.toString() }.toTypedArray()
+
+        private const val PREF_CUSTOM_LABEL_KEY = "pref_label"
+        private const val PREF_CUSTOM_LABEL_DEFAULT = ""
+
         private const val HOSTURL_KEY = "host_url"
         private const val HOSTURL_DEFAULT = "http://127.0.0.1:8096"
 
@@ -430,7 +443,50 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
         private const val PREF_TRUST_CERT_DEFAULT = false
     }
 
+    private fun getCustomLabel(): String =
+        preferences.getString(PREF_CUSTOM_LABEL_KEY, suffix)!!.ifBlank { suffix }
+
+    private fun getPrefBaseUrl(): String =
+        preferences.getString(HOSTURL_KEY, HOSTURL_DEFAULT)!!
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        if (suffix == "1") {
+            ListPreference(screen.context).apply {
+                key = EXTRA_SOURCES_COUNT_KEY
+                title = "Number of sources"
+                summary = "Number of jellyfin sources to create. There will always be at least one Jellyfin source."
+                entries = EXTRA_SOURCES_ENTRIES
+                entryValues = EXTRA_SOURCES_ENTRIES
+
+                setDefaultValue(EXTRA_SOURCES_COUNT_DEFAULT)
+                setOnPreferenceChangeListener { _, newValue ->
+                    try {
+                        val setting = preferences.edit().putString(EXTRA_SOURCES_COUNT_KEY, newValue as String).commit()
+                        Toast.makeText(screen.context, "Restart Aniyomi to apply new setting.", Toast.LENGTH_LONG).show()
+                        setting
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        false
+                    }
+                }
+            }.also(screen::addPreference)
+        }
+
+        EditTextPreference(screen.context).apply {
+            key = PREF_CUSTOM_LABEL_KEY
+            title = "Custom Label"
+            summary = "Show the given label for the source instead of the default."
+            setDefaultValue(PREF_CUSTOM_LABEL_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                runCatching {
+                    val value = (newValue as String).trim().ifBlank { PREF_CUSTOM_LABEL_DEFAULT }
+                    Toast.makeText(screen.context, "Restart Aniyomi to apply new setting.", Toast.LENGTH_LONG).show()
+                    preferences.edit().putString(key, value).commit()
+                }.getOrDefault(false)
+            }
+        }.also(screen::addPreference)
+
         val mediaLibPref = medialibPreference(screen)
         screen.addPreference(
             screen.editTextPreference(
