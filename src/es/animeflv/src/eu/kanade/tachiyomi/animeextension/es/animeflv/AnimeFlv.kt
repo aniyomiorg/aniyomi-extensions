@@ -11,7 +11,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
@@ -50,12 +49,12 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"
-        private const val PREF_QUALITY_DEFAULT = "1080"
+        private const val PREF_QUALITY_DEFAULT = "480"
         private val QUALITY_LIST = arrayOf("1080", "720", "480", "360")
 
         private const val PREF_SERVER_KEY = "preferred_server"
-        private const val PREF_SERVER_DEFAULT = "YourUpload"
-        private val SERVER_LIST = arrayOf("MailRu", "Okru", "YourUpload", "DoodStream", "StreamTape")
+        private const val PREF_SERVER_DEFAULT = "StreamWish"
+        private val SERVER_LIST = arrayOf("StreamWish", "YourUpload", "Mail.ru", "OK.ru", "Streamtape")
     }
 
     override fun popularAnimeSelector(): String = "div.Container ul.ListAnimes li article"
@@ -123,7 +122,6 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 val stapeUrl = json!!["url"]!!.jsonPrimitive!!.content
                                 StreamTapeExtractor(client).videoFromUrl(stapeUrl)?.let(::listOf)
                             }
-                            "Doodstream" -> DoodExtractor(client).videoFromUrl(url, "DoodStream", false)?.let(::listOf)
                             "Okru" -> OkruExtractor(client).videosFromUrl(url)
                             "YourUpload" -> YourUploadExtractor(client).videoFromUrl(url, headers = headers)
                             "SW" -> {

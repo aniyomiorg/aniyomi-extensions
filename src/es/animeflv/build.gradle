@@ -10,6 +10,5 @@ dependencies {
     implementation(project(':lib:yourupload-extractor'))
     implementation(project(':lib:streamtape-extractor'))
     implementation(project(':lib:okru-extractor'))
-    implementation(project(':lib:dood-extractor'))
     implementation(project(':lib:streamwish-extractor'))
 }
