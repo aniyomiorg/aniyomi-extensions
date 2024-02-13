@@ -54,7 +54,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         private const val PREF_SERVER_KEY = "preferred_server"
         private const val PREF_SERVER_DEFAULT = "StreamWish"
-        private val SERVER_LIST = arrayOf("StreamWish", "YourUpload", "Mail.ru", "OK.ru", "Streamtape")
+        private val SERVER_LIST = arrayOf("StreamWish", "YourUpload", "Okru", "Streamtape")
     }
 
     override fun popularAnimeSelector(): String = "div.Container ul.ListAnimes li article"
@@ -128,7 +128,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 val docHeaders = headers.newBuilder()
                                     .add("Referer", "$baseUrl/")
                                     .build()
-                                StreamWishExtractor(client, docHeaders).videosFromUrl(url, videoNameGen = { "StreamWish:$it" })
+                                StreamWishExtractor(client, docHeaders).videosFromUrl(url, videoNameGen = { "StreamWish: $it" })
                             }
                             else -> null
                         }
