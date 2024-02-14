@@ -12,11 +12,11 @@ class AnimeStreamGenerator : ThemeSourceGenerator {
 
     override val sources = listOf(
         SingleLang("AnimeBalkan", "https://animebalkan.org", "sr", isNsfw = false, overrideVersionCode = 1),
-        SingleLang("AnimeIndo", "https://animeindo.skin", "id", isNsfw = false, overrideVersionCode = 9),
+        SingleLang("AnimeIndo", "https://animeindo.skin", "id", isNsfw = false, overrideVersionCode = 10),
         SingleLang("AnimeKhor", "https://animekhor.xyz", "en", isNsfw = false, overrideVersionCode = 3),
         SingleLang("Animenosub", "https://animenosub.com", "en", isNsfw = true, overrideVersionCode = 4),
         SingleLang("AnimeXin", "https://animexin.vip", "all", isNsfw = false, overrideVersionCode = 8),
-        SingleLang("AnimeYT.es", "https://animeyt.es", "es", isNsfw = false, className = "AnimeYTES", pkgName = "animeytes", overrideVersionCode = 2),
+        SingleLang("AnimeYT.es", "https://animeyt.es", "es", isNsfw = false, className = "AnimeYTES", pkgName = "animeytes", overrideVersionCode = 3),
         SingleLang("Tiodonghua.com", "https://anime.tiodonghua.com", "es", isNsfw = false, className = "Tiodonghua", pkgName = "tiodonghua", overrideVersionCode = 2),
         SingleLang("AsyaAnimeleri", "https://asyaanimeleri.com", "tr", isNsfw = false, overrideVersionCode = 3),
         SingleLang("ChineseAnime", "https://chineseanime.top", "all", isNsfw = false, overrideVersionCode = 4),
