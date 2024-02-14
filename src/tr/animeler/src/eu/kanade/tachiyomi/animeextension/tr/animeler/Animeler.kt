@@ -230,7 +230,7 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.asJsoup()
         val iframeUrl = doc.selectFirst("div.episode-player-box > iframe")
-            ?.attr("src")
+            ?.run { attr("data-src").ifBlank { attr("src") } }
             ?: doc.selectFirst("script:containsData(embedUrl)")
                 ?.data()
                 ?.substringAfter("\"embedUrl\": \"")
