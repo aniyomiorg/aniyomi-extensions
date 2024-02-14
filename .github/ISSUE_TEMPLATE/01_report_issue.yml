@@ -10,7 +10,7 @@ body:
       description: |
         You can find the extension name and version in **Browse → Extensions**.
       placeholder: |
-        Example: "AnimePahe 13.19 (English)"
+        Example: "AnimePahe 14.19 (English)"
     validations:
       required: true
 
@@ -63,7 +63,7 @@ body:
       description: |
         You can find your Aniyomi version in **More → About**.
       placeholder: |
-        Example: "0.15.2.2" or "Preview r7473"
+        Example: "0.15.2.4" or "Preview r7473"
     validations:
       required: true
 
@@ -95,11 +95,11 @@ body:
           required: true
         - label: I have written a short but informative title.
           required: true
-        - label: I have updated the app to version **[0.12.3.10](https://github.com/aniyomiorg/aniyomi/releases/latest)**.
+        - label: I have updated the app to version **[0.15.2.4](https://github.com/aniyomiorg/aniyomi/releases/latest)**.
           required: true
         - label: I have updated all installed extensions.
           required: true
-        - label: I have tried the [troubleshooting guide](https://aniyomi.org/help/guides/troubleshooting/).
+        - label: I have tried the [troubleshooting guide](https://aniyomi.org/docs/guides/troubleshooting/).
           required: true
         - label: If this is an issue with the app itself, I should be opening an issue in the [app repository](https://github.com/aniyomiorg/aniyomi/issues/new/choose).
           required: true
