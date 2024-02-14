@@ -7,7 +7,7 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
 
 class StreamTapeExtractor(private val client: OkHttpClient) {
-    fun videoFromUrl(url: String, quality: String = "StreamTape", subtitleList: List<Track> = emptyList()): Video? {
+    fun videoFromUrl(url: String, quality: String = "Streamtape", subtitleList: List<Track> = emptyList()): Video? {
         val baseUrl = "https://streamtape.com/e/"
         val newUrl = if (!url.startsWith(baseUrl)) {
             // ["https", "", "<domain>", "<???>", "<id>", ...]
@@ -27,7 +27,7 @@ class StreamTapeExtractor(private val client: OkHttpClient) {
         return Video(videoUrl, quality, videoUrl, subtitleTracks = subtitleList)
     }
 
-    fun videosFromUrl(url: String, quality: String = "StreamTape", subtitleList: List<Track> = emptyList()): List<Video> {
+    fun videosFromUrl(url: String, quality: String = "Streamtape", subtitleList: List<Track> = emptyList()): List<Video> {
         return videoFromUrl(url, quality, subtitleList)?.let(::listOf).orEmpty()
     }
 }
