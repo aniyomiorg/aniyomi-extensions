@@ -1,7 +1,7 @@
 ext {
     extName = 'AnimeFLV'
     extClass = '.AnimeFlv'
-    extVersionCode = 52
+    extVersionCode = 53
 }
 
 apply from: "$rootDir/common.gradle"
@@ -10,6 +10,5 @@ dependencies {
     implementation(project(':lib:yourupload-extractor'))
     implementation(project(':lib:streamtape-extractor'))
     implementation(project(':lib:okru-extractor'))
-    implementation(project(':lib:dood-extractor'))
     implementation(project(':lib:streamwish-extractor'))
 }
