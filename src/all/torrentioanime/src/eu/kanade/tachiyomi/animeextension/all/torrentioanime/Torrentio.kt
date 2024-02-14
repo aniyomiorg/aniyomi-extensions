@@ -379,11 +379,10 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
 
             "movie" -> {
                 // Handle movie response
-                val movieId = episodeList.meta.kitsuId?.substringAfterLast(":")?.toIntOrNull() ?: 0
                 listOf(
                     SEpisode.create().apply {
                         episode_number = 1.0F
-                        url = "/stream/movie/$movieId.json"
+                        url = "/stream/movie/${episodeList.meta.kitsuId}.json"
                         name = "Movie"
                     },
                 ).reversed()
