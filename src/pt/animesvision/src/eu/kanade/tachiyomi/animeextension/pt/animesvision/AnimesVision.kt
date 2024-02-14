@@ -3,10 +3,7 @@ package eu.kanade.tachiyomi.animeextension.pt.animesvision
 import android.app.Application
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.AVResponseDto
-import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.PayloadData
-import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.PayloadItem
-import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.GlobalVisionExtractor
+import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.AnimesVisionExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -14,27 +11,17 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
-import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import eu.kanade.tachiyomi.util.parallelFlatMapBlocking
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 
 class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -50,8 +37,6 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val client = network.client.newBuilder()
         .addInterceptor(::loginInterceptor)
         .build()
-
-    private val json: Json by injectLazy()
 
     private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -106,7 +91,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val params = AVFilters.getSearchParameters(filters)
-        val url = "$baseUrl/search?".toHttpUrl().newBuilder()
+        val url = "$baseUrl/search-anime".toHttpUrl().newBuilder()
             .addQueryParameter("page", page.toString())
             .addQueryParameter("nome", query)
             .addQueryParameter("tipo", params.type)
@@ -122,7 +107,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .addQueryParameter("generos", params.genres)
             .build()
 
-        return GET(url.toString(), headers)
+        return GET(url, headers)
     }
 
     override fun searchAnimeSelector() = "div.film_list-wrap div.film-poster"
@@ -139,6 +124,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
         val doc = getRealDoc(document)
+        setUrlWithoutDomain(doc.location())
 
         val content = doc.selectFirst("div#ani_detail div.anis-content")!!
         val detail = content.selectFirst("div.anisc-detail")!!
@@ -152,13 +138,13 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         status = parseStatus(infos.getInfo("Status"))
 
         description = buildString {
-            append(infos.getInfo("Sinopse") + "\n")
-            infos.getInfo("Inglês")?.also { append("\nTítulo em inglês: $it") }
-            infos.getInfo("Japonês")?.also { append("\nTítulo em japonês: $it") }
-            infos.getInfo("Foi ao ar em")?.also { append("\nFoi ao ar em: $it") }
-            infos.getInfo("Temporada")?.also { append("\nTemporada: $it") }
-            infos.getInfo("Duração")?.also { append("\nDuração: $it") }
-            infos.getInfo("Fansub")?.also { append("\nFansub: $it") }
+            appendLine(infos.getInfo("Sinopse"))
+            infos.getInfo("Inglês")?.also { append("\nTítulo em inglês: ", it) }
+            infos.getInfo("Japonês")?.also { append("\nTítulo em japonês: ", it) }
+            infos.getInfo("Foi ao ar em")?.also { append("\nFoi ao ar em: ", it) }
+            infos.getInfo("Temporada")?.also { append("\nTemporada: ", it) }
+            infos.getInfo("Duração")?.also { append("\nDuração: ", it) }
+            infos.getInfo("Fansub")?.also { append("\nFansub: ", it) }
         }
     }
 
@@ -193,61 +179,12 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val body = response.body.string()
-        val internalVideos = GlobalVisionExtractor()
-            .videoListFromHtml(body)
-            .toMutableList()
-
-        val externalVideos = externalVideosFromEpisode(response.asJsoup(body))
-        return internalVideos + externalVideos
+        val doc = response.asJsoup()
+        val encodedScript = doc.selectFirst("div.player-frame div#playerglobalapi ~ script")?.data()
+            // "ERROR: Script not found."
+            ?: throw Exception("ERRO: Script não encontrado.")
+        return AnimesVisionExtractor.videoListFromScript(encodedScript)
     }
-
-    private fun externalVideosFromEpisode(doc: Document): List<Video> {
-        val wireDiv = doc.selectFirst("div[wire:id]")!!
-        val initialData = wireDiv.attr("wire:initial-data").dropLast(1)
-        val wireToken = doc.html()
-            .substringAfter("livewire_token")
-            .substringAfter("'")
-            .substringBefore("'")
-
-        val headers = headersBuilder()
-            .add("x-livewire", "true")
-            .add("x-csrf-token", wireToken)
-            .add("content-type", "application/json")
-            .build()
-
-        val players = doc.select("div.server-item > a.btn")
-
-        return players.parallelFlatMapBlocking {
-            val id = it.attr("wire:click")
-                .substringAfter("(")
-                .substringBefore(")")
-                .toIntOrNull() ?: 1
-            val updateItem = PayloadItem(PayloadData(listOf(id)))
-            val updateString = json.encodeToString(updateItem)
-            val body = "$initialData, \"updates\": [$updateString]}"
-            val reqBody = body.toRequestBody()
-            val url = "$baseUrl/livewire/message/components.episodio.player-episodio-component"
-            val response = client.newCall(POST(url, headers, reqBody)).await()
-            val responseBody = response.body.string()
-            val resJson = json.decodeFromString<AVResponseDto>(responseBody)
-            (resJson.serverMemo?.data?.framePlay ?: resJson.effects?.html)
-                ?.let(::parsePlayerData).orEmpty()
-        }
-    }
-
-    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
-    private val doodExtractor by lazy { DoodExtractor(client) }
-    private val voeExtractor by lazy { VoeExtractor(client) }
-
-    private fun parsePlayerData(data: String) = runCatching {
-        when {
-            "streamtape" in data -> voeExtractor.videosFromUrl(data)
-            "dood" in data -> doodExtractor.videosFromUrl(data)
-            "voe.sx" in data -> voeExtractor.videosFromUrl(data)
-            else -> emptyList()
-        }
-    }.getOrElse { emptyList() }
 
     override fun videoListSelector() = throw UnsupportedOperationException()
     override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
