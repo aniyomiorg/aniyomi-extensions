@@ -106,7 +106,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val params = AVFilters.getSearchParameters(filters)
-        val url = "$baseUrl/search?".toHttpUrl().newBuilder()
+        val url = "$baseUrl/search-anime".toHttpUrl().newBuilder()
             .addQueryParameter("page", page.toString())
             .addQueryParameter("nome", query)
             .addQueryParameter("tipo", params.type)
@@ -122,7 +122,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .addQueryParameter("generos", params.genres)
             .build()
 
-        return GET(url.toString(), headers)
+        return GET(url, headers)
     }
 
     override fun searchAnimeSelector() = "div.film_list-wrap div.film-poster"
