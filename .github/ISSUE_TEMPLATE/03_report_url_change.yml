@@ -10,7 +10,7 @@ body:
       description: |
         You can find the extension name and version in **Browse → Extensions**.
       placeholder: |
-        Example: "NotRealSource 13.1"
+        Example: "NotRealSource 14.1"
     validations:
       required: true
 
