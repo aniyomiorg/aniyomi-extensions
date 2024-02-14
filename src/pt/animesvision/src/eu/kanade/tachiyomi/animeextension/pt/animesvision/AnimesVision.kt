@@ -139,6 +139,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
         val doc = getRealDoc(document)
+        setUrlWithoutDomain(doc.location())
 
         val content = doc.selectFirst("div#ani_detail div.anis-content")!!
         val detail = content.selectFirst("div.anisc-detail")!!
@@ -152,13 +153,13 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         status = parseStatus(infos.getInfo("Status"))
 
         description = buildString {
-            append(infos.getInfo("Sinopse") + "\n")
-            infos.getInfo("Inglês")?.also { append("\nTítulo em inglês: $it") }
-            infos.getInfo("Japonês")?.also { append("\nTítulo em japonês: $it") }
-            infos.getInfo("Foi ao ar em")?.also { append("\nFoi ao ar em: $it") }
-            infos.getInfo("Temporada")?.also { append("\nTemporada: $it") }
-            infos.getInfo("Duração")?.also { append("\nDuração: $it") }
-            infos.getInfo("Fansub")?.also { append("\nFansub: $it") }
+            appendLine(infos.getInfo("Sinopse"))
+            infos.getInfo("Inglês")?.also { append("\nTítulo em inglês: ", it) }
+            infos.getInfo("Japonês")?.also { append("\nTítulo em japonês: ", it) }
+            infos.getInfo("Foi ao ar em")?.also { append("\nFoi ao ar em: ", it) }
+            infos.getInfo("Temporada")?.also { append("\nTemporada: ", it) }
+            infos.getInfo("Duração")?.also { append("\nDuração: ", it) }
+            infos.getInfo("Fansub")?.also { append("\nFansub: ", it) }
         }
     }
 
