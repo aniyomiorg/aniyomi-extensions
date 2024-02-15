@@ -1,5 +1,3 @@
-import org.gradle.accessors.dm.LibrariesForLibs
-
 plugins {
     id("com.android.library")
     kotlin("android")
@@ -16,8 +14,11 @@ android {
     namespace = "eu.kanade.tachiyomi.lib.${name.replace("-", "")}"
 }
 
-val libs = the<LibrariesForLibs>()
-
-dependencies {
-    compileOnly(libs.bundles.common)
-}
+versionCatalogs
+    .named("libs")
+    .findBundle("common")
+    .ifPresent { common ->
+        dependencies {
+            implementation(common)
+        }
+    }

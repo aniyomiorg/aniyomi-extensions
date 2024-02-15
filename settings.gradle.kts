@@ -1,9 +1,5 @@
 apply(from = "repositories.gradle.kts")
 
-pluginManagement {
-    includeBuild("build-plugins")
-}
-
 include(":core")
 
 // Load all modules under /lib
