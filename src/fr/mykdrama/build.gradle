@@ -1,0 +1,16 @@
+ext {
+    extName = 'MyKdrama'
+    extClass = '.MyKdrama'
+    themePkg = 'animestream'
+    baseUrl = 'https://mykdrama.co'
+    overrideVersionCode = 0
+}
+
+apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation(project(":lib:okru-extractor"))
+    implementation(project(":lib:uqload-extractor"))
+    implementation(project(":lib:dood-extractor"))
+    implementation(project(":lib:vudeo-extractor"))
+}

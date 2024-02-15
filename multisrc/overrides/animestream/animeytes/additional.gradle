@@ -1,5 +1,0 @@
-dependencies {
-    implementation(project(":lib:okru-extractor"))
-    implementation(project(":lib:streamtape-extractor"))
-    implementation(project(":lib:sendvid-extractor"))
-}

@@ -1,0 +1,9 @@
+ext {
+    extName = 'SFlix'
+    extClass = '.SFlix'
+    themePkg = 'dopeflix'
+    baseUrl = 'https://sflix.to'
+    overrideVersionCode = 5
+}
+
+apply from: "$rootDir/common.gradle"
