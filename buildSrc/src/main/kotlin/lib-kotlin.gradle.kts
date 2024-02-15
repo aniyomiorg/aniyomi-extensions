@@ -5,9 +5,9 @@ plugins {
 
 versionCatalogs
     .named("libs")
-    .findBundle("common")
-    .ifPresent { common ->
+    .findLibrary("kotlin-stdlib")
+    .ifPresent { stdlib ->
         dependencies {
-            implementation(common)
+            compileOnly(stdlib)
         }
     }

@@ -38,7 +38,7 @@ versionCatalogs
     .findBundle("common")
     .ifPresent { common ->
         dependencies {
-            implementation(common)
+            compileOnly(common)
         }
     }
 
