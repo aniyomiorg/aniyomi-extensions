@@ -5,7 +5,7 @@ plugins {
 baseVersionCode = 19
 
 dependencies {
-    implementation(project(":lib:dood-extractor"))
-    implementation(project(":lib:cryptoaes"))
-    implementation(project(":lib:playlist-utils"))
+    api(project(":lib:dood-extractor"))
+    api(project(":lib:cryptoaes"))
+    api(project(":lib:playlist-utils"))
 }

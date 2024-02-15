@@ -5,6 +5,6 @@ plugins {
 baseVersionCode = 1
 
 dependencies {
-    implementation(project(":lib:megacloud-extractor"))
-    implementation(project(":lib:streamtape-extractor"))
+    api(project(":lib:megacloud-extractor"))
+    api(project(":lib:streamtape-extractor"))
 }
