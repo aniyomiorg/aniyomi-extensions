@@ -5,10 +5,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
-data class SearchResponseDto(
-    val data: List<SimpleAnimeDto>,
-    val pages: Int,
-)
+data class SearchResponseDto(val data: String, val pages: Int)
 
 @Serializable
 data class PostDto(
@@ -19,17 +16,6 @@ data class PostDto(
 @Serializable
 data class ThumbnailDto(private val featured_url: JsonPrimitive) {
     val url = if (featured_url.isString) featured_url.content else null
-}
-
-@Serializable
-data class SimpleAnimeDto(
-    val url: String,
-    val post: PostDto,
-    private val image: String = "",
-    private val images: ThumbnailDto? = null,
-) {
-    val thumbnail = image.ifEmpty { images?.url }
-    val title = post.post_title
 }
 
 @Serializable

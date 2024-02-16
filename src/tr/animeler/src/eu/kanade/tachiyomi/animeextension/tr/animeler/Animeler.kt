@@ -44,6 +44,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import org.jsoup.Jsoup
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -71,13 +72,17 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val results = response.parseAs<SearchResponseDto>()
-        val animes = results.data.map {
+        val doc = Jsoup.parseBodyFragment(results.data)
+        val animes = doc.select("div.w-full:has(div.kira-anime)").map {
             SAnime.create().apply {
-                setUrlWithoutDomain(it.url)
-                thumbnail_url = it.thumbnail
-                title = it.title
+                thumbnail_url = it.selectFirst("img")?.attr("src")
+                with(it.selectFirst("h3 > a")!!) {
+                    title = text()
+                    setUrlWithoutDomain(attr("href"))
+                }
             }
         }
+
         val page = response.request.url.queryParameter("page")?.toIntOrNull() ?: 1
         val hasNextPage = page < results.pages
         return AnimesPage(animes, hasNextPage)
@@ -225,7 +230,7 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.asJsoup()
         val iframeUrl = doc.selectFirst("div.episode-player-box > iframe")
-            ?.attr("src")
+            ?.run { attr("data-src").ifBlank { attr("src") } }
             ?: doc.selectFirst("script:containsData(embedUrl)")
                 ?.data()
                 ?.substringAfter("\"embedUrl\": \"")
