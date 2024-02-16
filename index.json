@@ -4088,10 +4088,10 @@
   {
     "name": "Aniyomi: Animeler",
     "pkg": "eu.kanade.tachiyomi.animeextension.tr.animeler",
-    "apk": "aniyomi-tr.animeler-v14.9.apk",
+    "apk": "aniyomi-tr.animeler-v14.10.apk",
     "lang": "tr",
-    "code": 9,
-    "version": "14.9",
+    "code": 10,
+    "version": "14.10",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
