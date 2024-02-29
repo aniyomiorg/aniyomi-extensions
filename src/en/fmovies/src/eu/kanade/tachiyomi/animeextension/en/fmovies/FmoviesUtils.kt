@@ -62,13 +62,15 @@ class FmoviesUtils(private val client: OkHttpClient, private val headers: Header
 
     // ===================== Encryption ================================
     fun vrfEncrypt(input: String): String {
-        val rc4Key = SecretKeySpec("FWsfu0KQd9vxYGNB".toByteArray(), "RC4")
+        val rc4Key = SecretKeySpec("Ij4aiaQXgluXQRs6".toByteArray(), "RC4")
         val cipher = Cipher.getInstance("RC4")
-        cipher.init(Cipher.DECRYPT_MODE, rc4Key, cipher.parameters)
+        cipher.init(Cipher.ENCRYPT_MODE, rc4Key, cipher.parameters)
 
         var vrf = cipher.doFinal(input.toByteArray())
         vrf = Base64.encode(vrf, Base64.URL_SAFE or Base64.NO_WRAP)
-        vrf = rot13(vrf)
+//        vrf = rot13(vrf)
+        vrf = Base64.encode(vrf, Base64.URL_SAFE or Base64.NO_WRAP)
+        vrf.reverse()
         vrf = Base64.encode(vrf, Base64.URL_SAFE or Base64.NO_WRAP)
         vrf = vrfShift(vrf)
         val stringVrf = vrf.toString(Charsets.UTF_8)
@@ -101,7 +103,7 @@ class FmoviesUtils(private val client: OkHttpClient, private val headers: Header
 
     private fun vrfShift(vrf: ByteArray): ByteArray {
         for (i in vrf.indices) {
-            val shift = arrayOf(-4, -2, -6, 5, -2)[i % 5]
+            val shift = arrayOf(4, 3, -2, 5, 2, -4, -4, 2)[i % 8]
             vrf[i] = vrf[i].plus(shift).toByte()
         }
         return vrf
