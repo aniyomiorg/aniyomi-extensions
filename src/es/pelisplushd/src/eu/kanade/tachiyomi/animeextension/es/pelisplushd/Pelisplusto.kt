@@ -134,9 +134,8 @@ class Pelisplusto(override val name: String, override val baseUrl: String) : Pel
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val videoList = mutableListOf<Video>()
         val regIsUrl = "https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)".toRegex()
-        document.select(".bg-tabs ul li").parallelCatchingFlatMapBlocking {
+        return document.select(".bg-tabs ul li").parallelCatchingFlatMapBlocking {
             val decode = String(Base64.decode(it.attr("data-server"), Base64.DEFAULT))
 
             val url = if (!regIsUrl.containsMatchIn(decode)) {
@@ -153,7 +152,6 @@ class Pelisplusto(override val name: String, override val baseUrl: String) : Pel
 
             serverVideoResolver(videoUrl)
         }
-        return videoList
     }
 
     override fun List<Video>.sort(): List<Video> {
