@@ -8,6 +8,9 @@ assert !ext.has("libVersion")
 
 assert extName.chars().max().asInt < 0x180 : "Extension name should be romanized"
 
+Project theme = ext.has("themePkg") ? project(":lib-multisrc:$themePkg") : null
+if (theme != null) evaluationDependsOn(theme.path)
+
 android {
     compileSdkVersion AndroidConfig.compileSdk
     namespace AndroidConfig.namespace
@@ -30,8 +33,8 @@ android {
         minSdkVersion AndroidConfig.minSdk
         targetSdkVersion AndroidConfig.targetSdk
         applicationIdSuffix project.parent.name + "." + project.name
-        versionCode extVersionCode
-        versionName "14.$extVersionCode"
+        versionCode theme == null ? extVersionCode : theme.baseVersionCode + overrideVersionCode
+        versionName "14.$versionCode"
         base {
             archivesName = "aniyomi-$applicationIdSuffix-v$versionName"
         }
@@ -39,8 +42,19 @@ android {
         manifestPlaceholders = [
                 appName : "Aniyomi: $extName",
                 extClass: extClass,
-                nsfw: project.ext.find("isNsfw") ? 1 : 0,
+                nsfw    : project.ext.find("isNsfw") ? 1 : 0,
         ]
+        String baseUrl = project.ext.find("baseUrl") ?: ""
+        if (theme != null && !baseUrl.isEmpty()) {
+            def split = baseUrl.split("://")
+            assert split.length == 2
+            def path = split[1].split("/")
+            manifestPlaceholders += [
+                    SOURCEHOST  : path[0],
+                    SOURCESCHEME: split[0],
+            ]
+        }
+
     }
 
     signingConfigs {
@@ -84,6 +98,7 @@ android {
 }
 
 dependencies {
+    if (theme != null) implementation(theme) // Overrides core launcher icons
     implementation(project(":core"))
     compileOnly(libs.bundles.common)
 }
@@ -113,4 +128,6 @@ tasks.register("writeManifestFile") {
 }
 
 preBuild.dependsOn(writeManifestFile, lintKotlin)
-lintKotlin.dependsOn(formatKotlin)
+if (System.getenv("CI") != "true") {
+    lintKotlin.dependsOn(formatKotlin)
+}

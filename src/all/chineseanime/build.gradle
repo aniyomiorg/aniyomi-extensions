@@ -1,0 +1,15 @@
+ext {
+    extName = 'ChineseAnime'
+    extClass = '.ChineseAnime'
+    themePkg = 'animestream'
+    baseUrl = 'https://chineseanime.top'
+    overrideVersionCode = 4
+}
+
+apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation(project(":lib:dailymotion-extractor"))
+    implementation(project(":lib:streamwish-extractor"))
+    implementation(project(":lib:playlist-utils"))
+}

@@ -1,0 +1,9 @@
+ext {
+    extName = 'TRAnimeCI'
+    extClass = '.TRAnimeCI'
+    themePkg = 'animestream'
+    baseUrl = 'https://tranimaci.com'
+    overrideVersionCode = 1
+}
+
+apply from: "$rootDir/common.gradle"

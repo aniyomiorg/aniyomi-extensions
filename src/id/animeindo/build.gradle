@@ -1,0 +1,17 @@
+ext {
+    extName = 'AnimeIndo'
+    extClass = '.AnimeIndo'
+    themePkg = 'animestream'
+    baseUrl = 'https://animeindo.skin'
+    overrideVersionCode = 10
+}
+
+apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation(project(":lib:mp4upload-extractor"))
+    implementation(project(":lib:gdriveplayer-extractor"))
+    implementation(project(":lib:streamtape-extractor"))
+    implementation(project(":lib:yourupload-extractor"))
+    implementation(project(":lib:okru-extractor"))
+}

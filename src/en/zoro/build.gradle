@@ -1,0 +1,9 @@
+ext {
+    extName = 'AniWatch'
+    extClass = '.AniWatch'
+    themePkg = 'zorotheme'
+    baseUrl = 'https://aniwatch.to'
+    overrideVersionCode = 39
+}
+
+apply from: "$rootDir/common.gradle"

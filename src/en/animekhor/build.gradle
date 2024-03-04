@@ -1,0 +1,15 @@
+ext {
+    extName = 'AnimeKhor'
+    extClass = '.AnimeKhor'
+    themePkg = 'animestream'
+    baseUrl = 'https://animekhor.xyz'
+    overrideVersionCode = 3
+}
+
+apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation(project(':lib:okru-extractor'))
+    implementation(project(':lib:streamwish-extractor'))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+}

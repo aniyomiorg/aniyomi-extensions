@@ -1,5 +1,0 @@
-dependencies {
-    implementation(project(':lib:okru-extractor'))
-    implementation(project(':lib:streamwish-extractor'))
-    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
-}

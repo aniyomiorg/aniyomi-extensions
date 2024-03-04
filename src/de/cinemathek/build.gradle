@@ -1,0 +1,18 @@
+ext {
+    extName = 'Cinemathek'
+    extClass = '.Cinemathek'
+    themePkg = 'dooplay'
+    baseUrl = 'https://cinemathek.net'
+    overrideVersionCode = 19
+    isNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation(project(':lib:filemoon-extractor'))
+    implementation(project(':lib:dood-extractor'))
+    implementation(project(':lib:streamlare-extractor'))
+    implementation(project(':lib:streamtape-extractor'))
+    implementation(project(':lib:streamwish-extractor'))
+}

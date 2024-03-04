@@ -1,0 +1,9 @@
+ext {
+    extName = 'AnimesFox BR'
+    extClass = '.AnimesFoxBR'
+    themePkg = 'dooplay'
+    baseUrl = 'https://animesfox.net'
+    overrideVersionCode = 2
+}
+
+apply from: "$rootDir/common.gradle"

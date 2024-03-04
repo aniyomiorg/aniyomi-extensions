@@ -1,0 +1,17 @@
+ext {
+    extName = 'AnimesOnline'
+    extClass = '.AnimesOnline'
+    themePkg = 'dooplay'
+    baseUrl = 'https://animesonline.nz'
+    overrideVersionCode = 8
+}
+
+apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation(project(":lib:blogger-extractor"))
+    implementation(project(":lib:filemoon-extractor"))
+    implementation(project(":lib:streamwish-extractor"))
+    implementation(project(":lib:mixdrop-extractor"))
+    implementation(project(":lib:streamtape-extractor"))
+}

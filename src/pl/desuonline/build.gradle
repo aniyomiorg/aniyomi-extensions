@@ -1,0 +1,15 @@
+ext {
+    extName = 'desu-online'
+    extClass = '.DesuOnline'
+    themePkg = 'animestream'
+    baseUrl = 'https://desu-online.pl'
+    overrideVersionCode = 4
+}
+
+apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation(project(':lib:okru-extractor'))
+    implementation(project(':lib:googledrive-extractor'))
+    implementation(project(':lib:sibnet-extractor'))
+}
