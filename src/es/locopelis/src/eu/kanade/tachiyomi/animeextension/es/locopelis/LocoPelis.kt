@@ -13,9 +13,11 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.streamhidevidextractor.StreamHideVidExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -90,35 +92,23 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val videoList = mutableListOf<Video>()
-        document.select(".tab_container .tab_content iframe").forEach { iframe ->
-            val url = iframe.attr("src")
-            val embedUrl = url.lowercase()
-            if (embedUrl.contains("streamtape")) {
-                val video = StreamTapeExtractor(client).videoFromUrl(url, "StreamTape")
-                if (video != null) {
-                    videoList.add(video)
+        return document.select(".tab_container .tab_content iframe").parallelCatchingFlatMapBlocking { iframe ->
+            runCatching {
+                val url = iframe.attr("src")
+                with(url.lowercase()) {
+                    when {
+                        contains("streamtape") || contains("stp") || contains("stape")
+                        -> listOf(StreamTapeExtractor(client).videoFromUrl(this, quality = "StreamTape")!!)
+                        contains("doodstream") || contains("dood.") || contains("ds2play") || contains("doods.")
+                        -> listOf(DoodExtractor(client).videoFromUrl(this, "DoodStream", true)!!)
+                        contains("ok.ru") || contains("okru") -> OkruExtractor(client).videosFromUrl(this)
+                        contains("vidhide") || contains("streamhide") || contains("guccihide") || contains("streamvid")
+                        -> StreamHideVidExtractor(client).videosFromUrl(this)
+                        else -> emptyList()
+                    }
                 }
-            }
-            if (embedUrl.contains("doodstream") ||
-                embedUrl.contains("dood") ||
-                embedUrl.contains("ds2play")
-            ) {
-                val video = try {
-                    DoodExtractor(client).videoFromUrl(url, "DoodStream", true)
-                } catch (e: Exception) {
-                    null
-                }
-                if (video != null) {
-                    videoList.add(video)
-                }
-            }
-            if (embedUrl.contains("okru") || embedUrl.contains("ok.ru")) {
-                val videos = OkruExtractor(client).videosFromUrl(url)
-                videoList.addAll(videos)
-            }
+            }.getOrDefault(emptyList())
         }
-        return videoList
     }
 
     override fun videoListSelector() = throw UnsupportedOperationException()
