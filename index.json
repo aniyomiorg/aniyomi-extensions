@@ -2104,7 +2104,7 @@
     ]
   },
   {
-    "name": "Aniyomi: AniWatch",
+    "name": "Aniyomi: HiAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.zoro",
     "apk": "aniyomi-en.zoro-v14.40.apk",
     "lang": "en",
@@ -2115,10 +2115,10 @@
     "hasChangelog": 0,
     "sources": [
       {
-        "name": "AniWatch",
+        "name": "HiAnime",
         "lang": "en",
         "id": "6706411382606718900",
-        "baseUrl": "https://aniwatch.to",
+        "baseUrl": "https://hianime.to/",
         "versionId": 1
       }
     ]
