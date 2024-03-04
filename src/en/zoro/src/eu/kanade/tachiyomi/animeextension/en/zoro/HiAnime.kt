@@ -8,7 +8,7 @@ import eu.kanade.tachiyomi.multisrc.zorotheme.ZoroTheme
 class HiAnime : ZoroTheme(
     "en",
     "HiAnime",
-    "https://hianime.to/",
+    "https://hianime.to",
 ) {
     override val id = 6706411382606718900L
 
