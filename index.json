@@ -1486,10 +1486,10 @@
   {
     "name": "Aniyomi: Gogoanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.gogoanime",
-    "apk": "aniyomi-en.gogoanime-v14.79.apk",
+    "apk": "aniyomi-en.gogoanime-v14.80.apk",
     "lang": "en",
-    "code": 79,
-    "version": "14.79",
+    "code": 80,
+    "version": "14.80",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
