@@ -1,8 +1,8 @@
 ext {
-    extName = 'AniWatch'
-    extClass = '.AniWatch'
+    extName = 'HiAnime'
+    extClass = '.HiAnime'
     themePkg = 'zorotheme'
-    baseUrl = 'https://aniwatch.to'
+    baseUrl = 'https://hianime.to/'
     overrideVersionCode = 39
 }
 

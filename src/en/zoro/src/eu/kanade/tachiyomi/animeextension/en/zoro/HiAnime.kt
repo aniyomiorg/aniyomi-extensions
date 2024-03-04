@@ -5,10 +5,10 @@ import eu.kanade.tachiyomi.lib.megacloudextractor.MegaCloudExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.multisrc.zorotheme.ZoroTheme
 
-class AniWatch : ZoroTheme(
+class HiAnime : ZoroTheme(
     "en",
-    "AniWatch",
-    "https://aniwatch.to",
+    "HiAnime",
+    "https://hianime.to/",
 ) {
     override val id = 6706411382606718900L
 
