@@ -217,7 +217,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private const val AJAX_URL = "https://ajax.gogo-load.com/ajax"
+        private const val AJAX_URL = "https://ajax.gogocdn.net/ajax"
 
         private val HOSTERS = arrayOf(
             "Gogostream",
