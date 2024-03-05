@@ -2,8 +2,11 @@ package eu.kanade.tachiyomi.animeextension.id.samehadaku
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.widget.Toast
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -19,6 +22,7 @@ import eu.kanade.tachiyomi.util.parallelMapNotNullBlocking
 import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.Response
+import org.json.JSONObject
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
@@ -27,10 +31,12 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
+    private val mainBaseUrl: String = "https://samehadaku.show"
+
     override val name: String = "Samehadaku"
-    override val baseUrl: String = "https://samehadaku.show"
     override val lang: String = "id"
     override val supportsLatest: Boolean = true
+    override val baseUrl: String by lazy { getPrefBaseUrl() }
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -56,12 +62,14 @@ class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val params = SamehadakuFilters.getSearchParameters(filters)
-        return GET("$baseUrl/daftar-anime-2/page/$page/?s=$query${params.filter}", headers)
+
+        return GET("$baseUrl/daftar-anime-2/page/$page/?s=$query${params.filter}")
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         val doc = response.asJsoup()
         val searchSelector = "main.site-main.relat > article"
+
         return if (doc.selectFirst(searchSelector) != null) {
             getAnimeParse(doc, searchSelector)
         } else {
@@ -78,6 +86,7 @@ class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun animeDetailsParse(response: Response): SAnime {
         val doc = response.asJsoup()
         val detail = doc.selectFirst("div.infox > div.spe")!!
+
         return SAnime.create().apply {
             author = detail.getInfo("Studio")
             status = parseStatus(detail.getInfo("Status"))
@@ -94,6 +103,7 @@ class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val doc = response.asJsoup()
+
         return doc.select("div.lstepsiode > ul > li")
             .map {
                 val episode = it.selectFirst("span.eps > a")!!
@@ -112,6 +122,8 @@ class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
         val doc = response.asJsoup()
         val parseUrl = response.request.url.toUrl()
         val url = "${parseUrl.protocol}://${parseUrl.host}"
+        if (!getPrefBaseUrl().contains(url)) putPrefBaseUrl(url)
+
         return doc.select("#server > ul > li > div")
             .parallelMapNotNullBlocking {
                 runCatching { getEmbedLinks(url, it) }.getOrNull()
@@ -123,26 +135,6 @@ class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================= Utilities ==============================
 
-    override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
-        return sortedWith(compareByDescending { it.quality.contains(quality) })
-    }
-
-    private fun String?.toDate(): Long {
-        return runCatching { DATE_FORMATTER.parse(this?.trim() ?: "")?.time }
-            .getOrNull() ?: 0L
-    }
-
-    private fun Element.getInfo(info: String, cut: Boolean = true): String {
-        return selectFirst("span:has(b:contains($info))")!!.text()
-            .let {
-                when {
-                    cut -> it.substringAfter(" ")
-                    else -> it
-                }.trim()
-            }
-    }
-
     private fun getAnimeParse(document: Document, query: String): AnimesPage {
         val animes = document.select(query).map {
             SAnime.create().apply {
@@ -151,6 +143,7 @@ class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
                 thumbnail_url = it.selectFirst("div.content-thumb > img")!!.attr("src")
             }
         }
+
         val hasNextPage = try {
             val pagination = document.selectFirst("div.pagination")!!
             val totalPage = pagination.selectFirst("span:nth-child(1)")!!.text().split(" ").last()
@@ -159,15 +152,8 @@ class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
         } catch (_: Exception) {
             false
         }
-        return AnimesPage(animes, hasNextPage)
-    }
 
-    private fun parseStatus(status: String?): Int {
-        return when (status?.trim()?.lowercase()) {
-            "completed" -> SAnime.COMPLETED
-            "ongoing" -> SAnime.ONGOING
-            else -> SAnime.UNKNOWN
-        }
+        return AnimesPage(animes, hasNextPage)
     }
 
     private fun getEmbedLinks(url: String, element: Element): Pair<String, String> {
@@ -177,22 +163,44 @@ class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
             add("nume", element.attr("data-nume"))
             add("type", element.attr("data-type"))
         }.build()
+
         return client.newCall(POST("$url/wp-admin/admin-ajax.php", body = form))
             .execute()
             .let {
-                val link = it.body.string().substringAfter("src=\"").substringBefore("\"")
-                val server = element.selectFirst("span")!!.text()
-                Pair(server, link)
+                val body = it.body.string()
+                val quality = element.selectFirst("span")!!.text()
+                val link = body.substringAfter("src=\"").substringBefore("\"")
+                Pair(quality, link)
             }
     }
 
-    private fun getVideosFromEmbed(server: String, link: String): List<Video> {
+    private fun getVideosFromEmbed(quality: String, link: String): List<Video> {
         return when {
             "wibufile" in link -> {
+                val videoQuality = when {
+                    "480" in quality -> "Wibufile 480p"
+                    "720" in quality -> "Wibufile 720p"
+                    "1080" in quality -> "Wibufile 1080p"
+                    else -> "Unknown Resolution"
+                }
+
+                if (".mp4" in link.lowercase()) {
+                    return listOf(Video(link, videoQuality, link, headers))
+                }
+
                 client.newCall(GET(link)).execute().use {
                     if (!it.isSuccessful) return emptyList()
-                    val videoUrl = it.body.string().substringAfter("cast(\"").substringBefore("\"")
-                    listOf(Video(videoUrl, server, videoUrl, headers))
+
+                    val body = it.body.string()
+                    val json = JSONObject(body.substringAfter("source = ").substringBefore(";"))
+                    val sources = json.getJSONArray("sources")
+                    val videoList = mutableListOf<Video>()
+                    for (i in 0 until sources.length()) {
+                        val stream = sources.getJSONObject(i)
+                        val videoUrl = stream.getString("src")
+                        videoList.add(Video(videoUrl, videoQuality, videoUrl, headers))
+                    }
+                    videoList
                 }
             }
 
@@ -201,15 +209,26 @@ class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
                     val doc = it.asJsoup()
                     val getUrl = doc.selectFirst("source")!!.attr("src")
                     val videoUrl = "https:${getUrl.replace("&amp;", "&")}"
-                    listOf(Video(videoUrl, server, videoUrl, headers))
+                    listOf(Video(videoUrl, quality, videoUrl, headers))
                 }
             }
 
             "blogger" in link -> {
-                client.newCall(GET(link)).execute().let {
-                    val videoUrl =
-                        it.body.string().substringAfter("play_url\":\"").substringBefore("\"")
-                    listOf(Video(videoUrl, server, videoUrl, headers))
+                client.newCall(GET(link)).execute().body.string().let {
+                    val json = JSONObject(it.substringAfter("= ").substringBefore("<"))
+                    val streams = json.getJSONArray("streams")
+                    val videoList = mutableListOf<Video>()
+                    for (i in 0 until streams.length()) {
+                        val stream = streams.getJSONObject(i)
+                        val videoUrl = stream.getString("play_url")
+                        val videoQuality = when (stream.getString("format_id")) {
+                            "18" -> "Google 360p"
+                            "22" -> "Google 720p"
+                            else -> "Unknown Resolution"
+                        }
+                        videoList.add(Video(videoUrl, videoQuality, videoUrl, headers))
+                    }
+                    videoList
                 }
             }
 
@@ -217,34 +236,88 @@ class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
+    override fun List<Video>.sort(): List<Video> =
+        sortedWith(compareByDescending { it.quality.contains(getPrefQuality()) })
+
+    private fun String?.toDate(): Long =
+        runCatching { DATE_FORMATTER.parse(this?.trim() ?: "")?.time }.getOrNull() ?: 0L
+
+    private fun Element.getInfo(info: String, cut: Boolean = true): String =
+        selectFirst("span:has(b:contains($info))")!!.text()
+            .let {
+                when {
+                    cut -> it.substringAfter(" ")
+                    else -> it
+                }.trim()
+            }
+
+    private fun parseStatus(status: String?): Int =
+        when (status?.trim()?.lowercase()) {
+            "completed" -> SAnime.COMPLETED
+            "ongoing" -> SAnime.ONGOING
+            else -> SAnime.UNKNOWN
+        }
+
     // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            summary = "%s"
+        EditTextPreference(screen.context).apply {
+            key = PREF_BASEURL_KEY
+            title = PREF_BASEURL_TITLE
+            dialogTitle = PREF_BASEURL_TITLE
+            summary = getPrefBaseUrl()
+
+            setDefaultValue(getPrefBaseUrl())
+            setOnPreferenceChangeListener { _, newValue ->
+                val changed = newValue as String
+                summary = changed
+                Toast.makeText(screen.context, RESTART_ANIYOMI, Toast.LENGTH_LONG).show()
+                putPrefBaseUrl(changed)
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
             entries = PREF_QUALITY_ENTRIES
             entryValues = PREF_QUALITY_ENTRIES
-            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setDefaultValue(getPrefQuality())
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
+                putPrefQuality(entry)
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
     }
 
+    private fun getPrefBaseUrl(): String =
+        preferences.getString(PREF_BASEURL_KEY, mainBaseUrl)!!
+
+    private fun putPrefBaseUrl(newValue: String): Boolean =
+        preferences.edit().putString(PREF_BASEURL_KEY, newValue).commit()
+
+    private fun getPrefQuality(): String =
+        preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+    private fun putPrefQuality(newValue: String): Boolean =
+        preferences.edit().putString(PREF_QUALITY_KEY, newValue).commit()
+
     companion object {
+        private const val PREF_BASEURL_KEY = "baseurlkey_v${BuildConfig.VERSION_NAME}"
+        private const val PREF_BASEURL_TITLE = "Override BaseUrl"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred Quality"
+        private const val PREF_QUALITY_DEFAULT = "480p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p")
+
+        private const val RESTART_ANIYOMI = "Restart Aniyomi to apply new setting."
+
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("d MMMM yyyy", Locale("id", "ID"))
         }
-
-        private const val PREF_QUALITY_KEY = "preferred_quality"
-        private const val PREF_QUALITY_TITLE = "Preferred quality"
-        private const val PREF_QUALITY_DEFAULT = "720p"
-        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p")
     }
 }
