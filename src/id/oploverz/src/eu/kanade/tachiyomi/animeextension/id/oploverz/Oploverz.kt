@@ -2,8 +2,11 @@ package eu.kanade.tachiyomi.animeextension.id.oploverz
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.widget.Toast
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -27,10 +30,12 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
+    private val mainBaseUrl: String = "https://oploverz.gold"
+
     override val name: String = "Oploverz"
-    override val baseUrl: String = "https://oploverz.plus"
     override val lang: String = "id"
     override val supportsLatest: Boolean = true
+    override val baseUrl: String by lazy { getPrefBaseUrl() }
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -56,7 +61,7 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val params = OploverzFilters.getSearchParameters(filters)
-        return GET("$baseUrl/anime-list/page/$page/?title=$query${params.filter}", headers)
+        return GET("$baseUrl/anime-list/page/$page/?title=$query${params.filter}")
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage =
@@ -71,6 +76,7 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun animeDetailsParse(response: Response): SAnime {
         val doc = response.asJsoup()
         val detail = doc.selectFirst("div.infox > div.spe")!!
+
         return SAnime.create().apply {
             author = detail.getInfo("Studio")
             status = parseStatus(doc.selectFirst("div.alternati > span:nth-child(2)")!!.text())
@@ -88,6 +94,7 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val doc = response.asJsoup()
+
         return doc.select("div.lstepsiode.listeps > ul.scrolling > li").map {
             val episode = it.selectFirst("span.eps > a")!!
             SEpisode.create().apply {
@@ -105,6 +112,8 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
         val doc = response.asJsoup()
         val parseUrl = response.request.url.toUrl()
         val url = "${parseUrl.protocol}://${parseUrl.host}"
+        if (!getPrefBaseUrl().contains(url)) putPrefBaseUrl(url)
+
         return doc.select("#server > ul > li > div.east_player_option")
             .parallelMapNotNullBlocking {
                 runCatching { getEmbedLinks(url, it) }.getOrNull()
@@ -116,26 +125,6 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================= Utilities ==============================
 
-    override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
-        return sortedWith(compareByDescending { it.quality.contains(quality) })
-    }
-
-    private fun String?.toDate(): Long {
-        return runCatching { DATE_FORMATTER.parse(this?.trim() ?: "")?.time }
-            .getOrNull() ?: 0L
-    }
-
-    private fun Element.getInfo(info: String, cut: Boolean = true): String {
-        return selectFirst("span:has(b:contains($info))")!!.text()
-            .let {
-                when {
-                    cut -> it.substringAfter(" ")
-                    else -> it
-                }.trim()
-            }
-    }
-
     private fun getAnimeParse(response: Response, query: String): AnimesPage {
         val doc = response.asJsoup()
         val animes = doc.select(query).map {
@@ -145,6 +134,7 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
                 thumbnail_url = it.selectFirst("div.content-thumb > img")!!.attr("src")
             }
         }
+
         val hasNextPage = try {
             val pagination = doc.selectFirst("div.pagination")!!
             val totalPage = pagination.selectFirst("span:nth-child(1)")!!.text().split(" ").last()
@@ -153,15 +143,8 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
         } catch (_: Exception) {
             false
         }
-        return AnimesPage(animes, hasNextPage)
-    }
 
-    private fun parseStatus(status: String?): Int {
-        return when (status?.trim()?.lowercase()) {
-            "completed" -> SAnime.COMPLETED
-            "ongoing" -> SAnime.ONGOING
-            else -> SAnime.UNKNOWN
-        }
+        return AnimesPage(animes, hasNextPage)
     }
 
     private fun getEmbedLinks(url: String, element: Element): Pair<String, String> {
@@ -171,6 +154,7 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
             add("nume", element.attr("data-nume"))
             add("type", element.attr("data-type"))
         }.build()
+
         return client.newCall(POST("$url/wp-admin/admin-ajax.php", body = form))
             .execute()
             .let { Pair(it.asJsoup().selectFirst(".playeriframe")!!.attr("src"), "") }
@@ -185,13 +169,13 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
                     val videoList = mutableListOf<Video>()
                     for (i in 0 until streams.length()) {
                         val stream = streams.getJSONObject(i)
-                        val url = stream.getString("play_url")
-                        val quality = when (stream.getString("format_id")) {
-                            "18" -> "Google - 360p"
-                            "22" -> "Google - 720p"
+                        val videoUrl = stream.getString("play_url")
+                        val videoQuality = when (stream.getString("format_id")) {
+                            "18" -> "Google 360p"
+                            "22" -> "Google 720p"
                             else -> "Unknown Resolution"
                         }
-                        videoList.add(Video(url, quality, url))
+                        videoList.add(Video(videoUrl, videoQuality, videoUrl, headers))
                     }
                     videoList
                 }
@@ -201,34 +185,88 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
+    override fun List<Video>.sort(): List<Video> =
+        sortedWith(compareByDescending { it.quality.contains(getPrefQuality()) })
+
+    private fun String?.toDate(): Long =
+        runCatching { DATE_FORMATTER.parse(this?.trim() ?: "")?.time }.getOrNull() ?: 0L
+
+    private fun Element.getInfo(info: String, cut: Boolean = true): String =
+        selectFirst("span:has(b:contains($info))")!!.text()
+            .let {
+                when {
+                    cut -> it.substringAfter(" ")
+                    else -> it
+                }.trim()
+            }
+
+    private fun parseStatus(status: String?): Int =
+        when (status?.trim()?.lowercase()) {
+            "completed" -> SAnime.COMPLETED
+            "ongoing" -> SAnime.ONGOING
+            else -> SAnime.UNKNOWN
+        }
+
     // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            summary = "%s"
+        EditTextPreference(screen.context).apply {
+            key = PREF_BASEURL_KEY
+            title = PREF_BASEURL_TITLE
+            dialogTitle = PREF_BASEURL_TITLE
+            summary = getPrefBaseUrl()
+
+            setDefaultValue(getPrefBaseUrl())
+            setOnPreferenceChangeListener { _, newValue ->
+                val changed = newValue as String
+                summary = changed
+                Toast.makeText(screen.context, RESTART_ANIYOMI, Toast.LENGTH_LONG).show()
+                putPrefBaseUrl(changed)
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
             entries = PREF_QUALITY_ENTRIES
             entryValues = PREF_QUALITY_ENTRIES
-            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setDefaultValue(getPrefQuality())
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
+                putPrefQuality(entry)
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
     }
 
+    private fun getPrefBaseUrl(): String =
+        preferences.getString(PREF_BASEURL_KEY, mainBaseUrl)!!
+
+    private fun putPrefBaseUrl(newValue: String): Boolean =
+        preferences.edit().putString(PREF_BASEURL_KEY, newValue).commit()
+
+    private fun getPrefQuality(): String =
+        preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+    private fun putPrefQuality(newValue: String): Boolean =
+        preferences.edit().putString(PREF_QUALITY_KEY, newValue).commit()
+
     companion object {
-        private val DATE_FORMATTER by lazy {
-            SimpleDateFormat("dd/MM/yyyy", Locale("id", "ID"))
-        }
+        private const val PREF_BASEURL_KEY = "baseurlkey_v${BuildConfig.VERSION_NAME}"
+        private const val PREF_BASEURL_TITLE = "Override BaseUrl"
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
-        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_TITLE = "Preferred Quality"
         private const val PREF_QUALITY_DEFAULT = "720p"
         private val PREF_QUALITY_ENTRIES = arrayOf("720p", "360p")
+
+        private const val RESTART_ANIYOMI = "Restart Aniyomi to apply new setting."
+
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("d MMMM yyyy", Locale("id", "ID"))
+        }
     }
 }
