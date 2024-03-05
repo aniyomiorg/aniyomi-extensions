@@ -7,9 +7,7 @@ import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
 import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES.decodeHex
 import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.json.Json
-import okhttp3.CacheControl
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -20,27 +18,6 @@ class KickAssAnimeExtractor(
     private val json: Json,
     private val headers: Headers,
 ) {
-    // Stolen from AniWatch
-    // Prevent (automatic) caching the .JS file for different episodes, because it
-    // changes everytime, and a cached old .js will have a invalid AES password,
-    // invalidating the decryption algorithm.
-    // We cache it manually when initializing the class.
-    private val cacheControl = CacheControl.Builder().noStore().build()
-    private val newClient = client.newBuilder()
-        .cache(null)
-        .build()
-
-    private val keyMaps by lazy {
-        buildMap {
-            put("bird", newClient.newCall(GET("https://raw.githubusercontent.com/enimax-anime/kaas/bird/key.txt", cache = cacheControl)).execute().body.string().toByteArray())
-            put("duck", newClient.newCall(GET("https://raw.githubusercontent.com/enimax-anime/kaas/duck/key.txt", cache = cacheControl)).execute().body.string().toByteArray())
-        }
-    }
-
-    private val signaturesMap by lazy {
-        newClient.newCall(GET("https://raw.githubusercontent.com/enimax-anime/gogo/main/KAA.json", cache = cacheControl)).execute().parseAs<Map<String, List<String>>>()
-    }
-
     fun videosFromUrl(url: String, name: String): List<Video> {
         val host = url.toHttpUrl().host
         val mid = if (name == "DuckStream") "mid" else "id"
@@ -51,11 +28,11 @@ class KickAssAnimeExtractor(
         val html = client.newCall(GET(url, headers)).execute().body.string()
 
         val key = when (name) {
-            "VidStreaming" -> keyMaps["duck"]!!
-            "DuckStream" -> keyMaps["duck"]!!
-            "BirdStream" -> keyMaps["bird"]!!
+            "VidStreaming" -> "e13d38099bf562e8b9851a652d2043d3"
+            "DuckStream" -> "4504447b74641ad972980a6b8ffd7631"
+            "BirdStream" -> "4b14d0ff625163e3c9c7a47926484bf2"
             else -> return emptyList()
-        }
+        }.toByteArray()
 
         val (sig, timeStamp, route) = getSignature(html, name, query, key) ?: return emptyList()
         val sourceUrl = buildString {
@@ -127,9 +104,9 @@ class KickAssAnimeExtractor(
 
     private fun getSignature(html: String, server: String, query: String, key: ByteArray): Triple<String, String, String>? {
         val order = when (server) {
-            "VidStreaming" -> signaturesMap["vid"]!!
-            "DuckStream" -> signaturesMap["duck"]!!
-            "BirdStream" -> signaturesMap["bird"]!!
+            "VidStreaming" -> listOf("IP", "USERAGENT", "ROUTE", "MID", "TIMESTAMP", "KEY")
+            "DuckStream" -> listOf("IP", "USERAGENT", "ROUTE", "MID", "TIMESTAMP", "KEY")
+            "BirdStream" -> listOf("IP", "USERAGENT", "ROUTE", "MID", "KEY")
             else -> return null
         }
 

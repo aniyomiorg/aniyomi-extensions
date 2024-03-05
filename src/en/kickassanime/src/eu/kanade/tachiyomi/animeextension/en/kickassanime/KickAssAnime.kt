@@ -37,6 +37,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.util.Locale
 
 class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
@@ -55,9 +56,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-    }
+    private val json: Json by injectLazy()
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET("$apiUrl/popular?page=$page")
@@ -323,9 +322,9 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
         private const val PREF_DOMAIN_KEY = "preferred_domain"
         private const val PREF_DOMAIN_TITLE = "Preferred domain (requires app restart)"
-        private const val PREF_DOMAIN_DEFAULT = "https://kickassanime.am"
-        private val PREF_DOMAIN_ENTRIES = arrayOf("kickassanime.am", "kaas.to", "kaas.ro")
-        private val PREF_DOMAIN_ENTRY_VALUES = arrayOf("https://kickassanime.am", "https://kaas.to", "https://kaas.ro")
+        private const val PREF_DOMAIN_DEFAULT = "https://kaas.to"
+        private val PREF_DOMAIN_ENTRIES = arrayOf("kaas.to", "kaas.ro", "kickassanimes.io", "www1.kickassanime.mx")
+        private val PREF_DOMAIN_ENTRY_VALUES = PREF_DOMAIN_ENTRIES.map { "https://$it" }.toTypedArray()
 
         private const val PREF_HOSTER_KEY = "hoster_selection"
         private const val PREF_HOSTER_TITLE = "Enable/Disable Hosts"
