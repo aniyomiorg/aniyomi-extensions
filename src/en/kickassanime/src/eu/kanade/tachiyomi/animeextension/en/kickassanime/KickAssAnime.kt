@@ -54,6 +54,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+            .clearBaseUrl()
     }
 
     private val json: Json by injectLazy()
@@ -287,6 +288,17 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 { Regex("""([\d,]+) [KMGTPE]B/s""").find(it.quality)?.groupValues?.get(1)?.replace(",", ".")?.toFloatOrNull() ?: 0F },
             ),
         ).reversed()
+    }
+
+    private fun SharedPreferences.clearBaseUrl(): SharedPreferences {
+        if (getString(PREF_DOMAIN_KEY, "")!! in PREF_DOMAIN_ENTRY_VALUES) {
+            return this
+        }
+        edit()
+            .remove(PREF_DOMAIN_KEY)
+            .putString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)
+            .apply()
+        return this
     }
 
     companion object {
