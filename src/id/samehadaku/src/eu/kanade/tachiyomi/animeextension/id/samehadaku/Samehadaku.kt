@@ -61,9 +61,12 @@ class Samehadaku : ConfigurableAnimeSource, AnimeHttpSource() {
     // =============================== Search ===============================
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val params = SamehadakuFilters.getSearchParameters(filters)
-
-        return GET("$baseUrl/daftar-anime-2/page/$page/?s=$query${params.filter}")
+        return if (query.isNotEmpty()) {
+            GET("$baseUrl/page/$page/?s=$query")
+        } else {
+            val params = SamehadakuFilters.getSearchParameters(filters)
+            GET("$baseUrl/daftar-anime-2/page/$page/?${params.filter}")
+        }
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
