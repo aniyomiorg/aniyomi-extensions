@@ -19,6 +19,8 @@ class Ask4Movie : ParsedAnimeHttpSource() {
 
     override val name = "Ask4Movie"
 
+    // TODO: Check frequency of url changes to potentially
+    // add back overridable baseurl preference
     override val baseUrl = "https://ask4movie.li"
 
     override val lang = "en"

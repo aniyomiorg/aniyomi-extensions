@@ -27,6 +27,8 @@ class Multimovies : DooPlay(
     "Multimovies",
     "https://multimovies.art",
 ) {
+    // TODO: Check frequency of url changes to potentially
+    // add back overridable baseurl preference
     override val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }

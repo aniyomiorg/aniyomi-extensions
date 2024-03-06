@@ -29,6 +29,8 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "StreamingCommunity"
 
+    // TODO: Check frequency of url changes to potentially
+    // add back overridable baseurl preference
     override val baseUrl = "https://streamingcommunity.report"
 
     override val lang = "it"

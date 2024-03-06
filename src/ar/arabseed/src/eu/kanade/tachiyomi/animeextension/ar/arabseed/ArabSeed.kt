@@ -28,6 +28,8 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "عرب سيد"
 
+    // TODO: Check frequency of url changes to potentially
+    // add back overridable baseurl preference
     override val baseUrl = "https://m.asd.homes"
 
     override val lang = "ar"

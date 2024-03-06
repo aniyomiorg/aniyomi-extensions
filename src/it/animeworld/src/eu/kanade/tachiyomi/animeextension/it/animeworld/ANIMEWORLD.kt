@@ -34,6 +34,8 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "ANIMEWORLD.tv"
 
+    // TODO: Check frequency of url changes to potentially
+    // add back overridable baseurl preference
     override val baseUrl = "https://www.animeworld.so"
 
     override val lang = "it"

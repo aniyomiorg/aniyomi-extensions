@@ -37,6 +37,8 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val id = 623659475482363776
 
+    // TODO: Check frequency of url changes to potentially
+    // add back overridable baseurl preference
     override val baseUrl = "https://ripcrabbyanime.com"
 
     override val lang = "en"

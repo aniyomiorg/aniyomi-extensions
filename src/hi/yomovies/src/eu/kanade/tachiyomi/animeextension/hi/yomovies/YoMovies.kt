@@ -29,6 +29,8 @@ class YoMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "YoMovies"
 
+    // TODO: Check frequency of url changes to potentially
+    // add back overridable baseurl preference
     override val baseUrl = "https://yomovies.town"
 
     override val lang = "hi"
