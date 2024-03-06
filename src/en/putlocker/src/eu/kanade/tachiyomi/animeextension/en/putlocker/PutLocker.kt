@@ -74,7 +74,7 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request =
         GET("$baseUrl/filter/$page?genre=all&country=all&types=all&year=all&sort=updated")
 
-    override fun latestUpdatesSelector(): String = "div.movies-list > div.ml-item > div.mli-poster"
+    override fun latestUpdatesSelector(): String = "div.movies-list > div.ml-item"
 
     override fun latestUpdatesNextPageSelector(): String = "div#pagination li.active ~ li"
 
@@ -257,8 +257,8 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p")
-            entryValues = arrayOf("1080", "720", "480")
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
             setDefaultValue("1080")
             summary = "%s"
 
