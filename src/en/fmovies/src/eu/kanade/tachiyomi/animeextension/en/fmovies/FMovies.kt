@@ -251,13 +251,16 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             val decrypted = utils.vrfDecrypt(encrypted)
             when (name) {
-                "Vidplay", "MyCloud" -> vidsrcExtractor.videosFromUrl(decrypted, name)
+                "Vidplay", "MyCloud" -> {
+                    val subs = client.newCall(
+                        GET("$baseUrl/ajax/episode/subtitles/${data.id}"),
+                    ).execute().toTracks()
+                    vidsrcExtractor.videosFromUrl(decrypted, name, subtitleList = subs)
+                }
                 "Filemoon" -> filemoonExtractor.videosFromUrl(decrypted, headers = headers)
                 "Streamtape" -> {
                     val subtitleList = decrypted.toHttpUrl().queryParameter("sub.info")?.let {
-                        client.newCall(GET(it, headers)).await().parseAs<List<FMoviesSubs>>().map { t ->
-                            Track(t.file, t.label)
-                        }
+                        client.newCall(GET(it, headers)).await().toTracks()
                     } ?: emptyList()
 
                     streamtapeExtractor.videoFromUrl(decrypted, subtitleList = subtitleList)?.let(::listOf) ?: emptyList()
@@ -291,6 +294,11 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun Int.toPageQuery(first: Boolean = true): String {
         return if (this == 1) "" else "${if (first) "?" else "&"}page=$this"
     }
+
+    private fun Response.toTracks(): List<Track> = parseAs<List<FMoviesSubs>>()
+        .map { t ->
+            Track(t.file, t.label)
+        }
 
     companion object {
         private val HOSTERS = arrayOf(

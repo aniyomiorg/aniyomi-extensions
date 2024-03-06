@@ -33,7 +33,7 @@ class VidsrcExtractor(private val client: OkHttpClient, private val headers: Hea
         ).execute().parseAs<List<String>>()
     }
 
-    fun videosFromUrl(embedLink: String, hosterName: String, type: String = ""): List<Video> {
+    fun videosFromUrl(embedLink: String, hosterName: String, type: String = "", subtitleList: List<Track> = emptyList()): List<Video> {
         val host = embedLink.toHttpUrl().host
         val apiUrl = getApiUrl(embedLink, keys)
 
@@ -64,7 +64,7 @@ class VidsrcExtractor(private val client: OkHttpClient, private val headers: Hea
             data.result.sources.first().file,
             referer = "https://$host/",
             videoNameGen = { q -> hosterName + (if (type.isBlank()) "" else " - $type") + " - $q" },
-            subtitleList = data.result.tracks.toTracks(),
+            subtitleList = subtitleList + data.result.tracks.toTracks(),
         )
     }
 
