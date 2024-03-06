@@ -1,7 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.en.ask4movie
 
-import android.app.Application
-import android.content.SharedPreferences
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -16,8 +14,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 
 class Ask4Movie : ParsedAnimeHttpSource() {
 
