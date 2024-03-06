@@ -80,7 +80,7 @@ class PutServerExtractor(private val client: OkHttpClient) {
 
         val playerResp = client.newCall(GET(embedUrl, referer)).execute().asJsoup()
         val player = playerResp.select("div#player")
-        val vidId = "\"" + player.attr("data-id") + "\""
+        val vidId = "\"${player.attr("data-id")}\""
         val vidHash = player.attr("data-hash")
         val cipher = CryptoAES.encrypt(vidHash, vidId)
         val vidUrl = "$embedHost/ajax/getSources/".toHttpUrl().newBuilder()
