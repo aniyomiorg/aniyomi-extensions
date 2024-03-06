@@ -3,11 +3,8 @@ package eu.kanade.tachiyomi.animeextension.it.animeunity
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.SharedPreferences
-import android.widget.Toast
-import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -39,7 +36,7 @@ class AnimeUnity :
     ConfigurableAnimeSource {
     override val name = "AnimeUnity"
 
-    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
+    override val baseUrl = "https://www.animeunity.to"
 
     override val lang = "it"
 
@@ -491,11 +488,6 @@ class AnimeUnity :
     }
 
     companion object {
-        private val PREF_DOMAIN_KEY = "preferred_domain_name_v${BuildConfig.VERSION_CODE}"
-        private const val PREF_DOMAIN_TITLE = "Override BaseUrl"
-        private const val PREF_DOMAIN_DEFAULT = "https://www.animeunity.to"
-        private const val PREF_DOMAIN_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
-
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_DEFAULT = "1080"
     }
@@ -503,22 +495,6 @@ class AnimeUnity :
     // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        EditTextPreference(screen.context)
-            .apply {
-                key = PREF_DOMAIN_KEY
-                title = PREF_DOMAIN_TITLE
-                summary = PREF_DOMAIN_SUMMARY
-                dialogTitle = PREF_DOMAIN_TITLE
-                dialogMessage = "Default: $PREF_DOMAIN_DEFAULT"
-                setDefaultValue(PREF_DOMAIN_DEFAULT)
-
-                setOnPreferenceChangeListener { _, newValue ->
-                    val newValueString = newValue as String
-                    Toast.makeText(screen.context, "Restart Aniyomi to apply new setting.", Toast.LENGTH_LONG).show()
-                    preferences.edit().putString(key, newValueString.trim()).commit()
-                }
-            }.also(screen::addPreference)
-
         ListPreference(screen.context)
             .apply {
                 key = PREF_QUALITY_KEY

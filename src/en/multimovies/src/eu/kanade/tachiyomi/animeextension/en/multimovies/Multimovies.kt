@@ -2,11 +2,8 @@ package eu.kanade.tachiyomi.animeextension.en.multimovies
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.widget.Toast
-import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animeextension.en.multimovies.extractors.AutoEmbedExtractor
 import eu.kanade.tachiyomi.animeextension.en.multimovies.extractors.MultimoviesCloudExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -28,13 +25,8 @@ import uy.kohesive.injekt.api.get
 class Multimovies : DooPlay(
     "en",
     "Multimovies",
-    "https://multimovies.live",
+    "https://multimovies.art",
 ) {
-
-    private val defaultBaseUrl = "https://multimovies.live"
-
-    override val baseUrl by lazy { getPrefBaseUrl() }
-
     override val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
@@ -156,19 +148,6 @@ class Multimovies : DooPlay(
     // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        EditTextPreference(screen.context).apply {
-            key = BASE_URL_PREF
-            title = BASE_URL_PREF_TITLE
-            summary = BASE_URL_PREF_SUMMARY
-            this.setDefaultValue(defaultBaseUrl)
-            dialogTitle = BASE_URL_PREF_TITLE
-
-            setOnPreferenceChangeListener { _, _ ->
-                Toast.makeText(screen.context, RESTART_ANIYOMI, Toast.LENGTH_LONG).show()
-                true
-            }
-        }.also(screen::addPreference)
-
         ListPreference(screen.context).apply {
             key = PREF_SERVER_KEY
             title = PREF_SERVER_TITLE
@@ -189,18 +168,11 @@ class Multimovies : DooPlay(
 
     // ============================= Utilities ==============================
 
-    private fun getPrefBaseUrl(): String = preferences.getString(BASE_URL_PREF, defaultBaseUrl)!!
-
     private inline fun <reified R> AnimeFilterList.getFirst(): R {
         return first { it is R } as R
     }
 
     companion object {
-        private const val RESTART_ANIYOMI = "Restart Aniyomi to apply new setting."
-        private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
-        private val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_CODE}"
-        private const val BASE_URL_PREF_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
-
         private const val PREF_SERVER_KEY = "preferred_server"
         private const val PREF_SERVER_TITLE = "Preferred Server"
         private const val PREF_SERVER_DEFAULT = "multimovies"

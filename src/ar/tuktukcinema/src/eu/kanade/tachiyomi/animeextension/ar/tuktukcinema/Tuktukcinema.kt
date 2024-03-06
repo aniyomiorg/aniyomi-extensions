@@ -2,12 +2,9 @@ package eu.kanade.tachiyomi.animeextension.ar.tuktukcinema
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.widget.Toast
-import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import dev.datlag.jsunpacker.JsUnpacker
-import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -30,15 +27,12 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 
 class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "توك توك سينما"
 
-    override val baseUrl by lazy {
-        getPrefHostUrl(preferences)
-    }
+    override val baseUrl = "https://w.tuktokcinema.com"
 
     override val lang = "ar"
 
@@ -292,33 +286,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         CatUnit("مسلسلات هندى", "category/series-9/مسلسلات-هندي/"),
     )
 
-    // preferred quality settings
-    private fun getPrefHostUrl(preferences: SharedPreferences): String = preferences.getString(
-        "default_domain_v${BuildConfig.VERSION_CODE}",
-        "https://ww.tuktukcima.com/",
-    )!!.trim()
-
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val defaultDomain = EditTextPreference(screen.context).apply {
-            key = "default_domain"
-            title = "Enter default domain"
-            summary = getPrefHostUrl(preferences)
-            this.setDefaultValue(getPrefHostUrl(preferences))
-            dialogTitle = "Default domain"
-            dialogMessage = "You can change the site domain from here"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                try {
-                    val res = preferences.edit().putString("default_domain", newValue as String).commit()
-                    Toast.makeText(screen.context, "Restart Aniyomi to apply changes", Toast.LENGTH_LONG).show()
-                    res
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    false
-                }
-            }
-        }
-
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
@@ -334,7 +302,6 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
-        screen.addPreference(defaultDomain)
         screen.addPreference(videoQualityPref)
     }
 }
