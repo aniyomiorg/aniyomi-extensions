@@ -1,11 +1,8 @@
 package eu.kanade.tachiyomi.animeextension.en.dramacool
 
 import android.app.Application
-import android.widget.Toast
-import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -23,7 +20,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -31,9 +27,9 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "DramaCool"
 
-    private val defaultBaseUrl = "https://dramacool.pa"
-
-    override val baseUrl by lazy { getPrefBaseUrl() }
+    // TODO: Check frequency of url changes to potentially
+    // add back overridable baseurl preference
+    override val baseUrl = "https://dramacool.com.pa"
 
     override val lang = "en"
 
@@ -150,26 +146,6 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        EditTextPreference(screen.context).apply {
-            key = BASE_URL_PREF_TITLE
-            title = BASE_URL_PREF_TITLE
-            summary = BASE_URL_PREF_SUMMARY
-            setDefaultValue(defaultBaseUrl)
-            dialogTitle = BASE_URL_PREF_TITLE
-            dialogMessage = "Default: $defaultBaseUrl"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                try {
-                    val res = preferences.edit().putString(BASE_URL_PREF, newValue as String).commit()
-                    Toast.makeText(screen.context, RESTART_ANIYOMI, Toast.LENGTH_LONG).show()
-                    res
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    false
-                }
-            }
-        }.also(screen::addPreference)
-
         ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
@@ -212,17 +188,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .getOrNull() ?: 0L
     }
 
-    private fun getPrefBaseUrl(): String = preferences.getString(BASE_URL_PREF, defaultBaseUrl)!!
-
     companion object {
-        private const val RESTART_ANIYOMI = "Restart Aniyomi to apply new setting."
-
-        private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
-
-        private val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_CODE}"
-
-        private const val BASE_URL_PREF_SUMMARY = "For temporary uses. Update extension will erase this setting."
-
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
         }

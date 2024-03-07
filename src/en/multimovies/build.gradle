@@ -2,8 +2,8 @@ ext {
     extName = 'Multimovies'
     extClass = '.Multimovies'
     themePkg = 'dooplay'
-    baseUrl = 'https://multimovies.live'
-    overrideVersionCode = 15
+    baseUrl = 'https://multimovies.art'
+    overrideVersionCode = 16
 }
 
 apply from: "$rootDir/common.gradle"

@@ -1,7 +1,7 @@
 ext {
     extName = 'YoMovies'
     extClass = '.YoMovies'
-    extVersionCode = 8
+    extVersionCode = 9
     isNsfw = true
 }
 
