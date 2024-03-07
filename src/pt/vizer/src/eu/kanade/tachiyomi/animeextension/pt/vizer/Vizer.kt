@@ -39,7 +39,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "Vizer.tv"
 
-    override val baseUrl = "https://vizer.tv"
+    override val baseUrl = "https://vizertv.in"
     private val apiUrl = "$baseUrl/includes/ajax"
 
     override val lang = "pt-BR"
