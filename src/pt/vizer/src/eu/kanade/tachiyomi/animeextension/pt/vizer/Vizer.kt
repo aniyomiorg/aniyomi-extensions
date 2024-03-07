@@ -178,7 +178,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val doc = response.asJsoup()
-        val seasons = doc.select("div#seasonsList div.item[data-season-id]")
+        val seasons = doc.select("div.seasons div.list div.item[data-season-id]")
         return if (seasons.size > 0) {
             seasons.flatMap(::getSeasonEps).reversed()
         } else {
