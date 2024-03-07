@@ -123,7 +123,6 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
             it.parallelCatchingFlatMap { playerUrl ->
                 with(playerUrl) {
                     when {
-                        contains("anime-sama.fr") -> listOf(Video(playerUrl, "${prefix}AS Player", playerUrl))
                         contains("sibnet.ru") -> SibnetExtractor(client).videosFromUrl(playerUrl, prefix)
                         contains("vk.") -> VkExtractor(client, headers).videosFromUrl(playerUrl, prefix)
                         contains("sendvid.com") -> SendvidExtractor(client, headers).videosFromUrl(playerUrl, prefix)
