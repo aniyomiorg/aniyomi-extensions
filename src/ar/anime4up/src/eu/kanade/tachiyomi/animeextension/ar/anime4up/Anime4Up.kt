@@ -1,5 +1,4 @@
 package eu.kanade.tachiyomi.animeextension.ar.anime4up
-
 import android.app.Application
 import android.util.Base64
 import androidx.preference.ListPreference
@@ -22,7 +21,10 @@ import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -36,14 +38,15 @@ import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
 class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
-
     override val name = "Anime4Up"
 
     override val baseUrl = "https://anime4up.cam"
 
     override val lang = "ar"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
+
+    override val client = network.cloudflareClient
 
     private val json: Json by injectLazy()
 
@@ -58,84 +61,108 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector() = "div.anime-list-content div.anime-card-poster > div.hover"
 
-    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
-        element.selectFirst("img")!!.run {
-            thumbnail_url = absUrl("src")
-            title = attr("alt")
+    override fun popularAnimeFromElement(element: Element) =
+        SAnime.create().apply {
+            element.selectFirst("img")!!.run {
+                thumbnail_url = absUrl("src")
+                title = attr("alt")
+            }
+            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         }
-        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
-    }
 
     override fun popularAnimeNextPageSelector() = "ul.pagination > li > a.next"
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException()
-    override fun latestUpdatesSelector() = throw UnsupportedOperationException()
-    override fun latestUpdatesFromElement(element: Element) = throw UnsupportedOperationException()
-    override fun latestUpdatesNextPageSelector() = throw UnsupportedOperationException()
+    override fun latestUpdatesRequest(page: Int) = GET(baseUrl + if (page > 1) "/episode/page/$page" else "/episode/", headers)
+
+    override fun latestUpdatesSelector() = popularAnimeSelector()
+
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
+    // SAnime.create().apply {
+    //     element.selectFirst("img")!!.run {
+    //         thumbnail_url = absUrl("src")
+    //     }
+    //     title = element.select("div.anime-card-details > div.anime-card-title > h3")!!.text()
+
+    //     setUrlWithoutDomain(element.select("div.anime-card-details > div.anime-card-title > h3 a")!!.attr("href"))
+    // }
+
+    override fun latestUpdatesNextPageSelector() = "ul.pagination > li:last-child >a"
 
     // =============================== Search ===============================
     override fun getFilterList() = Anime4UpFilters.FILTER_LIST
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+    override fun searchAnimeRequest(
+        page: Int,
+        query: String,
+        filters: AnimeFilterList,
+    ): Request {
         if (query.isNotBlank()) {
             return GET("$baseUrl/?search_param=animes&s=$query", headers)
         }
 
         return with(Anime4UpFilters.getSearchParameters(filters)) {
-            val url = when {
-                genre.isNotBlank() -> "$baseUrl/anime-genre/$genre"
-                type.isNotBlank() -> "$baseUrl/anime-type/$type"
-                status.isNotBlank() -> "$baseUrl/anime-status/$status"
-                else -> throw Exception("اختر فلتر")
-            }
+            val url =
+                when {
+                    genre.isNotBlank() -> "$baseUrl/anime-genre/$genre"
+                    type.isNotBlank() -> "$baseUrl/anime-type/$type"
+                    status.isNotBlank() -> "$baseUrl/anime-status/$status"
+                    season.isNotBlank() -> "$baseUrl/anime-season/$season"
+                    else -> throw Exception("اختر فلتر")
+                }
             GET(url, headers)
         }
     }
 
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+
     override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
+
     override fun searchAnimeSelector() = popularAnimeSelector()
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
-        val doc = document // Shortcut
+    override fun animeDetailsParse(document: Document) =
+        SAnime.create().apply {
+            val doc = document // Shortcut
 
-        thumbnail_url = doc.selectFirst("img.thumbnail")!!.attr("src")
-        title = doc.selectFirst("h1.anime-details-title")!!.text()
-        // Genres + useful info
-        genre = doc.select("ul.anime-genres > li > a, div.anime-info > a").eachText().joinToString()
+            thumbnail_url = doc.selectFirst("img.thumbnail")!!.attr("src")
+            title = doc.selectFirst("h1.anime-details-title")!!.text()
+            // Genres + useful info
+            genre = doc.select("ul.anime-genres > li > a, div.anime-info > a").eachText().joinToString()
 
-        description = buildString {
-            // Additional info
-            doc.select("div.anime-info").eachText().forEach {
-                append("$it\n")
-            }
-            // Description
-            doc.selectFirst("p.anime-story")?.text()?.also {
-                append("\n$it")
+            description =
+                buildString {
+                    // Additional info
+                    doc.select("div.anime-info").eachText().forEach {
+                        append("$it\n")
+                    }
+                    // Description
+                    doc.selectFirst("p.anime-story")?.text()?.also {
+                        append("\n$it")
+                    }
+                }
+
+            doc.selectFirst("div.anime-info:contains(حالة الأنمي)")?.text()?.also {
+                status =
+                    when {
+                        it.contains("يعرض الان", true) -> SAnime.ONGOING
+                        it.contains("مكتمل", true) -> SAnime.COMPLETED
+                        else -> SAnime.UNKNOWN
+                    }
             }
         }
-
-        doc.selectFirst("div.anime-info:contains(حالة الأنمي)")?.text()?.also {
-            status = when {
-                it.contains("يعرض الان", true) -> SAnime.ONGOING
-                it.contains("مكتمل", true) -> SAnime.COMPLETED
-                else -> SAnime.UNKNOWN
-            }
-        }
-    }
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
 
     override fun episodeListSelector() = "div.ehover6 > div.episodes-card-title > h3 > a, ul.all-episodes-list li > a"
 
-    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
-        setUrlWithoutDomain(element.attr("href"))
-        name = element.text()
-        episode_number = name.substringAfterLast(" ").toFloatOrNull() ?: 0F
-    }
+    override fun episodeFromElement(element: Element) =
+        SEpisode.create().apply {
+            setUrlWithoutDomain(element.attr("href"))
+            name = element.text()
+            episode_number = name.substringAfterLast(" ").toFloatOrNull() ?: 0F
+        }
 
     // ============================ Video Links =============================
     @Serializable
@@ -146,15 +173,16 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     )
 
     override fun videoListParse(response: Response): List<Video> {
-        val base64 = response.asJsoup().selectFirst("input[name=wl]")
-            ?.attr("value")
-            ?.let { String(Base64.decode(it, Base64.DEFAULT)) }
-            ?: return emptyList()
+        val base64 =
+            response.use { it.asJsoup() }.selectFirst("input[name=wl]")
+                ?.attr("value")
+                ?.let { String(Base64.decode(it, Base64.DEFAULT)) }
+                ?: return emptyList()
 
         val parsedData = json.decodeFromString<Qualities>(base64)
         val streamLinks = with(parsedData) { fhd + hd + sd }
 
-        return streamLinks.values.distinct().parallelCatchingFlatMapBlocking(::extractVideos)
+        return streamLinks.values.distinct().parallelCatchingFlatMap(::extractVideos)
     }
 
     private val uqloadExtractor by lazy { UqloadExtractor(client) }
@@ -178,7 +206,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             url.contains("ok.ru") -> okruExtractor.videosFromUrl(url)
             url.contains("mp4upload") -> mp4uploadExtractor.videosFromUrl(url, headers)
             url.contains("uqload") -> uqloadExtractor.videosFromUrl(url)
-            url.contains("voe") -> voeExtractor.videosFromUrl(url)
+            url.contains("voe") -> voeExtractor.videoFromUrl(url)?.let(::listOf)
             url.contains("shared") -> sharedExtractor.videosFromUrl(url)?.let(::listOf)
             DOOD_REGEX.containsMatchIn(url) -> doodExtractor.videosFromUrl(url, "Dood mirror")
             VIDBOM_REGEX.containsMatchIn(url) -> vidbomExtractor.videosFromUrl(url)
@@ -187,9 +215,11 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } ?: emptyList()
     }
 
-    override fun videoListSelector() = throw UnsupportedOperationException()
-    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
-    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
+    override fun videoListSelector() = throw Exception("not used")
+
+    override fun videoFromElement(element: Element) = throw Exception("not used")
+
+    override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -211,6 +241,15 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
+    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
+        runBlocking {
+            map {
+                async(Dispatchers.Default) {
+                    runCatching { f(it) }.getOrElse { emptyList() }
+                }
+            }.awaitAll().flatten()
+        }
+
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
@@ -220,9 +259,15 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private val VIDBOM_REGEX = Regex("(?:v[aie]d[bp][aoe]?m|myvii?d|segavid|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+)")
+        private val VIDBOM_REGEX =
+            Regex(
+                "(?:v[aie]d[bp][aoe]?m|myvii?d|segavid|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+)",
+            )
         private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)")
-        private val STREAMWISH_REGEX = Regex("((?:streamwish|anime7u|animezd|ajmidyad|khadhnayad|yadmalik|hayaatieadhab)\\.(?:com|to|sbs))/(?:e/|v/|f/)?([0-9a-zA-Z]+)")
+        private val STREAMWISH_REGEX =
+            Regex(
+                "((?:streamwish|anime7u|animezd|ajmidyad|khadhnayad|yadmalik|hayaatieadhab)\\.(?:com|to|sbs))/(?:e/|v/|f/)?([0-9a-zA-Z]+)",
+            )
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
@@ -231,3 +276,45 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private val PREF_QUALITY_VALUES = PREF_QUALITY_ENTRIES
     }
 }
+
+// override fun latestUpdatesRequest(page: Int) = GET("%baseUrl")
+// // if (page > 1) {
+// //     GET("%baseUrl/episode/page/$page")
+// // } else {
+// //     GET("%baseUrl/episode/")
+// // }
+
+// override fun latestUpdatesSelector() = "body > div:nth-child(7) > div > div > div.main-widget-body >div  div.episodes-card-container"
+
+// override fun latestUpdatesFromElement(element: Element) =
+//     SAnime.create().apply {
+//         element.selectFirst("img")!!.run {
+//             thumbnail_url = absUrl("src")
+//         }
+//         title = element.select("div.anime-card-title > h3")!!.text()
+
+//         setUrlWithoutDomain(element.select("div.anime-card-title > h3 > a")!!.attr("href"))
+//     }
+
+// override fun latestUpdatesNextPageSelector() = throw Exception("not used")
+
+// override fun latestUpdatesRequest(page: Int) = GET("%baseUrl/episode/", headers)
+// // if (page > 1) {
+// //     GET("%baseUrl/episode/page/$page")
+// // } else {
+// //     GET("%baseUrl/episode/")
+// // }
+
+// override fun latestUpdatesSelector() = "body > div.container > div.anime-list-content > div > div"
+
+// override fun latestUpdatesFromElement(element: Element) =
+//     SAnime.create().apply {
+//         element.selectFirst("img")!!.run {
+//             thumbnail_url = absUrl("src")
+//         }
+//         title = element.select("div.anime-card-details > div.anime-card-title > h3")!!.text()
+
+//         setUrlWithoutDomain(element.select("div.anime-card-details > div.anime-card-title > h3 a")!!.attr("href"))
+//     }
+
+// override fun latestUpdatesNextPageSelector() = "body > div.container > div.pagination-content > ul > li:nth-child(7) > a"
