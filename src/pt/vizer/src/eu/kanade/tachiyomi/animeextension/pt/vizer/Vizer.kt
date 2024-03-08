@@ -5,11 +5,11 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.vizer.VizerFilters.FilterSearchParams
 import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.EpisodeListDto
-import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.PlayersDto
+import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.HostersDto
 import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.SearchItemDto
 import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.SearchResultDto
 import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.VideoDto
-import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.VideoLanguagesDto
+import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.VideoListDto
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -24,7 +24,6 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parseAs
-import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
@@ -33,7 +32,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
 
 class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -45,8 +43,6 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     override val lang = "pt-BR"
 
     override val supportsLatest = true
-
-    private val json: Json by injectLazy()
 
     private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -65,7 +61,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val result = response.parseAs<SearchResultDto>()
-        val animes = result.list.map(::animeFromObject)
+        val animes = result.items.values.map(::animeFromObject)
         val hasNext = result.quantity == 35
         return AnimesPage(animes, hasNext)
     }
@@ -89,7 +85,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
         val parsedData = response.parseAs<SearchResultDto>()
-        val animes = parsedData.list.map(::animeFromObject)
+        val animes = parsedData.items.values.map(::animeFromObject)
         return AnimesPage(animes, false)
     }
 
@@ -165,6 +161,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
         val sname = seasonElement.text()
         val response = client.newCall(apiRequest("getEpisodes=$id")).execute()
         val episodes = response.parseAs<EpisodeListDto>().episodes
+            .values
             .filter { it.released }
             .map {
                 SEpisode.create().apply {
@@ -201,17 +198,24 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
         } else {
             // Fake url, its an ID that will be used to get episode languages
             // (sub/dub) and then return the video link
-            apiRequest("getEpisodeLanguages=$url")
+            apiRequest("getEpisodeData=$url")
         }
     }
 
     override fun videoListParse(response: Response): List<Video> {
         val body = response.body.string()
         val videoObjectList = if (body.startsWith("{")) {
-            json.decodeFromString<VideoLanguagesDto>(body).videos
+            body.parseAs<VideoListDto>().videos.values.toList()
         } else {
-            val videoJson = body.substringAfterLast("videoPlayerBox(").substringBefore(");")
-            json.decodeFromString<VideoLanguagesDto>(videoJson).videos
+            val doc = response.asJsoup(body)
+            doc.select("div.audios div[data-load-player]").mapNotNull {
+                try {
+                    val movieHosters = it.attr("data-players").parseAs<HostersDto>()
+                    val movieId = it.attr("data-load-player")
+                    val movieLang = if (it.hasClass("legendado")) "1" else "0"
+                    VideoDto(movieId, movieLang).apply { hosters = movieHosters }
+                } catch (_: Throwable) { null }
+            }
         }
 
         return videoObjectList.flatMap(::getVideosFromObject)
@@ -221,20 +225,19 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
 
     private fun getVideosFromObject(videoObj: VideoDto): List<Video> {
-        val players = client.newCall(apiRequest("getVideoPlayers=${videoObj.id}"))
-            .execute()
-            .parseAs<PlayersDto>()
+        val hosters = videoObj.hosters ?: return emptyList()
+
         val langPrefix = if (videoObj.lang == "1") "LEG" else "DUB"
-        val videoList = players.iterator().mapNotNull { (name, status) ->
-            if (status == "0") return@mapNotNull null
+
+        return hosters.iterator().flatMap { (name, status) ->
+            if (status != 3) return@flatMap emptyList()
             val url = getPlayerUrl(videoObj.id, name)
             when (name) {
-                "mixdrop" -> mixdropExtractor.videoFromUrl(url, langPrefix)
+                "mixdrop" -> mixdropExtractor.videosFromUrl(url, langPrefix)
                 "streamtape" -> streamtapeExtractor.videosFromUrl(url, "StreamTape($langPrefix)")
-                else -> null
+                else -> emptyList()
             }
-        }.flatten()
-        return videoList
+        }
     }
 
     // ============================== Settings ==============================
