@@ -276,4 +276,3 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private val PREF_QUALITY_VALUES = PREF_QUALITY_ENTRIES
     }
 }
-
