@@ -2,6 +2,7 @@ ext {
     extName = 'Anime4up'
     extClass = '.Anime4Up'
     extVersionCode = 55
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"
