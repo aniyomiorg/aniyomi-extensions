@@ -1,3 +1,4 @@
+
 package eu.kanade.tachiyomi.animeextension.ar.anime4up
 import android.app.Application
 import android.util.Base64
@@ -21,10 +22,6 @@ import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -78,14 +75,6 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesSelector() = popularAnimeSelector()
 
     override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
-    // SAnime.create().apply {
-    //     element.selectFirst("img")!!.run {
-    //         thumbnail_url = absUrl("src")
-    //     }
-    //     title = element.select("div.anime-card-details > div.anime-card-title > h3")!!.text()
-
-    //     setUrlWithoutDomain(element.select("div.anime-card-details > div.anime-card-title > h3 a")!!.attr("href"))
-    // }
 
     override fun latestUpdatesNextPageSelector() = "ul.pagination > li:last-child >a"
 
@@ -241,15 +230,6 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
-        runBlocking {
-            map {
-                async(Dispatchers.Default) {
-                    runCatching { f(it) }.getOrElse { emptyList() }
-                }
-            }.awaitAll().flatten()
-        }
-
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
