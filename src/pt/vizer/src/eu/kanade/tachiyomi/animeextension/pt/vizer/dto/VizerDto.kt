@@ -62,11 +62,13 @@ class VideoDto(
 class HostersDto(
     val mixdrop: Int = 0,
     val streamtape: Int = 0,
+    val warezcdn: Int = 0,
 ) {
     operator fun iterator(): List<Pair<String, Int>> {
         return listOf(
             "mixdrop" to mixdrop,
             "streamtape" to streamtape,
+            "warezcdn" to warezcdn,
         )
     }
 }

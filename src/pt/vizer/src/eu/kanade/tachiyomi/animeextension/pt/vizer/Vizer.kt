@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.SearchItemDto
 import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.SearchResultDto
 import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.VideoDto
 import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.VideoListDto
+import eu.kanade.tachiyomi.animeextension.pt.vizer.extractors.WarezExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -43,6 +44,8 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     override val lang = "pt-BR"
 
     override val supportsLatest = true
+
+    override fun headersBuilder() = super.headersBuilder().add("Referer", "$baseUrl/")
 
     private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -223,6 +226,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private val mixdropExtractor by lazy { MixDropExtractor(client) }
     private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val warezExtractor by lazy { WarezExtractor(client, headers) }
 
     private fun getVideosFromObject(videoObj: VideoDto): List<Video> {
         val hosters = videoObj.hosters ?: return emptyList()
@@ -235,6 +239,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             when (name) {
                 "mixdrop" -> mixdropExtractor.videosFromUrl(url, langPrefix)
                 "streamtape" -> streamtapeExtractor.videosFromUrl(url, "StreamTape($langPrefix)")
+                "warezcdn" -> warezExtractor.videosFromUrl(url, langPrefix)
                 else -> emptyList()
             }
         }
@@ -292,10 +297,19 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
+    private val noRedirectClient = client.newBuilder().followRedirects(false).build()
+
     private fun getPlayerUrl(id: String, name: String): String {
-        val req = GET("$baseUrl/embed/getPlay.php?id=$id&sv=$name")
-        val body = client.newCall(req).execute().body.string()
-        return body.substringAfter("location.href=\"").substringBefore("\";")
+        val req = GET("$baseUrl/embed/getPlay.php?id=$id&sv=$name", headers)
+        return if (name == "warezcdn") {
+            val res = noRedirectClient.newCall(req).execute()
+            res.close()
+            res.headers["location"]!!
+        } else {
+            val res = client.newCall(req).execute()
+            val body = res.body.string()
+            body.substringAfter("location.href=\"", "").substringBefore("\";", "")
+        }
     }
 
     private fun apiRequest(body: String): Request {
@@ -336,6 +350,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
         private val PREF_PLAYER_ARRAY = arrayOf(
             "MixDrop",
             "StreamTape",
+            "WarezCDN",
         )
 
         private const val PREF_LANGUAGE_KEY = "pref_language"
