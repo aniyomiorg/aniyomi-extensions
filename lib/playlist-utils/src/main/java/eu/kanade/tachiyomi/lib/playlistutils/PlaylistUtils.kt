@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.internal.commonEmptyHeaders
@@ -105,9 +106,8 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
         val masterUrlBasePath = playlistHttpUrl.newBuilder().apply {
             removePathSegment(playlistHttpUrl.pathSize - 1)
             addPathSegment("")
-            query(null)
             fragment(null)
-        }.build().toString()
+        }.build()
 
         // Get subtitles
         val subtitleTracks = subtitleList + SUBTITLE_REGEX.findAll(masterPlaylist).mapNotNull {
@@ -146,14 +146,14 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
         }
     }
 
-    private fun getAbsoluteUrl(url: String, playlistUrl: String, masterBase: String): String? {
+    private fun getAbsoluteUrl(url: String, playlistUrl: String, masterBase: HttpUrl): String? {
         return when {
             url.isEmpty() -> null
             url.startsWith("http") -> url
             url.startsWith("//") -> "https:$url"
             url.startsWith("/") -> playlistUrl.toHttpUrl().newBuilder().encodedPath("/").build().toString()
                 .substringBeforeLast("/") + url
-            else -> masterBase + url
+            else -> masterBase.newBuilder().addEncodedPathSegments(url).build().toString()
         }
     }
 
