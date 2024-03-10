@@ -32,7 +32,6 @@ class ChineseAnime : AnimeStream(
 
     override fun getVideoList(url: String, name: String): List<Video> {
         val prefix = "$name - "
-        println("$prefix$url")
         return when {
             url.contains("dailymotion") -> dailymotionExtractor.videosFromUrl(url, prefix)
             url.contains("embedwish") -> streamwishExtractor.videosFromUrl(url, prefix)
