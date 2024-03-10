@@ -39,6 +39,12 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    private val interceptor = DdosGuardInterceptor(network.client)
+
+    override val client = network.client.newBuilder()
+        .addInterceptor(interceptor)
+        .build()
+
     override val name = "AnimePahe"
 
     override val baseUrl by lazy {
