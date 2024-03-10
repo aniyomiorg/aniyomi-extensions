@@ -5,18 +5,18 @@ import eu.kanade.tachiyomi.lib.megacloudextractor.MegaCloudExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.multisrc.zorotheme.ZoroTheme
 
-class AniWatch : ZoroTheme(
+class HiAnime : ZoroTheme(
     "en",
-    "AniWatch",
-    "https://aniwatch.to",
+    "HiAnime",
+    "https://hianime.to",
 ) {
     override val id = 6706411382606718900L
 
     override val ajaxRoute = "/v2"
 
     override val hosterNames: List<String> = listOf(
-        "Vidstreaming",
-        "MegaCloud",
+        "HD-1",
+        "HD-2",
         "StreamTape",
     )
 
@@ -30,7 +30,7 @@ class AniWatch : ZoroTheme(
                     ?.let(::listOf)
                     ?: emptyList()
             }
-            "Vidstreaming", "MegaCloud" -> megaCloudExtractor.getVideosFromUrl(server.link, server.type, server.name)
+            "HD-1", "HD-2" -> megaCloudExtractor.getVideosFromUrl(server.link, server.type, server.name)
             else -> emptyList()
         }
     }

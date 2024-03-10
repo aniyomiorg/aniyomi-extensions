@@ -1,9 +1,9 @@
 ext {
-    extName = 'AniWatch'
-    extClass = '.AniWatch'
+    extName = 'HiAnime'
+    extClass = '.HiAnime'
     themePkg = 'zorotheme'
-    baseUrl = 'https://aniwatch.to'
-    overrideVersionCode = 39
+    baseUrl = 'https://hianime.to'
+    overrideVersionCode = 40
 }
 
 apply from: "$rootDir/common.gradle"
