@@ -11,7 +11,7 @@ import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
 class ChineseAnime : AnimeStream(
     "all",
     "ChineseAnime",
-    "https://chineseanime.top",
+    "https://www.chineseanime.vip",
 ) {
 
     // =============================== Search ===============================
