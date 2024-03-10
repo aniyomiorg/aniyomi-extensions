@@ -1,7 +1,7 @@
 ext {
     extName = 'Vizer.tv'
     extClass = '.Vizer'
-    extVersionCode = 13
+    extVersionCode = 14
     isNsfw = true
 }
 
