@@ -3,7 +3,7 @@ ext {
     extClass = '.GoAnimes'
     themePkg = 'dooplay'
     baseUrl = 'https://goanimes.net'
-    overrideVersionCode = 9
+    overrideVersionCode = 11
     isNsfw = true
 }
 
