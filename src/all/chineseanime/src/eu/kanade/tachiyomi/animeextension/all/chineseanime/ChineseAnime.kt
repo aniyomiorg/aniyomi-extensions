@@ -5,13 +5,14 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.all.chineseanime.extractors.VatchusExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
+import eu.kanade.tachiyomi.lib.streamvidextractor.StreamVidExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
 
 class ChineseAnime : AnimeStream(
     "all",
     "ChineseAnime",
-    "https://chineseanime.top",
+    "https://www.chineseanime.vip",
 ) {
 
     // =============================== Search ===============================
@@ -26,6 +27,7 @@ class ChineseAnime : AnimeStream(
     // ============================ Video Links =============================
     private val dailymotionExtractor by lazy { DailymotionExtractor(client, headers) }
     private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val streamvidExtractor by lazy { StreamVidExtractor(client) }
     private val vatchusExtractor by lazy { VatchusExtractor(client, headers) }
 
     override fun getVideoList(url: String, name: String): List<Video> {
@@ -34,6 +36,7 @@ class ChineseAnime : AnimeStream(
             url.contains("dailymotion") -> dailymotionExtractor.videosFromUrl(url, prefix)
             url.contains("embedwish") -> streamwishExtractor.videosFromUrl(url, prefix)
             url.contains("vatchus") -> vatchusExtractor.videosFromUrl(url, prefix)
+            url.contains("donghua.xyz/v/") -> streamvidExtractor.videosFromUrl(url, prefix, true)
             else -> emptyList()
         }
     }
