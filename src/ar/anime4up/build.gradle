@@ -5,7 +5,14 @@ ext {
 }
 
 apply from: "$rootDir/common.gradle"
-	@@ -16,4 +16,4 @@ dependencies {
+
+dependencies {
+    implementation(project(':lib:dood-extractor'))
+    implementation(project(':lib:gdriveplayer-extractor'))
+    implementation(project(':lib:mp4upload-extractor'))
+    implementation(project(':lib:okru-extractor'))
+    implementation(project(':lib:streamwish-extractor'))
+    implementation(project(':lib:uqload-extractor'))
     implementation(project(':lib:vidbom-extractor'))
     implementation(project(':lib:voe-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
