@@ -36,6 +36,7 @@ abstract class ZoroTheme(
     override val lang: String,
     override val name: String,
     override val baseUrl: String,
+    private val hosterNames: List<String>,
 ) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
@@ -44,6 +45,7 @@ abstract class ZoroTheme(
 
     val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+            .clearOldHosts()
     }
 
     private val docHeaders = headers.newBuilder().apply {
@@ -53,8 +55,6 @@ abstract class ZoroTheme(
     }.build()
 
     protected open val ajaxRoute = ""
-
-    abstract val hosterNames: List<String>
 
     private val useEnglish by lazy { preferences.getTitleLang == "English" }
     private val markFiller by lazy { preferences.markFiller }
@@ -238,9 +238,7 @@ abstract class ZoroTheme(
         return embedLinks.parallelCatchingFlatMap(::extractVideo)
     }
 
-    protected open fun extractVideo(server: VideoData): List<Video> {
-        return emptyList()
-    }
+    abstract fun extractVideo(server: VideoData): List<Video>
 
     override fun videoListSelector() = throw UnsupportedOperationException()
 
@@ -249,6 +247,21 @@ abstract class ZoroTheme(
     override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================= Utilities ==============================
+
+    private fun SharedPreferences.clearOldHosts(): SharedPreferences {
+        if (hostToggle.all { hosterNames.contains(it) }) {
+            return this
+        }
+
+        edit()
+            .remove(PREF_HOSTER_KEY)
+            .putStringSet(PREF_HOSTER_KEY, hosterNames.toSet())
+            .remove(PREF_SERVER_KEY)
+            .putString(PREF_SERVER_KEY, hosterNames.first())
+            .apply()
+        return this
+    }
+
     private fun Set<String>.contains(s: String, ignoreCase: Boolean): Boolean {
         return any { it.equals(s, ignoreCase) }
     }
