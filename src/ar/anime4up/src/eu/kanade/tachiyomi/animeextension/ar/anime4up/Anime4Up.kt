@@ -35,8 +35,9 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
-class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
-
+class Anime4Up :
+    ParsedAnimeHttpSource(),
+    ConfigurableAnimeSource {
     override val name = "Anime4Up"
 
     override val baseUrl = "https://anime4up.cam"
@@ -58,13 +59,14 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector() = "div.anime-list-content div.anime-card-poster > div.hover"
 
-    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
-        element.selectFirst("img")!!.run {
-            thumbnail_url = absUrl("src")
-            title = attr("alt")
+    override fun popularAnimeFromElement(element: Element) =
+        SAnime.create().apply {
+            element.selectFirst("img")!!.run {
+                thumbnail_url = absUrl("src")
+                title = attr("alt")
+            }
+            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         }
-        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
-    }
 
     override fun popularAnimeNextPageSelector() = "ul.pagination > li > a.next"
 
@@ -109,44 +111,48 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeSelector() = popularAnimeSelector()
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
-        val doc = document // Shortcut
+    override fun animeDetailsParse(document: Document) =
+        SAnime.create().apply {
+            val doc = document // Shortcut
 
-        thumbnail_url = doc.selectFirst("img.thumbnail")!!.attr("src")
-        title = doc.selectFirst("h1.anime-details-title")!!.text()
-        // Genres + useful info
-        genre = doc.select("ul.anime-genres > li > a, div.anime-info > a").eachText().joinToString()
+            thumbnail_url = doc.selectFirst("img.thumbnail")!!.attr("src")
+            title = doc.selectFirst("h1.anime-details-title")!!.text()
+            // Genres + useful info
+            genre = doc.select("ul.anime-genres > li > a, div.anime-info > a").eachText().joinToString()
 
-        description = buildString {
-            // Additional info
-            doc.select("div.anime-info").eachText().forEach {
-                append("$it\n")
-            }
-            // Description
-            doc.selectFirst("p.anime-story")?.text()?.also {
-                append("\n$it")
+            description =
+                buildString {
+                    // Additional info
+                    doc.select("div.anime-info").eachText().forEach {
+                        append("$it\n")
+                    }
+                    // Description
+                    doc.selectFirst("p.anime-story")?.text()?.also {
+                        append("\n$it")
+                    }
+                }
+
+            doc.selectFirst("div.anime-info:contains(حالة الأنمي)")?.text()?.also {
+                status =
+                    when {
+                        it.contains("يعرض الان", true) -> SAnime.ONGOING
+                        it.contains("مكتمل", true) -> SAnime.COMPLETED
+                        else -> SAnime.UNKNOWN
+                    }
             }
         }
-
-        doc.selectFirst("div.anime-info:contains(حالة الأنمي)")?.text()?.also {
-            status = when {
-                it.contains("يعرض الان", true) -> SAnime.ONGOING
-                it.contains("مكتمل", true) -> SAnime.COMPLETED
-                else -> SAnime.UNKNOWN
-            }
-        }
-    }
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
 
     override fun episodeListSelector() = "div.ehover6 > div.episodes-card-title > h3 > a, ul.all-episodes-list li > a"
 
-    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
-        setUrlWithoutDomain(element.attr("href"))
-        name = element.text()
-        episode_number = name.substringAfterLast(" ").toFloatOrNull() ?: 0F
-    }
+    override fun episodeFromElement(element: Element) =
+        SEpisode.create().apply {
+            setUrlWithoutDomain(element.attr("href"))
+            name = element.text()
+            episode_number = name.substringAfterLast(" ").toFloatOrNull() ?: 0F
+        }
 
     // ============================ Video Links =============================
     @Serializable
@@ -157,10 +163,13 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     )
 
     override fun videoListParse(response: Response): List<Video> {
-        val base64 = response.asJsoup().selectFirst("input[name=wl]")
-            ?.attr("value")
-            ?.let { String(Base64.decode(it, Base64.DEFAULT)) }
-            ?: return emptyList()
+        val base64 =
+            response
+                .asJsoup()
+                .selectFirst("input[name=wl]")
+                ?.attr("value")
+                ?.let { String(Base64.decode(it, Base64.DEFAULT)) }
+                ?: return emptyList()
 
         val parsedData = json.decodeFromString<Qualities>(base64)
         val streamLinks = with(parsedData) { fhd + hd + sd }
@@ -179,8 +188,8 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val vidyardExtractor by lazy { VidYardExtractor(client, headers) }
     private val voeExtractor by lazy { VoeExtractor(client) }
 
-    private fun extractVideos(url: String): List<Video> {
-        return when {
+    private fun extractVideos(url: String): List<Video> =
+        when {
             url.contains("drive.google") -> {
                 val embedUrlG = "https://gdriveplayer.to/embed2.php?link=$url"
                 gdriveplayerExtractor.videosFromUrl(embedUrlG, "GdrivePlayer", headers)
@@ -196,29 +205,31 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             STREAMWISH_REGEX.containsMatchIn(url) -> streamwishExtractor.videosFromUrl(url) { "Mirror: $it" }
             else -> null
         } ?: emptyList()
-    }
 
     override fun videoListSelector() = throw UnsupportedOperationException()
+
     override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
+
     override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        ListPreference(screen.context).apply {
-            key = PREF_QUALITY_KEY
-            title = PREF_QUALITY_TITLE
-            entries = PREF_QUALITY_ENTRIES
-            entryValues = PREF_QUALITY_VALUES
-            setDefaultValue(PREF_QUALITY_DEFAULT)
-            summary = "%s"
+        ListPreference(screen.context)
+            .apply {
+                key = PREF_QUALITY_KEY
+                title = PREF_QUALITY_TITLE
+                entries = PREF_QUALITY_ENTRIES
+                entryValues = PREF_QUALITY_VALUES
+                setDefaultValue(PREF_QUALITY_DEFAULT)
+                summary = "%s"
 
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }.also(screen::addPreference)
+                setOnPreferenceChangeListener { _, newValue ->
+                    val selected = newValue as String
+                    val index = findIndexOfValue(selected)
+                    val entry = entryValues[index] as String
+                    preferences.edit().putString(key, entry).commit()
+                }
+            }.also(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
@@ -231,9 +242,15 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private val VIDBOM_REGEX = Regex("(?:v[aie]d[bp][aoe]?m|myvii?d|segavid|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+)")
+        private val VIDBOM_REGEX =
+            Regex(
+                "(?:v[aie]d[bp][aoe]?m|myvii?d|segavid|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+)",
+            )
         private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)")
-        private val STREAMWISH_REGEX = Regex("((?:streamwish|anime7u|animezd|ajmidyad|khadhnayad|yadmalik|hayaatieadhab)\\.(?:com|to|sbs))/(?:e/|v/|f/)?([0-9a-zA-Z]+)")
+        private val STREAMWISH_REGEX =
+            Regex(
+                "((?:streamwish|anime7u|animezd|ajmidyad|khadhnayad|yadmalik|hayaatieadhab)\\.(?:com|to|sbs))/(?:e/|v/|f/)?([0-9a-zA-Z]+)",
+            )
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
