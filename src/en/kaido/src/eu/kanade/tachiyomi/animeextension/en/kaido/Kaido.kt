@@ -9,13 +9,12 @@ class Kaido : ZoroTheme(
     "en",
     "Kaido",
     "https://kaido.to",
-) {
-    override val hosterNames: List<String> = listOf(
+    hosterNames = listOf(
         "Vidstreaming",
         "Vidcloud",
         "StreamTape",
-    )
-
+    ),
+) {
     private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
     private val megaCloudExtractor by lazy { MegaCloudExtractor(client, headers, preferences) }
 
