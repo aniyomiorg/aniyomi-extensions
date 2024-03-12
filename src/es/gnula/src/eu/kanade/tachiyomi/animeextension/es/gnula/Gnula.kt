@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.es.gnula
 
-import android.annotation.SuppressLint
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
@@ -78,76 +77,66 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_LANGUAGE_DEFAULT = "[LAT]"
         private val LANGUAGE_LIST = arrayOf("[LAT]", "[CAST]", "[SUB]")
         private val LANGUAGE_LIST_VALUES = arrayOf("latino", "spanish", "english")
+
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        }
     }
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/archives/movies/releases/page/$page")
 
+    private fun urlSolverByType(type: String, slug: String, id: String? = ""): String {
+        return when (type) {
+            "PaginatedMovie", "PaginatedGenre" -> "$baseUrl/movies/$slug"
+            "PaginatedSerie" -> "$baseUrl/series/$slug"
+            else -> ""
+        }
+    }
+
     override fun popularAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
-        val animeList = mutableListOf<SAnime>()
-        val hasNextPage = document.selectFirst("ul.pagination > li.page-item.active ~ li > a > span.visually-hidden")?.text()?.contains("Next") ?: false
-        document.select("script").forEach { script ->
-            if (script.data().contains("{\"props\":{\"pageProps\":")) {
-                val jObject = json.decodeFromString<JsonObject>(script.data())
-                val props = jObject["props"]!!.jsonObject
-                val pageProps = props["pageProps"]!!.jsonObject
-                val results = pageProps["results"]!!.jsonObject
-                val data = results["data"]!!.jsonArray
-                data.forEach { item ->
-                    val animeItem = item!!.jsonObject
-                    val anime = SAnime.create()
-                    val slug = animeItem["slug"]!!.jsonObject["name"]!!.jsonPrimitive!!.content
-                    val type = animeItem["url"]?.jsonObject?.get("slug")?.jsonPrimitive?.content ?: response.request.url.toString()
+        val jsonString = document.selectFirst("script:containsData({\"props\":{\"pageProps\":)")?.data()
+            ?: return AnimesPage(emptyList(), false)
 
-                    anime.title = animeItem["titles"]!!.jsonObject["name"]!!.jsonPrimitive!!.content
-                    anime.thumbnail_url = animeItem["images"]!!.jsonObject["poster"]!!.jsonPrimitive!!.content
-                    anime.setUrlWithoutDomain(if (type.contains("movies") || type.contains("genres")) "$baseUrl/movies/$slug" else "$baseUrl/series/$slug")
-                    animeList.add(anime)
-                }
+        val jsonData = jsonString.parseTo<PopularModel>().props.pageProps
+        val hasNextPage = (jsonData.currentPage?.toLong() ?: 0) < (jsonData.results.pages ?: 0)
+        val type = jsonData.results.typename ?: ""
+
+        val animeList = jsonData.results.data.map {
+            SAnime.create().apply {
+                title = it.titles.name ?: ""
+                thumbnail_url = it.images.poster
+                setUrlWithoutDomain(urlSolverByType(type, it.slug.name ?: ""))
             }
         }
         return AnimesPage(animeList, hasNextPage)
     }
 
-    @SuppressLint("SimpleDateFormat")
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
-        val episodeList = mutableListOf<SEpisode>()
-        if (response.request.url.toString().contains("/movies/")) {
-            val episode = SEpisode.create()
-            episode.episode_number = 1F
-            episode.name = "Película"
-            episode.setUrlWithoutDomain(response.request.url.toString())
-            episodeList.add(episode)
+        return if (response.request.url.toString().contains("/movies/")) {
+            listOf(
+                SEpisode.create().apply {
+                    name = "Película"
+                    episode_number = 1F
+                    setUrlWithoutDomain(response.request.url.toString())
+                },
+            )
         } else {
-            document.select("script").forEach { script ->
-                if (script.data().contains("{\"props\":{\"pageProps\"")) {
-                    val jObject = json.decodeFromString<JsonObject>(script.data())
-                    val props = jObject["props"]!!.jsonObject
-                    val pageProps = props["pageProps"]!!.jsonObject
-                    val post = pageProps["post"]!!.jsonObject
-                    val slug = post["slug"]!!.jsonObject["name"]!!.jsonPrimitive!!.content
-                    val seasons = post["seasons"]!!.jsonArray
-                    var realNoEpisode = 0F
-                    seasons!!.forEach { it ->
-                        val season = it!!.jsonObject
-                        val seasonNumber = season["number"]!!.jsonPrimitive!!.content
-                        season["episodes"]!!.jsonArray!!.map {
-                            realNoEpisode += 1
-                            val noEp = it.jsonObject["number"]!!.jsonPrimitive!!.content
-                            val episode = SEpisode.create()
-                            episode.name = "T$seasonNumber - E$noEp - Capítulo $noEp"
-                            episode.episode_number = realNoEpisode
-                            episode.setUrlWithoutDomain("$baseUrl/series/$slug/seasons/$seasonNumber/episodes/$noEp")
-                            val date = it!!.jsonObject["releaseDate"]!!.jsonPrimitive!!.content!!.substringBefore("T")
-                            val epDate = try { SimpleDateFormat("yyyy-MM-dd").parse(date) } catch (e: Exception) { null }
-                            if (epDate != null) episode.date_upload = epDate.time
-                            episodeList.add(episode)
-                        }
+            val jsonString = document.selectFirst("script:containsData({\"props\":{\"pageProps\":)")?.data() ?: return emptyList()
+            val jsonData = jsonString.parseTo<SeasonModel>().props.pageProps
+            var realNoEpisode = 0F
+            jsonData.post.seasons.flatMap { season ->
+                season.episodes.map { ep ->
+                    realNoEpisode += 1
+                    SEpisode.create().apply {
+                        episode_number = realNoEpisode
+                        name = "T${season.number} - E${ep.number} - Capítulo ${ep.number}"
+                        date_upload = ep.releaseDate?.toDate() ?: 0L
+                        setUrlWithoutDomain("$baseUrl/series/${ep.slug.name}/seasons/${ep.slug.season}/episodes/${ep.slug.episode}")
                     }
                 }
             }
         }
-        return episodeList
     }
 
     override fun videoListParse(response: Response): List<Video> {
@@ -389,6 +378,14 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
+    }
+
+    private inline fun <reified T> String.parseTo(): T {
+        return json.decodeFromString<T>(this)
+    }
+
+    private fun String.toDate(): Long {
+        return runCatching { DATE_FORMATTER.parse(trim())?.time }.getOrNull() ?: 0L
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
