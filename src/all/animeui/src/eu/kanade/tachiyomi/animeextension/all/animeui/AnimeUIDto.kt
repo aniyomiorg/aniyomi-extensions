@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.en.animeui
+package eu.kanade.tachiyomi.animeextension.all.animeui
 
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
