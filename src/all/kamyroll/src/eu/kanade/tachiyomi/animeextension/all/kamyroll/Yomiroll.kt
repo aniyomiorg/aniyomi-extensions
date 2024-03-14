@@ -302,7 +302,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         audLang: String,
         subsList: List<Track>,
     ): List<Video> {
-        return streams.streams?.adaptive_hls?.entries?.parallelMapNotNullBlocking { (_, value) ->
+        return streams.streams?.adaptiveHls?.entries?.parallelMapNotNullBlocking { (_, value) ->
             val stream = json.decodeFromString<HlsLinks>(value.jsonObject.toString())
             runCatching {
                 val playlist = client.newCall(GET(stream.url)).execute()
