@@ -152,7 +152,8 @@ data class VideoStreams(
 ) {
     @Serializable
     data class Stream(
-        val adaptive_hls: JsonObject,
+        @SerialName("vo_adaptive_hls")
+        val adaptiveHls: JsonObject,
     )
 }
 
