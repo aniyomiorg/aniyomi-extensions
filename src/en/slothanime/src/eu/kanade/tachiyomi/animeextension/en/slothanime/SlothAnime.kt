@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.slothanime
 
+import android.util.Base64
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -8,9 +9,12 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
-import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import javax.crypto.Cipher
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
+import kotlin.math.floor
 
 class SlothAnime : ParsedAnimeHttpSource() {
 
@@ -21,12 +25,6 @@ class SlothAnime : ParsedAnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
-
-    /*
-    private val preferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
-     */
 
     // ============================== Popular ===============================
 
@@ -138,8 +136,44 @@ class SlothAnime : ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun videoListParse(response: Response): List<Video> {
-        return emptyList()
+    fun encryptAES(input: String, key: ByteArray, iv: ByteArray): String {
+        val cipher = Cipher.getInstance("AES/CBC/NoPadding")
+        val secretKey = SecretKeySpec(key, "AES")
+        val ivParameterSpec = IvParameterSpec(iv)
+
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec)
+        val paddedInput = zeroPad(input)
+        val encryptedBytes = cipher.doFinal(paddedInput.toByteArray(Charsets.UTF_8))
+        return Base64.encodeToString(encryptedBytes, Base64.NO_WRAP)
+    }
+
+    fun zeroPad(input: String): String {
+        val blockSize = 16
+        val padLength = blockSize - input.length % blockSize
+        return input.padEnd(input.length + padLength, '\u0000')
+    }
+
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
+        val key = String(Base64.decode(KEY, Base64.DEFAULT)).chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+        val iv = String(Base64.decode(IV, Base64.DEFAULT)).chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+        val time = floor(System.currentTimeMillis() / 1000.0)
+        val vrf = encryptAES(time.toString(), key, iv)
+        val id = episode.url.substringAfterLast("/")
+
+        val url = baseUrl.toHttpUrl().newBuilder().apply {
+            addPathSegment("player-url")
+            addPathSegment(id)
+            addQueryParameter("vrf", vrf)
+        }.build().toString()
+
+        val videoHeaders = headersBuilder().apply {
+            add("Accept", "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5")
+            add("Referer", baseUrl + episode.url)
+        }.build()
+
+        return listOf(
+            Video(url, "Video", url, videoHeaders),
+        )
     }
 
     override fun videoListSelector() = throw UnsupportedOperationException()
@@ -154,5 +188,10 @@ class SlothAnime : ParsedAnimeHttpSource() {
         hasAttr("data-lazy-src") -> attr("abs:data-lazy-src")
         hasAttr("data-src") -> attr("abs:data-src")
         else -> attr("abs:src")
+    }
+
+    companion object {
+        private const val KEY = "YWI0OWZkYjllYzE5M2I0YWQzYWFkMGVmMTU4N2Q2OGE0YmYxY2Y5YjJkMjA4YjRjYzIzMDYwZTkwNThiMjA0NA=="
+        private const val IV = "NDI4MzEzNjcxMThiMzFmYjVhNTI1MTMzNTc0ZmJmNGI="
     }
 }
