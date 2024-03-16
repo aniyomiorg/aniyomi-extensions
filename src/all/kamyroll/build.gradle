@@ -1,7 +1,0 @@
-ext {
-    extName = 'Yomiroll'
-    extClass = '.Yomiroll'
-    extVersionCode = 31
-}
-
-apply from: "$rootDir/common.gradle"
