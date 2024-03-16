@@ -3,7 +3,7 @@ ext {
     extClass = '.ChineseAnime'
     themePkg = 'animestream'
     baseUrl = 'https://www.chineseanime.vip'
-    overrideVersionCode = 6
+    overrideVersionCode = 7
 }
 
 apply from: "$rootDir/common.gradle"

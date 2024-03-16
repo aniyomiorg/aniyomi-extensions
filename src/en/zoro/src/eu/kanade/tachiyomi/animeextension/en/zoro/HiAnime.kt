@@ -9,16 +9,15 @@ class HiAnime : ZoroTheme(
     "en",
     "HiAnime",
     "https://hianime.to",
+    hosterNames = listOf(
+        "HD-1",
+        "HD-2",
+        "StreamTape",
+    ),
 ) {
     override val id = 6706411382606718900L
 
     override val ajaxRoute = "/v2"
-
-    override val hosterNames: List<String> = listOf(
-        "HD-1",
-        "HD-2",
-        "StreamTape",
-    )
 
     private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
     private val megaCloudExtractor by lazy { MegaCloudExtractor(client, headers, preferences) }

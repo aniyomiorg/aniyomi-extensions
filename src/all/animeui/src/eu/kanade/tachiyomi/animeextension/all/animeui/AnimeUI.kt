@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.en.animeui
+package eu.kanade.tachiyomi.animeextension.all.animeui
 
 import android.app.Application
 import android.content.SharedPreferences
@@ -30,11 +30,13 @@ class AnimeUI : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val baseUrl = "https://animeui.com"
 
-    override val lang = "en"
+    override val lang = "all"
 
     override val supportsLatest = true
 
     private val json: Json by injectLazy()
+
+    override val id: Long = 7372747480486811746L
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -135,7 +137,7 @@ class AnimeUI : ConfigurableAnimeSource, AnimeHttpSource() {
         val subtitleList = parsed.subtitlesJson?.let {
             json.decodeFromString<List<SubtitleObject>>(it).map { s ->
                 Track("$baseUrl/api${s.url}", s.subtitle_name)
-            }
+            }.sortSubs()
         } ?: emptyList()
 
         val cid = parsed.episode.cid
@@ -154,7 +156,17 @@ class AnimeUI : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
-    // ============================= Utilities ==============================
+    // ============================= Utilities ==============================.
+
+    private fun Iterable<Track>.sortSubs(): List<Track> {
+        val sub = preferences.getString(PREF_SUB_LANG_KEY, PREF_SUB_LANG_DEFAULT)!!
+        return this.sortedWith(
+            compareBy<Track>(
+                { it.lang.startsWith(sub, true) },
+                { it.lang.contains(sub, true) },
+            ).thenByDescending { it.lang },
+        ).reversed()
+    }
 
     override fun List<Video>.sort(): List<Video> {
         val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
@@ -173,6 +185,20 @@ class AnimeUI : ConfigurableAnimeSource, AnimeHttpSource() {
             "Tokyo", "Kyoto", "Nagoya", "Sendai", "Sagara",
             "Nara", "Osaka", "Web", "Noshiro",
         )
+
+        private const val PREF_SUB_LANG_KEY = "preferred_sub_lang"
+        private const val PREF_SUB_LANG_DEFAULT = "English"
+        private val LOCALE_LIST = arrayOf(
+            "English",
+            "Spanish",
+            "European Spanish",
+            "Portuguese",
+            "Deutsch",
+            "French",
+            "Italian",
+            "Russian",
+            "Arabic",
+        )
     }
     // ============================== Settings ==============================
 
@@ -190,6 +216,22 @@ class AnimeUI : ConfigurableAnimeSource, AnimeHttpSource() {
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
                 Toast.makeText(screen.context, "Restart Aniyomi to apply new setting.", Toast.LENGTH_LONG).show()
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_SUB_LANG_KEY
+            title = "Preferred subtitle language"
+            entries = LOCALE_LIST
+            entryValues = LOCALE_LIST
+            setDefaultValue(PREF_SUB_LANG_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
         }.also(screen::addPreference)
