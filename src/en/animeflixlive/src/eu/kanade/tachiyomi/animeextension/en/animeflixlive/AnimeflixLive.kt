@@ -36,6 +36,7 @@ import org.jsoup.nodes.Document
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.net.URLDecoder
 import java.util.Calendar
 import java.util.Locale
 import java.util.TimeZone
@@ -226,7 +227,7 @@ class AnimeflixLive : ConfigurableAnimeSource, AnimeHttpSource() {
 
         val initialPlayerDocument = client.newCall(
             GET(initialPlayerUrl, docHeaders),
-        ).execute().asJsoup()
+        ).execute().asJsoup().unescape()
 
         videoList.addAll(
             videosFromPlayer(
@@ -266,7 +267,7 @@ class AnimeflixLive : ConfigurableAnimeSource, AnimeHttpSource() {
 
                 val playerDocument = client.newCall(
                     GET(playerUrl, docHeaders),
-                ).execute().asJsoup()
+                ).execute().asJsoup().unescape()
 
                 videosFromPlayer(
                     playerDocument,
@@ -300,16 +301,26 @@ class AnimeflixLive : ConfigurableAnimeSource, AnimeHttpSource() {
         }.build()
     }
 
+    private fun Document.unescape(): Document {
+        val unescapeScript = this.selectFirst("script:containsData(unescape)")
+        return if (unescapeScript == null) {
+            this
+        } else {
+            val data = URLDecoder.decode(unescapeScript.data(), "UTF-8")
+            Jsoup.parse(data, this.location())
+        }
+    }
+
     private fun videosFromPlayer(document: Document, name: String): List<Video> {
-        val dataScript = document.selectFirst("script:containsData(const source)")
+        val dataScript = document.selectFirst("script:containsData(m3u8)")
             ?.data() ?: return emptyList()
 
         val subtitleList = document.select("video > track[kind=captions]").map {
             Track(it.attr("id"), it.attr("label"))
         }
 
-        var masterPlaylist = dataScript.substringAfter("const source = `")
-            .substringBefore("`")
+        var masterPlaylist = M3U8_REGEX.find(dataScript)?.groupValues?.get(1)
+            ?: return emptyList()
 
         if (name.equals("moon", true)) {
             masterPlaylist += dataScript.substringAfter("`${'$'}{url}")
@@ -357,6 +368,7 @@ class AnimeflixLive : ConfigurableAnimeSource, AnimeHttpSource() {
 
     companion object {
         private val SERVER_REGEX = Regex("""'1' === '1'.*?(<button.*?</button>)""", RegexOption.DOT_MATCHES_ALL)
+        private val M3U8_REGEX = Regex("""const ?\w*? ?= ?`(.*?)`""")
         private const val PAGE_SIZE = 24
 
         private const val PREF_DOMAIN_KEY = "pref_domain_key"
