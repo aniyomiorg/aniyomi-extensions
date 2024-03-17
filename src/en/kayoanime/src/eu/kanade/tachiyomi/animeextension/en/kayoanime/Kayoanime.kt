@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.en.kayoanime
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -401,7 +400,6 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val redirected = noRedirectClient.newCall(GET(url)).execute()
                 redirected.headers["location"]?.let { location ->
                     val host = location.toHttpUrl().host
-                    Log.i("SOMETHING-idk", location)
                     if (host.contains("workers.dev")) {
                         episodeList.addAll(
                             indexExtractor.getEpisodesFromIndex(
