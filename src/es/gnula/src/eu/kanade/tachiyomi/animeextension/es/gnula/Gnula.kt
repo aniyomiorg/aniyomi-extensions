@@ -28,11 +28,8 @@ import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
@@ -51,7 +48,7 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "es"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     private val json: Json by injectLazy()
 
@@ -76,40 +73,34 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_LANGUAGE_KEY = "preferred_language"
         private const val PREF_LANGUAGE_DEFAULT = "[LAT]"
         private val LANGUAGE_LIST = arrayOf("[LAT]", "[CAST]", "[SUB]")
-        private val LANGUAGE_LIST_VALUES = arrayOf("latino", "spanish", "english")
 
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
         }
     }
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/archives/movies/releases/page/$page")
 
-    private fun urlSolverByType(type: String, slug: String, id: String? = ""): String {
-        return when (type) {
-            "PaginatedMovie", "PaginatedGenre" -> "$baseUrl/movies/$slug"
-            "PaginatedSerie" -> "$baseUrl/series/$slug"
-            else -> ""
-        }
-    }
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/archives/movies/page/$page")
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
         val jsonString = document.selectFirst("script:containsData({\"props\":{\"pageProps\":)")?.data()
             ?: return AnimesPage(emptyList(), false)
-
         val jsonData = jsonString.parseTo<PopularModel>().props.pageProps
-        val hasNextPage = (jsonData.currentPage?.toLong() ?: 0) < (jsonData.results.pages ?: 0)
+        val hasNextPage = document.selectFirst("ul.pagination > li.page-item.active ~ li > a > span.visually-hidden")?.text()?.contains("Next") ?: false
         val type = jsonData.results.typename ?: ""
-
         val animeList = jsonData.results.data.map {
             SAnime.create().apply {
                 title = it.titles.name ?: ""
-                thumbnail_url = it.images.poster
+                thumbnail_url = it.images.poster?.replace("/original/", "/w200/")
                 setUrlWithoutDomain(urlSolverByType(type, it.slug.name ?: ""))
             }
         }
         return AnimesPage(animeList, hasNextPage)
     }
+
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/archives/movies/releases/page/$page")
+
+    override fun latestUpdatesParse(response: Response) = popularAnimeParse(response)
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
@@ -124,178 +115,75 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } else {
             val jsonString = document.selectFirst("script:containsData({\"props\":{\"pageProps\":)")?.data() ?: return emptyList()
             val jsonData = jsonString.parseTo<SeasonModel>().props.pageProps
-            var realNoEpisode = 0F
-            jsonData.post.seasons.flatMap { season ->
-                season.episodes.map { ep ->
-                    realNoEpisode += 1
-                    SEpisode.create().apply {
-                        episode_number = realNoEpisode
-                        name = "T${season.number} - E${ep.number} - Capítulo ${ep.number}"
-                        date_upload = ep.releaseDate?.toDate() ?: 0L
-                        setUrlWithoutDomain("$baseUrl/series/${ep.slug.name}/seasons/${ep.slug.season}/episodes/${ep.slug.episode}")
+            var episodeCounter = 1F
+            jsonData.post.seasons
+                .flatMap { season ->
+                    season.episodes.map { ep ->
+                        val episode = SEpisode.create().apply {
+                            episode_number = episodeCounter++
+                            name = "T${season.number} - E${ep.number} - ${ep.title}"
+                            date_upload = ep.releaseDate?.toDate() ?: 0L
+                            setUrlWithoutDomain("$baseUrl/series/${ep.slug.name}/seasons/${ep.slug.season}/episodes/${ep.slug.episode}")
+                        }
+                        episode
                     }
                 }
-            }
-        }
+        }.reversed()
     }
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
+        val jsonString = document.selectFirst("script:containsData({\"props\":{\"pageProps\":)")?.data() ?: return emptyList()
 
         if (response.request.url.toString().contains("/movies/")) {
-            document.select("script").forEach { script ->
-                if (script.data().contains("{\"props\":{\"pageProps\"")) {
-                    val jObject = json.decodeFromString<JsonObject>(script.data())
-                    val props = jObject["props"]!!.jsonObject
-                    val pageProps = props["pageProps"]!!.jsonObject
-                    val post = pageProps["post"]!!.jsonObject
-                    post["players"]!!.jsonObject.entries.map {
-                        val key = it.key
-                        val langVal = try {
-                            LANGUAGE_LIST[LANGUAGE_LIST.indexOf(LANGUAGE_LIST_VALUES.firstOrNull { it == key })]
-                        } catch (_: Exception) { "" }
-                        it.value!!.jsonArray!!.map {
-                            val server = it!!.jsonObject["result"]!!.jsonPrimitive!!.content
-                            var url = ""
-                            client.newCall(GET(server)).execute()!!.asJsoup()!!.select("script")!!.map { sc ->
-                                if (sc.data().contains("var url = '")) {
-                                    url = sc.data().substringAfter("var url = '").substringBefore("';")
-                                }
-                            }
-                            serverVideoResolver(url, langVal).let { videos -> videoList.addAll(videos) }
-                        }
-                    }
-                }
-            }
+            val pageProps = jsonString.parseTo<SeasonModel>().props.pageProps
+            pageProps.post.players.latino.toVideoList("[LAT]").also(videoList::addAll)
+            pageProps.post.players.spanish.toVideoList("[CAST]").also(videoList::addAll)
+            pageProps.post.players.english.toVideoList("[SUB]").also(videoList::addAll)
         } else {
-            document.select("script").forEach { script ->
-                if (script.data().contains("{\"props\":{\"pageProps\"")) {
-                    val jObject = json.decodeFromString<JsonObject>(script.data())
-                    val props = jObject["props"]!!.jsonObject
-                    val pageProps = props["pageProps"]!!.jsonObject
-                    val episode = pageProps["episode"]!!.jsonObject
-                    val players = episode["players"]!!.jsonObject.entries
-                    players.map {
-                        val key = it.key
-                        val langVal = try {
-                            LANGUAGE_LIST[LANGUAGE_LIST.indexOf(LANGUAGE_LIST_VALUES.firstOrNull { it == key })]
-                        } catch (_: Exception) { "" }
-
-                        it.value!!.jsonArray!!.map {
-                            val server = it!!.jsonObject["result"]!!.jsonPrimitive!!.content
-                            var url = ""
-                            client.newCall(GET(server)).execute()!!.asJsoup()!!.select("script")!!.map { sc ->
-                                if (sc.data().contains("var url = '")) {
-                                    url = sc.data().substringAfter("var url = '").substringBefore("';")
-                                }
-                            }
-                            serverVideoResolver(url, langVal).let { videos -> videoList.addAll(videos) }
-                        }
-                    }
-                }
-            }
+            val pageProps = jsonString.parseTo<EpisodeModel>().props.pageProps
+            pageProps.episode.players.latino.toVideoList("[LAT]").also(videoList::addAll)
+            pageProps.episode.players.spanish.toVideoList("[CAST]").also(videoList::addAll)
+            pageProps.episode.players.english.toVideoList("[SUB]").also(videoList::addAll)
         }
         return videoList
     }
 
     private fun serverVideoResolver(url: String, prefix: String = ""): List<Video> {
-        val videoList = mutableListOf<Video>()
         val embedUrl = url.lowercase()
-        try {
-            if (embedUrl.contains("voe")) {
-                VoeExtractor(client).videosFromUrl(url, prefix).also(videoList::addAll)
-            }
-            if ((embedUrl.contains("amazon") || embedUrl.contains("amz")) && !embedUrl.contains("disable")) {
-                val body = client.newCall(GET(url)).execute().asJsoup()
-                if (body.select("script:containsData(var shareId)").toString().isNotBlank()) {
-                    val shareId = body.selectFirst("script:containsData(var shareId)")!!.data()
-                        .substringAfter("shareId = \"").substringBefore("\"")
-                    val amazonApiJson = client.newCall(GET("https://www.amazon.com/drive/v1/shares/$shareId?resourceVersion=V2&ContentType=JSON&asset=ALL"))
-                        .execute().asJsoup()
-                    val epId = amazonApiJson.toString().substringAfter("\"id\":\"").substringBefore("\"")
-                    val amazonApi =
-                        client.newCall(GET("https://www.amazon.com/drive/v1/nodes/$epId/children?resourceVersion=V2&ContentType=JSON&limit=200&sort=%5B%22kind+DESC%22%2C+%22modifiedDate+DESC%22%5D&asset=ALL&tempLink=true&shareId=$shareId"))
-                            .execute().asJsoup()
-                    val videoUrl = amazonApi.toString().substringAfter("\"FOLDER\":").substringAfter("tempLink\":\"").substringBefore("\"")
-                    videoList.add(Video(videoUrl, "$prefix Amazon", videoUrl))
-                }
-            }
-            if (embedUrl.contains("ok.ru") || embedUrl.contains("okru")) {
-                OkruExtractor(client).videosFromUrl(url, prefix).also(videoList::addAll)
-            }
-            if (embedUrl.contains("filemoon") || embedUrl.contains("moonplayer")) {
+        return when {
+            embedUrl.contains("voe") -> VoeExtractor(client).videosFromUrl(url, prefix)
+            embedUrl.contains("ok.ru") || embedUrl.contains("okru") -> OkruExtractor(client).videosFromUrl(url, prefix)
+            embedUrl.contains("filemoon") || embedUrl.contains("moonplayer") -> {
                 val vidHeaders = headers.newBuilder()
                     .add("Origin", "https://${url.toHttpUrl().host}")
                     .add("Referer", "https://${url.toHttpUrl().host}/")
                     .build()
-                FilemoonExtractor(client).videosFromUrl(url, prefix = "$prefix Filemoon:", headers = vidHeaders).also(videoList::addAll)
+                FilemoonExtractor(client).videosFromUrl(url, prefix = "$prefix Filemoon:", headers = vidHeaders)
             }
-            if (embedUrl.contains("uqload")) {
-                UqloadExtractor(client).videosFromUrl(url, prefix = prefix).also(videoList::addAll)
-            }
-            if (embedUrl.contains("mp4upload")) {
-                Mp4uploadExtractor(client).videosFromUrl(url, headers, prefix = prefix).let { videoList.addAll(it) }
-            }
-            if (embedUrl.contains("wishembed") || embedUrl.contains("streamwish") || embedUrl.contains("strwish") || embedUrl.contains("wish")) {
+            embedUrl.contains("uqload") -> UqloadExtractor(client).videosFromUrl(url, prefix = prefix)
+            embedUrl.contains("mp4upload") -> Mp4uploadExtractor(client).videosFromUrl(url, headers, prefix = prefix)
+            embedUrl.contains("wishembed") || embedUrl.contains("streamwish") || embedUrl.contains("strwish") || embedUrl.contains("wish") -> {
                 val docHeaders = headers.newBuilder()
                     .add("Origin", "https://streamwish.to")
                     .add("Referer", "https://streamwish.to/")
                     .build()
-                StreamWishExtractor(client, docHeaders).videosFromUrl(url, videoNameGen = { "$prefix StreamWish:$it" }).also(videoList::addAll)
+                StreamWishExtractor(client, docHeaders).videosFromUrl(url, videoNameGen = { "$prefix StreamWish:$it" })
             }
-            if (embedUrl.contains("doodstream") || embedUrl.contains("dood.")) {
+            embedUrl.contains("doodstream") || embedUrl.contains("dood.") || embedUrl.contains("ds2play") || embedUrl.contains("doods.") -> {
                 val url2 = url.replace("https://doodstream.com/e/", "https://dood.to/e/")
-                DoodExtractor(client).videoFromUrl(url2, "$prefix DoodStream", false)?.let { videoList.add(it) }
+                listOf(DoodExtractor(client).videoFromUrl(url2, "$prefix DoodStream", false)!!)
             }
-            if (embedUrl.contains("streamlare")) {
-                StreamlareExtractor(client).videosFromUrl(url, prefix = prefix).let { videoList.addAll(it) }
-            }
-            if (embedUrl.contains("yourupload") || embedUrl.contains("upload")) {
-                YourUploadExtractor(client).videoFromUrl(url, headers = headers, prefix = prefix).let { videoList.addAll(it) }
-            }
-            if (embedUrl.contains("burstcloud") || embedUrl.contains("burst")) {
-                BurstCloudExtractor(client).videoFromUrl(url, headers = headers, prefix = prefix).let { videoList.addAll(it) }
-            }
-            if (embedUrl.contains("fastream")) {
-                FastreamExtractor(client, headers).videosFromUrl(url, prefix = "$prefix Fastream:").also(videoList::addAll)
-            }
-            if (embedUrl.contains("upstream")) {
-                UpstreamExtractor(client).videosFromUrl(url, prefix = prefix).let { videoList.addAll(it) }
-            }
-            if (embedUrl.contains("streamtape") || embedUrl.contains("stp") || embedUrl.contains("stape")) {
-                StreamTapeExtractor(client).videoFromUrl(url, quality = "$prefix StreamTape")?.let { videoList.add(it) }
-            }
-            if (embedUrl.contains("ahvsh") || embedUrl.contains("streamhide")) {
-                StreamHideVidExtractor(client).videosFromUrl(url, "$prefix ").let { videoList.addAll(it) }
-            }
-            if (embedUrl.contains("tomatomatela")) {
-                runCatching {
-                    val mainUrl = url.substringBefore("/embed.html#").substringAfter("https://")
-                    val headers = headers.newBuilder()
-                        .set("authority", mainUrl)
-                        .set("accept", "application/json, text/javascript, */*; q=0.01")
-                        .set("accept-language", "es-MX,es-419;q=0.9,es;q=0.8,en;q=0.7")
-                        .set("sec-ch-ua", "\"Chromium\";v=\"106\", \"Google Chrome\";v=\"106\", \"Not;A=Brand\";v=\"99\"")
-                        .set("sec-ch-ua-mobile", "?0")
-                        .set("sec-ch-ua-platform", "Windows")
-                        .set("sec-fetch-dest", "empty")
-                        .set("sec-fetch-mode", "cors")
-                        .set("sec-fetch-site", "same-origin")
-                        .set("x-requested-with", "XMLHttpRequest")
-                        .build()
-                    val token = url.substringAfter("/embed.html#")
-                    val urlRequest = "https://$mainUrl/details.php?v=$token"
-                    val response = client.newCall(GET(urlRequest, headers = headers)).execute().asJsoup()
-                    val bodyText = response.select("body").text()
-                    val json = json.decodeFromString<JsonObject>(bodyText)
-                    val status = json["status"]!!.jsonPrimitive!!.content
-                    val file = json["file"]!!.jsonPrimitive!!.content
-                    if (status == "200") { videoList.add(Video(file, "$prefix Tomatomatela", file, headers = null)) }
-                }
-            }
-        } catch (_: Exception) { }
-        return videoList
+            embedUrl.contains("streamlare") -> StreamlareExtractor(client).videosFromUrl(url, prefix = prefix)
+            embedUrl.contains("yourupload") || embedUrl.contains("upload") -> YourUploadExtractor(client).videoFromUrl(url, headers = headers, prefix = prefix)
+            embedUrl.contains("burstcloud") || embedUrl.contains("burst") -> BurstCloudExtractor(client).videoFromUrl(url, headers = headers, prefix = prefix)
+            embedUrl.contains("fastream") -> FastreamExtractor(client, headers).videosFromUrl(url, prefix = "$prefix Fastream:")
+            embedUrl.contains("upstream") -> UpstreamExtractor(client).videosFromUrl(url, prefix = prefix)
+            embedUrl.contains("streamtape") || embedUrl.contains("stp") || embedUrl.contains("stape") -> listOf(StreamTapeExtractor(client).videoFromUrl(url, quality = "$prefix StreamTape")!!)
+            embedUrl.contains("ahvsh") || embedUrl.contains("streamhide") || embedUrl.contains("guccihide") || embedUrl.contains("streamvid") -> StreamHideVidExtractor(client).videosFromUrl(url, "$prefix StreamHide")
+            else -> emptyList()
+        }
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -330,23 +218,29 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
     override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        document.select("script").forEach { script ->
-            if (script.data().contains("{\"props\":{\"pageProps\"")) {
-                val jObject = json.decodeFromString<JsonObject>(script.data())
-                val props = jObject["props"]!!.jsonObject
-                val pageProps = props["pageProps"]!!.jsonObject
-                val post = pageProps["post"]!!.jsonObject
-                val page = jObject["page"]?.jsonPrimitive?.content ?: ""
-                anime.title = post["titles"]!!.jsonObject["name"]!!.jsonPrimitive!!.content
-                anime.thumbnail_url = post["images"]!!.jsonObject["poster"]!!.jsonPrimitive!!.content
-                anime.description = post["overview"]!!.jsonPrimitive!!.content
-                anime.genre = try { post["genres"]!!.jsonArray!!.joinToString { it!!.jsonObject["name"]!!.jsonPrimitive!!.content } } catch (e: Exception) { "" }
-                anime.status = if (page.contains("movie") || page.contains("movies")) SAnime.COMPLETED else SAnime.UNKNOWN
-                anime.artist = try { post["cast"]!!.jsonObject["acting"]!!.jsonArray!!.first()!!.jsonObject["name"]!!.jsonPrimitive!!.content } catch (e: Exception) { null }
-            }
+        val jsonString = document.selectFirst("script:containsData({\"props\":{\"pageProps\":)")?.data() ?: return SAnime.create()
+        val json = jsonString.parseTo<SeasonModel>()
+        val post = json.props.pageProps.post
+        return SAnime.create().apply {
+            title = post.titles.name ?: ""
+            thumbnail_url = post.images.poster
+            description = post.overview
+            genre = post.genres.joinToString { it.name ?: "" }
+            artist = post.cast.acting.firstOrNull()?.name ?: ""
+            status = if (json.page.contains("movie", true)) SAnime.COMPLETED else SAnime.UNKNOWN
         }
-        return anime
+    }
+
+    private fun List<Region>.toVideoList(lang: String): List<Video> {
+        return this.parallelCatchingFlatMapBlocking {
+            var url = ""
+            client.newCall(GET(it.result)).execute().asJsoup().select("script").map { sc ->
+                if (sc.data().contains("var url = '")) {
+                    url = sc.data().substringAfter("var url = '").substringBefore("';")
+                }
+            }
+            serverVideoResolver(url, lang)
+        }
     }
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
@@ -386,6 +280,14 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun String.toDate(): Long {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }.getOrNull() ?: 0L
+    }
+
+    private fun urlSolverByType(type: String, slug: String): String {
+        return when (type) {
+            "PaginatedMovie", "PaginatedGenre" -> "$baseUrl/movies/$slug"
+            "PaginatedSerie" -> "$baseUrl/series/$slug"
+            else -> ""
+        }
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -448,9 +350,8 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime = throw UnsupportedOperationException()
     override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
     override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
-    override fun latestUpdatesNextPageSelector() = throw UnsupportedOperationException()
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw UnsupportedOperationException()
-    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException()
-    override fun latestUpdatesSelector() = throw UnsupportedOperationException()
+    override fun latestUpdatesFromElement(element: Element) = throw UnsupportedOperationException()
+    override fun latestUpdatesNextPageSelector(): String = throw UnsupportedOperationException()
+    override fun latestUpdatesSelector(): String = throw UnsupportedOperationException()
     // Not Used
 }
