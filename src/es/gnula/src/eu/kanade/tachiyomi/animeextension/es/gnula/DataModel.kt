@@ -93,8 +93,23 @@ data class SeasonPost(
     val genres: List<SeasonGenre> = emptyList(),
     val cast: SeasonCast = SeasonCast(),
     val slug: SeasonSlug = SeasonSlug(),
+    val players: Players = Players(),
     val releaseDate: String? = null,
     val seasons: List<Season> = emptyList(),
+)
+
+@Serializable
+data class Players(
+    val latino: List<Region> = emptyList(),
+    val spanish: List<Region> = emptyList(),
+    val english: List<Region> = emptyList(),
+)
+
+@Serializable
+data class Region(
+    val cyberlocker: String = "",
+    val result: String = "",
+    val quality: String = "",
 )
 
 @Serializable
@@ -173,4 +188,42 @@ data class Slug2(
 @Serializable
 data class SeasonQuery(
     val slug: String? = null,
+)
+
+// -----------------------Episode Model----------------------
+
+@Serializable
+data class EpisodeModel(
+    val props: EpisodeProps = EpisodeProps(),
+    val page: String,
+)
+
+@Serializable
+data class EpisodeProps(
+    val pageProps: EpisodePageProps = EpisodePageProps(),
+    @SerialName("__N_SSG")
+    val nSsg: Boolean = false,
+)
+
+@Serializable
+data class EpisodePageProps(
+    val episode: Episode = Episode(),
+)
+
+@Serializable
+data class Episode(
+    @SerialName("TMDbId")
+    val tmdbId: String? = null,
+    val title: String? = null,
+    val number: Long? = null,
+    val image: String? = null,
+    val slug: EpisodeSlug = EpisodeSlug(),
+    val players: Players = Players(),
+)
+
+@Serializable
+data class EpisodeSlug(
+    val name: String? = null,
+    val season: String? = null,
+    val episode: String? = null,
 )
