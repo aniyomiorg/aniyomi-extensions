@@ -1,7 +1,8 @@
 ext {
     extName = 'SuperStream'
     extClass = '.SuperStream'
-    extVersionCode = 10
+    extVersionCode = 11
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

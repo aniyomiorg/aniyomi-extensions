@@ -718,7 +718,7 @@ class SuperStreamAPI(val json: Json) {
     private val client = configureToIgnoreCertificate()
 
     // 0 to get nsfw
-    private val hideNsfw = 1
+    private val hideNsfw = 0
 
     private val headers = Headers.headersOf(
         "Platform",
