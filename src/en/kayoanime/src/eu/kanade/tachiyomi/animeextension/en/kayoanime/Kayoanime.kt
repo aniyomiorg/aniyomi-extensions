@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.en.kayoanime
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -399,7 +400,9 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val url = it.selectFirst("a[href*=tinyurl.com]")!!.attr("href")
                 val redirected = noRedirectClient.newCall(GET(url)).execute()
                 redirected.headers["location"]?.let { location ->
-                    if (location.toHttpUrl().host.contains("workers.dev")) {
+                    val host = location.toHttpUrl().host
+                    Log.i("SOMETHING-idk", location)
+                    if (host.contains("workers.dev")) {
                         episodeList.addAll(
                             indexExtractor.getEpisodesFromIndex(
                                 location,
@@ -407,6 +410,14 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 preferences.trimEpisodeName,
                             ),
                         )
+                    }
+
+                    if (host.contains("slogoanime")) {
+                        val document = client.newCall(GET(location)).execute().asJsoup()
+                        document.select("a[href*=drive.google.com]").distinctBy { it.text() }.forEach {
+                            val url = it.selectFirst("a[href*=drive.google.com]")!!.attr("href").substringBeforeLast("?usp=shar")
+                            traverseFolder(url, getVideoPathsFromElement(season) + " " + it.text())
+                        }
                     }
                 }
             }
