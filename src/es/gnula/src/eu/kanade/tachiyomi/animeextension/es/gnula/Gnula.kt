@@ -87,8 +87,17 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             ?: return AnimesPage(emptyList(), false)
         val jsonData = jsonString.parseTo<PopularModel>().props.pageProps
         val hasNextPage = document.selectFirst("ul.pagination > li.page-item.active ~ li > a > span.visually-hidden")?.text()?.contains("Next") ?: false
-        val type = jsonData.results.typename ?: ""
+        var type = jsonData.results.typename ?: ""
+
         val animeList = jsonData.results.data.map {
+            if (!it.url.slug.isNullOrEmpty()) {
+                type = when {
+                    "series" in it.url.slug -> "PaginatedSerie"
+                    "movies" in it.url.slug -> "PaginatedMovie"
+                    else -> ""
+                }
+            }
+
             SAnime.create().apply {
                 title = it.titles.name ?: ""
                 thumbnail_url = it.images.poster?.replace("/original/", "/w200/")

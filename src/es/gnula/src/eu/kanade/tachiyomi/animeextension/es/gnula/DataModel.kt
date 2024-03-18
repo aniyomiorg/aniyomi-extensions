@@ -40,6 +40,7 @@ data class Daum(
     val images: Images = Images(),
     val releaseDate: String? = null,
     val slug: Slug = Slug(),
+    val url: Url = Url(),
 )
 
 @Serializable
@@ -55,6 +56,11 @@ data class Images(
 @Serializable
 data class Slug(
     val name: String? = null,
+)
+
+@Serializable
+data class Url(
+    val slug: String? = null,
 )
 
 @Serializable
