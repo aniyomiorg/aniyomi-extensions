@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.en.superstream
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
@@ -193,6 +194,8 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
         const val PREF_HIDE_NSFW_DEFAULT = true
     }
 
+    // ============================== Settings ==============================
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
             key = "preferred_quality"
@@ -214,12 +217,12 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
             key = PREF_HIDE_NSFW_KEY
             title = "Hide NSFW content"
             setDefaultValue(PREF_HIDE_NSFW_DEFAULT)
+            summary = "requires restart"
 
             setOnPreferenceChangeListener { _, newValue ->
                 val new = newValue as Boolean
+                Toast.makeText(screen.context, "Restart Aniyomi to apply new setting.", Toast.LENGTH_LONG).show()
                 preferences.edit().putBoolean(key, new).commit()
-                superStreamAPI.hideNsfw = if (new) 1 else 0
-                true
             }
         }.also(screen::addPreference)
     }
