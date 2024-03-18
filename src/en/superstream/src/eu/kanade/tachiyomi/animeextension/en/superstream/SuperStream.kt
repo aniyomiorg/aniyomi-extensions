@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -31,13 +32,13 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
-    private val superStreamAPI = SuperStreamAPI(json)
-
-    override val baseUrl = superStreamAPI.apiUrl
-
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
+
+    private val superStreamAPI = SuperStreamAPI(json, preferences)
+
+    override val baseUrl = superStreamAPI.apiUrl
 
     override suspend fun getPopularAnime(page: Int): AnimesPage {
         val animes = superStreamAPI.getMainPage(page)
@@ -187,8 +188,13 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
     }
     override fun animeDetailsParse(response: Response) = throw UnsupportedOperationException()
 
+    companion object {
+        const val PREF_HIDE_NSFW_KEY = "pref_hide_nsfw"
+        const val PREF_HIDE_NSFW_DEFAULT = true
+    }
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
             entries = arrayOf("4k", "1080p", "720p", "480p", "360p", "240p")
@@ -201,6 +207,19 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_HIDE_NSFW_KEY
+            title = "Hide NSFW content"
+            setDefaultValue(PREF_HIDE_NSFW_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val new = newValue as Boolean
+                preferences.edit().putBoolean(key, new).commit()
+                superStreamAPI.hideNsfw = if (new) 1 else 0
+                true
             }
         }.also(screen::addPreference)
     }
