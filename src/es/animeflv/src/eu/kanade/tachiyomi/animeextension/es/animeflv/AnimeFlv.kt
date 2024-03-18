@@ -104,19 +104,22 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element) = throw UnsupportedOperationException()
 
+    /*--------------------------------Video extractors------------------------------------*/
+    private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
+    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers.newBuilder().add("Referer", "$baseUrl/").build()) }
+
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val jsonString = document.selectFirst("script:containsData(var videos = {)")?.data() ?: return emptyList()
         val responseString = jsonString.substringAfter("var videos =").substringBefore(";").trim()
         return json.decodeFromString<ServerModel>(responseString).sub.parallelCatchingFlatMapBlocking {
             when (it.title) {
-                "Stape" -> listOf(StreamTapeExtractor(client).videoFromUrl(it.url ?: it.code)!!)
-                "Okru" -> OkruExtractor(client).videosFromUrl(it.url ?: it.code)
-                "YourUpload" -> YourUploadExtractor(client).videoFromUrl(it.url ?: it.code, headers = headers)
-                "SW" -> {
-                    val docHeaders = headers.newBuilder().add("Referer", "$baseUrl/").build()
-                    StreamWishExtractor(client, docHeaders).videosFromUrl(it.url ?: it.code, videoNameGen = { "StreamWish:$it" })
-                }
+                "Stape" -> listOf(streamTapeExtractor.videoFromUrl(it.url ?: it.code)!!)
+                "Okru" -> okruExtractor.videosFromUrl(it.url ?: it.code)
+                "YourUpload" -> yourUploadExtractor.videoFromUrl(it.url ?: it.code, headers = headers)
+                "SW" -> streamWishExtractor.videosFromUrl(it.url ?: it.code, videoNameGen = { "StreamWish:$it" })
                 else -> emptyList()
             }
         }
