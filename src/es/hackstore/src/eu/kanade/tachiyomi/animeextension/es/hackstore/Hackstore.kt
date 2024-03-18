@@ -19,6 +19,7 @@ import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
@@ -47,31 +48,21 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeSelector(): String = "div.movie-thumbnail"
 
     override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("div.movie-thumbnail > div.movie-back > a").attr("href"))
-        anime.title = element.select("h3 > a.movie-title").attr("title")
-        anime.thumbnail_url = element.select("div.movie-back > a > div.poster-pad > img.imghacks").attr("data-src")
-
-        anime.description = ""
-        return anime
+        return SAnime.create().apply {
+            title = element.select(".movie-title").attr("title")
+            thumbnail_url = element.select(".poster-pad img").attr("abs:data-src")
+            description = ""
+            setUrlWithoutDomain(element.select(".movie-thumbnail a").attr("abs:href"))
+        }
     }
 
-    override fun popularAnimeNextPageSelector(): String = "div.wp-pagenavi"
+    override fun popularAnimeNextPageSelector(): String = "div.wp-pagenavi .current ~ a"
 
     // =============================== Latest ===============================
 
     override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
 
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-
-        anime.setUrlWithoutDomain(element.select("div.movie-thumbnail > div.movie-back > a").attr("href"))
-        anime.title = element.select("h3 > a.movie-title").attr("title")
-        anime.thumbnail_url = element.select("div.movie-thumbnail > div.movie-back > div > div.poster-pad > a > img").attr("data-src")
-        anime.description = ""
-
-        return anime
-    }
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/page/$page/?s")
 
@@ -98,9 +89,7 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         fun toUriPart() = vals[state].second
     }
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        return popularAnimeFromElement(element)
-    }
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
     override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
@@ -118,80 +107,56 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
-        val ismovie = document.selectFirst("#main-content > div > div.content-area.twelve.columns > div.watch-content > center > div > p:nth-child(1)") != null
-        if (ismovie) {
-            val anime = SAnime.create()
-            anime.description = document.selectFirst("#main-content > div > div.content-area.twelve.columns > div.watch-content > center > div > p:nth-child(1)")!!.text().removeSurrounding("\"")
-            document.select("#main-content > div > div.content-area.twelve.columns > div.watch-content > center > div > p").map {
-                val textContent = it.text()
-                val tempContent = textContent.lowercase()
-                if (tempContent.contains("titulo latino")) anime.title = textContent.replace("Titulo Latino:", "").trim()
-                if (tempContent.contains("genero")) anime.genre = textContent.replace("Genero:", "").trim()
-                if (tempContent.contains("Director")) anime.author = textContent.replace("Director:", "").trim()
-                textContent.replace("en 1 Link", "").trim()
+        val isMovie = document.location().contains("/peliculas/")
+        if (isMovie) {
+            val infoText = document.select(".watch-content .watch-text strong ~ p").text()
+            return SAnime.create().apply {
+                description = document.selectFirst(".watch-content .watch-text p:nth-child(1)")?.text()?.removeSurrounding("\"")
+                title = if (infoText.contains("Título Latino:", true)) infoText.substringAfter("Título Latino:").substringBefore(")").trim() + ")" else ""
+                genre = if (infoText.contains("Genero:", true)) infoText.substringAfter("Genero:").substringBefore("País").trim().replace(",", ", ") else null
+                author = if (infoText.contains("Director:", true)) infoText.substringAfter("Director:").substringBefore(",").trim() else null
+                artist = if (infoText.contains("Elenco:", true)) infoText.substringAfter("Elenco:").substringBefore(",").trim() else null
+                thumbnail_url = document.selectFirst(".watch-content img")?.attr("abs:data-src")?.replace("-200x300", "")
+                status = SAnime.COMPLETED
             }
-            return anime
         } else {
-            val anime = SAnime.create()
-
-            anime.description = document.selectFirst("#pcontent > p")?.text()?.trim() ?: document.selectFirst("#zcontent > p")?.text()?.trim() ?: ""
-
-            document.select("#zcontent, #pcontent > p").forEach { infoElement ->
-                val textContent = infoElement.text().trim().lowercase()
-
-                when {
-                    "titulo original" in textContent -> anime.title = textContent.replace("titulo original:", "").trim()
-                    "generos" in textContent -> anime.genre = textContent.replace("generos:", "").trim()
-                    "director" in textContent -> anime.author = textContent.replace("director:", "").trim()
-                }
+            return SAnime.create().apply {
+                title = document.selectFirst(".serieee h2")?.text() ?: ""
+                description = document.selectFirst("#pcontent > p")?.text()?.trim() ?: document.selectFirst("#zcontent > p")?.text()?.trim() ?: ""
+                genre = document.select("#ggenre [rel=tag]").joinToString { it.text() }
+                thumbnail_url = document.selectFirst(".imghacks")?.attr("abs:data-src")
             }
-
-            return anime
         }
-    }
-
-    private fun externalOrInternalImg(url: String): String {
-        return if (url.contains("https")) url else "$baseUrl/$url"
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
-
-        val episodeList = mutableListOf<SEpisode>()
         val ismovie = response.request.url.toString().contains("/peliculas/")
-        if (ismovie) {
-            val ep = SEpisode.create()
-            ep.setUrlWithoutDomain(response.request.url.toString())
-            ep.name = "PELÍCULA"
-            ep.episode_number = 1f
-            episodeList.add(ep)
+        return if (ismovie) {
+            listOf(
+                SEpisode.create().apply {
+                    name = "PELÍCULA"
+                    setUrlWithoutDomain(response.request.url.toString())
+                    episode_number = 1f
+                },
+            )
         } else {
-            document.select(".movie-thumbnail").forEach { thumbnail ->
-                val episode = SEpisode.create()
-
+            document.select(".movie-thumbnail").map { thumbnail ->
                 val episodeLink = thumbnail.select("a").attr("href")
                 val seasonMatch = Regex("-(\\d+)x(\\d+)/$").find(episodeLink)
                 val seasonNumber = seasonMatch?.groups?.get(1)?.value?.toInt() ?: 0
                 val episodeNumber = seasonMatch?.groups?.get(2)?.value?.toInt() ?: 0
-
-                episode.name = "T$seasonNumber - E$episodeNumber"
-                episode.episode_number = episodeNumber.toFloat()
-                episodeList.add(0, episode)
-                episode.setUrlWithoutDomain(episodeLink)
-
-                episodeList.add(episode)
+                SEpisode.create().apply {
+                    name = "T$seasonNumber - E$episodeNumber"
+                    episode_number = episodeNumber.toFloat()
+                    setUrlWithoutDomain(episodeLink)
+                }
             }
-        }
-
-        return episodeList
+        }.reversed()
     }
 
     // ============================== Episodes ==============================
     override fun episodeListSelector() = "uwu"
-
-    private fun getNumberFromString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
-    }
 
     override fun episodeFromElement(element: Element): SEpisode { throw UnsupportedOperationException() }
 
@@ -208,11 +173,7 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val videoList = mutableListOf<Video>()
-
-        val tabs = document.select("ul.TbVideoNv li.pres")
-
-        tabs.forEach { tab ->
+        return document.select("ul.TbVideoNv li.pres").parallelCatchingFlatMapBlocking { tab ->
             val server = tab.select("a.playr").text()
             val deco = tab.select("a.playr").attr("data-href")
             val langs = tab.select("a.playr").attr("data-lang")
@@ -220,35 +181,25 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val url = extractUrlFromDonFunction(fullUrl)
             val isLatino = langs.contains("latino")
             val isSub = langs.contains("subtitulado") || langs.contains("sub") || langs.contains("japonés")
+            val prefix = if (isLatino) "[LAT]" else if (isSub) "[SUB]" else "[CAST]"
 
             when {
-                server.contains("streamtape") -> {
-                    val video = StreamTapeExtractor(client).videoFromUrl(url, if (isLatino) "StreamTape Latino" else if (isSub) "StreamTape Subtitulado" else "StreamTape Castellano")
-                    if (video != null) {
-                        videoList.add(video)
-                    }
+                server.contains("streamtape") || server.contains("stp") || server.contains("stape") -> {
+                    listOf(StreamTapeExtractor(client).videoFromUrl(url, quality = "$prefix StreamTape")!!)
                 }
-                server.contains("voe") -> {
-                    val video = VoeExtractor(client).videosFromUrl(url, if (isLatino) "(Latino) " else if (isSub) "(Subtitulado) " else "(Castellano) ")
-                    videoList.addAll(video)
+                server.contains("voe") -> VoeExtractor(client).videosFromUrl(url, prefix)
+                server.contains("filemoon") -> FilemoonExtractor(client).videosFromUrl(url, prefix = "$prefix Filemoon:")
+                server.contains("wishembed") || server.contains("streamwish") || server.contains("strwish") || server.contains("wish") -> {
+                    StreamWishExtractor(client, headers).videosFromUrl(url, videoNameGen = { "$prefix StreamWish:$it" })
                 }
-                server.contains("filemoon") -> {
-                    val video = FilemoonExtractor(client).videosFromUrl(url, if (isLatino) "Filemoon Latino" else if (isSub) "Filemoon Subtitulado" else "Filemoon Castellano")
-                    videoList.addAll(video)
+                server.contains("doodstream") || server.contains("dood.") || server.contains("ds2play") || server.contains("doods.") -> {
+                    DoodExtractor(client).videosFromUrl(url, "$prefix DoodStream")
                 }
-                server.contains("streamwish") -> {
-                    val video = StreamWishExtractor(client, headers).videosFromUrl(url, if (isLatino) "StreamWish Latino" else if (isSub) "StreamWish Subtitulado" else "StreamWish Castellano")
-                    videoList.addAll(video)
-                }
-                server.contains("dood") -> {
-                    val video = DoodExtractor(client).videosFromUrl(url, if (isLatino) "Dood Latino" else if (isSub) "Dood Subtitulado" else "Dood Castellano")
-                    videoList.addAll(video)
-                }
+                else -> emptyList()
             }
         }
-
-        return videoList
     }
+
     override fun videoListSelector(): String = "ul.TbVideoNv li.pres a.playr"
 
     override fun videoFromElement(element: Element): Video { throw UnsupportedOperationException() }
@@ -276,12 +227,14 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_DEFAULT = "1080"
         private val QUALITY_LIST = arrayOf("1080", "720", "480", "360")
+
         private const val PREF_LANGUAGE_KEY = "preferred_language"
-        private const val PREF_LANGUAGE_DEFAULT = "Latino"
+        private const val PREF_LANGUAGE_DEFAULT = "[LAT]"
         private val LANGUAGE_LIST = arrayOf("Latino", "Castellano", "Subtitulado")
+        private val LANGUAGE_VALUES = arrayOf("[LAT]", "[CAST]", "[SUB]")
 
         private const val PREF_SERVER_KEY = "preferred_server"
-        private const val PREF_SERVER_DEFAULT = "DoodStream"
+        private const val PREF_SERVER_DEFAULT = "StreamWish"
         private val SERVER_LIST = arrayOf("DoodStream", "StreamTape", "Voe", "Filemoon", "StreamWish")
     }
 
@@ -322,7 +275,7 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             key = PREF_LANGUAGE_KEY
             title = "Preferred language"
             entries = LANGUAGE_LIST
-            entryValues = LANGUAGE_LIST
+            entryValues = LANGUAGE_VALUES
             setDefaultValue(PREF_LANGUAGE_DEFAULT)
             summary = "%s"
 
