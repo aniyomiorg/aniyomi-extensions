@@ -719,7 +719,7 @@ class SuperStreamAPI(val json: Json, preferences: SharedPreferences) {
     private val client = configureToIgnoreCertificate()
 
     // 0 to get nsfw
-    private var hideNsfw = if (preferences.getBoolean(SuperStream.PREF_HIDE_NSFW_KEY, SuperStream.PREF_HIDE_NSFW_DEFAULT)) 1 else 0
+    private val hideNsfw = if (preferences.getBoolean(SuperStream.PREF_HIDE_NSFW_KEY, SuperStream.PREF_HIDE_NSFW_DEFAULT)) 1 else 0
 
     private val headers = Headers.headersOf(
         "Platform",
