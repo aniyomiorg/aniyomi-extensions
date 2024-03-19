@@ -89,21 +89,40 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         val hasNextPage = page < nbPages - 1
         val arrayString = jObject["hits"]!!.jsonPrimitive.content
         val array = json.decodeFromString<JsonArray>(arrayString)
+        val titles = ArrayList<String>()
         val animeList = mutableListOf<SAnime>()
         for (item in array) {
             val anime = SAnime.create()
-            anime.title = item.jsonObject["name"]!!.jsonPrimitive.content
-            anime.thumbnail_url = item.jsonObject["cover_url"]!!.jsonPrimitive.content
-            anime.setUrlWithoutDomain("https://hanime.tv/videos/hentai/" + item.jsonObject["slug"]!!.jsonPrimitive.content)
-            anime.author = item.jsonObject["brand"]!!.jsonPrimitive.content
-            anime.description = item.jsonObject["description"]!!.jsonPrimitive.content.replace("<p>", "").replace("</p>", "")
-            anime.status = SAnime.COMPLETED
-            val tags = item.jsonObject["tags"]!!.jsonArray
-            anime.genre = tags.joinToString(", ") { it.jsonPrimitive.content }
-            anime.initialized = true
-            animeList.add(anime)
+            val title = getTitle(item.jsonObject["name"]!!.jsonPrimitive.content)
+            if (!titles.contains(title)) {
+                titles.add(title)
+                anime.title = title
+                anime.thumbnail_url = item.jsonObject["cover_url"]!!.jsonPrimitive.content
+                anime.setUrlWithoutDomain("https://hanime.tv/videos/hentai/" + item.jsonObject["slug"]!!.jsonPrimitive.content)
+                anime.author = item.jsonObject["brand"]!!.jsonPrimitive.content
+                anime.description = item.jsonObject["description"]!!.jsonPrimitive.content.replace("<p>", "").replace("</p>", "")
+                anime.status = SAnime.COMPLETED
+                val tags = item.jsonObject["tags"]!!.jsonArray
+                anime.genre = tags.joinToString(", ") { it.jsonPrimitive.content }
+                anime.initialized = true
+                animeList.add(anime)
+            }
         }
         return AnimesPage(animeList, hasNextPage)
+    }
+
+    private fun isNumber(num: String) = (num.toIntOrNull() != null)
+    private fun getTitle(title: String): String {
+        return if (title.contains(" Ep ")) {
+            title.split(" Ep ")[0].trim()
+        } else {
+            if (isNumber(title.trim().split(" ").last())) {
+                val split = title.trim().split(" ")
+                split.slice(0..split.size - 2).joinToString(" ").trim()
+            } else {
+                title.trim()
+            }
+        }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = POST("https://search.htv-services.com/", popularRequestHeaders, searchRequestBody(query, page, filters))
@@ -116,7 +135,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun animeDetailsParse(response: Response): SAnime {
         val document = response.asJsoup()
         return SAnime.create().apply {
-            title = document.select("h1.tv-title").text()
+            title = getTitle(document.select("h1.tv-title").text())
             thumbnail_url = document.select("img.hvpi-cover").attr("src")
             setUrlWithoutDomain(document.location())
             author = document.select("a.hvpimbc-text").text()
@@ -214,12 +233,15 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val responseString = response.body.string()
         val jObject = json.decodeFromString<JsonObject>(responseString)
-        val episode = SEpisode.create()
-        episode.date_upload = jObject.jsonObject["hentai_video"]!!.jsonObject["released_at_unix"]!!.jsonPrimitive.long * 1000
-        episode.name = jObject.jsonObject["hentai_video"]!!.jsonObject["name"]!!.jsonPrimitive.content
-        episode.url = response.request.url.toString()
-        episode.episode_number = 1F
-        return listOf(episode)
+
+        return jObject["hentai_franchise_hentai_videos"]?.jsonArray?.mapIndexed { idx, it ->
+            SEpisode.create().apply {
+                name = "Episode ${(idx + 1)}"
+                date_upload = it.jsonObject["released_at_unix"]!!.jsonPrimitive.long * 1000
+                url = "$baseUrl/api/v8/video?id=${it.jsonObject["id"]!!.jsonPrimitive.content}"
+                episode_number = (idx + 1).toFloat()
+            }
+        }?.reversed() ?: emptyList()
     }
 
     private fun setAuthCookie() {

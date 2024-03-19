@@ -1,7 +1,7 @@
 ext {
     extName = 'hanime.tv'
     extClass = '.Hanime'
-    extVersionCode = 17
+    extVersionCode = 18
     isNsfw = true
 }
 
