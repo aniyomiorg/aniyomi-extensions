@@ -199,6 +199,15 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
         return episodes
     }
 
+    /*--------------------------------Video extractors------------------------------------*/
+    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+    private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
+    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
+    private val burstCloudExtractor by lazy { BurstCloudExtractor(client) }
+    private val streamHideVidExtractor by lazy { StreamHideVidExtractor(client) }
+
+
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoServers = document.selectFirst("script:containsData(var videos = [)")!!.data()
@@ -212,13 +221,13 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
             val nameServer = server[0]
 
             when (nameServer.lowercase()) {
-                "streamwish" -> StreamWishExtractor(client, headers).videosFromUrl(urlServer, videoNameGen = { "StreamWish:$it" })
-                "voe" -> VoeExtractor(client).videosFromUrl(urlServer)
+                "streamwish" -> streamWishExtractor.videosFromUrl(urlServer, videoNameGen = { "StreamWish:$it" })
+                "voe" -> voeExtractor.videosFromUrl(urlServer)
                 "arc" -> listOf(Video(urlServer.substringAfter("#"), "Arc", urlServer.substringAfter("#")))
-                "yupi" -> YourUploadExtractor(client).videoFromUrl(urlServer, headers = headers)
-                "mp4upload" -> Mp4uploadExtractor(client).videosFromUrl(urlServer, headers = headers)
-                "burst" -> BurstCloudExtractor(client).videoFromUrl(urlServer, headers = headers)
-                "vidhide", "streamhide", "guccihide", "streamvid" -> StreamHideVidExtractor(client).videosFromUrl(urlServer)
+                "yupi" -> yourUploadExtractor.videoFromUrl(urlServer, headers = headers)
+                "mp4upload" -> mp4uploadExtractor.videosFromUrl(urlServer, headers = headers)
+                "burst" -> burstCloudExtractor.videoFromUrl(urlServer, headers = headers)
+                "vidhide", "streamhide", "guccihide", "streamvid" -> streamHideVidExtractor.videosFromUrl(urlServer)
                 else -> emptyList()
             }
         }
