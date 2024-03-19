@@ -171,6 +171,13 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return matchResult?.groupValues?.get(1) ?: "url not found"
     }
 
+    /*--------------------------------Video extractors------------------------------------*/
+    private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+    private val filemoonExtractor by lazy { FilemoonExtractor(client) }
+    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val doodExtractor by lazy { DoodExtractor(client) }
+
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         return document.select("ul.TbVideoNv li.pres").parallelCatchingFlatMapBlocking { tab ->
@@ -185,15 +192,15 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             when {
                 server.contains("streamtape") || server.contains("stp") || server.contains("stape") -> {
-                    listOf(StreamTapeExtractor(client).videoFromUrl(url, quality = "$prefix StreamTape")!!)
+                    listOf(streamTapeExtractor.videoFromUrl(url, quality = "$prefix StreamTape")!!)
                 }
-                server.contains("voe") -> VoeExtractor(client).videosFromUrl(url, prefix)
-                server.contains("filemoon") -> FilemoonExtractor(client).videosFromUrl(url, prefix = "$prefix Filemoon:")
+                server.contains("voe") -> voeExtractor.videosFromUrl(url, prefix)
+                server.contains("filemoon") -> filemoonExtractor.videosFromUrl(url, prefix = "$prefix Filemoon:")
                 server.contains("wishembed") || server.contains("streamwish") || server.contains("strwish") || server.contains("wish") -> {
-                    StreamWishExtractor(client, headers).videosFromUrl(url, videoNameGen = { "$prefix StreamWish:$it" })
+                    streamWishExtractor.videosFromUrl(url, videoNameGen = { "$prefix StreamWish:$it" })
                 }
                 server.contains("doodstream") || server.contains("dood.") || server.contains("ds2play") || server.contains("doods.") -> {
-                    DoodExtractor(client).videosFromUrl(url, "$prefix DoodStream")
+                    doodExtractor.videosFromUrl(url, "$prefix DoodStream")
                 }
                 else -> emptyList()
             }

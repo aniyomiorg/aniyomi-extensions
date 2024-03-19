@@ -207,7 +207,6 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
     private val burstCloudExtractor by lazy { BurstCloudExtractor(client) }
     private val streamHideVidExtractor by lazy { StreamHideVidExtractor(client) }
 
-
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoServers = document.selectFirst("script:containsData(var videos = [)")!!.data()
