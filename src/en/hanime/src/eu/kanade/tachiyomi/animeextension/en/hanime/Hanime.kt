@@ -70,7 +70,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun popularAnimeParse(response: Response) = parseSearchJson(response)
 
     private fun parseSearchJson(response: Response): AnimesPage {
-        val jsonLine = response.body.string().ifEmpty { return  AnimesPage(emptyList(), false) }
+        val jsonLine = response.body.string().ifEmpty { return AnimesPage(emptyList(), false) }
 
         val jResponse = jsonLine.parseTo<HAnimeResponse>()
         val hasNextPage = jResponse.page < jResponse.nbPages - 1
@@ -177,10 +177,10 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         val responseString = response.body.string().ifEmpty { return emptyList() }
         return responseString.parseTo<VideoModel>().hentaiFranchiseHentaiVideos?.mapIndexed { idx, it ->
             SEpisode.create().apply {
-                name = "Episode $idx"
+                episode_number = idx + 1f
+                name = "Episode ${idx + 1}"
                 date_upload = (it.releasedAtUnix ?: 0) * 1000
                 url = "$baseUrl/api/v8/video?id=${it.id}"
-                episode_number = idx + 1f
             }
         }?.reversed() ?: emptyList()
     }
@@ -216,8 +216,9 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         TagList(getTags()),
         BrandList(getBrands()),
         SortFilter(sortableList.map { it.first }.toTypedArray()),
-        TagInclusionMode()
+        TagInclusionMode(),
     )
+
     internal class Tag(val id: String, name: String) : AnimeFilter.TriState(name)
     internal class Brand(val id: String, name: String) : AnimeFilter.CheckBox(name)
     private class TagList(tags: List<Tag>) : AnimeFilter.Group<Tag>("Tags", tags)
