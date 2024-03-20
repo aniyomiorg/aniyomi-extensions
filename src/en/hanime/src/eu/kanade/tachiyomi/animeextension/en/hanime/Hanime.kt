@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -72,9 +73,9 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun parseSearchJson(response: Response): AnimesPage {
         val jsonLine = response.body.string().ifEmpty { return AnimesPage(emptyList(), false) }
 
-        val jResponse = jsonLine.parseTo<HAnimeResponse>()
+        val jResponse = jsonLine.parseAs<HAnimeResponse>()
         val hasNextPage = jResponse.page < jResponse.nbPages - 1
-        val array = jResponse.hits.parseTo<Array<HitsModel>>()
+        val array = jResponse.hits.parseAs<Array<HitsModel>>()
 
         val animeList = array.groupBy { getTitle(it.name) }.map { (_, items) -> items.first() }.map { item ->
             SAnime.create().apply {
@@ -138,14 +139,12 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun fetchVideoListPremium(episode: SEpisode): List<Video> {
         val id = episode.url.substringAfter("?id=")
-        val headers = headers.newBuilder()
-            .add("cookie", authCookie!!)
-        val document = client.newCall(
-            GET("$baseUrl/videos/hentai/$id", headers = headers.build()),
-        ).execute().asJsoup()
-        val data = document.selectFirst("script:containsData(__NUXT__)")!!.data()
-            .substringAfter("__NUXT__=").substringBeforeLast(";")
-        val parsed = json.decodeFromString<WindowNuxt>(data)
+        val headers = headers.newBuilder().add("cookie", authCookie!!)
+        val document = client.newCall(GET("$baseUrl/videos/hentai/$id", headers = headers.build())).execute().asJsoup()
+
+        val parsed = document.selectFirst("script:containsData(__NUXT__)")!!.data()
+            .substringAfter("__NUXT__=").substringBeforeLast(";").parseAs<WindowNuxt>()
+
         return parsed.state.data.video.videos_manifest.servers.flatMap { server ->
             server.streams.map { stream -> Video(stream.url, stream.height + "p", stream.url) }
         }
@@ -153,7 +152,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val responseString = response.body.string().ifEmpty { return emptyList() }
-        return responseString.parseTo<VideoModel>().videosManifest?.servers?.get(0)?.streams?.filter { it.kind != "premium_alert" }?.map {
+        return responseString.parseAs<VideoModel>().videosManifest?.servers?.get(0)?.streams?.filter { it.kind != "premium_alert" }?.map {
             Video(it.url, "${it.height}p", it.url)
         } ?: emptyList()
     }
@@ -175,7 +174,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val responseString = response.body.string().ifEmpty { return emptyList() }
-        return responseString.parseTo<VideoModel>().hentaiFranchiseHentaiVideos?.mapIndexed { idx, it ->
+        return responseString.parseAs<VideoModel>().hentaiFranchiseHentaiVideos?.mapIndexed { idx, it ->
             SEpisode.create().apply {
                 episode_number = idx + 1f
                 name = "Episode ${idx + 1}"
@@ -224,15 +223,6 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
     private class TagList(tags: List<Tag>) : AnimeFilter.Group<Tag>("Tags", tags)
     private class BrandList(brands: List<Brand>) : AnimeFilter.Group<Brand>("Brands", brands)
     private class TagInclusionMode : AnimeFilter.Select<String>("Included tags mode", arrayOf("And", "Or"), 0)
-
-    data class SearchParameters(
-        val includedTags: ArrayList<String>,
-        val blackListedTags: ArrayList<String>,
-        val brands: ArrayList<String>,
-        val tagsMode: String,
-        val orderBy: String,
-        val ordering: String,
-    )
 
     private fun getSearchParameters(filters: AnimeFilterList): SearchParameters {
         val includedTags = ArrayList<String>()
@@ -289,10 +279,6 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
         return SearchParameters(includedTags, blackListedTags, brands, tagsMode, orderBy, ordering)
-    }
-
-    private inline fun <reified T> String.parseTo(): T {
-        return json.decodeFromString<T>(this)
     }
 
     private fun getBrands() = listOf(

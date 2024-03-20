@@ -3,6 +3,15 @@ package eu.kanade.tachiyomi.animeextension.en.hanime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+data class SearchParameters(
+    val includedTags: ArrayList<String>,
+    val blackListedTags: ArrayList<String>,
+    val brands: ArrayList<String>,
+    val tagsMode: String,
+    val orderBy: String,
+    val ordering: String,
+)
+
 @Serializable
 data class HAnimeResponse(
     val page: Long,
@@ -53,21 +62,10 @@ data class VideoModel(
     val hentaiVideo: HentaiVideo? = HentaiVideo(),
     @SerialName("hentai_tags")
     val hentaiTags: List<HentaiTag>? = emptyList(),
-    @SerialName("hentai_franchise")
-    val hentaiFranchise: HentaiFranchise? = HentaiFranchise(),
     @SerialName("hentai_franchise_hentai_videos")
     val hentaiFranchiseHentaiVideos: List<HentaiFranchiseHentaiVideo>? = emptyList(),
-    val brand: Brand? = Brand(),
-    @SerialName("next_hentai_video")
-    val nextHentaiVideo: NextHentaiVideo? = NextHentaiVideo(),
     @SerialName("videos_manifest")
     val videosManifest: VideosManifest? = VideosManifest(),
-    val ap: Double? = null,
-    val pre: String? = null,
-    @SerialName("session_token")
-    val sessionToken: String? = null,
-    @SerialName("session_token_expire_time_unix")
-    val sessionTokenExpireTimeUnix: Long? = null,
 )
 
 @Serializable
@@ -126,61 +124,7 @@ data class HentaiTag(
 )
 
 @Serializable
-data class HentaiFranchise(
-    val id: Long? = null,
-    val name: String? = null,
-    val slug: String? = null,
-    val title: String? = null,
-)
-
-@Serializable
 data class HentaiFranchiseHentaiVideo(
-    val id: Long? = null,
-    val name: String? = null,
-    val slug: String? = null,
-    @SerialName("created_at")
-    val createdAt: String? = null,
-    @SerialName("released_at")
-    val releasedAt: String? = null,
-    val views: Long? = null,
-    val interests: Long? = null,
-    @SerialName("poster_url")
-    val posterUrl: String? = null,
-    @SerialName("cover_url")
-    val coverUrl: String? = null,
-    @SerialName("is_hard_subtitled")
-    val isHardSubtitled: Boolean? = false,
-    val brand: String? = null,
-    @SerialName("duration_in_ms")
-    val durationInMs: Long? = null,
-    @SerialName("is_censored")
-    val isCensored: Boolean? = false,
-    val rating: Double? = null,
-    val likes: Long? = null,
-    val dislikes: Long? = null,
-    val downloads: Long? = null,
-    @SerialName("monthly_rank")
-    val monthlyRank: Long? = null,
-    @SerialName("brand_id")
-    val brandId: String? = null,
-    @SerialName("is_banned_in")
-    val isBannedIn: String? = null,
-    @SerialName("created_at_unix")
-    val createdAtUnix: Long? = null,
-    @SerialName("released_at_unix")
-    val releasedAtUnix: Long? = null,
-)
-
-@Serializable
-data class Brand(
-    val id: Long? = null,
-    val title: String? = null,
-    val slug: String? = null,
-    val count: Long? = null,
-)
-
-@Serializable
-data class NextHentaiVideo(
     val id: Long? = null,
     val name: String? = null,
     val slug: String? = null,
