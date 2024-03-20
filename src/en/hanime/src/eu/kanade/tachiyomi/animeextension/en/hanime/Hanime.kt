@@ -15,16 +15,7 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.int
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.long
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -73,45 +64,36 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
     private val popularRequestHeaders =
         Headers.headersOf("authority", "search.htv-services.com", "accept", "application/json, text/plain, */*", "content-type", "application/json;charset=UTF-8")
 
-    override fun popularAnimeRequest(page: Int): Request {
-        return POST("https://search.htv-services.com/", popularRequestHeaders, searchRequestBody("", page, AnimeFilterList()))
-    }
+    override fun popularAnimeRequest(page: Int): Request =
+        POST("https://search.htv-services.com/", popularRequestHeaders, searchRequestBody("", page, AnimeFilterList()))
 
-    override fun popularAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body.string()
-        return parseSearchJson(responseString)
-    }
-    private fun parseSearchJson(jsonLine: String?): AnimesPage {
-        val jsonData = jsonLine ?: return AnimesPage(emptyList(), false)
-        val jObject = json.decodeFromString<JsonObject>(jsonData)
-        val nbPages = jObject["nbPages"]!!.jsonPrimitive.int
-        val page = jObject["page"]!!.jsonPrimitive.int
-        val hasNextPage = page < nbPages - 1
-        val arrayString = jObject["hits"]!!.jsonPrimitive.content
-        val array = json.decodeFromString<JsonArray>(arrayString)
-        val titles = ArrayList<String>()
-        val animeList = mutableListOf<SAnime>()
-        for (item in array) {
-            val anime = SAnime.create()
-            val title = getTitle(item.jsonObject["name"]!!.jsonPrimitive.content)
-            if (!titles.contains(title)) {
-                titles.add(title)
-                anime.title = title
-                anime.thumbnail_url = item.jsonObject["cover_url"]!!.jsonPrimitive.content
-                anime.setUrlWithoutDomain("https://hanime.tv/videos/hentai/" + item.jsonObject["slug"]!!.jsonPrimitive.content)
-                anime.author = item.jsonObject["brand"]!!.jsonPrimitive.content
-                anime.description = item.jsonObject["description"]!!.jsonPrimitive.content.replace("<p>", "").replace("</p>", "")
-                anime.status = SAnime.COMPLETED
-                val tags = item.jsonObject["tags"]!!.jsonArray
-                anime.genre = tags.joinToString(", ") { it.jsonPrimitive.content }
-                anime.initialized = true
-                animeList.add(anime)
+    override fun popularAnimeParse(response: Response) = parseSearchJson(response)
+
+    private fun parseSearchJson(response: Response): AnimesPage {
+        val jsonLine = response.body.string().ifEmpty { return  AnimesPage(emptyList(), false) }
+
+        val jResponse = jsonLine.parseTo<HAnimeResponse>()
+        val hasNextPage = jResponse.page < jResponse.nbPages - 1
+        val array = jResponse.hits.parseTo<Array<HitsModel>>()
+
+        val animeList = array.groupBy { getTitle(it.name) }.map { (_, items) -> items.first() }.map { item ->
+            SAnime.create().apply {
+                title = getTitle(item.name)
+                thumbnail_url = item.coverUrl
+                author = item.brand
+                description = item.description?.replace(Regex("<[^>]*>"), "")
+                status = SAnime.UNKNOWN
+                genre = item.tags.joinToString { it }
+                initialized = true
+                setUrlWithoutDomain("https://hanime.tv/videos/hentai/" + item.slug)
             }
         }
+
         return AnimesPage(animeList, hasNextPage)
     }
 
     private fun isNumber(num: String) = (num.toIntOrNull() != null)
+
     private fun getTitle(title: String): String {
         return if (title.contains(" Ep ")) {
             title.split(" Ep ")[0].trim()
@@ -125,44 +107,36 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = POST("https://search.htv-services.com/", popularRequestHeaders, searchRequestBody(query, page, filters))
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request =
+        POST("https://search.htv-services.com/", popularRequestHeaders, searchRequestBody(query, page, filters))
 
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body.string()
-        return parseSearchJson(responseString)
-    }
+    override fun searchAnimeParse(response: Response): AnimesPage = parseSearchJson(response)
 
     override fun animeDetailsParse(response: Response): SAnime {
         val document = response.asJsoup()
         return SAnime.create().apply {
             title = getTitle(document.select("h1.tv-title").text())
             thumbnail_url = document.select("img.hvpi-cover").attr("src")
-            setUrlWithoutDomain(document.location())
             author = document.select("a.hvpimbc-text").text()
-            description = document.select("div.hvpist-description p")
-                .joinToString("\n\n") { it.text() }
-            status = SAnime.COMPLETED
+            description = document.select("div.hvpist-description p").joinToString("\n\n") { it.text() }
+            status = SAnime.UNKNOWN
             genre = document.select("div.hvpis-text div.btn__content").joinToString { it.text() }
             initialized = true
+            setUrlWithoutDomain(document.location())
         }
     }
 
-    override fun videoListRequest(episode: SEpisode): Request {
-        return GET(episode.url)
-    }
+    override fun videoListRequest(episode: SEpisode) = GET(episode.url)
 
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
         setAuthCookie()
-
         if (authCookie != null) {
             return fetchVideoListPremium(episode)
         }
-
         return super.getVideoList(episode)
     }
 
     private fun fetchVideoListPremium(episode: SEpisode): List<Video> {
-        val videoList = mutableListOf<Video>()
         val id = episode.url.substringAfter("?id=")
         val headers = headers.newBuilder()
             .add("cookie", authCookie!!)
@@ -172,57 +146,26 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         val data = document.selectFirst("script:containsData(__NUXT__)")!!.data()
             .substringAfter("__NUXT__=").substringBeforeLast(";")
         val parsed = json.decodeFromString<WindowNuxt>(data)
-        parsed.state.data.video.videos_manifest.servers.forEach { server ->
-            server.streams.forEach { stream ->
-                videoList.add(
-                    Video(
-                        stream.url,
-                        stream.height + "p",
-                        stream.url,
-                    ),
-                )
-            }
+        return parsed.state.data.video.videos_manifest.servers.flatMap { server ->
+            server.streams.map { stream -> Video(stream.url, stream.height + "p", stream.url) }
         }
-        return videoList
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val responseString = response.body.string()
-        val jObject = json.decodeFromString<JsonObject>(responseString)
-        val server = jObject["videos_manifest"]!!.jsonObject["servers"]!!.jsonArray[0].jsonObject
-        val streams = server["streams"]!!.jsonArray
-        val linkList = mutableListOf<Video>()
-        for (stream in streams) {
-            val streamObject = stream.jsonObject
-            if (streamObject["kind"]!!.jsonPrimitive.content != "premium_alert") {
-                linkList.add(
-                    Video(
-                        url = streamObject["url"]!!.jsonPrimitive.content,
-                        quality = streamObject["height"]!!.jsonPrimitive.content + "p",
-                        videoUrl = streamObject["url"]!!.jsonPrimitive.content,
-                    ),
-                )
-            }
-        }
-        return linkList
+        val responseString = response.body.string().ifEmpty { return emptyList() }
+        return responseString.parseTo<VideoModel>().videosManifest?.servers?.get(0)?.streams?.filter { it.kind != "premium_alert" }?.map {
+            Video(it.url, "${it.height}p", it.url)
+        } ?: emptyList()
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(quality) },
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
+        ).reversed()
     }
 
     override fun episodeListRequest(anime: SAnime): Request {
@@ -231,15 +174,13 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val responseString = response.body.string()
-        val jObject = json.decodeFromString<JsonObject>(responseString)
-
-        return jObject["hentai_franchise_hentai_videos"]?.jsonArray?.mapIndexed { idx, it ->
+        val responseString = response.body.string().ifEmpty { return emptyList() }
+        return responseString.parseTo<VideoModel>().hentaiFranchiseHentaiVideos?.mapIndexed { idx, it ->
             SEpisode.create().apply {
-                name = "Episode ${(idx + 1)}"
-                date_upload = it.jsonObject["released_at_unix"]!!.jsonPrimitive.long * 1000
-                url = "$baseUrl/api/v8/video?id=${it.jsonObject["id"]!!.jsonPrimitive.content}"
-                episode_number = (idx + 1).toFloat()
+                name = "Episode $idx"
+                date_upload = (it.releasedAtUnix ?: 0) * 1000
+                url = "$baseUrl/api/v8/video?id=${it.id}"
+                episode_number = idx + 1f
             }
         }?.reversed() ?: emptyList()
     }
@@ -266,27 +207,22 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         """.trimIndent().toRequestBody("application/json".toMediaType())
     }
 
-    override fun latestUpdatesRequest(page: Int): Request = POST("https://search.htv-services.com/", popularRequestHeaders, latestSearchRequestBody(page))
+    override fun latestUpdatesRequest(page: Int) = POST("https://search.htv-services.com/", popularRequestHeaders, latestSearchRequestBody(page))
 
-    override fun latestUpdatesParse(response: Response): AnimesPage {
-        val responseString = response.body.string()
-        return parseSearchJson(responseString)
-    }
+    override fun latestUpdatesParse(response: Response) = parseSearchJson(response)
 
     // Filters
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         TagList(getTags()),
         BrandList(getBrands()),
         SortFilter(sortableList.map { it.first }.toTypedArray()),
-        TagInclusionMode(),
-
+        TagInclusionMode()
     )
     internal class Tag(val id: String, name: String) : AnimeFilter.TriState(name)
     internal class Brand(val id: String, name: String) : AnimeFilter.CheckBox(name)
     private class TagList(tags: List<Tag>) : AnimeFilter.Group<Tag>("Tags", tags)
     private class BrandList(brands: List<Brand>) : AnimeFilter.Group<Brand>("Brands", brands)
-    private class TagInclusionMode :
-        AnimeFilter.Select<String>("Included tags mode", arrayOf("And", "Or"), 0)
+    private class TagInclusionMode : AnimeFilter.Select<String>("Included tags mode", arrayOf("And", "Or"), 0)
 
     data class SearchParameters(
         val includedTags: ArrayList<String>,
@@ -352,6 +288,10 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
         return SearchParameters(includedTags, blackListedTags, brands, tagsMode, orderBy, ordering)
+    }
+
+    private inline fun <reified T> String.parseTo(): T {
+        return json.decodeFromString<T>(this)
     }
 
     private fun getBrands() = listOf(
@@ -589,13 +529,19 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
     class SortFilter(sortables: Array<String>) : AnimeFilter.Sort("Sort", sortables, Selection(2, false))
 
     // Preferences
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080p"
+        private val QUALITY_LIST = arrayOf("1080p", "720p", "480p", "360p")
+    }
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
+            key = PREF_QUALITY_KEY
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
-            setDefaultValue("720")
+            entries = QUALITY_LIST
+            entryValues = QUALITY_LIST
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -606,41 +552,5 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
         screen.addPreference(videoQualityPref)
-    }
-
-    @Serializable
-    data class WindowNuxt(
-        val state: State,
-    ) {
-        @Serializable
-        data class State(
-            val data: Data,
-        ) {
-            @Serializable
-            data class Data(
-                val video: DataVideo,
-            ) {
-                @Serializable
-                data class DataVideo(
-                    val videos_manifest: VideosManifest,
-                ) {
-                    @Serializable
-                    data class VideosManifest(
-                        val servers: List<Server>,
-                    ) {
-                        @Serializable
-                        data class Server(
-                            val streams: List<Stream>,
-                        ) {
-                            @Serializable
-                            data class Stream(
-                                val height: String,
-                                val url: String,
-                            )
-                        }
-                    }
-                }
-            }
-        }
     }
 }
