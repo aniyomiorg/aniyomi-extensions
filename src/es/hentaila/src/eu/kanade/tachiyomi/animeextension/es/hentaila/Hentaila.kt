@@ -14,12 +14,14 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.burstcloudextractor.BurstCloudExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.streamhidevidextractor.StreamHideVidExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -29,7 +31,6 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.io.IOException
-import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -55,7 +56,7 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
         private val QUALITY_LIST = arrayOf("1080", "720", "480", "360")
 
         private const val PREF_SERVER_KEY = "preferred_server"
-        private const val PREF_SERVER_DEFAULT = "Voe"
+        private const val PREF_SERVER_DEFAULT = "StreamWish"
         private val SERVER_LIST = arrayOf(
             "StreamWish",
             "Voe",
@@ -63,7 +64,12 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
             "YourUpload",
             "Mp4Upload",
             "BurstCloud",
+            "StreamHideVid",
         )
+
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("MMMMM dd, yyyy", Locale.ENGLISH)
+        }
     }
 
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/directorio?filter=popular&p=$page", headers)
@@ -185,10 +191,7 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
                 episode_number = epNum.toFloat()
                 name = "Episodio $epNum"
                 url = "/ver/$animeId-$epNum"
-                date_upload = try {
-                    val date = it.select(".h-header time").text()
-                    SimpleDateFormat("MMMMM dd, yyyy", Locale.ENGLISH).parse(date).time
-                } catch (_: Exception) { System.currentTimeMillis() }
+                date_upload = it.select(".h-header time").text().toDate()
             }
             episodes.add(episode)
         }
@@ -196,41 +199,37 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
         return episodes
     }
 
+    /*--------------------------------Video extractors------------------------------------*/
+    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+    private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
+    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
+    private val burstCloudExtractor by lazy { BurstCloudExtractor(client) }
+    private val streamHideVidExtractor by lazy { StreamHideVidExtractor(client) }
+
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val videoList = mutableListOf<Video>()
-        val videoServers = document.selectFirst("script:containsData(var videos = [)")!!.data().substringAfter("videos = ").substringBefore(";")
+        val videoServers = document.selectFirst("script:containsData(var videos = [)")!!.data()
+            .substringAfter("videos = ").substringBefore(";")
             .replace("[[", "").replace("]]", "")
+
         val videoServerList = videoServers.split("],[")
-        videoServerList.forEach {
+        return videoServerList.parallelCatchingFlatMapBlocking {
             val server = it.split(",").map { a -> a.replace("\"", "") }
             val urlServer = server[1].replace("\\/", "/")
             val nameServer = server[0]
 
             when (nameServer.lowercase()) {
-                "streamwish" -> {
-                    videoList.addAll(StreamWishExtractor(client, headers).videosFromUrl(urlServer, videoNameGen = { "StreamWish:$it" }))
-                }
-                "voe" -> {
-                    videoList.addAll(VoeExtractor(client).videosFromUrl(urlServer))
-                }
-                "arc" -> {
-                    val videoUrl = urlServer.substringAfter("#")
-                    videoList.add(Video(videoUrl, "Arc", videoUrl))
-                }
-                "yupi" -> {
-                    videoList.addAll(YourUploadExtractor(client).videoFromUrl(urlServer, headers = headers))
-                }
-                "mp4upload" -> {
-                    videoList.addAll(Mp4uploadExtractor(client).videosFromUrl(urlServer, headers = headers))
-                }
-                "burst" -> {
-                    videoList.addAll(BurstCloudExtractor(client).videoFromUrl(urlServer, headers = headers))
-                }
+                "streamwish" -> streamWishExtractor.videosFromUrl(urlServer, videoNameGen = { "StreamWish:$it" })
+                "voe" -> voeExtractor.videosFromUrl(urlServer)
+                "arc" -> listOf(Video(urlServer.substringAfter("#"), "Arc", urlServer.substringAfter("#")))
+                "yupi" -> yourUploadExtractor.videoFromUrl(urlServer, headers = headers)
+                "mp4upload" -> mp4uploadExtractor.videosFromUrl(urlServer, headers = headers)
+                "burst" -> burstCloudExtractor.videoFromUrl(urlServer, headers = headers)
+                "vidhide", "streamhide", "guccihide", "streamvid" -> streamHideVidExtractor.videosFromUrl(urlServer)
+                else -> emptyList()
             }
         }
-
-        return videoList
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -313,6 +312,11 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
+    }
+
+    private fun String.toDate(): Long {
+        return runCatching { DATE_FORMATTER.parse(trim())?.time }
+            .getOrNull() ?: 0L
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

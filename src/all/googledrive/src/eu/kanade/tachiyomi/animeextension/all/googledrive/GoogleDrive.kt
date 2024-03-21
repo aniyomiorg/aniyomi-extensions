@@ -357,7 +357,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================ Video Links =============================
 
     override suspend fun getVideoList(episode: SEpisode): List<Video> =
-        GoogleDriveExtractor(client, headers).videosFromUrl(episode.url)
+        GoogleDriveExtractor(client, headers).videosFromUrl(episode.url.substringAfter("?id="))
 
     // ============================= Utilities ==============================
 

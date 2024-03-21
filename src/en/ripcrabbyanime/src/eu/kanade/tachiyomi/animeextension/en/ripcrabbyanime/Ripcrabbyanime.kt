@@ -55,7 +55,7 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/ongoing-series/")
 
-    override fun popularAnimeSelector(): String = "section#movies-list > div.movies-box"
+    override fun popularAnimeSelector(): String = "section#movies-list div.movies-box"
 
     override fun popularAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
         setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
@@ -323,7 +323,7 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
 
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
-        val videoList = GoogleDriveExtractor(client, headers).videosFromUrl(episode.url)
+        val videoList = GoogleDriveExtractor(client, headers).videosFromUrl(episode.url.substringAfter("?id="))
         return videoList
     }
 

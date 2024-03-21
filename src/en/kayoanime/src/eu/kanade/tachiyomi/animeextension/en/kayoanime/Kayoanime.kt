@@ -68,8 +68,8 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             latestPost = ""
             layout = ""
             settings = ""
-            currentReferer = "https://kayoanime.com/ongoing-anime/"
-            GET("$baseUrl/ongoing-anime/")
+            currentReferer = "https://kayoanime.com/ongoing-animes/"
+            GET("$baseUrl/ongoing-animes/")
         } else {
             val formBody = FormBody.Builder()
                 .add("action", "tie_archives_load_more")
@@ -206,11 +206,17 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun searchAnimeSelector(): String = popularAnimeSelector()
+    override fun searchAnimeParse(response: Response): AnimesPage =
+        popularAnimeParse(response)
 
-    override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
+    override fun searchAnimeSelector(): String =
+        throw UnsupportedOperationException()
 
-    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
+    override fun searchAnimeFromElement(element: Element): SAnime =
+        throw UnsupportedOperationException()
+
+    override fun searchAnimeNextPageSelector(): String =
+        throw UnsupportedOperationException()
 
     // ============================== Filters ===============================
 
@@ -393,7 +399,8 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val url = it.selectFirst("a[href*=tinyurl.com]")!!.attr("href")
                 val redirected = noRedirectClient.newCall(GET(url)).execute()
                 redirected.headers["location"]?.let { location ->
-                    if (location.toHttpUrl().host.contains("workers.dev")) {
+                    val host = location.toHttpUrl().host
+                    if (host.contains("workers.dev")) {
                         episodeList.addAll(
                             indexExtractor.getEpisodesFromIndex(
                                 location,
@@ -401,6 +408,14 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 preferences.trimEpisodeName,
                             ),
                         )
+                    }
+
+                    if (host.contains("slogoanime")) {
+                        val document = client.newCall(GET(location)).execute().asJsoup()
+                        document.select("a[href*=drive.google.com]").distinctBy { it.text() }.forEach {
+                            val url = it.selectFirst("a[href*=drive.google.com]")!!.attr("href").substringBeforeLast("?usp=shar")
+                            traverseFolder(url, getVideoPathsFromElement(season) + " " + it.text())
+                        }
                     }
                 }
             }
@@ -422,18 +437,16 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
 
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
-        val host = episode.url.toHttpUrl().host
-        val videoList = if (host == "drive.google.com") {
-            GoogleDriveExtractor(client, headers).videosFromUrl(episode.url)
+        val httpUrl = episode.url.toHttpUrl()
+        val host = httpUrl.host
+        return if (host == "drive.google.com") {
+            val id = httpUrl.queryParameter("id")!!
+            GoogleDriveExtractor(client, headers).videosFromUrl(id)
         } else if (host.contains("workers.dev")) {
             getIndexVideoUrl(episode.url)
         } else {
             throw Exception("Unsupported url: ${episode.url}")
         }
-
-        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
-
-        return videoList
     }
 
     override fun videoListSelector(): String = throw UnsupportedOperationException()

@@ -17,11 +17,10 @@ import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -49,7 +48,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"
-        private const val PREF_QUALITY_DEFAULT = "480"
+        private const val PREF_QUALITY_DEFAULT = "720"
         private val QUALITY_LIST = arrayOf("1080", "720", "480", "360")
 
         private const val PREF_SERVER_KEY = "preferred_server"
@@ -105,39 +104,25 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element) = throw UnsupportedOperationException()
 
+    /*--------------------------------Video extractors------------------------------------*/
+    private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
+    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers.newBuilder().add("Referer", "$baseUrl/").build()) }
+
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val videoList = mutableListOf<Video>()
-        document.select("script").forEach { script ->
-            if (script.data().contains("var videos = {")) {
-                val responseString = script.data().substringAfter("var videos =").substringBefore(";").trim()
-                val jObject = json.decodeFromString<JsonObject>(responseString)
-                jObject["SUB"]!!.jsonArray!!.forEach { servers ->
-                    val json = servers!!.jsonObject
-                    val quality = json!!["title"]!!.jsonPrimitive!!.content
-                    val url = json!!["code"]!!.jsonPrimitive!!.content
-                    val extractedVideos = runCatching {
-                        when (quality) {
-                            "Stape" -> {
-                                val stapeUrl = json!!["url"]!!.jsonPrimitive!!.content
-                                StreamTapeExtractor(client).videoFromUrl(stapeUrl)?.let(::listOf)
-                            }
-                            "Okru" -> OkruExtractor(client).videosFromUrl(url)
-                            "YourUpload" -> YourUploadExtractor(client).videoFromUrl(url, headers = headers)
-                            "SW" -> {
-                                val docHeaders = headers.newBuilder()
-                                    .add("Referer", "$baseUrl/")
-                                    .build()
-                                StreamWishExtractor(client, docHeaders).videosFromUrl(url, videoNameGen = { "StreamWish: $it" })
-                            }
-                            else -> null
-                        }
-                    }.getOrNull() ?: emptyList<Video>()
-                    videoList.addAll(extractedVideos)
-                }
+        val jsonString = document.selectFirst("script:containsData(var videos = {)")?.data() ?: return emptyList()
+        val responseString = jsonString.substringAfter("var videos =").substringBefore(";").trim()
+        return json.decodeFromString<ServerModel>(responseString).sub.parallelCatchingFlatMapBlocking {
+            when (it.title) {
+                "Stape" -> listOf(streamTapeExtractor.videoFromUrl(it.url ?: it.code)!!)
+                "Okru" -> okruExtractor.videosFromUrl(it.url ?: it.code)
+                "YourUpload" -> yourUploadExtractor.videoFromUrl(it.url ?: it.code, headers = headers)
+                "SW" -> streamWishExtractor.videosFromUrl(it.url ?: it.code, videoNameGen = { "StreamWish:$it" })
+                else -> emptyList()
             }
         }
-        return videoList
     }
 
     override fun videoListSelector() = throw UnsupportedOperationException()
@@ -335,4 +320,21 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }.also(screen::addPreference)
     }
+
+    @Serializable
+    data class ServerModel(
+        @SerialName("SUB")
+        val sub: List<Sub> = emptyList(),
+    )
+
+    @Serializable
+    data class Sub(
+        val server: String? = "",
+        val title: String? = "",
+        val ads: Long? = null,
+        val url: String? = null,
+        val code: String = "",
+        @SerialName("allow_mobile")
+        val allowMobile: Boolean? = false,
+    )
 }
