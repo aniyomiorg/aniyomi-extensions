@@ -1,7 +1,7 @@
 ext {
     extName = 'Google Drive'
     extClass = '.GoogleDrive'
-    extVersionCode = 14
+    extVersionCode = 15
 }
 
 apply from: "$rootDir/common.gradle"
