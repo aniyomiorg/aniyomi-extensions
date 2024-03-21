@@ -1,7 +1,7 @@
 ext {
     extName = 'HentaiLA'
     extClass = '.Hentaila'
-    extVersionCode = 21
+    extVersionCode = 22
     isNsfw = true
 }
 
@@ -13,4 +13,5 @@ dependencies {
     implementation(project(':lib:streamwish-extractor'))
     implementation(project(':lib:voe-extractor'))
     implementation(project(':lib:yourupload-extractor'))
+    implementation(project(':lib:streamhidevid-extractor'))
 }
