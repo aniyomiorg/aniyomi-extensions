@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.FormBody
+import okhttp3.Request
 import okhttp3.internal.commonEmptyHeaders
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -117,7 +118,28 @@ object JavCoverFetcher {
         val asin = asinRegex.find(amazonUrl)?.groupValues?.get(1)
             ?: return null
 
-        return basicCoverUrl.replace("%s", asin)
+        var cover = basicCoverUrl.replace("%s", asin)
+
+        if (!checkCover(cover)) {
+            cover = cover.replace(".01.", ".")
+        }
+
+        return cover
+    }
+
+    private fun checkCover(cover: String): Boolean {
+        return getContentLength(cover) > 100
+    }
+
+    private fun getContentLength(url: String): Long {
+        val request = Request.Builder()
+            .head()
+            .url(url)
+            .build()
+
+        val res = CLIENT.newCall(request).execute()
+
+        return res.use { it.headers["content-length"] }?.toLongOrNull() ?: 0
     }
 
     fun addPreferenceToScreen(screen: PreferenceScreen) {
