@@ -9,44 +9,14 @@ import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.FormBody
-import okhttp3.Interceptor
-import okhttp3.Response
 import okhttp3.internal.commonEmptyHeaders
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.io.IOException
 
 object JavCoverFetcher {
 
     private val CLIENT by lazy {
-        Injekt.get<NetworkHelper>().client.newBuilder()
-            .addInterceptor(::amazonAgeVerifyIntercept)
-            .build()
-    }
-
-    private val HEADERS by lazy {
-        commonEmptyHeaders.newBuilder()
-            .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36")
-            .build()
-    }
-
-    private fun amazonAgeVerifyIntercept(chain: Interceptor.Chain): Response {
-        val request = chain.request()
-        val response = chain.proceed(request)
-
-        if (!request.url.host.contains("amazon.co.jp") || !response.request.url.pathSegments.contains("black-curtain")) {
-            return response
-        }
-
-        val document = response.asJsoup()
-        val targetUrl = document.selectFirst("#black-curtain-yes-button a")?.attr("abs:href")
-            ?: throw IOException("Failed to bypass Amazon Age Gate")
-
-        val newRequest = request.newBuilder().apply {
-            url(targetUrl)
-        }.build()
-
-        return chain.proceed(newRequest)
+        Injekt.get<NetworkHelper>().client
     }
 
     /**
@@ -89,7 +59,7 @@ object JavCoverFetcher {
     private fun getJPTitleFromID(javId: String): String? {
         val url = "https://www.javlibrary.com/ja/vl_searchbyid.php?keyword=$javId"
 
-        val request = GET(url, HEADERS)
+        val request = GET(url, commonEmptyHeaders)
 
         val response = CLIENT.newCall(request).execute()
 
@@ -100,7 +70,7 @@ object JavCoverFetcher {
             val targetUrl = document.selectFirst(".videos a[href*=\"?v=\"]")?.attr("abs:href")
                 ?: return null
 
-            document = CLIENT.newCall(GET(targetUrl, HEADERS)).execute().asJsoup()
+            document = CLIENT.newCall(GET(targetUrl, commonEmptyHeaders)).execute().asJsoup()
         }
 
         val dirtyTitle = document.selectFirst(".post-title")?.text()
@@ -111,13 +81,27 @@ object JavCoverFetcher {
     }
 
     private fun getDDGSearchResult(jpTitle: String): String? {
-        val url = "https://lite.duckduckgo.com/lite"
+        val url = "https://lite.duckduckgo.com/lite/"
 
         val form = FormBody.Builder()
             .add("q", "site:amazon.co.jp inurl:/dp/$jpTitle")
             .build()
 
-        val request = POST(url, HEADERS, form)
+        val headers = commonEmptyHeaders.newBuilder().apply {
+            add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+            add("Host", "lite.duckduckgo.com")
+            add("Referer", "https://lite.duckduckgo.com/")
+            add("Origin", "https://lite.duckduckgo.com")
+            add("Accept-Language", "en-US,en;q=0.5")
+            add("DNT", "1")
+            add("Sec-Fetch-Dest", "document")
+            add("Sec-Fetch-Mode", "navigate")
+            add("Sec-Fetch-Site", "same-origin")
+            add("Sec-Fetch-User", "?1")
+            add("TE", "trailers")
+        }.build()
+
+        val request = POST(url, headers, form)
 
         val response = CLIENT.newCall(request).execute()
 
@@ -127,22 +111,20 @@ object JavCoverFetcher {
     }
 
     private fun getHDCoverFromAmazonUrl(amazonUrl: String): String? {
-        val request = GET(amazonUrl, HEADERS)
+        val basicCoverUrl = "https://m.media-amazon.com/images/P/%s.01.MAIN._SCRM_.jpg"
+        val asinRegex = Regex("""/dp/(\w+)""")
 
-        val response = CLIENT.newCall(request).execute()
+        val asin = asinRegex.find(amazonUrl)?.groupValues?.get(1)
+            ?: return null
 
-        val document = response.asJsoup()
-
-        val smallImage = document.selectFirst("#landingImage")?.attr("src")
-
-        return smallImage?.replace(Regex("""(\._\w+_\.jpg)"""), ".jpg")
+        return basicCoverUrl.replace("%s", asin)
     }
 
     fun addPreferenceToScreen(screen: PreferenceScreen) {
         SwitchPreferenceCompat(screen.context).apply {
             key = "JavCoverFetcherPref"
             title = "Fetch HD covers from Amazon"
-            summary = "Attempts to fetch HD covers from Amazon.\nMay result in incorrect cover."
+            summary = "Attempts to fetch vertical HD covers from Amazon.\nMay result in incorrect cover."
             setDefaultValue(false)
         }.also(screen::addPreference)
     }
