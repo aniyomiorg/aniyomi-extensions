@@ -35,7 +35,9 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private val preferences: SharedPreferences = Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
 
-    private val superStreamAPI = SuperStreamAPI(json, preferences)
+    private val hideNsfw = if (preferences.getBoolean(PREF_HIDE_NSFW_KEY, PREF_HIDE_NSFW_DEFAULT)) 1 else 0
+
+    private val superStreamAPI = SuperStreamAPI(json, hideNsfw)
 
     override val baseUrl = superStreamAPI.apiUrl
 
@@ -187,11 +189,6 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
     }
     override fun animeDetailsParse(response: Response) = throw UnsupportedOperationException()
 
-    companion object {
-        const val PREF_HIDE_NSFW_KEY = "pref_hide_nsfw"
-        const val PREF_HIDE_NSFW_DEFAULT = true
-    }
-
     // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -237,3 +234,6 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 }
+
+private const val PREF_HIDE_NSFW_KEY = "pref_hide_nsfw"
+private const val PREF_HIDE_NSFW_DEFAULT = true

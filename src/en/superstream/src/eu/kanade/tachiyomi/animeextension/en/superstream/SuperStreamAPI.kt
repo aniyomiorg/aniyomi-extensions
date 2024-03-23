@@ -680,7 +680,6 @@ Public License instead of this License.  But first, please read
 package eu.kanade.tachiyomi.animeextension.en.superstream
 
 import android.annotation.SuppressLint
-import android.content.SharedPreferences
 import android.util.Base64
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -714,12 +713,9 @@ const val TYPE_SERIES = 2
 const val TYPE_MOVIES = 1
 
 // Ported from CS3
-class SuperStreamAPI(val json: Json, preferences: SharedPreferences) {
+class SuperStreamAPI(private val json: Json, private val hideNsfw: Int) {
 
     private val client = configureToIgnoreCertificate()
-
-    // 0 to get nsfw
-    private val hideNsfw = if (preferences.getBoolean(SuperStream.PREF_HIDE_NSFW_KEY, SuperStream.PREF_HIDE_NSFW_DEFAULT)) 1 else 0
 
     private val headers = Headers.headersOf(
         "Platform",
