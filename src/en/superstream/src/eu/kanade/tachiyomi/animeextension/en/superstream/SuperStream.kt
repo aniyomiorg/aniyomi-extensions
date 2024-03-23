@@ -2,8 +2,10 @@ package eu.kanade.tachiyomi.animeextension.en.superstream
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -31,13 +33,13 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
-    private val superStreamAPI = SuperStreamAPI(json)
+    private val preferences: SharedPreferences = Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+
+    private val hideNsfw = if (preferences.getBoolean(PREF_HIDE_NSFW_KEY, PREF_HIDE_NSFW_DEFAULT)) 1 else 0
+
+    private val superStreamAPI = SuperStreamAPI(json, hideNsfw)
 
     override val baseUrl = superStreamAPI.apiUrl
-
-    private val preferences: SharedPreferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
 
     override suspend fun getPopularAnime(page: Int): AnimesPage {
         val animes = superStreamAPI.getMainPage(page)
@@ -187,8 +189,10 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
     }
     override fun animeDetailsParse(response: Response) = throw UnsupportedOperationException()
 
+    // ============================== Settings ==============================
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
             entries = arrayOf("4k", "1080p", "720p", "480p", "360p", "240p")
@@ -202,8 +206,20 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_HIDE_NSFW_KEY
+            title = "Hide NSFW content"
+            setDefaultValue(PREF_HIDE_NSFW_DEFAULT)
+            summary = "requires restart"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val new = newValue as Boolean
+                Toast.makeText(screen.context, "Restart Aniyomi to apply new setting.", Toast.LENGTH_LONG).show()
+                preferences.edit().putBoolean(key, new).commit()
+            }
+        }.also(screen::addPreference)
     }
 
     private fun LinkData.toJson(): String {
@@ -218,3 +234,6 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 }
+
+private const val PREF_HIDE_NSFW_KEY = "pref_hide_nsfw"
+private const val PREF_HIDE_NSFW_DEFAULT = true

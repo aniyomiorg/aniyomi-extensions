@@ -713,12 +713,9 @@ const val TYPE_SERIES = 2
 const val TYPE_MOVIES = 1
 
 // Ported from CS3
-class SuperStreamAPI(val json: Json) {
+class SuperStreamAPI(private val json: Json, private val hideNsfw: Int) {
 
     private val client = configureToIgnoreCertificate()
-
-    // 0 to get nsfw
-    private val hideNsfw = 1
 
     private val headers = Headers.headersOf(
         "Platform",
