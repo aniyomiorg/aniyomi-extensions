@@ -272,7 +272,13 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
         return redirectUrl
     }
 
-    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val streamWishExtractor by lazy {
+        val swHeaders = headersBuilder()
+            .set("Referer", "$baseUrl/")
+            .build()
+
+        StreamWishExtractor(client, swHeaders)
+    }
     private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
     private val doodExtractor by lazy { DoodExtractor(client) }
     private val mixDropExtractor by lazy { MixDropExtractor(client) }
@@ -281,7 +287,7 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
 
     private fun getVideos(hosterUrl: String): List<Video> {
         return when {
-            hosterUrl.contains("javplaya") -> {
+            listOf("javplaya", "javclan").any { it in hosterUrl } -> {
                 streamWishExtractor.videosFromUrl(hosterUrl)
             }
 
@@ -289,11 +295,11 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
                 streamTapeExtractor.videoFromUrl(hosterUrl).let(::listOfNotNull)
             }
 
-            hosterUrl.contains("dood") -> {
+            listOf("dood", "ds2play").any { it in hosterUrl } -> {
                 doodExtractor.videosFromUrl(hosterUrl)
             }
 
-            MIXDROP_DOMAINS.any { it in hosterUrl } -> {
+            listOf("mixdrop", "mixdroop").any { it in hosterUrl } -> {
                 mixDropExtractor.videoFromUrl(hosterUrl)
             }
 
@@ -363,11 +369,6 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
         private val IFRAME_B64_REGEX = Regex(""""iframe_url":"([^"]+)"""")
         private val IFRAME_OLID_REGEX = Regex("""var OLID = '([^']+)'""")
         private val IFRAME_OLID_URL = Regex("""src="([^"]+)"""")
-
-        private val MIXDROP_DOMAINS = listOf(
-            "mixdrop",
-            "mixdroop",
-        )
 
         private const val PREF_QUALITY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"

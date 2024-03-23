@@ -152,7 +152,7 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
 
         val masterPlaylist = playlists.substringAfter("source=\"").substringBefore("\";")
 
-        return playlistExtractor.extractFromHls(masterPlaylist)
+        return playlistExtractor.extractFromHls(masterPlaylist, referer = "$baseUrl/")
     }
 
     override fun List<Video>.sort(): List<Video> {
