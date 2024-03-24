@@ -54,7 +54,7 @@ class Hds : DooPlay(
     private val streamHideVidExtractor by lazy { StreamHideVidExtractor(client) }
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.use { it.asJsoup() }
+        val document = response.asJsoup()
         val players = document.select("#playeroptions li").not("#player-option-trailer")
         return players.parallelCatchingFlatMapBlocking { it ->
             val post = it.attr("data-post")
