@@ -7,8 +7,8 @@ import eu.kanade.tachiyomi.network.GET
 import okhttp3.OkHttpClient
 
 class StreamHideVidExtractor(private val client: OkHttpClient) {
-    // from nineanime / ask4movie FilemoonExtractor
-    private val subtitleRegex = Regex("""#EXT-X-MEDIA:TYPE=SUBTITLES.*?NAME="(.*?)".*?URI="(.*?)"""")
+
+    private val playlistUtils by lazy { PlaylistUtils(client) }
 
     fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
         val page = client.newCall(GET(url)).execute().body.string()
@@ -18,7 +18,7 @@ class StreamHideVidExtractor(private val client: OkHttpClient) {
             .substringAfter("src:\"") // StreamVid
             .substringBefore('"')
         if (!playlistUrl.startsWith("http")) return emptyList()
-        return PlaylistUtils(client).extractFromHls(playlistUrl,
+        return playlistUtils.extractFromHls(playlistUrl,
             videoNameGen = { "${prefix}StreamHideVid - $it" }
         )
     }
