@@ -1,0 +1,14 @@
+ext {
+    extName = 'HDS'
+    extClass = '.Hds'
+    themePkg = 'dooplay'
+    baseUrl = 'https://ww1.hds.quest'
+    overrideVersionCode = 0
+}
+
+apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation(project(':lib:filemoon-extractor'))
+    implementation(project(':lib:streamhidevid-extractor'))
+}
