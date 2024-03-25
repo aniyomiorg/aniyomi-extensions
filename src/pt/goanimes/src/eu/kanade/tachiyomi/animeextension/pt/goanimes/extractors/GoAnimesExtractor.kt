@@ -35,7 +35,7 @@ class GoAnimesExtractor(private val client: OkHttpClient, private val headers: H
                 playlistUtils.extractFromHls(
                     playlistUrl,
                     url,
-                    videoNameGen = { "$partialName - ${it.replace("Video", resolution)}" }
+                    videoNameGen = { "$partialName - ${it.replace("Video", resolution)}" },
                 )
             }
             "/proxy/api3/" in url -> {
@@ -57,7 +57,7 @@ class GoAnimesExtractor(private val client: OkHttpClient, private val headers: H
                 playlistUtils.extractFromHls(
                     fixedUrl,
                     referer,
-                    videoNameGen = { "$partialName - ${it.replace("Video", resolution)}" }
+                    videoNameGen = { "$partialName - ${it.replace("Video", resolution)}" },
                 )
             }
             "jwplayer" in decodedBody && "sources:" in decodedBody -> {
@@ -67,7 +67,7 @@ class GoAnimesExtractor(private val client: OkHttpClient, private val headers: H
                     return playlistUtils.extractFromHls(
                         videos[0].url,
                         url,
-                        videoNameGen = { "$partialName - ${it.replace("Video", resolution)}" }
+                        videoNameGen = { "$partialName - ${it.replace("Video", resolution)}" },
                     )
                 }
 
