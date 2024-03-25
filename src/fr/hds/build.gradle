@@ -2,7 +2,7 @@ ext {
     extName = 'HDS'
     extClass = '.Hds'
     themePkg = 'dooplay'
-    baseUrl = 'https://ww1.hds.quest'
+    baseUrl = 'https://www.hds.quest'
     overrideVersionCode = 0
 }
 

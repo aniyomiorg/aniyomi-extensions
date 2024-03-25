@@ -55,14 +55,14 @@ class Hds : DooPlay(
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val players = document.select("#playeroptions li").not("#player-option-trailer")
+        val players = document.select("#playeroptions li:not(#player-option-trailer)")
         return players.parallelCatchingFlatMapBlocking { it ->
             val post = it.attr("data-post")
             val nume = it.attr("data-nume")
             val type = it.attr("data-type")
             val raw = client.newCall(GET("$baseUrl/wp-json/dooplayer/v1/post/$post?type=$type&source=$nume", headers))
                 .execute()
-                .use { it.body.string() }
+                .body.string()
             val securedUrl = json.decodeFromString<VideoLinkDTO>(raw).url
             val playerUrl = client.newCall(GET(securedUrl, headers)).execute().use { it.request.url.toString() }
             when {
