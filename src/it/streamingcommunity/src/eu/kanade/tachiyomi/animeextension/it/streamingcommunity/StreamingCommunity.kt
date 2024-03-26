@@ -2,8 +2,6 @@ package eu.kanade.tachiyomi.animeextension.it.streamingcommunity
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.widget.Toast
-import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -33,7 +31,7 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "StreamingCommunity"
 
-    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
+    override val baseUrl = "https://streamingcommunity.forum"
 
     override val lang = "it"
 
@@ -256,15 +254,8 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    object VideoRegex {
-        val PLAYLIST_URL_REGEX = Regex("""url: ?'(.*?)'""")
-        val EXPIRES_REGEX = Regex("""'expires': ?'(\d+)'""")
-        val TOKEN_REGEX = Regex("""'token': ?'([\w-]+)'""")
-        val TOKEN_QUALITY_REGEX = Regex("""'token(\d+p?)': ?'([\w-]+)'""")
-        val SUBTITLES_REGEX = Regex("""#EXT-X-MEDIA:TYPE=SUBTITLES.*?NAME="(.*?)".*?URI="(.*?)"""")
-    }
 
-    @Deprecated("Use the non-RxJava API instead", replaceWith = ReplaceWith("getVideoList"))
+    @Deprecated("Use the non-RxJava API instead", replaceWith = ReplaceWith("fetchVideoList"))
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val videoList = mutableListOf<Video>()
         val doc =
@@ -291,14 +282,14 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
                 ).execute()
                 .asJsoup()
         val script = iframe.selectFirst("script:containsData(masterPlaylist)")!!.data().replace("\n", "\t")
-        var playlistUrl = VideoRegex.PLAYLIST_URL_REGEX.find(script)!!.groupValues[1]
+        var playlistUrl = PLAYLIST_URL_REGEX.find(script)!!.groupValues[1]
         val filename = playlistUrl.substringAfterLast("/")
         if (!filename.endsWith(".m3u8")) {
             playlistUrl = playlistUrl.replace(filename, filename + ".m3u8")
         }
 
-        val expires = VideoRegex.EXPIRES_REGEX.find(script)!!.groupValues[1]
-        val token = VideoRegex.TOKEN_REGEX.find(script)!!.groupValues[1]
+        val expires = EXPIRES_REGEX.find(script)!!.groupValues[1]
+        val token = TOKEN_REGEX.find(script)!!.groupValues[1]
 
         // Get subtitles
         val masterPlUrl = "$playlistUrl?token=$token&expires=$expires&n=1"
@@ -309,11 +300,11 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
                 .body
                 .string()
         val subList =
-            VideoRegex.SUBTITLES_REGEX.findAll(masterPl)
+            SUBTITLES_REGEX.findAll(masterPl)
                 .map {
                     Track(it.groupValues[2], it.groupValues[1])
                 }.toList()
-        VideoRegex.TOKEN_QUALITY_REGEX.findAll(script).forEach { match ->
+             TOKEN_QUALITY_REGEX.findAll(script).forEach { match ->
             val quality = match.groupValues[1]
 
             val videoUrl =
@@ -369,11 +360,11 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     companion object {
-        private const val PREF_DOMAIN_KEY = "referred_domain"
-        private const val PREF_DOMAIN_TITLE = "Override BaseUrl"
-        private const val PREF_DOMAIN_DEFAULT = "https://streamingcommunity.forum"
-        private const val PREF_DOMAIN_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
-
+        private val PLAYLIST_URL_REGEX = Regex("""url: ?'(.*?)'""")
+        private val EXPIRES_REGEX = Regex("""'expires': ?'(\d+)'""")
+        private val TOKEN_REGEX = Regex("""'token': ?'([\w-]+)'""")
+        private val TOKEN_QUALITY_REGEX = Regex("""'token(\d+p?)': ?'([\w-]+)'""")
+        private val SUBTITLES_REGEX = Regex("""#EXT-X-MEDIA:TYPE=SUBTITLES.*?NAME="(.*?)".*?URI="(.*?)"""")
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_DEFAULT = "720"
     }
@@ -381,21 +372,6 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        EditTextPreference(screen.context).apply {
-            key = PREF_DOMAIN_KEY
-            title = PREF_DOMAIN_TITLE
-            summary = PREF_DOMAIN_SUMMARY
-            dialogTitle = PREF_DOMAIN_TITLE
-            dialogMessage = "Default: $PREF_DOMAIN_DEFAULT"
-            setDefaultValue(PREF_DOMAIN_DEFAULT)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val newValueString = newValue as String
-                Toast.makeText(screen.context, "Restart Aniyomi to apply new setting.", Toast.LENGTH_LONG).show()
-                preferences.edit().putString(key, newValueString.trim()).commit()
-            }
-        }.also(screen::addPreference)
-
         ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = "Preferred quality"
