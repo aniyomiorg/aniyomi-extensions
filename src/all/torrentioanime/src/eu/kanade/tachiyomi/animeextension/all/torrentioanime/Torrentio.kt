@@ -9,6 +9,7 @@ import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.all.torrentioanime.dto.AnilistMeta
 import eu.kanade.tachiyomi.animeextension.all.torrentioanime.dto.AnilistMetaLatest
 import eu.kanade.tachiyomi.animeextension.all.torrentioanime.dto.DetailsById
@@ -361,20 +362,23 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
 
         return when (episodeList.meta?.type) {
             "series" -> {
-                episodeList.meta.videos?.filter { video ->
-                    (video.released?.let { parseDate(it) } ?: 0L) <= System.currentTimeMillis()
-                }?.map { video ->
-                    SEpisode.create().apply {
-                        episode_number = video.episode?.toFloat() ?: 0.0F
-                        url = "/stream/series/${video.videoId}.json"
-                        date_upload = video.released?.let { parseDate(it) } ?: 0L
-                        name = "Episode ${video.episode} : ${
-                            video.title?.removePrefix("Episode ")
-                                ?.replaceFirst("\\d+\\s*".toRegex(), "")
-                                ?.trim()
-                        }"
+                episodeList.meta.videos
+                    ?.let { videos ->
+                        if (preferences.getBoolean(UPCOMING_EP_KEY, false)) { videos } else { videos.filter { video -> (video.released?.let { parseDate(it) } ?: 0L) <= System.currentTimeMillis() } }
                     }
-                }.orEmpty().reversed()
+                    ?.map { video ->
+                        SEpisode.create().apply {
+                            episode_number = video.episode?.toFloat() ?: 0.0F
+                            url = "/stream/series/${video.videoId}.json"
+                            date_upload = video.released?.let { parseDate(it) } ?: 0L
+                            name = "Episode ${video.episode} : ${
+                                video.title?.removePrefix("Episode ")
+                                    ?.replaceFirst("\\d+\\s*".toRegex(), "")
+                                    ?.trim()
+                            }"
+                            scanlator = (video.released?.let { parseDate(it) } ?: 0L).takeIf { it > System.currentTimeMillis() }?.let { "Upcoming" } ?: ""
+                        }
+                    }.orEmpty().reversed()
             }
 
             "movie" -> {
@@ -424,7 +428,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                         context.let {
                             Toast.makeText(
                                 it,
-                                "Kindly input the token in the extension settings.",
+                                "Kindly input the debrid token in the extension settings.",
                                 Toast.LENGTH_LONG,
                             ).show()
                         }
@@ -488,7 +492,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
             entries = PREF_DEBRID_ENTRIES
             entryValues = PREF_DEBRID_VALUES
             setDefaultValue("none")
-            summary = "Select 'None' to use torrents. If you choose a Debrid provider, please enter your token key."
+            summary = "Choose 'None' for Torrent. If you select a Debrid provider, enter your token key. No token key is needed if 'None' is selected."
 
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -588,6 +592,15 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }.also(screen::addPreference)
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = UPCOMING_EP_KEY
+            title = "Show Upcoming Episodes"
+            setDefaultValue(UPCOMING_EP_DEFAULT)
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putBoolean(key, newValue as Boolean).commit()
+            }
+        }.also(screen::addPreference)
     }
 
     companion object {
@@ -596,7 +609,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
         // Token
         private const val PREF_TOKEN_KEY = "token"
         private const val PREF_TOKEN_DEFAULT = ""
-        private const val PREF_TOKEN_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
+        private const val PREF_TOKEN_SUMMARY = "Exclusive to Debrid providers; not intended for Torrents."
 
         // Debrid
         private const val PREF_DEBRID_KEY = "debrid_provider"
@@ -846,6 +859,9 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
             "english",
             "native",
         )
+
+        private const val UPCOMING_EP_KEY = "upcoming_ep"
+        private const val UPCOMING_EP_DEFAULT = false
 
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH)
