@@ -21,7 +21,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -254,9 +253,11 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
 
+    interface VideoProvider {
+        fun getVideoList(): List<Video>
+    }
 
-    @Deprecated("Use the non-RxJava API instead", replaceWith = ReplaceWith("fetchVideoList"))
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val videoList = mutableListOf<Video>()
         val doc =
             client
@@ -304,7 +305,7 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
                 .map {
                     Track(it.groupValues[2], it.groupValues[1])
                 }.toList()
-             TOKEN_QUALITY_REGEX.findAll(script).forEach { match ->
+        TOKEN_QUALITY_REGEX.findAll(script).forEach { match ->
             val quality = match.groupValues[1]
 
             val videoUrl =
@@ -322,9 +323,8 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
 
         require(videoList.isNotEmpty()) { "Failed to fetch videos" }
 
-        return Observable.just(videoList.sort())
+        return videoList
     }
-
 
     override fun videoListRequest(episode: SEpisode): Request = throw Exception("Not used")
 
