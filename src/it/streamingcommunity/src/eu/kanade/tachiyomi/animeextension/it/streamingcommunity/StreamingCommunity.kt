@@ -256,6 +256,15 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
 
+    object VideoRegex {
+        val PLAYLIST_URL_REGEX = Regex("""url: ?'(.*?)'""")
+        val EXPIRES_REGEX = Regex("""'expires': ?'(\d+)'""")
+        val TOKEN_REGEX = Regex("""'token': ?'([\w-]+)'""")
+        val TOKEN_QUALITY_REGEX = Regex("""'token(\d+p?)': ?'([\w-]+)'""")
+        val SUBTITLES_REGEX = Regex("""#EXT-X-MEDIA:TYPE=SUBTITLES.*?NAME="(.*?)".*?URI="(.*?)"""")
+    }
+
+    @Deprecated("Use the non-RxJava API instead", replaceWith = ReplaceWith("getVideoList"))
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val videoList = mutableListOf<Video>()
         val doc =
@@ -282,14 +291,14 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
                 ).execute()
                 .asJsoup()
         val script = iframe.selectFirst("script:containsData(masterPlaylist)")!!.data().replace("\n", "\t")
-        var playlistUrl = Regex("""url: ?'(.*?)'""").find(script)!!.groupValues[1]
+        var playlistUrl = VideoRegex.PLAYLIST_URL_REGEX.find(script)!!.groupValues[1]
         val filename = playlistUrl.substringAfterLast("/")
         if (!filename.endsWith(".m3u8")) {
             playlistUrl = playlistUrl.replace(filename, filename + ".m3u8")
         }
 
-        val expires = Regex("""'expires': ?'(\d+)'""").find(script)!!.groupValues[1]
-        val token = Regex("""'token': ?'([\w-]+)'""").find(script)!!.groupValues[1]
+        val expires = VideoRegex.EXPIRES_REGEX.find(script)!!.groupValues[1]
+        val token = VideoRegex.TOKEN_REGEX.find(script)!!.groupValues[1]
 
         // Get subtitles
         val masterPlUrl = "$playlistUrl?token=$token&expires=$expires&n=1"
@@ -300,12 +309,11 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
                 .body
                 .string()
         val subList =
-            Regex("""#EXT-X-MEDIA:TYPE=SUBTITLES.*?NAME="(.*?)".*?URI="(.*?)"""")
-                .findAll(masterPl)
+            VideoRegex.SUBTITLES_REGEX.findAll(masterPl)
                 .map {
                     Track(it.groupValues[2], it.groupValues[1])
                 }.toList()
-        Regex("""'token(\d+p?)': ?'([\w-]+)'""").findAll(script).forEach { match ->
+        VideoRegex.TOKEN_QUALITY_REGEX.findAll(script).forEach { match ->
             val quality = match.groupValues[1]
 
             val videoUrl =
@@ -325,6 +333,7 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
 
         return Observable.just(videoList.sort())
     }
+
 
     override fun videoListRequest(episode: SEpisode): Request = throw Exception("Not used")
 
