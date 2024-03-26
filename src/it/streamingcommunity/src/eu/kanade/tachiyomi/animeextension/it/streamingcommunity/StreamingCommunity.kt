@@ -281,8 +281,7 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
                     GET(iframeUrl, headers = iframeHeaders),
                 ).execute()
                 .asJsoup()
-        val scripts = iframe.select("script")
-        val script = scripts.find { it.data().contains("masterPlaylist") }!!.data().replace("\n", "\t")
+        val script = iframe.selectFirst("script:containsData(masterPlaylist)")!!.data().replace("\n", "\t")
         var playlistUrl = Regex("""url: ?'(.*?)'""").find(script)!!.groupValues[1]
         val filename = playlistUrl.slice(playlistUrl.lastIndexOf("/") + 1 until playlistUrl.length)
         if (!filename.endsWith(".m3u8")) {
