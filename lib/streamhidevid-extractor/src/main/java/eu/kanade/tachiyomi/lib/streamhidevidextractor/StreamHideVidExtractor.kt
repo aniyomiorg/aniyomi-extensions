@@ -1,36 +1,25 @@
 package eu.kanade.tachiyomi.lib.streamhidevidextractor
 
 import dev.datlag.jsunpacker.JsUnpacker
-import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.OkHttpClient
 
 class StreamHideVidExtractor(private val client: OkHttpClient) {
-    // from nineanime / ask4movie FilemoonExtractor
-    private val subtitleRegex = Regex("""#EXT-X-MEDIA:TYPE=SUBTITLES.*?NAME="(.*?)".*?URI="(.*?)"""")
+
+    private val playlistUtils by lazy { PlaylistUtils(client) }
 
     fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
         val page = client.newCall(GET(url)).execute().body.string()
-        val unpacked = JsUnpacker.unpackAndCombine(page) ?: return emptyList()
-        val playlistUrl = unpacked.substringAfter("sources:")
+        val playlistUrl = (JsUnpacker.unpackAndCombine(page) ?: page)
+            .substringAfter("sources:")
             .substringAfter("file:\"") // StreamHide
             .substringAfter("src:\"") // StreamVid
             .substringBefore('"')
-
-        val playlistData = client.newCall(GET(playlistUrl)).execute().body.string()
-
-        val subs = subtitleRegex.findAll(playlistData).map {
-            val urlPart = it.groupValues[2]
-            val subUrl = when {
-                !urlPart.startsWith("https:") ->
-                    playlistUrl.substringBeforeLast("/") + "/$urlPart"
-                else -> urlPart
-            }
-            Track(subUrl, it.groupValues[1])
-        }.toList()
-
-        // The playlist usually only have one video quality.
-        return listOf(Video(playlistUrl, "${prefix}StreamHideVid", playlistUrl, subtitleTracks = subs))
+        if (!playlistUrl.startsWith("http")) return emptyList()
+        return playlistUtils.extractFromHls(playlistUrl,
+            videoNameGen = { "${prefix}StreamHideVid - $it" }
+        )
     }
 }
