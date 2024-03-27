@@ -3,7 +3,7 @@ ext {
     extClass = '.PiFansubs'
     themePkg = 'dooplay'
     baseUrl = 'https://pifansubs.club'
-    overrideVersionCode = 18
+    overrideVersionCode = 19
     isNsfw = true
 }
 
