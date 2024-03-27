@@ -132,7 +132,7 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
                 .substringBefore(",") + "p"
 
             val videoUrl = it.substringAfter("\n").substringBefore("\n").let { url ->
-                getAbsoluteUrl(url, playlistUrl, masterUrlBasePath)
+                getAbsoluteUrl(url, playlistUrl, masterUrlBasePath)?.trimEnd()
             } ?: return@mapNotNull null
 
             Video(
