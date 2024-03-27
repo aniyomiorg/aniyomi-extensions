@@ -7,8 +7,19 @@ object PlaylistExtractor {
         val sources = script.substringAfter("sources: [").substringBefore("],")
 
         return sources.split("{").drop(1).mapNotNull { source ->
-            val url = source.substringAfter("file:").substringAfter('"').substringBefore('"')
-                .ifEmpty { return@mapNotNull null }
+            val url = source.substringAfter("file:")
+                .substringAfter('"', "")
+                .substringBefore('"', "")
+                .takeIf(String::isNotEmpty)
+                ?: source.substringAfter("file:")
+                    .substringAfter("'", "")
+                    .substringBefore("'", "")
+                    .takeIf(String::isNotEmpty)
+
+            if (url.isNullOrBlank()) {
+                return@mapNotNull null
+            }
+
             val label = source.substringAfter("label:").substringAfter('"').substringBefore('"')
                 .replace("FHD", "1080p")
                 .replace("HD", "720p")

@@ -86,7 +86,6 @@ class GoAnimes : DooPlay(
             .replace("SD", "480p")
         val url = getPlayerUrl(player)
         return when {
-            "player5.goanimes.net" in url -> goanimesExtractor.videosFromUrl(url, name)
             "https://gojopoolt" in url -> {
                 val headers = headers.newBuilder()
                     .set("referer", url)
@@ -129,7 +128,7 @@ class GoAnimes : DooPlay(
             listOf("/bloggerjwplayer", "/m3u8", "/multivideo").any { it in url } -> {
                 val script = client.newCall(GET(url)).await()
                     .body.string()
-                    .let(JsDecoder::decodeScript)
+                    .let { JsDecoder.decodeScript(it, true).ifBlank { JsDecoder.decodeScript(it, false).ifBlank { it } } }
                 when {
                     "/bloggerjwplayer" in url ->
                         BloggerJWPlayerExtractor.videosFromScript(script)
@@ -145,7 +144,7 @@ class GoAnimes : DooPlay(
                 }
             }
             "www.blogger.com" in url -> bloggerExtractor.videosFromUrl(url, headers)
-            else -> emptyList<Video>()
+            else -> goanimesExtractor.videosFromUrl(url, name)
         }
     }
 

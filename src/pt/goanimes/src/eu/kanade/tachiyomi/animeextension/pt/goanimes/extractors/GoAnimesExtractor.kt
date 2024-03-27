@@ -15,9 +15,16 @@ class GoAnimesExtractor(private val client: OkHttpClient, private val headers: H
     fun videosFromUrl(url: String, name: String): List<Video> {
         val body = client.newCall(GET(url, headers)).execute()
             .body.string()
+
+        val decodedBody = JsUnpacker.unpackAndCombine(body)
+            ?: JsDecoder.decodeScript(body, false).takeIf(String::isNotEmpty)
+            ?: JsDecoder.decodeScript(body, true).takeIf(String::isNotEmpty)
+            ?: body
+
+        val partialName = name.split('-').first().trim()
+        val resolution = name.split('-').last().trim()
+
         return when {
-            "better-go.fun/player.php" in url || "/profix/player.php" in url ->
-                PlaylistExtractor.videosFromScript(body, name.split('-').first().trim())
             "/proxy/v.php" in url -> {
                 val playlistUrl = JsUnpacker.unpackAndCombine(body)
                     ?.substringAfterLast("player(\\'", "")
@@ -25,7 +32,11 @@ class GoAnimesExtractor(private val client: OkHttpClient, private val headers: H
                     ?.takeIf(String::isNotEmpty)
                     ?: return emptyList()
 
-                playlistUtils.extractFromHls(playlistUrl, url, videoNameGen = { "$name - $it" })
+                playlistUtils.extractFromHls(
+                    playlistUrl,
+                    url,
+                    videoNameGen = { "$partialName - ${it.replace("Video", resolution)}" },
+                )
             }
             "/proxy/api3/" in url -> {
                 val playlistUrl = body.substringAfter("sources:", "")
@@ -43,7 +54,24 @@ class GoAnimesExtractor(private val client: OkHttpClient, private val headers: H
                 }
 
                 val referer = url.toHttpUrl().queryParameter("url") ?: url
-                playlistUtils.extractFromHls(fixedUrl, referer, videoNameGen = { "$name - $it" })
+                playlistUtils.extractFromHls(
+                    fixedUrl,
+                    referer,
+                    videoNameGen = { "$partialName - ${it.replace("Video", resolution)}" },
+                )
+            }
+            "jwplayer" in decodedBody && "sources:" in decodedBody -> {
+                val videos = PlaylistExtractor.videosFromScript(decodedBody, partialName)
+
+                if ("label:" !in decodedBody && videos.size === 1) {
+                    return playlistUtils.extractFromHls(
+                        videos[0].url,
+                        url,
+                        videoNameGen = { "$partialName - ${it.replace("Video", resolution)}" },
+                    )
+                }
+
+                videos
             }
             else -> emptyList()
         }
