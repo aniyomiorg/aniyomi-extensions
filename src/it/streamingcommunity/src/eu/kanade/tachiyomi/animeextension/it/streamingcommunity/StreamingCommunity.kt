@@ -253,10 +253,6 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    interface VideoProvider {
-        fun getVideoList(): List<Video>
-    }
-
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val videoList = mutableListOf<Video>()
         val doc =
@@ -323,7 +319,7 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
 
         require(videoList.isNotEmpty()) { "Failed to fetch videos" }
 
-        return videoList
+        return videoList.sort()
     }
 
     override fun videoListRequest(episode: SEpisode): Request = throw Exception("Not used")
