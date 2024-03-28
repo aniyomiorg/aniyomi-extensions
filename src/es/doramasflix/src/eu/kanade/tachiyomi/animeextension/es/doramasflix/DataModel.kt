@@ -139,7 +139,7 @@ data class Item(
     val cast: List<Cast> = emptyList(),
     val names: String?,
     val overview: String?,
-    val languages: List<String> = emptyList(),
+    val languages: List<String?>? = emptyList(),
     @SerialName("created_by")
     val createdBy: List<CreatedBy> = emptyList(),
     val popularity: Double?,
