@@ -116,7 +116,7 @@ class SlothAnime : ParsedAnimeHttpSource() {
     // =========================== Anime Details ============================
 
     override fun animeDetailsParse(document: Document): SAnime = SAnime.create().apply {
-        title = document.selectFirst(".single-title > h5")!!.text()
+        title = document.selectFirst(".single-title > *:not(.single-altername)")!!.text()
         thumbnail_url = document.selectFirst(".single-cover > img")!!.imgAttr()
         description = document.selectFirst(".single-detail:has(span:contains(Description)) .more-content")?.text()
         genre = document.select(".single-tag > a.tag").joinToString { it.text() }
