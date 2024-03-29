@@ -3,7 +3,7 @@ ext {
     extClass = '.Pobreflix'
     themePkg = 'dooplay'
     baseUrl = 'https://pobreflix.biz'
-    overrideVersionCode = 7
+    overrideVersionCode = 8
     isNsfw = true
 }
 
