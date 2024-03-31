@@ -120,9 +120,9 @@ class AniSama : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
 
     // =========================== Anime Details ============================
-    private fun Elements.getMeta(name: String) = select(".item:has(.item-title:contains($name)) > .item-content")
+    private fun Elements.getMeta(name: String) = select(".item:has(.item-title:contains($name)) > .item-content").text()
 
-    private fun parseStatus(status: String) = when (status) {
+    private fun Elements.parseStatus() = when (getMeta("Status")) {
         "Terminer" -> SAnime.COMPLETED
         "En cours" -> SAnime.ONGOING
         else -> SAnime.UNKNOWN
@@ -134,11 +134,10 @@ class AniSama : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             title = details.select(".dynamic-name").text().substringBeforeLast(" ")
             thumbnail_url = details.select(".film-poster-img").attr("src")
             url = document.select("link[rel=canonical]").attr("href")
-            artist = details.getMeta("Studio").text()
-            status = parseStatus(details.getMeta("Status").text())
+            artist = details.getMeta("Studio")
+            status = details.parseStatus()
             description = details.select(".shorting").text()
-            genre = details.getMeta("Genre").text()
-            initialized = true
+            genre = details.getMeta("Genre")
         }
     }
 

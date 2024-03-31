@@ -28,26 +28,24 @@ class VidCdnExtractor(
         url: String,
         videoNameGen: (String) -> String = { quality -> quality },
     ): List<Video> {
-        return runCatching {
-            val httpUrl = url.toHttpUrl()
-            val source = when {
-                url.contains("embeds.html") -> Pair("sib2", "Sibnet")
-                // their sendvid server is currently borken lmao
-                // url.contains("embedsen.html") -> Pair("azz", "Sendvid")
-                else -> return emptyList()
-            }
-            val id = httpUrl.queryParameter("id")
-            val epid = httpUrl.queryParameter("epid")
-            val cdnUrl = "https://cdn2.vidcdn.xyz/${source.first}/$id?epid=$epid"
-            val res = client.newCall(GET(cdnUrl, headers)).execute().parseAs<CdnResponseDto>()
-            return res.sources.map {
-                val file = if (it.file.startsWith("http")) it.file else "https:${it.file}"
-                Video(
-                    file,
-                    videoNameGen(source.second),
-                    file,
-                )
-            }
-        }.getOrElse { emptyList() }
+        val httpUrl = url.toHttpUrl()
+        val source = when {
+            url.contains("embeds.html") -> Pair("sib2", "Sibnet")
+            // their sendvid server is currently borken lmao
+            // url.contains("embedsen.html") -> Pair("azz", "Sendvid")
+            else -> return emptyList()
+        }
+        val id = httpUrl.queryParameter("id")
+        val epid = httpUrl.queryParameter("epid")
+        val cdnUrl = "https://cdn2.vidcdn.xyz/${source.first}/$id?epid=$epid"
+        val res = client.newCall(GET(cdnUrl, headers)).execute().parseAs<CdnResponseDto>()
+        return res.sources.map {
+            val file = if (it.file.startsWith("http")) it.file else "https:${it.file}"
+            Video(
+                file,
+                videoNameGen(source.second),
+                file,
+            )
+        }
     }
 }
