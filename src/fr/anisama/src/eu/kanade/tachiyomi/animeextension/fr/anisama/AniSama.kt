@@ -191,21 +191,26 @@ class AniSama : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     override fun videoListParse(response: Response): List<Video> {
         val document = Jsoup.parse(response.parseAs<HtmlResponseDTO>().html)
         val epid = response.request.url.toString().substringAfterLast("=")
+        val serverBlacklist = preferences.serverBlacklist
         return document.select(videoListSelector()).parallelCatchingFlatMapBlocking {
             val playerUrl = client.newCall(
                 GET("$baseUrl/ajax/episode/sources?id=${it.attr("data-id")}&epid=$epid"),
             ).execute().parseAs<PlayerInfoDTO>().link
             val prefix = "(${it.attr("data-type").uppercase()}) "
-            with(playerUrl) {
-                when {
-                    contains("toonanime.xyz") -> vidCdnExtractor.videosFromUrl(playerUrl, { "$prefix$it CDN" })
-                    contains("filemoon.sx") -> filemoonExtractor.videosFromUrl(this, "$prefix Filemoon - ")
-                    contains("sibnet.ru") -> sibnetExtractor.videosFromUrl(this, prefix)
-                    contains("sendvid.com") -> sendvidExtractor.videosFromUrl(this, prefix)
-                    contains("voe.sx") -> voeExtractor.videosFromUrl(this, prefix)
-                    contains(Regex("(d000d|dood)")) -> doodExtractor.videosFromUrl(this, "${prefix}DoodStream")
-                    contains("vidhide") -> streamHideVidExtractor.videosFromUrl(this, prefix)
-                    else -> emptyList()
+            if (serverBlacklist.fold(false) { acc, v -> acc || playerUrl.contains(Regex(v)) }) {
+                emptyList()
+            } else {
+                with(playerUrl) {
+                    when {
+                        contains("toonanime.xyz") -> vidCdnExtractor.videosFromUrl(playerUrl, { "$prefix$it CDN" })
+                        contains("filemoon.sx") -> filemoonExtractor.videosFromUrl(this, "$prefix Filemoon - ")
+                        contains("sibnet.ru") -> sibnetExtractor.videosFromUrl(this, prefix)
+                        contains("sendvid.com") -> sendvidExtractor.videosFromUrl(this, prefix)
+                        contains("voe.sx") -> voeExtractor.videosFromUrl(this, prefix)
+                        contains(Regex("(d000d|dood)")) -> doodExtractor.videosFromUrl(this, "${prefix}DoodStream")
+                        contains("vidhide") -> streamHideVidExtractor.videosFromUrl(this, prefix)
+                        else -> emptyList()
+                    }
                 }
             }
         }
@@ -215,16 +220,13 @@ class AniSama : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         val language = preferences.language
         val quality = preferences.quality
         val server = preferences.server
-        val serverBlacklist = preferences.serverBlacklist
         return sortedWith(
             compareBy(
                 { it.quality.contains(server) },
                 { it.quality.contains(language) },
                 { it.quality.contains(quality) },
             ),
-        ).filterNot {
-            serverBlacklist.fold(false) { acc, v -> acc || it.quality.contains(v) }
-        }.reversed()
+        ).reversed()
     }
 
     override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
@@ -278,9 +280,9 @@ class AniSama : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             key = PREF_SERVER_BLACKLIST_KEY
             title = PREF_SERVER_BLACKLIST_TITLE
             entries = PREF_SERVER_ENTRIES.filter { it.second.isNotBlank() }.map { it.first }.toTypedArray()
-            entryValues = PREF_SERVER_ENTRIES.filter { it.second.isNotBlank() }.map { it.second }.toTypedArray()
+            entryValues = PREF_SERVER_ENTRIES.filter { it.second.isNotBlank() }.map { it.third }.toTypedArray()
             setDefaultValue(PREF_SERVER_BLACKLIST_DEFAULT)
-            setSummaryFromValues(values)
+            setSummaryFromValues(preferences.serverBlacklist)
 
             setOnPreferenceChangeListener { _, new ->
                 val newValue = new as Set<String>
@@ -332,14 +334,14 @@ class AniSama : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         private val PREF_SERVER_BLACKLIST_DEFAULT = emptySet<String>()
 
         private val PREF_SERVER_ENTRIES = arrayOf(
-            Pair("Toonanime", "CDN"),
-            Pair("Filemoon", "Filemoon"),
-            Pair("Sibnet", "Sibnet"),
-            Pair("Sendvid", "Sendvid"),
-            Pair("Voe", "Voe"),
-            Pair("DoodStream", "DoodStream"),
-            Pair("StreamHideVid", "StreamHideVid"),
-            Pair("Aucun", ""),
+            Triple("Toonanime", "CDN", "toonanime\\.xyz"),
+            Triple("Filemoon", "Filemoon", "filemoon\\.sx"),
+            Triple("Sibnet", "Sibnet", "sibnet\\.ru"),
+            Triple("Sendvid", "Sendvid", "sendvid\\.com"),
+            Triple("Voe", "Voe", "voe\\.sx"),
+            Triple("DoodStream", "DoodStream", "(dood|d000d)"),
+            Triple("StreamHideVid", "StreamHideVid", "vidhide"),
+            Triple("Aucun", "", "^$"),
         )
     }
 }
