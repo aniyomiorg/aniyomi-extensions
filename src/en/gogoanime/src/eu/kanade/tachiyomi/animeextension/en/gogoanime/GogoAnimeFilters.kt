@@ -205,6 +205,7 @@ object GogoAnimeFilters {
         // copy($("div.cls_year ul.dropdown-menu li").map((i,el) => `Pair("${$(el).text().trim()}", "${$(el).find("input").first().attr('value')}")`).get().join(',\n'))
         // on /filter.html
         val YEAR_SEARCH_LIST = arrayOf(
+            Pair("2024", "2024"),
             Pair("2023", "2023"),
             Pair("2022", "2022"),
             Pair("2021", "2021"),
