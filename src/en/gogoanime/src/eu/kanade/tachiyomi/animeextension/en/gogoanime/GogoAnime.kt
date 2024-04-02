@@ -106,7 +106,8 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             status = parseStatus(infoDocument.getInfo("Status:").orEmpty())
 
             description = buildString {
-                infoDocument.getInfo("Plot Summary:")?.also(::append)
+                val summary = infoDocument.selectFirst("div.anime_info_body_bg > div.description")
+                append(summary?.text())
 
                 // add alternative name to anime description
                 infoDocument.getInfo("Other name:")?.also {
@@ -223,7 +224,8 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Mp4upload",
             "FileLions",
         )
-        private val HOSTERS_NAMES = arrayOf( // Names that appears in the gogo html
+        private val HOSTERS_NAMES = arrayOf(
+            // Names that appears in the gogo html
             "vidcdn",
             "anime",
             "doodstream",
