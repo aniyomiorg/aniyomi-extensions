@@ -1,7 +1,7 @@
 ext {
     extName = 'Tuktuk Cinema'
     extClass = '.Tuktukcinema'
-    extVersionCode = 20
+    extVersionCode = 21
 }
 
 apply from: "$rootDir/common.gradle"

@@ -364,7 +364,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
             "series" -> {
                 episodeList.meta.videos
                     ?.let { videos ->
-                        if (preferences.getBoolean(UPCOMING_EP_KEY, false)) { videos } else { videos.filter { video -> (video.released?.let { parseDate(it) } ?: 0L) <= System.currentTimeMillis() } }
+                        if (preferences.getBoolean(UPCOMING_EP_KEY, UPCOMING_EP_DEFAULT)) { videos } else { videos.filter { video -> (video.released?.let { parseDate(it) } ?: 0L) <= System.currentTimeMillis() } }
                     }
                     ?.map { video ->
                         SEpisode.create().apply {
