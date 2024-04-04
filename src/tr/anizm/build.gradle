@@ -1,7 +1,7 @@
 ext {
     extName = 'Anizm'
     extClass = '.Anizm'
-    extVersionCode = 17
+    extVersionCode = 18
 }
 
 apply from: "$rootDir/common.gradle"

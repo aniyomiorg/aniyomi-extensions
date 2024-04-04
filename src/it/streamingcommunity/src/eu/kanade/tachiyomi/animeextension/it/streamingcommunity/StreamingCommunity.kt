@@ -17,6 +17,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -29,13 +30,13 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "StreamingCommunity"
 
-    // TODO: Check frequency of url changes to potentially
-    // add back overridable baseurl preference
-    override val baseUrl = "https://streamingcommunity.report"
+    override val baseUrl = "https://streamingcommunity.forum"
 
     override val lang = "it"
 
     override val supportsLatest = true
+
+    override val client: OkHttpClient = network.client
 
     private val json: Json by injectLazy()
 
@@ -240,7 +241,7 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
                         SEpisode.create().apply {
                             name = "Stagione ${season.number} episodio ${episode.number} - ${episode.name}"
                             episode_number = episode.number.toFloat()
-                            url = "${data.title.id}?e=${episode.id}"
+                            url = "${data.title.id}?episode_id=${episode.id}&next_episode=1"
                         },
                     )
                 }
@@ -252,60 +253,67 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun videoListRequest(episode: SEpisode): Request = GET("$baseUrl/watch/${episode.url}", headers)
-
-    override fun videoListParse(response: Response): List<Video> {
-        val data = json.decodeFromString<VideoResponse>(response.asJsoup().getData())
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
         val videoList = mutableListOf<Video>()
+        val doc =
+            client
+                .newCall(
+                    GET("$baseUrl/iframe/${episode.url}", headers),
+                ).execute()
+                .asJsoup()
+        val iframeUrl =
+            doc.selectFirst("iframe[src]")?.attr("abs:src")
+                ?: error("Failed to extract iframe")
+        val iframeHeaders =
+            headers
+                .newBuilder()
+                .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+                .add("Host", iframeUrl.toHttpUrl().host)
+                .add("Referer", "$baseUrl/")
+                .build()
 
-        val embedUrl = data.props.embedUrl
-        val embedHeaders = headers.newBuilder()
-            .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
-            .add("Host", baseUrl.toHttpUrl().host)
-            .add("Referer", response.request.url.toString())
-            .build()
+        val iframe =
+            client
+                .newCall(
+                    GET(iframeUrl, headers = iframeHeaders),
+                ).execute()
+                .asJsoup()
+        val script = iframe.selectFirst("script:containsData(masterPlaylist)")!!.data().replace("\n", "\t")
+        var playlistUrl = PLAYLIST_URL_REGEX.find(script)!!.groupValues[1]
+        val filename = playlistUrl.substringAfterLast("/")
+        if (!filename.endsWith(".m3u8")) {
+            playlistUrl = playlistUrl.replace(filename, filename + ".m3u8")
+        }
 
-        val embedded = client.newCall(
-            GET(embedUrl, headers = embedHeaders),
-        ).execute().asJsoup()
-
-        val iframeUrl = embedded.selectFirst("iframe[src]")?.attr("abs:src") ?: error("Failed to load iframe")
-        val iframeHeaders = headers.newBuilder()
-            .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
-            .add("Host", iframeUrl.toHttpUrl().host)
-            .add("Referer", "$baseUrl/")
-            .build()
-
-        val iframe = client.newCall(
-            GET(iframeUrl, headers = iframeHeaders),
-        ).execute().asJsoup()
-        val script = iframe.selectFirst("script:containsData(masterPlaylistParams)")!!.data()
-
-        val playlistUrl = Regex("""masterPlaylistUrl.*?'(.*?)'""").find(script)!!.groupValues[1]
-        val expires = Regex("""'expires': ?'(\d+)'""").find(script)!!.groupValues[1]
-        val canCast = Regex("""'canCast': ?'(\d*)'""").find(script)!!.groupValues[1]
-        val token = Regex("""'token': ?'([\w-]+)'""").find(script)!!.groupValues[1]
+        val expires = EXPIRES_REGEX.find(script)!!.groupValues[1]
+        val token = TOKEN_REGEX.find(script)!!.groupValues[1]
 
         // Get subtitles
-        val masterPlUrl = "$playlistUrl?token=$token&expires=$expires&canCast=$canCast&n=1"
-        val masterPl = client.newCall(GET(masterPlUrl)).execute().body.string()
-        val subList = Regex("""#EXT-X-MEDIA:TYPE=SUBTITLES.*?NAME="(.*?)".*?URI="(.*?)"""").findAll(masterPl).map {
-            Track(it.groupValues[2], it.groupValues[1])
-        }.toList()
-
-        Regex("""'token(\d+p?)': ?'([\w-]+)'""").findAll(script).forEach { match ->
+        val masterPlUrl = "$playlistUrl?token=$token&expires=$expires&n=1"
+        val masterPl =
+            client
+                .newCall(GET(masterPlUrl))
+                .execute()
+                .body
+                .string()
+        val subList =
+            SUBTITLES_REGEX.findAll(masterPl)
+                .map {
+                    Track(it.groupValues[2], it.groupValues[1])
+                }.toList()
+        TOKEN_QUALITY_REGEX.findAll(script).forEach { match ->
             val quality = match.groupValues[1]
 
-            val videoUrl = buildString {
-                append(playlistUrl)
-                append("?type=video&rendition=")
-                append(quality)
-                append("&token=")
-                append(match.groupValues[2])
-                append("&expires=$expires")
-                append("&canCast=$canCast")
-                append("&n=1")
-            }
+            val videoUrl =
+                buildString {
+                    append(playlistUrl)
+                    append("?type=video&rendition=")
+                    append(quality)
+                    append("&token=")
+                    append(match.groupValues[2])
+                    append("&expires=$expires")
+                    append("&n=1")
+                }
             videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subList))
         }
 
@@ -313,6 +321,10 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
 
         return videoList.sort()
     }
+
+    override fun videoListRequest(episode: SEpisode): Request = throw Exception("Not used")
+
+    override fun videoListParse(response: Response): List<Video> = throw Exception("Not used")
 
     // ============================= Utilities ==============================
 
@@ -344,6 +356,11 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     companion object {
+        private val PLAYLIST_URL_REGEX = Regex("""url: ?'(.*?)'""")
+        private val EXPIRES_REGEX = Regex("""'expires': ?'(\d+)'""")
+        private val TOKEN_REGEX = Regex("""'token': ?'([\w-]+)'""")
+        private val TOKEN_QUALITY_REGEX = Regex("""'token(\d+p?)': ?'([\w-]+)'""")
+        private val SUBTITLES_REGEX = Regex("""#EXT-X-MEDIA:TYPE=SUBTITLES.*?NAME="(.*?)".*?URI="(.*?)"""")
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_DEFAULT = "720"
     }
