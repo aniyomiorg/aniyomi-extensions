@@ -124,7 +124,11 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     override fun searchAnimeFromElement(element: Element) = SAnime.create().apply {
         thumbnail_url = element.selectFirst("img.cover-img-in")?.attr("abs:src")
         title = element.selectFirst(".title-ep")!!.text().replace(TITLE_CLEANUP_REGEX, "")
-        setUrlWithoutDomain(element.attr("href"))
+        setUrlWithoutDomain(
+            element.attr("href").replace(Regex("(?<=\\?e=)(.*?)(?=&f=)")) {
+                java.net.URLEncoder.encode(it.groupValues[1], "UTF-8")
+            },
+        )
     }
 
     // =========================== Anime Details ============================
@@ -162,7 +166,11 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
             add(
                 SEpisode.create().apply {
-                    setUrlWithoutDomain(doc.location())
+                    setUrlWithoutDomain(
+                        doc.location().replace(Regex("(?<=\\?e=)(.*?)(?=&f=)")) {
+                            java.net.URLEncoder.encode(it.groupValues[1], "UTF-8")
+                        },
+                    )
                     val num = doc.selectFirst("div.episode-info > h1")!!.text().substringAfter(" Ep ")
                     name = "Episode $num"
                     episode_number = num.toFloatOrNull() ?: 1F
@@ -175,7 +183,12 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     override fun episodeListSelector() = "div.more-same-eps > div > div > a"
 
     override fun episodeFromElement(element: Element) = SEpisode.create().apply {
-        setUrlWithoutDomain(element.attr("href"))
+        setUrlWithoutDomain(
+            element.attr("href").replace(Regex("(?<=\\?e=)(.*?)(?=&f=)")) {
+                java.net.URLEncoder.encode(it.groupValues[1], "UTF-8")
+            },
+        )
+
         val num = element.selectFirst("font.ep")?.text() ?: "1"
         name = "Episode $num"
         episode_number = num.toFloatOrNull() ?: 1F
