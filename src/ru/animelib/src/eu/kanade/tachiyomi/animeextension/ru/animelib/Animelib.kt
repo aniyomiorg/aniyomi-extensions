@@ -53,7 +53,7 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    companion object PrefConstants {
+    companion object Constants {
         private const val PREF_QUALITY_KEY = "pref_quality"
         private val PREF_QUALITY_ENTRIES = arrayOf("360", "720", "1080", "2160")
 
@@ -70,6 +70,8 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
 
         private const val PREF_USE_KODIK_KEY = "pref_use_kodik"
         private const val PREF_USE_KODIK_DEFAULT = true
+
+        private val ATOB_REGEX = Regex("atob\\([^\"]")
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -214,11 +216,10 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
         } ?: preferredTeams
 
         val ignoreSubs = preferences.getBoolean(PREF_IGNORE_SUBS_KEY, PREF_IGNORE_SUBS_DEFAULT)
-        val videoList = videoInfoList?.flatMap { videoInfo ->
+        return videoInfoList?.flatMap { videoInfo ->
             if (ignoreSubs && videoInfo.translationInfo.id == 1) {
                 return@flatMap emptyList()
             }
-
             val playerName = videoInfo.player.lowercase()
             when (playerName) {
                 "kodik" -> kodikVideoLinks(videoInfo.src, videoInfo.team.name)
@@ -226,8 +227,6 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
                 else -> emptyList()
             }
         } ?: emptyList()
-
-        return videoList
     }
 
     override fun videoListRequest(episode: SEpisode) = GET(episode.url)
@@ -332,8 +331,8 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
         // Parse form parameters for video link request
         val page = kodikPageResponse.asJsoup()
         val urlParams = page.getElementsByTag("script").find {
-            it.html().contains(domain)
-        }?.html() ?: return emptyList()
+            it.data().contains(domain)
+        }?.data() ?: return emptyList()
 
         val formData = urlParams.substringAfter("urlParams = '")
             .substringBefore("'")
@@ -362,13 +361,10 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
         val kodikData = videoInfoResponse.parseAs<KodikData>()
 
         // Load js with encode algorithm and parse it
-        val scriptElement = page.getElementsByTag("script").find {
-            it.outerHtml().contains("player_single")
-        } ?: return emptyList()
-
-        val scriptHref = scriptElement.attr("src")
-        val jsScript = client.newCall(GET("https://$kodikDomain$scriptHref")).execute().body.string()
-        val atob = Regex("atob\\([^\"]").find(jsScript) ?: return emptyList()
+        val scriptUrl = page.selectFirst("script[src*=player_single]")?.attr("abs:src")
+            ?: return emptyList()
+        val jsScript = client.newCall(GET(scriptUrl)).execute().body.string()
+        val atob = ATOB_REGEX.find(jsScript) ?: return emptyList()
 
         var encodeScript = ""
         val deque = ArrayDeque<Char>()
