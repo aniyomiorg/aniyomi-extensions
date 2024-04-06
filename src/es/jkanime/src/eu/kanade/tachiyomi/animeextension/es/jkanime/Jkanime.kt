@@ -164,21 +164,31 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return servers
     }
 
+    /*--------------------------------Video extractors------------------------------------*/
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+    private val filemoonExtractor by lazy { FilemoonExtractor(client) }
+    private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
+    private val mixDropExtractor by lazy { MixDropExtractor(client) }
+    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val jkanimeExtractor by lazy { JkanimeExtractor(client) }
+
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         return getVideoLinks(document).parallelCatchingFlatMapBlocking { (url, lang) ->
             when {
-                "ok" in url -> OkruExtractor(client).videosFromUrl(url, "$lang ")
-                "voe" in url -> VoeExtractor(client).videosFromUrl(url, "$lang ")
-                "filemoon" in url || "moonplayer" in url -> FilemoonExtractor(client).videosFromUrl(url, "$lang Filemoon:")
-                "streamtape" in url || "stp" in url || "stape" in url -> listOf(StreamTapeExtractor(client).videoFromUrl(url, quality = "$lang StreamTape")!!)
-                "mp4upload" in url -> Mp4uploadExtractor(client).videosFromUrl(url, prefix = "$lang ", headers = headers)
-                "mixdrop" in url || "mdbekjwqa" in url -> MixDropExtractor(client).videosFromUrl(url, prefix = "$lang ")
+                "ok" in url -> okruExtractor.videosFromUrl(url, "$lang ")
+                "voe" in url -> voeExtractor.videosFromUrl(url, "$lang ")
+                "filemoon" in url || "moonplayer" in url -> filemoonExtractor.videosFromUrl(url, "$lang Filemoon:")
+                "streamtape" in url || "stp" in url || "stape" in url -> listOf(streamTapeExtractor.videoFromUrl(url, quality = "$lang StreamTape")!!)
+                "mp4upload" in url -> mp4uploadExtractor.videosFromUrl(url, prefix = "$lang ", headers = headers)
+                "mixdrop" in url || "mdbekjwqa" in url -> mixDropExtractor.videosFromUrl(url, prefix = "$lang ")
                 "sfastwish" in url || "wishembed" in url || "streamwish" in url || "strwish" in url || "wish" in url
-                -> StreamWishExtractor(client, headers).videosFromUrl(url, videoNameGen = { "$lang StreamWish:$it" })
-                "stream/jkmedia" in url -> listOf(JkanimeExtractor(client).getDesukaFromUrl(url, "$lang ")!!)
-                "um2.php" in url -> listOf(JkanimeExtractor(client).getNozomiFromUrl(url, "$lang ")!!)
-                "um.php" in url -> listOf(JkanimeExtractor(client).getDesuFromUrl(url, "$lang ")!!)
+                -> streamWishExtractor.videosFromUrl(url, videoNameGen = { "$lang StreamWish:$it" })
+                "stream/jkmedia" in url -> listOf(jkanimeExtractor.getDesukaFromUrl(url, "$lang ")!!)
+                "um2.php" in url -> listOf(jkanimeExtractor.getNozomiFromUrl(url, "$lang ")!!)
+                "um.php" in url -> listOf(jkanimeExtractor.getDesuFromUrl(url, "$lang ")!!)
                 else -> emptyList()
             }
         }
