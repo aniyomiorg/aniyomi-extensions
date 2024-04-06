@@ -42,4 +42,14 @@ class JkanimeExtractor(
         }
         return null
     }
+
+    fun getDesukaFromUrl(url: String, prefix: String = ""): Video? {
+        val document = client.newCall(GET(url)).execute()
+        val script = document.asJsoup().selectFirst("script:containsData(new DPlayer({)")!!.data()
+        val streamUrl = script.substringAfter("url: '").substringBefore("'")
+        if (document.isSuccessful && streamUrl.isNotBlank()) {
+            return Video(streamUrl, "${prefix}Desuka", streamUrl)
+        }
+        return null
+    }
 }
