@@ -1,3 +1,4 @@
+
 ext {
     extName = 'Animelib'
     extClass = '.Animelib'
@@ -6,3 +7,7 @@ ext {
 }
 
 apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation project(':lib:playlist-utils')
+}

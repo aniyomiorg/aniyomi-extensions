@@ -1,12 +1,14 @@
 package eu.kanade.tachiyomi.animeextension.ru.animelib
 
 import android.app.Application
+import android.util.Base64
 import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
+import app.cash.quickjs.QuickJs
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -15,13 +17,19 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
-import kotlinx.serialization.json.Json
+import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parseAs
+import okhttp3.FormBody
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.net.URLDecoder
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -37,44 +45,41 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
     override val baseUrl = "https://$domain/ru"
     private val apiUrl = "https://api.lib.social/api"
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-    }
+    private val playlistUtils by lazy { PlaylistUtils(client, headers) }
+    private val dateFormatter by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH) }
 
+    // =============================== Preference ===============================
     private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val dateFormatter by lazy {
-        SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
-    }
+    companion object PrefConstants {
+        private const val PREF_QUALITY_KEY = "pref_quality"
+        private val PREF_QUALITY_ENTRIES = arrayOf("360", "720", "1080", "2160")
 
-    // =============================== Preference ===============================
+        private const val PREF_USE_MAX_QUALITY_KEY = "pref_use_max_quality"
+        private const val PREF_USE_MAX_QUALITY_DEFAULT = true
 
-    object PrefConstants {
-        const val PREF_QUALITY_KEY = "pref_quality"
-        val PREF_QUALITY_ENTRIES = arrayOf("360", "720", "1080", "2160")
+        private const val PREF_SERVER_KEY = "pref_server"
+        private val PREF_SERVER_ENTRIES = arrayOf("Основной", "Резервный 1", "Резервный 2")
 
-        const val PREF_USE_MAX_QUALITY_KEY = "pref_use_max_quality"
-        const val PREF_USE_MAX_QUALITY_DEFAULT = true
+        private const val PREF_DUB_TEAM_KEY = "prev_dub_team"
 
-        const val PREF_SERVER_KEY = "pref_server"
-        val PREF_SERVER_ENTRIES = arrayOf("Основной", "Резервный 1", "Резервный 2")
+        private const val PREF_IGNORE_SUBS_KEY = "pref_ignore_subs"
+        private const val PREF_IGNORE_SUBS_DEFAULT = true
 
-        const val PREF_DUB_TEAM_KEY = "prev_dub_team"
-
-        const val PREF_IGNORE_SUBS_KEY = "pref_ignore_subs"
-        const val PREF_IGNORE_SUBS_DEFAULT = true
+        private const val PREF_USE_KODIK_KEY = "pref_use_kodik"
+        private const val PREF_USE_KODIK_DEFAULT = true
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
-            key = PrefConstants.PREF_SERVER_KEY
+            key = PREF_SERVER_KEY
             title = "Предпочитаемый сервер плеера Animelib"
-            entries = PrefConstants.PREF_SERVER_ENTRIES
-            entryValues = PrefConstants.PREF_SERVER_ENTRIES
+            entries = PREF_SERVER_ENTRIES
+            entryValues = PREF_SERVER_ENTRIES
             summary = "%s"
-            setDefaultValue(PrefConstants.PREF_SERVER_ENTRIES[0])
+            setDefaultValue(PREF_SERVER_ENTRIES[0])
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putString(key, newValue as String).commit()
@@ -82,10 +87,10 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
         }.also(screen::addPreference)
 
         SwitchPreferenceCompat(screen.context).apply {
-            key = PrefConstants.PREF_USE_MAX_QUALITY_KEY
+            key = PREF_USE_MAX_QUALITY_KEY
             title = "Использовать максимальное доступное качество"
             summary = "Для каждой студии озвучки будет выбрано максимальное качество"
-            setDefaultValue(PrefConstants.PREF_USE_MAX_QUALITY_DEFAULT)
+            setDefaultValue(PREF_USE_MAX_QUALITY_DEFAULT)
 
             setOnPreferenceChangeListener { _, newValue ->
                 val value = newValue as Boolean
@@ -101,14 +106,14 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }.also(screen::addPreference)
 
-        if (!preferences.getBoolean(PrefConstants.PREF_USE_MAX_QUALITY_KEY, true)) {
+        if (!preferences.getBoolean(PREF_USE_MAX_QUALITY_KEY, true)) {
             MultiSelectListPreference(screen.context).apply {
-                key = PrefConstants.PREF_QUALITY_KEY
+                key = PREF_QUALITY_KEY
                 title = "Предпочитаемое качество"
-                entries = PrefConstants.PREF_QUALITY_ENTRIES
-                entryValues = PrefConstants.PREF_QUALITY_ENTRIES
+                entries = PREF_QUALITY_ENTRIES
+                entryValues = PREF_QUALITY_ENTRIES
                 summary = "При отсутствии нужного качества могут возникать ошибки!"
-                setDefaultValue(PrefConstants.PREF_QUALITY_ENTRIES.toSet())
+                setDefaultValue(PREF_QUALITY_ENTRIES.toSet())
 
                 setOnPreferenceChangeListener { _, newValue ->
                     @Suppress("UNCHECKED_CAST")
@@ -118,10 +123,21 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         SwitchPreferenceCompat(screen.context).apply {
-            key = PrefConstants.PREF_IGNORE_SUBS_KEY
+            key = PREF_USE_KODIK_KEY
+            title = "Включить парсинг видео из плеера Kodik"
+            summary = "Некоторые видео доступны только в нем, но он может работать нестабильно"
+            setDefaultValue(PREF_USE_KODIK_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putBoolean(key, newValue as Boolean).commit()
+            }
+        }.also(screen::addPreference)
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_IGNORE_SUBS_KEY
             title = "Игнорировать субтитры"
             summary = "Исключает из списка озвучек субтитры"
-            setDefaultValue(PrefConstants.PREF_IGNORE_SUBS_DEFAULT)
+            setDefaultValue(PREF_IGNORE_SUBS_DEFAULT)
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putBoolean(key, newValue as Boolean).commit()
@@ -129,7 +145,7 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
         }.also(screen::addPreference)
 
         EditTextPreference(screen.context).apply {
-            key = PrefConstants.PREF_DUB_TEAM_KEY
+            key = PREF_DUB_TEAM_KEY
             title = "Предпочитаемые студии озвучки"
             summary = "Список студий или ключевых слов через запятую (экспериментальная функция)"
             setDefaultValue("")
@@ -157,11 +173,7 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun getAnimeUrl(anime: SAnime) = "$baseUrl/${anime.url}"
 
-    override fun animeDetailsParse(response: Response): SAnime {
-        val animeInfo = json.decodeFromString<AnimeInfo>(response.body.string())
-
-        return animeInfo.data.toSAnime()
-    }
+    override fun animeDetailsParse(response: Response) = response.parseAs<AnimeInfo>().data.toSAnime()
 
     // =============================== Episodes ===============================
     override fun episodeListRequest(anime: SAnime): Request {
@@ -173,52 +185,49 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val episodeList = json.decodeFromString<EpisodeList>(response.body.string())
+        val episodeList = response.parseAs<EpisodeList>()
 
         return episodeList.data.map { it.toSEpisode() }.reversed()
     }
 
     // =============================== Video List ===============================
     override fun videoListParse(response: Response): List<Video> {
-        val episodeData = json.decodeFromString<EpisodeVideoData>(response.body.string())
+        val episodeData = response.parseAs<EpisodeVideoData>()
         val videoServer = fetchPreferredVideoServer()
+        val teams = preferences.getString(PREF_DUB_TEAM_KEY, "")?.split(',')
 
-        val videos = mutableListOf<Video>()
-        if (episodeData.data.players.isNullOrEmpty()) {
-            return videos
-        }
+        val preferredTeams = episodeData.data.players?.filter { videoInfo ->
+            teams.isNullOrEmpty() || teams.any { videoInfo.team.name.contains(it, true) }
+        } ?: episodeData.data.players
 
-        for (videoInfo in episodeData.data.players) {
+        val useMaxQuality = preferences.getBoolean(
+            PREF_USE_MAX_QUALITY_KEY,
+            PREF_USE_MAX_QUALITY_DEFAULT,
+        )
+        val videoInfoList = preferredTeams?.filter { videoInfo ->
+            val quality = bestQuality(videoInfo)
+            val noneBetter = preferredTeams.none {
+                bestQuality(it) > quality && it.team.name == videoInfo.team.name
+            }
+
+            noneBetter || !useMaxQuality
+        } ?: preferredTeams
+
+        val ignoreSubs = preferences.getBoolean(PREF_IGNORE_SUBS_KEY, PREF_IGNORE_SUBS_DEFAULT)
+        val videoList = videoInfoList?.flatMap { videoInfo ->
+            if (ignoreSubs && videoInfo.translationInfo.id == 1) {
+                return@flatMap emptyList()
+            }
+
             val playerName = videoInfo.player.lowercase()
-            if (playerName == "kodik") {
-                // TODO maybe in future
-                // videos.addAll(kodikVideoLink(videoInfo.src))
-            } else if (playerName == "animelib") {
-                videos.addAll(animelibVideoLinks(videoInfo, videoServer))
+            when (playerName) {
+                "kodik" -> kodikVideoLinks(videoInfo.src, videoInfo.team.name)
+                "animelib" -> animelibVideoLinks(videoInfo, videoServer)
+                else -> emptyList()
             }
-        }
+        } ?: emptyList()
 
-        // Filter by dub team preference
-        val prefDubTeam = preferences.getString(PrefConstants.PREF_DUB_TEAM_KEY, "")
-        val teams = prefDubTeam?.split(',')
-
-        if (teams.isNullOrEmpty()) {
-            return videos
-        }
-
-        videos.removeAll {
-            var remove = true
-            for (team in teams) {
-                if (it.quality.contains(team, true)) {
-                    remove = false
-                    break
-                }
-            }
-
-            remove
-        }
-
-        return videos
+        return videoList
     }
 
     override fun videoListRequest(episode: SEpisode) = GET(episode.url)
@@ -239,13 +248,9 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =============================== Popular ===============================
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val animeList = json.decodeFromString<AnimeList>(response.body.string())
+        val animeList = response.parseAs<AnimeList>()
 
-        var hasNext = false
-        if (animeList.links != null) {
-            hasNext = !animeList.links.next.isNullOrEmpty()
-        }
-
+        val hasNext = !animeList.links?.next.isNullOrEmpty()
         val animes = animeList.data.map { it.toSAnime() }
         return AnimesPage(animes, hasNext)
     }
@@ -297,12 +302,9 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
         url.addQueryParameter("fields[]", "videoServers")
 
         val videoServerResponse = client.newCall(GET(url.build())).execute()
-        val videoServers = json.decodeFromString<VideoServerData>(videoServerResponse.body.string())
+        val videoServers = videoServerResponse.parseAs<VideoServerData>()
 
-        val serverPreference = preferences.getString(
-            PrefConstants.PREF_SERVER_KEY,
-            PrefConstants.PREF_SERVER_ENTRIES[0],
-        )
+        val serverPreference = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_ENTRIES[0])
         if (serverPreference.isNullOrEmpty()) {
             return videoServers.data.videoServers[0].url
         }
@@ -316,64 +318,154 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
         return videoServers.data.videoServers[0].url
     }
 
-    private fun kodikVideoLink(playerUrl: String?): List<Video> {
-        val videos = mutableListOf<Video>()
-        // TODO extract video from kodik player
-
-        return videos
-    }
-
-    private fun animelibVideoLinks(videoInfo: VideoInfo, serverUrl: String): List<Video> {
-        val videos = mutableListOf<Video>()
-
-        if (videoInfo.video == null) {
-            return videos
+    private fun kodikVideoLinks(playerUrl: String?, teamName: String): List<Video> {
+        val useKodik = preferences.getBoolean(PREF_USE_KODIK_KEY, PREF_USE_KODIK_DEFAULT)
+        if (playerUrl.isNullOrEmpty() || !useKodik) {
+            return emptyList()
         }
 
-        val ignoreSubs = preferences.getBoolean(
-            PrefConstants.PREF_IGNORE_SUBS_KEY,
-            PrefConstants.PREF_IGNORE_SUBS_DEFAULT,
-        )
+        val kodikPage = "https:$playerUrl"
+        val headers = Headers.Builder()
+        headers.add("Referer", baseUrl)
+        val kodikPageResponse = client.newCall(GET(kodikPage, headers.build())).execute()
 
-        if (ignoreSubs && videoInfo.translationInfo.id == 1) {
-            return videos
+        // Parse form parameters for video link request
+        val page = kodikPageResponse.asJsoup()
+        val urlParams = page.getElementsByTag("script").find {
+            it.html().contains(domain)
+        }?.html() ?: return emptyList()
+
+        val formData = urlParams.substringAfter("urlParams = '")
+            .substringBefore("'")
+            .parseAs<KodikForm>()
+
+        if (formData.dSign.isEmpty()) {
+            return emptyList()
         }
 
-        val subtitles = mutableListOf<Track>()
-        if (videoInfo.subtitles != null) {
-            videoInfo.subtitles.forEach {
-                val url = it.src
-                val lang = "${videoInfo.team.name} (${it.format})"
-                subtitles.add(Track(url, lang))
+        val kodikDomain = formData.pd
+        val formBody = FormBody.Builder()
+        formBody.add("d", formData.d)
+        formBody.add("d_sign", URLDecoder.decode(formData.dSign, "utf-8"))
+        formBody.add("pd", formData.pd)
+        formBody.add("pd_sign", URLDecoder.decode(formData.pdSign, "utf-8"))
+        formBody.add("ref", URLDecoder.decode(formData.ref, "utf-8"))
+        formBody.add("ref_sign", URLDecoder.decode(formData.refSign, "utf-8"))
+
+        val urlParts = playerUrl.split('/')
+        formBody.add("type", urlParts[3])
+        formBody.add("id", urlParts[4])
+        formBody.add("hash", urlParts[5])
+
+        val videoInfoRequest = POST("https://$kodikDomain/ftor", body = formBody.build())
+        val videoInfoResponse = client.newCall(videoInfoRequest).execute()
+        val kodikData = videoInfoResponse.parseAs<KodikData>()
+
+        // Load js with encode algorithm and parse it
+        val scriptElement = page.getElementsByTag("script").find {
+            it.outerHtml().contains("player_single")
+        } ?: return emptyList()
+
+        val scriptHref = scriptElement.attr("src")
+        val jsScript = client.newCall(GET("https://$kodikDomain$scriptHref")).execute().body.string()
+        val atob = Regex("atob\\([^\"]").find(jsScript) ?: return emptyList()
+
+        var encodeScript = ""
+        val deque = ArrayDeque<Char>()
+        deque.addFirst('(')
+        for (i in atob.range.last..jsScript.length) {
+            val char = jsScript[i]
+            if (char in arrayOf('(', '{')) {
+                deque.addFirst(char)
+            } else if (char in arrayOf(')', '}')) {
+                if (deque.isNotEmpty()) {
+                    deque.removeFirst()
+                }
+            }
+
+            if (deque.isNotEmpty()) {
+                encodeScript += char
+            } else {
+                break
             }
         }
 
         val useMaxQuality = preferences.getBoolean(
-            PrefConstants.PREF_USE_MAX_QUALITY_KEY,
-            PrefConstants.PREF_USE_MAX_QUALITY_DEFAULT,
+            PREF_USE_MAX_QUALITY_KEY,
+            PREF_USE_MAX_QUALITY_DEFAULT,
         )
-        val qualityPreference = preferences.getStringSet(PrefConstants.PREF_QUALITY_KEY, emptySet())
-
-        var maxQuality = 0
-        for (qualityVideo in videoInfo.video.quality) {
-            val url = "$serverUrl${qualityVideo.href}"
-            val quality = "${videoInfo.team.name} (${qualityVideo.quality}p)"
-
-            val video = Video(url, quality, url, subtitleTracks = subtitles)
-            if (useMaxQuality && qualityVideo.quality > maxQuality) {
-                maxQuality = qualityVideo.quality
-                videos.clear()
-                videos.add(video)
-            } else if (!useMaxQuality && !qualityPreference.isNullOrEmpty()) {
-                if (qualityVideo.quality.toString() in qualityPreference) {
-                    videos.add(video)
-                }
-            } else if (!useMaxQuality) {
-                videos.add(video)
-            }
+        val qualityPreference = preferences.getStringSet(PREF_QUALITY_KEY, emptySet())
+        val qualityList = if (useMaxQuality) {
+            listOf("720")
+        } else if (!qualityPreference.isNullOrEmpty()) {
+            qualityPreference.toList()
+        } else {
+            listOf("360", "480", "720")
         }
 
-        return videos
+        val videoList = qualityList.flatMap { quality ->
+            val quickJs = QuickJs.create()
+            val videoInfo = when (quality) {
+                "360" -> kodikData.links.ugly[0].src
+                "480" -> kodikData.links.bad[0].src
+                "720" -> kodikData.links.good[0].src
+                else -> return@flatMap emptyList()
+            }
+
+            val base64Url = quickJs.use {
+                it.evaluate("t='$videoInfo'; $encodeScript")
+            }.toString()
+            val hlsUrl = Base64.decode(base64Url, Base64.DEFAULT).toString(Charsets.UTF_8)
+            playlistUtils.extractFromHls(
+                "https:$hlsUrl",
+                videoNameGen = { "$teamName (${quality}p Kodik)" },
+            )
+        }
+
+        return videoList
+    }
+
+    private fun animelibVideoLinks(videoInfo: VideoInfo, serverUrl: String): List<Video> {
+        if (videoInfo.video == null) {
+            return emptyList()
+        }
+
+        val subtitles = videoInfo.subtitles?.map {
+            val url = it.src
+            val lang = "${videoInfo.team.name} (${it.format})"
+            Track(url, lang)
+        } ?: emptyList()
+
+        val useMaxQuality = preferences.getBoolean(
+            PREF_USE_MAX_QUALITY_KEY,
+            PREF_USE_MAX_QUALITY_DEFAULT,
+        )
+        val maxQuality = bestQuality(videoInfo)
+        val qualityPreference = preferences.getStringSet(PREF_QUALITY_KEY, emptySet())
+
+        val videoList = videoInfo.video.quality.mapNotNull {
+            if (useMaxQuality && it.quality != maxQuality) {
+                return@mapNotNull null
+            } else if (!useMaxQuality && !qualityPreference.isNullOrEmpty()) {
+                if (!qualityPreference.contains(it.quality.toString())) {
+                    return@mapNotNull null
+                }
+            }
+
+            val url = "$serverUrl${it.href}"
+            val quality = "${videoInfo.team.name} (${it.quality}p Animelib)"
+            Video(url, quality, url, subtitleTracks = subtitles)
+        }
+
+        return videoList
+    }
+
+    private fun bestQuality(videoInfo: VideoInfo): Int {
+        return when (videoInfo.player.lowercase()) {
+            "animelib" -> videoInfo.video?.quality?.maxBy { it.quality }?.quality ?: 0
+            "kodik" -> 720
+            else -> 0
+        }
     }
 
     // =============================== Converters ===============================
@@ -395,8 +487,8 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
         thumbnail_url = cover.thumbnail
         description = summary
         status = convertStatus(animeStatus.id)
-        author = publisher?.joinToString { it.name } ?: ""
-        artist = authors?.joinToString { it.name } ?: ""
+        author = publisher?.joinToString { it.name }
+        artist = authors?.joinToString { it.name }
     }
 
     private fun EpisodeInfo.toSEpisode() = SEpisode.create().apply {

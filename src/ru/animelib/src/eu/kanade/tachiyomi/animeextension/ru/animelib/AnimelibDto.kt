@@ -149,3 +149,31 @@ data class VideoServers(
 data class VideoServerData(
     val data: VideoServers,
 )
+
+// ============================== Kodik ==============================
+@Serializable
+data class KodikForm(
+    val d: String = "",
+    @SerialName("d_sign") val dSign: String = "",
+    val pd: String = "",
+    @SerialName("pd_sign") val pdSign: String = "",
+    val ref: String = "",
+    @SerialName("ref_sign") val refSign: String = "",
+)
+
+@Serializable
+data class KodikVideoInfo(
+    val src: String,
+)
+
+@Serializable
+data class KodikVideoQuality(
+    @SerialName("480") val bad: List<KodikVideoInfo>,
+    @SerialName("720") val good: List<KodikVideoInfo>,
+    @SerialName("360") val ugly: List<KodikVideoInfo>,
+)
+
+@Serializable
+data class KodikData(
+    val links: KodikVideoQuality,
+)
