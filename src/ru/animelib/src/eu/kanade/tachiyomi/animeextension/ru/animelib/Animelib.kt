@@ -48,12 +48,7 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
     private val dateFormatter by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH) }
 
-    // =============================== Preference ===============================
-    private val preferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
-
-    companion object Constants {
+    companion object {
         private const val PREF_QUALITY_KEY = "pref_quality"
         private val PREF_QUALITY_ENTRIES = arrayOf("360", "720", "1080", "2160")
 
@@ -72,6 +67,11 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_USE_KODIK_DEFAULT = true
 
         private val ATOB_REGEX = Regex("atob\\([^\"]")
+    }
+
+    // =============================== Preference ===============================
+    private val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -138,7 +138,7 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
         SwitchPreferenceCompat(screen.context).apply {
             key = PREF_IGNORE_SUBS_KEY
             title = "Игнорировать субтитры"
-            summary = "Исключает из списка озвучек субтитры"
+            summary = "Исключает видео с субтитрами"
             setDefaultValue(PREF_IGNORE_SUBS_DEFAULT)
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -199,7 +199,7 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
         val teams = preferences.getString(PREF_DUB_TEAM_KEY, "")?.split(',')
 
         val preferredTeams = episodeData.data.players?.filter { videoInfo ->
-            teams.isNullOrEmpty() || teams.any { videoInfo.team.name.contains(it, true) }
+            teams.isNullOrEmpty() || teams.any { videoInfo.team.name.contains(it.trim(), true) }
         } ?: episodeData.data.players
 
         val useMaxQuality = preferences.getBoolean(
