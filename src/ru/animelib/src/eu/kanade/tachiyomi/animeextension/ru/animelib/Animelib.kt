@@ -330,9 +330,8 @@ class Animelib : ConfigurableAnimeSource, AnimeHttpSource() {
 
         // Parse form parameters for video link request
         val page = kodikPageResponse.asJsoup()
-        val urlParams = page.getElementsByTag("script").find {
-            it.data().contains(domain)
-        }?.data() ?: return emptyList()
+        val urlParams = page.selectFirst("script:containsData($domain)")?.data()
+            ?: return emptyList()
 
         val formData = urlParams.substringAfter("urlParams = '")
             .substringBefore("'")
