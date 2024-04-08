@@ -134,12 +134,12 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return languages.firstOrNull { it.first == this }?.second ?: ""
     }
 
-    private fun getVideoLinks(document: Document): MutableList<Pair<String, String>> {
+    private fun getVideoLinks(document: Document): List<Pair<String, String>> {
         val servers = mutableListOf<Pair<String, String>>()
-        val scriptServers = document.selectFirst("script:containsData(var video = [];)")!!
+        val scriptServers = document.selectFirst("script:containsData(var video = [];)")?.data() ?: return emptyList()
 
-        val jsServer = scriptServers.data().substringAfter("var remote = '").substringBefore("'")
-        val jsPath = scriptServers.data().substringAfter("= remote+'").substringBefore("'")
+        val jsServer = scriptServers.substringAfter("var remote = '").substringBefore("'")
+        val jsPath = scriptServers.substringAfter("= remote+'").substringBefore("'")
         if (jsServer.isNotEmpty() && jsPath.isNotEmpty()) {
             val jsLinks = client.newCall(GET(jsServer + jsPath)).execute().body.string()
                 .substringAfter("var servers = ").parseAs<Array<JsLinks>>().map {
@@ -151,7 +151,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val htmlLinks = document.select("div.col-lg-12.rounded.bg-servers.text-white.p-3.mt-2 a").map {
             val serverId = it.attr("data-id")
             val lang = it.attr("class").substringAfter("lg_").substringBefore(" ").getLang()
-            val url = scriptServers.data()
+            val url = scriptServers
                 .substringAfter("video[$serverId] = '<iframe class=\"player_conte\" src=\"")
                 .substringBefore("\"")
                 .replace("/jkokru.php?u=", "http://ok.ru/videoembed/")
@@ -186,9 +186,9 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "mixdrop" in url || "mdbekjwqa" in url -> mixDropExtractor.videosFromUrl(url, prefix = "$lang ")
                 "sfastwish" in url || "wishembed" in url || "streamwish" in url || "strwish" in url || "wish" in url
                 -> streamWishExtractor.videosFromUrl(url, videoNameGen = { "$lang StreamWish:$it" })
-                "stream/jkmedia" in url -> listOf(jkanimeExtractor.getDesukaFromUrl(url, "$lang ")!!)
-                "um2.php" in url -> listOf(jkanimeExtractor.getNozomiFromUrl(url, "$lang ")!!)
-                "um.php" in url -> listOf(jkanimeExtractor.getDesuFromUrl(url, "$lang ")!!)
+                "stream/jkmedia" in url -> jkanimeExtractor.getDesukaFromUrl(url, "$lang ")
+                "um2.php" in url -> jkanimeExtractor.getNozomiFromUrl(url, "$lang ")
+                "um.php" in url -> jkanimeExtractor.getDesuFromUrl(url, "$lang ")
                 else -> emptyList()
             }
         }

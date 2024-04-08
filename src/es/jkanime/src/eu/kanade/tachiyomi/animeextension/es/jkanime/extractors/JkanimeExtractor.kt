@@ -14,7 +14,7 @@ class JkanimeExtractor(
     private val client: OkHttpClient,
 ) {
 
-    fun getNozomiFromUrl(url: String, prefix: String = ""): Video? {
+    fun getNozomiFromUrl(url: String, prefix: String = ""): List<Video> {
         val dataKeyHeaders = Headers.Builder().add("Referer", url).build()
         val doc = client.newCall(GET(url, dataKeyHeaders)).execute().asJsoup()
         val dataKey = doc.select("form input[value]").attr("value")
@@ -26,30 +26,37 @@ class JkanimeExtractor(
 
         val nozomiBody = "v=$postKey".toRequestBody("application/x-www-form-urlencoded".toMediaTypeOrNull())
         val nozomiResponse = client.newCall(POST("https://jkanime.net/gsplay/api.php", body = nozomiBody)).execute()
-        val nozomiUrl = JSONObject(nozomiResponse.body.string()).getString("file")
-        if (nozomiResponse.isSuccessful && nozomiUrl.isNotBlank()) {
-            return Video(nozomiUrl, "${prefix}Nozomi", nozomiUrl)
-        }
-        return null
+        val nozomiUrl = JSONObject(nozomiResponse.body.string()).getString("file").ifBlank { return emptyList() }
+
+        return listOf(Video(nozomiUrl, "${prefix}Nozomi", nozomiUrl))
     }
 
-    fun getDesuFromUrl(url: String, prefix: String = ""): Video? {
+    fun getDesuFromUrl(url: String, prefix: String = ""): List<Video> {
         val document = client.newCall(GET(url)).execute()
-        val script = document.asJsoup().selectFirst("script:containsData(var parts = {)")!!.data()
-        val streamUrl = script.substringAfter("url: '").substringBefore("'")
-        if (document.isSuccessful && streamUrl.isNotBlank()) {
-            return Video(streamUrl, "${prefix}Desu", streamUrl)
-        }
-        return null
+        val streamUrl = document.asJsoup()
+            .selectFirst("script:containsData(var parts = {)")
+            ?.data()?.substringAfter("url: '")
+            ?.substringBefore("'") ?: return emptyList()
+
+        return listOf(Video(streamUrl, "${prefix}Desu", streamUrl))
     }
 
-    fun getDesukaFromUrl(url: String, prefix: String = ""): Video? {
+    fun getDesukaFromUrl(url: String, prefix: String = ""): List<Video> {
         val document = client.newCall(GET(url)).execute()
-        val script = document.asJsoup().selectFirst("script:containsData(new DPlayer({)")!!.data()
-        val streamUrl = script.substringAfter("url: '").substringBefore("'")
-        if (document.isSuccessful && streamUrl.isNotBlank()) {
-            return Video(streamUrl, "${prefix}Desuka", streamUrl)
+        val contentType = document.header("Content-Type") ?: ""
+
+        if (contentType.startsWith("video/")) {
+            val realUrl = document.networkResponse.toString()
+                .substringAfter("url=")
+                .substringBefore("}")
+            return listOf(Video(realUrl, "${prefix}Desuka", realUrl))
         }
-        return null
+
+        val streamUrl = document.asJsoup()
+            .selectFirst("script:containsData(new DPlayer({)")
+            ?.data()?.substringAfter("url: '")
+            ?.substringBefore("'") ?: return emptyList()
+
+        return listOf(Video(streamUrl, "${prefix}Desuka", streamUrl))
     }
 }
