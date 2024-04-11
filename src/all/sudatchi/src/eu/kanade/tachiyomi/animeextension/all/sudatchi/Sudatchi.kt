@@ -124,6 +124,8 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
     override fun searchAnimeParse(response: Response) = latestUpdatesParse(response)
 
     // =========================== Anime Details ============================
+    override fun getAnimeUrl(anime: SAnime) = "$baseUrl${anime.url}"
+
     override fun animeDetailsRequest(anime: SAnime) = GET("$baseUrl/api${anime.url}")
 
     override fun animeDetailsParse(response: Response) = response.parseAs<ShortAnimeDto>().toSAnime(preferences.title)
