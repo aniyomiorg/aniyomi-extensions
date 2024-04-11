@@ -70,7 +70,7 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
             "romaji" -> titleRomanji
             "japanese" -> titleJapanese
             else -> titleEnglish
-        }
+        } ?: arrayOf(titleEnglish, titleRomanji, titleJapanese, "").firstNotNullOf { it }
         description = synopsis
         status = statusId.parseStatus()
         thumbnail_url = "$baseUrl$imgUrl"

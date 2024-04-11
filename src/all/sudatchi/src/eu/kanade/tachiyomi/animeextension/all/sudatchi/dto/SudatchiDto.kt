@@ -14,9 +14,9 @@ data class AnimeGenreRelation(
 
 @Serializable
 data class ShortAnimeDto(
-    val titleRomanji: String,
-    val titleEnglish: String,
-    val titleJapanese: String,
+    val titleRomanji: String?,
+    val titleEnglish: String?,
+    val titleJapanese: String?,
     val synopsis: String,
     val slug: String,
     val statusId: Int,
