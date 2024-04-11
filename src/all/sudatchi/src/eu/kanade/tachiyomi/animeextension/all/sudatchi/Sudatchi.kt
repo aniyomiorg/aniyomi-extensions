@@ -4,12 +4,12 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.DataWatchDto
 import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.DirectoryDto
 import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.HomeListDto
 import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.LongAnimeDto
 import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.ShortAnimeDto
 import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.SubtitleDto
+import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.WatchDto
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -21,6 +21,7 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
+import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -40,11 +41,7 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
 
     override val supportsLatest = true
 
-    private val buildId by lazy {
-        Regex(""""buildId":"(.*?)"""")
-            .find(client.newCall(GET(baseUrl)).execute().body.string())
-            ?.groupValues?.get(1)
-    }
+    private val codeRegex by lazy { Regex("""\((.*)\)""") }
 
     private val json: Json by injectLazy()
 
@@ -55,7 +52,7 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/api/home-list")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/api/home-list", headers)
 
     private fun Int.parseStatus() = when (this) {
         1 -> SAnime.UNKNOWN // Not Yet Released
@@ -84,7 +81,7 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/api/directory?page=$page&genres=&status=2,3")
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/api/directory?page=$page&genres=&status=2,3", headers)
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
         sudatchiFilters.fetchFilters()
@@ -100,7 +97,7 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
     override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val id = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/api/anime/$id"))
+            client.newCall(GET("$baseUrl/api/anime/$id", headers))
                 .awaitSuccess()
                 .use(::searchAnimeByIdParse)
         } else {
@@ -118,7 +115,7 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
             val (name, value) = it.toQueryParameter()
             if (value != null) url.addQueryParameter(name, value)
         }
-        return GET(url.build())
+        return GET(url.build(), headers)
     }
 
     override fun searchAnimeParse(response: Response) = latestUpdatesParse(response)
@@ -126,7 +123,7 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
     // =========================== Anime Details ============================
     override fun getAnimeUrl(anime: SAnime) = "$baseUrl${anime.url}"
 
-    override fun animeDetailsRequest(anime: SAnime) = GET("$baseUrl/api${anime.url}")
+    override fun animeDetailsRequest(anime: SAnime) = GET("$baseUrl/api${anime.url}", headers)
 
     override fun animeDetailsParse(response: Response) = response.parseAs<ShortAnimeDto>().toSAnime(preferences.title)
 
@@ -145,14 +142,16 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // ============================ Video Links =============================
-    override fun videoListRequest(episode: SEpisode) = GET("$baseUrl/_next/data/$buildId${episode.url}.json")
+    override fun videoListRequest(episode: SEpisode) = GET("$baseUrl${episode.url}", headers)
 
     private val playlistUtils: PlaylistUtils by lazy { PlaylistUtils(client, headers) }
 
     override fun videoListParse(response: Response): List<Video> {
-        val data = response.parseAs<DataWatchDto>().pageProps.episodeData
+        val document = response.asJsoup()
+        val jsonString = document.selectFirst("script#__NEXT_DATA__")?.data() ?: return emptyList()
+        val data = json.decodeFromString<WatchDto>(jsonString).props.pageProps.episodeData
         val subtitles = json.decodeFromString<List<SubtitleDto>>(data.subtitlesJson)
-        // val videoUrl = client.newCall(GET("$baseUrl/api/streams?episodeId=${data.episode.id}")).execute().parseAs<StreamsDto>().url
+        // val videoUrl = client.newCall(GET("$baseUrl/api/streams?episodeId=${data.episode.id}", headers)).execute().parseAs<StreamsDto>().url
         // keeping it in case the simpler solution breaks, can be hardcoded to this for now :
         val videoUrl = "$baseUrl/videos/m3u8/episode-${data.episode.id}.m3u8"
         return playlistUtils.extractFromHls(
@@ -167,7 +166,6 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
     @JvmName("trackSort")
     private fun List<Track>.sort(): List<Track> {
         val subtitles = preferences.subtitles
-        val codeRegex = Regex("""\((.*)\)""")
         return sortedWith(
             compareBy(
                 { codeRegex.find(it.lang)!!.groupValues[1] != subtitles },

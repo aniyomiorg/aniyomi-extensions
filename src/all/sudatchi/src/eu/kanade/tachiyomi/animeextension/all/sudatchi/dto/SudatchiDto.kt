@@ -82,6 +82,11 @@ data class DataWatchDto(
 )
 
 @Serializable
+data class WatchDto(
+    val props: DataWatchDto,
+)
+
+@Serializable
 data class FilterItemDto(
     val id: Int,
     val name: String,
