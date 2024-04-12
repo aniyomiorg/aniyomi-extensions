@@ -4,11 +4,12 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parseAs
+import kotlinx.serialization.Serializable
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
 
 class JkanimeExtractor(
     private val client: OkHttpClient,
@@ -26,7 +27,7 @@ class JkanimeExtractor(
 
         val nozomiBody = "v=$postKey".toRequestBody("application/x-www-form-urlencoded".toMediaTypeOrNull())
         val nozomiResponse = client.newCall(POST("https://jkanime.net/gsplay/api.php", body = nozomiBody)).execute()
-        val nozomiUrl = JSONObject(nozomiResponse.body.string()).getString("file").ifBlank { return emptyList() }
+        val nozomiUrl = nozomiResponse.body.string().parseAs<NozomiResponse>().file ?: return emptyList()
 
         return listOf(Video(nozomiUrl, "${prefix}Nozomi", nozomiUrl))
     }
@@ -59,4 +60,7 @@ class JkanimeExtractor(
 
         return listOf(Video(streamUrl, "${prefix}Desuka", streamUrl))
     }
+
+    @Serializable
+    data class NozomiResponse(val file: String? = null)
 }
