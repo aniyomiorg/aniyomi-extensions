@@ -18,7 +18,7 @@ class AniwaveUtils {
         vrf = vrfShift(vrf)
         vrf = vrf.reversed().toByteArray()
         vrf = Base64.encode(vrf, Base64.URL_SAFE or Base64.NO_WRAP)
-        //vrf = rot13(vrf)
+        // vrf = rot13(vrf)
         val stringVrf = vrf.toString(Charsets.UTF_8)
         return "vrf=${java.net.URLEncoder.encode(stringVrf, "utf-8")}"
     }
