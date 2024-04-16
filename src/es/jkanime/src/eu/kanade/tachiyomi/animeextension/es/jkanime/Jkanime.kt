@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.es.jkanime
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.jkanime.extractors.JkanimeExtractor
@@ -13,11 +14,18 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
+import eu.kanade.tachiyomi.util.parseAs
+import kotlinx.serialization.Serializable
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -49,13 +57,15 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private val QUALITY_LIST = arrayOf("1080", "720", "480", "360")
 
         private const val PREF_SERVER_KEY = "preferred_server"
-        private const val PREF_SERVER_DEFAULT = "Nozomi"
+        private const val PREF_SERVER_DEFAULT = "Voe"
         private val SERVER_LIST = arrayOf(
             "Okru",
             "Mixdrop",
             "StreamWish",
-            "Xtreme S",
-            "HentaiJk",
+            "Filemoon",
+            "Mp4Upload",
+            "StreamTape",
+            "Desuka",
             "Nozomi",
             "Desu",
         )
@@ -114,33 +124,74 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element) = throw UnsupportedOperationException()
 
-    override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        val videos = mutableListOf<Video>()
-        document.select("div.col-lg-12.rounded.bg-servers.text-white.p-3.mt-2 a").forEach { it ->
+    private val languages = arrayOf(
+        Pair("1", "[JAP]"),
+        Pair("3", "[LAT]"),
+        Pair("4", "[CHIN]"),
+    )
+
+    private fun String.getLang(): String {
+        return languages.firstOrNull { it.first == this }?.second ?: ""
+    }
+
+    private fun getVideoLinks(document: Document): List<Pair<String, String>> {
+        val servers = mutableListOf<Pair<String, String>>()
+        val scriptServers = document.selectFirst("script:containsData(var video = [];)")?.data() ?: return emptyList()
+
+        val jsServer = scriptServers.substringAfter("var remote = '").substringBefore("'")
+        val jsPath = scriptServers.substringAfter("= remote+'").substringBefore("'")
+        if (jsServer.isNotEmpty() && jsPath.isNotEmpty()) {
+            val jsLinks = client.newCall(GET(jsServer + jsPath)).execute().body.string()
+                .substringAfter("var servers = ").parseAs<Array<JsLinks>>().map {
+                    Pair(String(Base64.decode(it.remote, Base64.DEFAULT)), "${it.lang}".getLang())
+                }
+            servers.addAll(jsLinks)
+        }
+
+        val htmlLinks = document.select("div.col-lg-12.rounded.bg-servers.text-white.p-3.mt-2 a").map {
             val serverId = it.attr("data-id")
-            val langClass = it.attr("class")
-            val lang = if (langClass.contains("lg_3")) "[LAT]" else if (langClass.contains("lg_1")) "[JAP]" else ""
-            val scriptServers = document.selectFirst("script:containsData(var video = [];)")!!
-            val url = scriptServers.data().substringAfter("video[$serverId] = '<iframe class=\"player_conte\" src=\"")
+            val lang = it.attr("class").substringAfter("lg_").substringBefore(" ").getLang()
+            val url = scriptServers
+                .substringAfter("video[$serverId] = '<iframe class=\"player_conte\" src=\"")
                 .substringBefore("\"")
                 .replace("/jkokru.php?u=", "http://ok.ru/videoembed/")
                 .replace("/jkvmixdrop.php?u=", "https://mixdrop.ag/e/")
                 .replace("/jksw.php?u=", "https://sfastwish.com/e/")
                 .replace("/jk.php?u=", "$baseUrl/")
-
-            try {
-                when {
-                    "ok" in url -> OkruExtractor(client).videosFromUrl(url, "$lang ").forEach { videos.add(it) }
-                    "mixdrop" in url -> MixDropExtractor(client).videosFromUrl(url, prefix = "$lang ").forEach { videos.add(it) }
-                    "sfastwish" in url -> StreamWishExtractor(client, headers).videosFromUrl(url, prefix = "$lang StreamWish").forEach { videos.add(it) }
-                    "stream/jkmedia" in url -> videos.add(Video(url, "$lang Xtreme S", url))
-                    "um2.php" in url -> JkanimeExtractor(client).getNozomiFromUrl(baseUrl + url, "$lang ").let { if (it != null) videos.add(it) }
-                    "um.php" in url -> JkanimeExtractor(client).getDesuFromUrl(baseUrl + url, "$lang ").let { if (it != null) videos.add(it) }
-                }
-            } catch (_: Exception) {}
+            Pair(if (url.contains("um2.php") || url.contains("um.php")) baseUrl + url else url, lang)
         }
-        return videos
+        servers.addAll(htmlLinks)
+        return servers
+    }
+
+    /*--------------------------------Video extractors------------------------------------*/
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+    private val filemoonExtractor by lazy { FilemoonExtractor(client) }
+    private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
+    private val mixDropExtractor by lazy { MixDropExtractor(client) }
+    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val jkanimeExtractor by lazy { JkanimeExtractor(client) }
+
+    override fun videoListParse(response: Response): List<Video> {
+        val document = response.asJsoup()
+        return getVideoLinks(document).parallelCatchingFlatMapBlocking { (url, lang) ->
+            when {
+                "ok" in url -> okruExtractor.videosFromUrl(url, "$lang ")
+                "voe" in url -> voeExtractor.videosFromUrl(url, "$lang ")
+                "filemoon" in url || "moonplayer" in url -> filemoonExtractor.videosFromUrl(url, "$lang Filemoon:")
+                "streamtape" in url || "stp" in url || "stape" in url -> listOf(streamTapeExtractor.videoFromUrl(url, quality = "$lang StreamTape")!!)
+                "mp4upload" in url -> mp4uploadExtractor.videosFromUrl(url, prefix = "$lang ", headers = headers)
+                "mixdrop" in url || "mdbekjwqa" in url -> mixDropExtractor.videosFromUrl(url, prefix = "$lang ")
+                "sfastwish" in url || "wishembed" in url || "streamwish" in url || "strwish" in url || "wish" in url
+                -> streamWishExtractor.videosFromUrl(url, videoNameGen = { "$lang StreamWish:$it" })
+                "stream/jkmedia" in url -> jkanimeExtractor.getDesukaFromUrl(url, "$lang ")
+                "um2.php" in url -> jkanimeExtractor.getNozomiFromUrl(url, "$lang ")
+                "um.php" in url -> jkanimeExtractor.getDesuFromUrl(url, "$lang ")
+                else -> emptyList()
+            }
+        }
     }
 
     override fun videoListSelector() = throw UnsupportedOperationException()
@@ -462,4 +513,12 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }.also(screen::addPreference)
     }
+
+    @Serializable
+    data class JsLinks(
+        val remote: String? = null,
+        val server: String? = null,
+        val lang: Long? = null,
+        val slug: String? = null,
+    )
 }
