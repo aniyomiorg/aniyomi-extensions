@@ -480,7 +480,6 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                     val trackerList = animeTrackers.split(",").map { it.trim() }.filter { it.isNotBlank() }.joinToString("&tr=")
                     "magnet:?xt=urn:btih:${stream.infoHash}&dn=${stream.infoHash}&tr=$trackerList&index=${stream.fileIdx}"
                 } else stream.url ?: ""
-
             Video(urlOrHash, stream.title ?: "", urlOrHash)
         }.orEmpty()
     }
