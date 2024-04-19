@@ -492,7 +492,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
         return sortedWith(
             compareBy(
                 { isDub && it.quality.contains("dubbed", true) },
-                { isEfficient && arrayOf("hevc", "265", "avi").any { q -> it.quality.contains(q, true) } },
+                { isEfficient && arrayOf("hevc", "265", "av1").any { q -> it.quality.contains(q, true) } },
             ),
         ).reversed()
     }
