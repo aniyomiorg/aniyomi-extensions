@@ -474,9 +474,6 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
             udp://www.torrent.eu.org:451/announce
         """.trimIndent()
 
-        val isDub = preferences.getBoolean(IS_DUB_KEY, IS_DUB_DEFAULT)
-        val isEfficient = preferences.getBoolean(IS_EFFICIENT_KEY, IS_EFFICIENT_DEFAULT)
-
         return streamList.streams?.map { stream ->
             val urlOrHash =
                 if (debridProvider == "none") {
@@ -485,35 +482,19 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                 } else stream.url ?: ""
 
             Video(urlOrHash, stream.title ?: "", urlOrHash)
-        }.orEmpty().let { videos ->
-            val comparator = compareBy<Video> { video ->
-                val title = video.quality
-                val containsDubbed = title.contains("Dubbed", ignoreCase = true)
-                val containsEfficient =
-                    title.contains("hevc", ignoreCase = true) ||
-                        title.contains("265", ignoreCase = true) ||
-                        title.contains("av1", ignoreCase = true)
+        }.orEmpty()
+    }
 
-                when {
-                    isDub && isEfficient -> {
-                        if (containsDubbed && containsEfficient) {
-                            -1
-                        } else if (containsDubbed) {
-                            1
-                        } else if (containsEfficient) {
-                            1
-                        } else {
-                            0
-                        }
-                    }
-                    isDub -> if (containsDubbed) -1 else 0
-                    isEfficient -> if (containsEfficient) -1 else 0
-                    else -> 0
-                }
-            }
+    override fun List<Video>.sort(): List<Video> {
+        val isDub = preferences.getBoolean(IS_DUB_KEY, IS_DUB_DEFAULT)
+        val isEfficient = preferences.getBoolean(IS_EFFICIENT_KEY, IS_EFFICIENT_DEFAULT)
 
-            videos.sortedWith(comparator)
-        }
+        return sortedWith(
+            compareBy(
+                { isDub && it.quality.contains("dubbed", true) },
+                { isEfficient && arrayOf("hevc", "265", "avi").any { q -> it.quality.contains(q, true) } },
+            ),
+        ).reversed()
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
