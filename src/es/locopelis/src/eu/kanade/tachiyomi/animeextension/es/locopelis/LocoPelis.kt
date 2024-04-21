@@ -77,8 +77,7 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 name = "PELÍCULA"
                 episode_number = 1f
                 document.select("div.content div.details ul.dtalist li").map {
-                    if (it.text().contains("Publicado:"))
-                        date_upload = it.text().replace("Publicado:", "").trim().toDate()
+                    if (it.text().contains("Publicado:")) { date_upload = it.text().replace("Publicado:", "").trim().toDate() }
                 }
             }
         }
