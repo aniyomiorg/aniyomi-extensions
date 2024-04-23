@@ -1,7 +1,0 @@
-ext {
-    extName = 'AnimeUI'
-    extClass = '.AnimeUI'
-    extVersionCode = 2
-}
-
-apply from: "$rootDir/common.gradle"
