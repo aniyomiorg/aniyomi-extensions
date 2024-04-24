@@ -480,7 +480,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                     val trackerList = animeTrackers.split(",").map { it.trim() }.filter { it.isNotBlank() }.joinToString("&tr=")
                     "magnet:?xt=urn:btih:${stream.infoHash}&dn=${stream.infoHash}&tr=$trackerList&index=${stream.fileIdx}"
                 } else stream.url ?: ""
-            Video(urlOrHash, stream.title ?: "", urlOrHash)
+            Video(urlOrHash, ((stream.name?.replace("Torrentio\n", "") ?: "") + "\n" + stream.title), urlOrHash)
         }.orEmpty()
     }
 
@@ -492,6 +492,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
             compareBy(
                 { isDub && it.quality.contains("dubbed", true) },
                 { isEfficient && arrayOf("hevc", "265", "av1").any { q -> it.quality.contains(q, true) } },
+                { !Regex("\\[(.+?) download]").containsMatchIn(it.quality) }
             ),
         ).reversed()
     }
