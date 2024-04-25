@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.hentaistube
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.hentaistube.HentaisTubeFilters.applyFilterParams
@@ -19,14 +18,13 @@ import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
-import kotlinx.serialization.json.Json
+import eu.kanade.tachiyomi.util.parseAs
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
 
 class HentaisTube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -42,9 +40,7 @@ class HentaisTube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .add("Referer", baseUrl)
         .add("Origin", baseUrl)
 
-    private val json: Json by injectLazy()
-
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -80,9 +76,7 @@ class HentaisTube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val animeList by lazy {
         val headers = headersBuilder().add("X-Requested-With", "XMLHttpRequest").build()
         client.newCall(GET("$baseUrl/json-lista-capas.php", headers)).execute()
-            .body.string()
-            .let { json.decodeFromString<ItemsListDto>(it) }
-            .items
+            .parseAs<ItemsListDto>().items
             .asSequence()
     }
 
@@ -213,12 +207,6 @@ class HentaisTube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             entryValues = PREF_QUALITY_ENTRIES
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
         }.also(screen::addPreference)
     }
 
