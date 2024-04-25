@@ -174,7 +174,13 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             .filter { it.released }
             .map {
                 SEpisode.create().apply {
-                    name = "Temp $sname: Ep ${it.name} - ${it.title}"
+                    name = "$sname: Ep ${it.name}".run {
+                        if (!it.title.contains("Episode ")) {
+                            this + " - ${it.title}"
+                        } else {
+                            this
+                        }
+                    }
                     episode_number = it.name.toFloatOrNull() ?: 0F
                     url = it.id
                 }
