@@ -23,6 +23,7 @@ import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.awaitSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parseAs
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -33,6 +34,7 @@ import okhttp3.Response
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import kotlin.time.Duration.Companion.seconds
 
 class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -46,6 +48,10 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     override val supportsLatest = true
 
     override fun headersBuilder() = super.headersBuilder().add("Referer", "$baseUrl/")
+
+    private val episodesClient by lazy {
+        client.newBuilder().rateLimitHost(baseUrl.toHttpUrl(), 1, 1.5.seconds).build()
+    }
 
     private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -162,7 +168,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun getSeasonEps(seasonElement: Element): List<SEpisode> {
         val id = seasonElement.attr("data-season-id")
         val sname = seasonElement.text()
-        val response = client.newCall(apiRequest("getEpisodes=$id")).execute()
+        val response = episodesClient.newCall(apiRequest("getEpisodes=$id")).execute()
         val episodes = response.parseAs<EpisodeListDto>().episodes
             .values
             .filter { it.released }
