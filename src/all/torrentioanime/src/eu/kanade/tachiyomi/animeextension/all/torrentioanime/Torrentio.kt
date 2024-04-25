@@ -904,6 +904,5 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH)
         }
-
     }
 }
