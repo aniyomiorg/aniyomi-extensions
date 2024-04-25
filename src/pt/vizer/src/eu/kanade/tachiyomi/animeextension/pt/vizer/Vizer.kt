@@ -25,6 +25,7 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import eu.kanade.tachiyomi.util.parseAs
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -233,7 +234,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
-        return videoObjectList.flatMap(::getVideosFromObject)
+        return videoObjectList.parallelCatchingFlatMapBlocking(::getVideosFromObject)
     }
 
     private val mixdropExtractor by lazy { MixDropExtractor(client) }
