@@ -7,7 +7,6 @@ import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.EpisodeDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.ResponseDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.VideoDto
-import eu.kanade.tachiyomi.animeextension.pt.animestc.extractors.AnonFilesExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animestc.extractors.LinkBypasser
 import eu.kanade.tachiyomi.animeextension.pt.animestc.extractors.SendcmExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -172,11 +171,10 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    private val anonFilesExtractor by lazy { AnonFilesExtractor(client) }
     private val sendcmExtractor by lazy { SendcmExtractor(client) }
     private val linkBypasser by lazy { LinkBypasser(client, json) }
 
-    private val supportedPlayers = listOf("anonfiles", "send")
+    private val supportedPlayers = listOf("send")
 
     override fun videoListParse(response: Response): List<Video> {
         val videoDto = response.parseAs<ResponseDto<VideoDto>>().items.first()
@@ -208,7 +206,6 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         return when (video.name) {
-            "anonfiles" -> anonFilesExtractor.videosFromUrl(playerUrl, quality)
             "send" -> sendcmExtractor.videosFromUrl(playerUrl, quality)
             else -> emptyList()
         }
@@ -293,7 +290,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
 
         private const val PREF_PLAYER_KEY = "pref_player"
         private const val PREF_PLAYER_TITLE = "Player preferido"
-        private const val PREF_PLAYER_DEFAULT = "AnonFiles"
-        private val PREF_PLAYER_VALUES = arrayOf("AnonFiles", "Sendcm", "Player ATC")
+        private const val PREF_PLAYER_DEFAULT = "Sendcm"
+        private val PREF_PLAYER_VALUES = arrayOf("Sendcm", "Player ATC")
     }
 }
