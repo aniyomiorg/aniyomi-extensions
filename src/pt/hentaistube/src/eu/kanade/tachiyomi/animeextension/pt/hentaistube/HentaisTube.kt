@@ -151,7 +151,7 @@ class HentaisTube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
 
-    override fun episodeListSelector() = "div.pagAniListaContainer > li > a"
+    override fun episodeListSelector() = "ul.pagAniListaContainer > li > a"
 
     override fun episodeFromElement(element: Element) = SEpisode.create().apply {
         setUrlWithoutDomain(element.attr("href"))
