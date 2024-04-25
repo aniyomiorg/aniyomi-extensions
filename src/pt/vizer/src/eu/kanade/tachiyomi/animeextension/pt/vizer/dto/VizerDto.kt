@@ -4,6 +4,12 @@ import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonTransformingSerializer
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 typealias FakeList<T> = Map<String, T>
 
@@ -34,6 +40,7 @@ class EpisodeListDto(
 class EpisodeItemDto(
     val id: String,
     val name: String,
+    @Serializable(with = BooleanSerializer::class)
     val released: Boolean,
     val title: String,
 )
@@ -70,5 +77,12 @@ class HostersDto(
             "streamtape" to streamtape,
             "warezcdn" to warezcdn,
         )
+    }
+}
+
+object BooleanSerializer : JsonTransformingSerializer<Boolean>(Boolean.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement {
+        require(element is JsonPrimitive)
+        return if (element.jsonPrimitive.isString) JsonPrimitive(true) else JsonPrimitive(element.jsonPrimitive.booleanOrNull ?: false)
     }
 }
