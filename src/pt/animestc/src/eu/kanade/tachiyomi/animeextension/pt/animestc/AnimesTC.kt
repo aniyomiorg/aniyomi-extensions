@@ -92,7 +92,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
             .addQueryParameter("tag", params.genre)
             .build()
 
-        return GET(url.toString(), headers)
+        return GET(url, headers)
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
@@ -138,8 +138,8 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         description = buildString {
             append(anime.synopsis + "\n")
 
-            anime.classification?.also { append("\nClassificação: $it anos") }
-            anime.year?.also { append("\nAno de lançamento: $it ") }
+            anime.classification?.also { append("\nClassificação: ", it, " anos") }
+            anime.year?.also { append("\nAno de lançamento: ", it) }
         }
     }
 
@@ -226,13 +226,6 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
             entryValues = PREF_QUALITY_ENTRIES
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
         }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
@@ -242,13 +235,6 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
             entryValues = PREF_PLAYER_VALUES
             setDefaultValue(PREF_PLAYER_DEFAULT)
             summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
         }.also(screen::addPreference)
     }
 
@@ -264,9 +250,9 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun String.toDate(): Long {
-        return runCatching {
+        return try {
             DATE_FORMATTER.parse(this)?.time
-        }.getOrNull() ?: 0L
+        } catch (_: Throwable) { null } ?: 0L
     }
 
     override fun List<Video>.sort(): List<Video> {
