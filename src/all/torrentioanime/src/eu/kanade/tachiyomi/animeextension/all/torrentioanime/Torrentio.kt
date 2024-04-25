@@ -490,9 +490,9 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
 
         return sortedWith(
             compareBy(
+                { !Regex("\\[(.+?) download]").containsMatchIn(it.quality) },
                 { isDub && it.quality.contains("dubbed", true) },
                 { isEfficient && arrayOf("hevc", "265", "av1").any { q -> it.quality.contains(q, true) } },
-                { !Regex("\\[(.+?) download]").containsMatchIn(it.quality) },
             ),
         ).reversed()
     }
@@ -904,5 +904,6 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH)
         }
+
     }
 }
