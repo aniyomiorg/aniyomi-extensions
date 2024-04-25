@@ -147,7 +147,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
                     }
                 }
             }
-        return GET(urlBuilder.build().toString(), headers)
+        return GET(urlBuilder.build(), headers)
     }
 
     // =========================== Anime Details ============================
@@ -159,9 +159,9 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
         description = buildString {
             append(doc.selectFirst("span.desc")!!.text() + "\n")
-            doc.selectFirst("div.year")?.also { append("\nAno: ${it.text()}") }
-            doc.selectFirst("div.tm")?.also { append("\nDuração: ${it.text()}") }
-            doc.selectFirst("a.rating")?.also { append("\nNota: ${it.text()}") }
+            doc.selectFirst("div.year")?.also { append("\nAno: ", it.text()) }
+            doc.selectFirst("div.tm")?.also { append("\nDuração: ", it.text()) }
+            doc.selectFirst("a.rating")?.also { append("\nNota: ", it.text()) }
         }
     }
 
@@ -267,13 +267,6 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             entryValues = PREF_POPULAR_PAGE_VALUES
             setDefaultValue(PREF_POPULAR_PAGE_DEFAULT)
             summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
         }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
@@ -283,13 +276,6 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             entryValues = PREF_PLAYER_ARRAY
             setDefaultValue(PREF_PLAYER_DEFAULT)
             summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
         }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
@@ -299,13 +285,6 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             entryValues = PREF_LANGUAGE_VALUES
             setDefaultValue(PREF_LANGUAGE_DEFAULT)
             summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
         }.also(screen::addPreference)
     }
 
