@@ -16,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
+import eu.kanade.tachiyomi.lib.googledriveextractor.GoogleDriveExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
@@ -172,9 +173,10 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
     private val sendcmExtractor by lazy { SendcmExtractor(client) }
+    private val gdriveExtractor by lazy { GoogleDriveExtractor(client, headers) }
     private val linkBypasser by lazy { LinkBypasser(client, json) }
 
-    private val supportedPlayers = listOf("send")
+    private val supportedPlayers = listOf("send", "drive")
 
     override fun videoListParse(response: Response): List<Video> {
         val videoDto = response.parseAs<ResponseDto<VideoDto>>().items.first()
@@ -207,6 +209,10 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
 
         return when (video.name) {
             "send" -> sendcmExtractor.videosFromUrl(playerUrl, quality)
+            "drive" -> {
+                val id = GDRIVE_REGEX.find(playerUrl)?.groupValues?.get(0) ?: return emptyList()
+                gdriveExtractor.videosFromUrl(id, "GDrive - $quality")
+            }
             else -> emptyList()
         }
     }
@@ -291,6 +297,8 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_PLAYER_KEY = "pref_player"
         private const val PREF_PLAYER_TITLE = "Player preferido"
         private const val PREF_PLAYER_DEFAULT = "Sendcm"
-        private val PREF_PLAYER_VALUES = arrayOf("Sendcm", "Player ATC")
+        private val PREF_PLAYER_VALUES = arrayOf("Sendcm", "GDrive", "Player ATC")
+
+        private val GDRIVE_REGEX = Regex("[\\w-]{28,}")
     }
 }
