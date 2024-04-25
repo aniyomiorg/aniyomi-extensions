@@ -1,0 +1,18 @@
+ext {
+    extName = 'HentaiTk'
+    extClass = '.Hentaitk'
+    extVersionCode = 1
+    isNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation(project(':lib:okru-extractor'))
+    implementation(project(':lib:streamwish-extractor'))
+    implementation(project(':lib:streamhidevid-extractor'))
+    implementation(project(':lib:voe-extractor'))
+    implementation(project(':lib:yourupload-extractor'))
+    implementation(project(':lib:dood-extractor'))
+    implementation(project(':lib:streamtape-extractor'))
+}
