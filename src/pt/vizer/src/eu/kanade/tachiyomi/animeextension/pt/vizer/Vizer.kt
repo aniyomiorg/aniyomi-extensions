@@ -23,7 +23,9 @@ import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.awaitSuccess
+import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import eu.kanade.tachiyomi.util.parseAs
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -33,6 +35,7 @@ import okhttp3.Response
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import kotlin.time.Duration.Companion.seconds
 
 class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -46,6 +49,10 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     override val supportsLatest = true
 
     override fun headersBuilder() = super.headersBuilder().add("Referer", "$baseUrl/")
+
+    private val episodesClient by lazy {
+        client.newBuilder().rateLimitHost(baseUrl.toHttpUrl(), 1, 1.5.seconds).build()
+    }
 
     private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -140,7 +147,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
                     }
                 }
             }
-        return GET(urlBuilder.build().toString(), headers)
+        return GET(urlBuilder.build(), headers)
     }
 
     // =========================== Anime Details ============================
@@ -152,9 +159,9 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
         description = buildString {
             append(doc.selectFirst("span.desc")!!.text() + "\n")
-            doc.selectFirst("div.year")?.also { append("\nAno: ${it.text()}") }
-            doc.selectFirst("div.tm")?.also { append("\nDuração: ${it.text()}") }
-            doc.selectFirst("a.rating")?.also { append("\nNota: ${it.text()}") }
+            doc.selectFirst("div.year")?.also { append("\nAno: ", it.text()) }
+            doc.selectFirst("div.tm")?.also { append("\nDuração: ", it.text()) }
+            doc.selectFirst("a.rating")?.also { append("\nNota: ", it.text()) }
         }
     }
 
@@ -162,13 +169,19 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun getSeasonEps(seasonElement: Element): List<SEpisode> {
         val id = seasonElement.attr("data-season-id")
         val sname = seasonElement.text()
-        val response = client.newCall(apiRequest("getEpisodes=$id")).execute()
+        val response = episodesClient.newCall(apiRequest("getEpisodes=$id")).execute()
         val episodes = response.parseAs<EpisodeListDto>().episodes
             .values
             .filter { it.released }
             .map {
                 SEpisode.create().apply {
-                    name = "Temp $sname: Ep ${it.name} - ${it.title}"
+                    name = "$sname: Ep ${it.name}".run {
+                        if (!it.title.contains("Episode ")) {
+                            this + " - ${it.title}"
+                        } else {
+                            this
+                        }
+                    }
                     episode_number = it.name.toFloatOrNull() ?: 0F
                     url = it.id
                 }
@@ -221,7 +234,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
-        return videoObjectList.flatMap(::getVideosFromObject)
+        return videoObjectList.parallelCatchingFlatMapBlocking(::getVideosFromObject)
     }
 
     private val mixdropExtractor by lazy { MixDropExtractor(client) }
@@ -254,13 +267,6 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             entryValues = PREF_POPULAR_PAGE_VALUES
             setDefaultValue(PREF_POPULAR_PAGE_DEFAULT)
             summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
         }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
@@ -270,13 +276,6 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             entryValues = PREF_PLAYER_ARRAY
             setDefaultValue(PREF_PLAYER_DEFAULT)
             summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
         }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
@@ -286,13 +285,6 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             entryValues = PREF_LANGUAGE_VALUES
             setDefaultValue(PREF_LANGUAGE_DEFAULT)
             summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
         }.also(screen::addPreference)
     }
 
