@@ -7,7 +7,6 @@ import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.EpisodeDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.ResponseDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.VideoDto
-import eu.kanade.tachiyomi.animeextension.pt.animestc.extractors.AnonFilesExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animestc.extractors.LinkBypasser
 import eu.kanade.tachiyomi.animeextension.pt.animestc.extractors.SendcmExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -17,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
+import eu.kanade.tachiyomi.lib.googledriveextractor.GoogleDriveExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
@@ -92,7 +92,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
             .addQueryParameter("tag", params.genre)
             .build()
 
-        return GET(url.toString(), headers)
+        return GET(url, headers)
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
@@ -138,8 +138,8 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         description = buildString {
             append(anime.synopsis + "\n")
 
-            anime.classification?.also { append("\nClassificação: $it anos") }
-            anime.year?.also { append("\nAno de lançamento: $it ") }
+            anime.classification?.also { append("\nClassificação: ", it, " anos") }
+            anime.year?.also { append("\nAno de lançamento: ", it) }
         }
     }
 
@@ -172,11 +172,11 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    private val anonFilesExtractor by lazy { AnonFilesExtractor(client) }
     private val sendcmExtractor by lazy { SendcmExtractor(client) }
+    private val gdriveExtractor by lazy { GoogleDriveExtractor(client, headers) }
     private val linkBypasser by lazy { LinkBypasser(client, json) }
 
-    private val supportedPlayers = listOf("anonfiles", "send")
+    private val supportedPlayers = listOf("send", "drive")
 
     override fun videoListParse(response: Response): List<Video> {
         val videoDto = response.parseAs<ResponseDto<VideoDto>>().items.first()
@@ -208,8 +208,11 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         return when (video.name) {
-            "anonfiles" -> anonFilesExtractor.videosFromUrl(playerUrl, quality)
             "send" -> sendcmExtractor.videosFromUrl(playerUrl, quality)
+            "drive" -> {
+                val id = GDRIVE_REGEX.find(playerUrl)?.groupValues?.get(0) ?: return emptyList()
+                gdriveExtractor.videosFromUrl(id, "GDrive - $quality")
+            }
             else -> emptyList()
         }
     }
@@ -223,13 +226,6 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
             entryValues = PREF_QUALITY_ENTRIES
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
         }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
@@ -239,13 +235,6 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
             entryValues = PREF_PLAYER_VALUES
             setDefaultValue(PREF_PLAYER_DEFAULT)
             summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
         }.also(screen::addPreference)
     }
 
@@ -261,9 +250,9 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun String.toDate(): Long {
-        return runCatching {
+        return try {
             DATE_FORMATTER.parse(this)?.time
-        }.getOrNull() ?: 0L
+        } catch (_: Throwable) { null } ?: 0L
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -293,7 +282,9 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
 
         private const val PREF_PLAYER_KEY = "pref_player"
         private const val PREF_PLAYER_TITLE = "Player preferido"
-        private const val PREF_PLAYER_DEFAULT = "AnonFiles"
-        private val PREF_PLAYER_VALUES = arrayOf("AnonFiles", "Sendcm", "Player ATC")
+        private const val PREF_PLAYER_DEFAULT = "Sendcm"
+        private val PREF_PLAYER_VALUES = arrayOf("Sendcm", "GDrive", "Player ATC")
+
+        private val GDRIVE_REGEX = Regex("[\\w-]{28,}")
     }
 }
