@@ -3,7 +3,7 @@ ext {
     extClass = '.AnimesOnline'
     themePkg = 'dooplay'
     baseUrl = 'https://animesonline.nz'
-    overrideVersionCode = 8
+    overrideVersionCode = 9
 }
 
 apply from: "$rootDir/common.gradle"
