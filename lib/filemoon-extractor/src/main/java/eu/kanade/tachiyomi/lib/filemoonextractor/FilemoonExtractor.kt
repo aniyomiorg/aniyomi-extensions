@@ -14,47 +14,48 @@ import okhttp3.OkHttpClient
 import uy.kohesive.injekt.injectLazy
 
 class FilemoonExtractor(private val client: OkHttpClient) {
+
+    private val playlistUtils by lazy { PlaylistUtils(client) }
     private val json: Json by injectLazy()
 
     fun videosFromUrl(url: String, prefix: String = "Filemoon - ", headers: Headers? = null): List<Video> {
-        return runCatching {
-            val httpUrl = url.toHttpUrl()
-            val videoHeaders = (headers?.newBuilder() ?: Headers.Builder())
-                .set("Referer", url)
-                .set("Origin", "https://${httpUrl.host}")
-                .build()
+        val httpUrl = url.toHttpUrl()
+        val videoHeaders = (headers?.newBuilder() ?: Headers.Builder())
+            .set("Referer", url)
+            .set("Origin", "https://${httpUrl.host}")
+            .build()
 
-            val doc = client.newCall(GET(url, videoHeaders)).execute().asJsoup()
-            val jsEval = doc.selectFirst("script:containsData(eval):containsData(m3u8)")!!.data()
-            val unpacked = JsUnpacker.unpackAndCombine(jsEval).orEmpty()
-            val masterUrl = unpacked.takeIf(String::isNotBlank)
-                ?.substringAfter("{file:\"", "")
-                ?.substringBefore("\"}", "")
-                ?.takeIf(String::isNotBlank)
-                ?: return emptyList()
+        val doc = client.newCall(GET(url, videoHeaders)).execute().asJsoup()
+        val jsEval = doc.selectFirst("script:containsData(eval):containsData(m3u8)")!!.data()
+        val unpacked = JsUnpacker.unpackAndCombine(jsEval).orEmpty()
+        val masterUrl = unpacked.takeIf(String::isNotBlank)
+            ?.substringAfter("{file:\"", "")
+            ?.substringBefore("\"}", "")
+            ?.takeIf(String::isNotBlank)
+            ?: return emptyList()
 
-            val subtitleTracks = buildList {
-                // Subtitles from a external URL
-                val subUrl = httpUrl.queryParameter("sub.info")
-                    ?: unpacked.substringAfter("fetch('", "")
-                        .substringBefore("').")
-                        .takeIf(String::isNotBlank)
-                if (subUrl != null) {
-                    runCatching { // to prevent failures on serialization errors
-                        client.newCall(GET(subUrl, videoHeaders)).execute()
-                            .body.string()
-                            .let { json.decodeFromString<List<SubtitleDto>>(it) }
-                            .forEach { add(Track(it.file, it.label)) }
-                    }
+        val subtitleTracks = buildList {
+            // Subtitles from a external URL
+            val subUrl = httpUrl.queryParameter("sub.info")
+                ?: unpacked.substringAfter("fetch('", "")
+                    .substringBefore("').")
+                    .takeIf(String::isNotBlank)
+            if (subUrl != null) {
+                runCatching { // to prevent failures on serialization errors
+                    client.newCall(GET(subUrl, videoHeaders)).execute()
+                        .body.string()
+                        .let { json.decodeFromString<List<SubtitleDto>>(it) }
+                        .forEach { add(Track(it.file, it.label)) }
                 }
             }
+        }
 
-            PlaylistUtils(client, videoHeaders).extractFromHls(
-                masterUrl,
-                subtitleList = subtitleTracks,
-                videoNameGen = { "$prefix$it" },
-            )
-        }.getOrElse { emptyList() }
+        return playlistUtils.extractFromHls(
+            masterUrl,
+            subtitleList = subtitleTracks,
+            referer = "https://${httpUrl.host}/",
+            videoNameGen = { "$prefix$it" },
+        )
     }
 
     @Serializable
