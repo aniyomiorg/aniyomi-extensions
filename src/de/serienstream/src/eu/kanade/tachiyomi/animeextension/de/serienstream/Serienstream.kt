@@ -2,10 +2,6 @@ package eu.kanade.tachiyomi.animeextension.de.serienstream
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.text.InputType
-import android.util.Log
-import android.widget.Toast
-import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
@@ -22,7 +18,6 @@ import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -44,9 +39,6 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val baseUrl = "http://186.2.175.5"
 
-    private val baseLogin by lazy { SConstants.getPrefBaseLogin(preferences) }
-    private val basePassword by lazy { SConstants.getPrefBasePassword(preferences) }
-
     override val lang = "de"
 
     override val supportsLatest = true
@@ -59,13 +51,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .addInterceptor(DdosGuardInterceptor(network.client))
         .build()
 
-    private val authClient = network.client.newBuilder()
-        .addInterceptor(SerienstreamInterceptor(client, preferences))
-        .build()
-
     private val json: Json by injectLazy()
-
-    val context = Injekt.get<Application>()
 
     // ===== POPULAR ANIME =====
     override fun popularAnimeSelector(): String = "div.seriesListContainer div"
@@ -77,7 +63,6 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun popularAnimeFromElement(element: Element): SAnime {
-        context
         val anime = SAnime.create()
         val linkElement = element.selectFirst("a")!!
         anime.url = linkElement.attr("href")
@@ -187,14 +172,14 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun parseEpisodesFromSeries(element: Element): List<SEpisode> {
         val seasonId = element.attr("abs:href")
-        val episodesHtml = authClient.newCall(GET(seasonId)).execute().asJsoup()
+        val episodesHtml = client.newCall(GET(seasonId)).execute().asJsoup()
         val episodeElements = episodesHtml.select("table.seasonEpisodesList tbody tr")
         return episodeElements.map { episodeFromElement(it) }
     }
 
     private fun parseMoviesFromSeries(element: Element): List<SEpisode> {
         val seasonId = element.attr("abs:href")
-        val episodesHtml = authClient.newCall(GET(seasonId)).execute().asJsoup()
+        val episodesHtml = client.newCall(GET(seasonId)).execute().asJsoup()
         val episodeElements = episodesHtml.select("table.seasonEpisodesList tbody tr")
         return episodeElements.map { episodeFromElement(it) }
     }
@@ -222,7 +207,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val redirectlink = document.select("ul.row li")
+        val redirectlink = document.select("div.hosterSiteVideo ul.row li")
         val videoList = mutableListOf<Video>()
         val hosterSelection = preferences.getStringSet(SConstants.HOSTER_SELECTION, null)
         redirectlink.forEach {
@@ -363,37 +348,8 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
             }
         }
-        screen.addPreference(screen.editTextPreference(SConstants.LOGIN_TITLE, SConstants.LOGIN_DEFAULT, baseLogin, false, ""))
-        screen.addPreference(screen.editTextPreference(SConstants.PASSWORD_TITLE, SConstants.PASSWORD_DEFAULT, basePassword, true, ""))
         screen.addPreference(subPref)
         screen.addPreference(hosterPref)
         screen.addPreference(hosterSelection)
-    }
-
-    private fun PreferenceScreen.editTextPreference(title: String, default: String, value: String, isPassword: Boolean = false, placeholder: String): EditTextPreference {
-        return EditTextPreference(context).apply {
-            key = title
-            this.title = title
-            summary = value.ifEmpty { placeholder }
-            this.setDefaultValue(default)
-            dialogTitle = title
-
-            if (isPassword) {
-                setOnBindEditTextListener {
-                    it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-                }
-            }
-
-            setOnPreferenceChangeListener { _, newValue ->
-                try {
-                    val res = preferences.edit().putString(title, newValue as String).commit()
-                    Toast.makeText(context, "Starte Aniyomi neu, um die Einstellungen zu übernehmen.", Toast.LENGTH_LONG).show()
-                    res
-                } catch (e: Exception) {
-                    Log.e("SerienStream", "Fehler beim festlegen der Einstellung.", e)
-                    false
-                }
-            }
-        }
     }
 }

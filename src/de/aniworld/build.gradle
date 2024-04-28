@@ -1,5 +1,5 @@
 ext {
-    extName = 'AniWorld (experimental)'
+    extName = 'AniWorld'
     extClass = '.AniWorld'
     extVersionCode = 23
 }
