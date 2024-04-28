@@ -42,6 +42,8 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "de"
 
+    override val id: Long = 8286900189409315836
+
     override val supportsLatest = true
 
     private val preferences: SharedPreferences by lazy {
