@@ -1,5 +1,9 @@
 package eu.kanade.tachiyomi.animeextension.all.hikari
 
+import android.app.Application
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -8,7 +12,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
-import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
+import eu.kanade.tachiyomi.lib.vidhideextractor.VidHideExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import eu.kanade.tachiyomi.util.parseAs
@@ -19,8 +23,10 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
-class Hikari : ParsedAnimeHttpSource() {
+class Hikari : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     override val name = "Hikari"
 
@@ -33,6 +39,10 @@ class Hikari : ParsedAnimeHttpSource() {
     override fun headersBuilder() = super.headersBuilder().apply {
         add("Origin", baseUrl)
         add("Referer", "$baseUrl/")
+    }
+
+    private val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
     // ============================== Popular ===============================
@@ -206,7 +216,7 @@ class Hikari : ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
 
     private val filemoonExtractor by lazy { FilemoonExtractor(client) }
-    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val vidHideExtractor by lazy { VidHideExtractor(client, headers) }
     private val embedRegex = Regex("""getEmbed\(\s*(\d+)\s*,\s*(\d+)\s*,\s*'(\d+)'""")
 
     override fun videoListRequest(episode: SEpisode): Request {
@@ -248,7 +258,7 @@ class Hikari : ParsedAnimeHttpSource() {
     }
 
     private fun getVideosFromEmbed(embedUrl: String, name: String): List<Video> = when {
-        name.contains("streamwish", true) -> streamWishExtractor.videosFromUrl(embedUrl, name)
+        name.contains("vidhide", true) -> vidHideExtractor.videosFromUrl(embedUrl)
         embedUrl.contains("filemoon", true) -> {
             filemoonExtractor.videosFromUrl(embedUrl, prefix = "$name - ", headers = headers)
         }
@@ -256,6 +266,17 @@ class Hikari : ParsedAnimeHttpSource() {
     }
 
     override fun videoListSelector() = ".server-item:has(a[onclick~=getEmbed])"
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+        return sortedWith(
+            compareBy(
+                { it.quality.contains(quality) },
+                { QUALITY_REGEX.find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
+        ).reversed()
+    }
 
     override fun videoFromElement(element: Element): Video =
         throw UnsupportedOperationException()
@@ -276,5 +297,36 @@ class Hikari : ParsedAnimeHttpSource() {
         class PageDto(
             val totalPages: Int,
         )
+    }
+
+    companion object {
+        private val QUALITY_REGEX = Regex("""(\d+)p""")
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+        private val PREF_QUALITY_VALUES = arrayOf("1080", "720", "480", "360")
+        private val PREF_QUALITY_ENTRIES = PREF_QUALITY_VALUES.map {
+            "${it}p"
+        }.toTypedArray()
+    }
+
+    // ============================== Settings ==============================
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = "Preferred quality"
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
     }
 }
