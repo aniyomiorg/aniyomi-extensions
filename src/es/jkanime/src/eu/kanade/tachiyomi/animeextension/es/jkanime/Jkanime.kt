@@ -135,17 +135,17 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun getVideoLinks(document: Document): List<Pair<String, String>> {
-        val servers = mutableListOf<Pair<String, String>>()
         val scriptServers = document.selectFirst("script:containsData(var video = [];)")?.data() ?: return emptyList()
-
+        val isRemote = scriptServers.contains("= remote+'", true)
         val jsServer = scriptServers.substringAfter("var remote = '").substringBefore("'")
         val jsPath = scriptServers.substringAfter("= remote+'").substringBefore("'")
-        if (jsServer.isNotEmpty() && jsPath.isNotEmpty()) {
-            val jsLinks = client.newCall(GET(jsServer + jsPath)).execute().body.string()
-                .substringAfter("var servers = ").parseAs<Array<JsLinks>>().map {
-                    Pair(String(Base64.decode(it.remote, Base64.DEFAULT)), "${it.lang}".getLang())
-                }
-            servers.addAll(jsLinks)
+
+        val jsLinks = if (isRemote && jsServer.isNotEmpty()) {
+            client.newCall(GET(jsServer + jsPath)).execute().body.string()
+        } else {
+            scriptServers.substringAfter("var servers = ").substringBefore(";").substringBefore("var")
+        }.parseAs<Array<JsLinks>>().map {
+            Pair(String(Base64.decode(it.remote, Base64.DEFAULT)), "${it.lang}".getLang())
         }
 
         val htmlLinks = document.select("div.col-lg-12.rounded.bg-servers.text-white.p-3.mt-2 a").map {
@@ -160,8 +160,8 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .replace("/jk.php?u=", "$baseUrl/")
             Pair(if (url.contains("um2.php") || url.contains("um.php")) baseUrl + url else url, lang)
         }
-        servers.addAll(htmlLinks)
-        return servers
+
+        return jsLinks + htmlLinks
     }
 
     /*--------------------------------Video extractors------------------------------------*/
