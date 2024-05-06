@@ -1,5 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.en.edytjedhgmdhm
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -14,14 +19,16 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.net.URI
 import java.net.URISyntaxException
 
-class Edytjedhgmdhm : ParsedAnimeHttpSource() {
+class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "edytjedhgmdhm"
 
-    override val baseUrl = "https://edytjedhgmdhm.abfhaqrhbnf.workers.dev"
+    override val baseUrl by lazy { getBaseUrlPref() }
 
     private val videoFormats = arrayOf(".mkv", ".mp4", ".avi")
 
@@ -29,7 +36,23 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
 
     override val supportsLatest = false
 
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
     // ============================ Initializers ============================
+
+    private val asiandramaList by lazy {
+        client.newCall(GET("$baseUrl/asiandrama/")).execute()
+            .asJsoup()
+            .select(LINK_SELECTOR)
+    }
+
+    private val kdramaList by lazy {
+        client.newCall(GET("$baseUrl/kdrama/")).execute()
+            .asJsoup()
+            .select(LINK_SELECTOR)
+    }
 
     private val miscList by lazy {
         client.newCall(GET("$baseUrl/misc/")).execute()
@@ -104,6 +127,8 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
             "/tvs/" -> tvsList
             "/movies/" -> moviesList
             "/misc/" -> miscList
+            "/kdrama/" -> kdramaList
+            "/asiandrama/" -> asiandramaList
             else -> emptyList()
         }
 
@@ -149,7 +174,9 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
         arrayOf(
             Pair("TVs", "/tvs/"),
             Pair("Movies", "/movies/"),
-            Pair("misc", "/misc/"),
+            Pair("Misc", "/misc/"),
+            Pair("K-drama", "/kdrama/"),
+            Pair("Asian drama", "/asiandrama/"),
         ),
     )
 
@@ -278,5 +305,43 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
     companion object {
         private const val CHUNKED_SIZE = 30
         private const val LINK_SELECTOR = "table tbody a:not([href=..])"
+
+        private const val PREF_DOMAIN_KEY = "preferred_domain"
+        private const val PREF_DOMAIN_TITLE = "Preferred domain (requires app restart)"
+        private val PREF_DOMAIN_ENTRY_VALUES = arrayOf(
+            "https://edytjedhgmdhm.abfhaqrhbnf.workers.dev",
+            "https://odd-bird-1319.zwuhygoaqe.workers.dev",
+            "https://hello-world-flat-violet-6291.wstnjewyeaykmdg.workers.dev",
+            "https://worker-mute-fog-66ae.ihrqljobdq.workers.dev",
+            "https://worker-square-heart-580a.uieafpvtgl.workers.dev",
+            "https://worker-little-bread-2c2f.wqwmiuvxws.workers.dev",
+        )
+        private val PREF_DOMAIN_ENTRIES = PREF_DOMAIN_ENTRY_VALUES.map {
+            it.substringAfter("//").substringBefore(".")
+        }.toTypedArray()
+        private val PREF_DOMAIN_DEFAULT = PREF_DOMAIN_ENTRY_VALUES.first()
+    }
+
+    private fun getBaseUrlPref(): String =
+        preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!!
+
+    // ============================== Settings ==============================
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
+            title = PREF_DOMAIN_TITLE
+            entries = PREF_DOMAIN_ENTRIES
+            entryValues = PREF_DOMAIN_ENTRY_VALUES
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
     }
 }
