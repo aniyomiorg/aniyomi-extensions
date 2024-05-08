@@ -24,7 +24,7 @@ import uy.kohesive.injekt.api.get
 
 class AnyMovie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "AnyMovie"
+    override val name = "AllMoviesForYou"
 
     override val baseUrl = "https://anymovie.cc"
 
