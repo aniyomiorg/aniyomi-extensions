@@ -1,0 +1,7 @@
+ext {
+    extName = 'AnyMovie'
+    extClass = '.AnyMovie'
+    extVersionCode = 13
+}
+
+apply from: "$rootDir/common.gradle"
