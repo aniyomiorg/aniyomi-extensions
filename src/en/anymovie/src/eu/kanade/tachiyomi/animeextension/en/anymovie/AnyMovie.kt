@@ -26,7 +26,7 @@ class AnyMovie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnyMovie"
 
-    override val baseUrl = "https://anymovie.cc/"
+    override val baseUrl = "https://anymovie.cc"
 
     override val lang = "en"
 
