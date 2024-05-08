@@ -137,6 +137,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         arrayOf(
             Pair("<선택하다>", ""),
             Pair("전체", "bo_table=fin"),
+            Pair("2024", "bo_table=fin&sca=2024"),
             Pair("2023", "bo_table=fin&sca=2023"),
             Pair("2022", "bo_table=fin&sca=2022"),
             Pair("2021", "bo_table=fin&sca=2021"),

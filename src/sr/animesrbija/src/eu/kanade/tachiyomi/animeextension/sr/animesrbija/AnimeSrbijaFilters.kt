@@ -162,7 +162,7 @@ object AnimeSrbijaFilters {
             Pair("Specijal", "Specijal"),
         )
 
-        val YEARS = (2023 downTo 1960).map {
+        val YEARS = (2024 downTo 1960).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
