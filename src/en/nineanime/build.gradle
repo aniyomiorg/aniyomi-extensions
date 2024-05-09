@@ -1,7 +1,7 @@
 ext {
     extName = 'Aniwave'
     extClass = '.Aniwave'
-    extVersionCode = 68
+    extVersionCode = 69
 }
 
 apply from: "$rootDir/common.gradle"

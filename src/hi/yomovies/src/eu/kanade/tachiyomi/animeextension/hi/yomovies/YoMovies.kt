@@ -258,6 +258,7 @@ class YoMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("<select>", ""),
             Pair("Bollywood", "/genre/bollywood/"),
             Pair("Trending", "/genre/top-rated/"),
+            Pair("Bollywood (2024)", "/account/?ptype=post&tax_category%5B%5D=bollywood&tax_release-year=2024&wpas=1"),
             Pair("Bollywood (2023)", "/account/?ptype=post&tax_category%5B%5D=bollywood&tax_release-year=2023&wpas=1"),
             Pair("Bollywood (2022)", "/account/?ptype=post&tax_category%5B%5D=bollywood&tax_release-year=2022&wpas=1"),
             Pair("Bollywood (2021)", "/account/?ptype=post&tax_category%5B%5D=bollywood&tax_release-year=2021&wpas=1"),
@@ -283,6 +284,7 @@ class YoMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         arrayOf(
             Pair("<select>", ""),
             Pair("Hollywood", "/genre/hollywood/"),
+            Pair("Hollywood (2024)", "/account/?ptype=post&tax_category%5B%5D=hollywood&tax_release-year=2024&wpas=1"),
             Pair("Hollywood (2023)", "/account/?ptype=post&tax_category%5B%5D=hollywood&tax_release-year=2023&wpas=1"),
             Pair("Hollywood (2022)", "/account/?ptype=post&tax_category%5B%5D=hollywood&tax_release-year=2022&wpas=1"),
             Pair("Hollywood (2021)", "/account/?ptype=post&tax_category%5B%5D=hollywood&tax_release-year=2021&wpas=1"),

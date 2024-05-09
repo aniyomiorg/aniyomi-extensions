@@ -189,7 +189,7 @@ object MiniOppaiFilters {
             Pair("Web", "web"),
         )
 
-        val YEARS_LIST = (2023 downTo 2001).map {
+        val YEARS_LIST = (2024 downTo 2001).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 

@@ -151,7 +151,7 @@ object AnimesZoneFilters {
             Pair("Vida Escolar", "vida-escolar"),
         )
 
-        val YEAR = arrayOf(ANY) + (1986..2023).map {
+        val YEAR = arrayOf(ANY) + (1986..2024).map {
             Pair(it.toString(), it.toString())
         }.reversed().toTypedArray()
 
