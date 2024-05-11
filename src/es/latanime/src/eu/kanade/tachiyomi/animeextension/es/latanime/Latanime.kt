@@ -284,11 +284,11 @@ class Latanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val prefix = "${videoElement.text()} - "
 
             when {
-                url.contains("ok.ru") -> {
+                url.contains("ok") -> {
                     val videos = OkruExtractor(client).videosFromUrl(url, prefix = prefix)
                     videoList.addAll(videos)
                 }
-                url.contains("mp4upload.com") -> {
+                url.contains("mp4upload") -> {
                     val videos = Mp4uploadExtractor(client).videosFromUrl(url, headers, prefix = "$prefix ")
                     videoList.addAll(videos)
                 }
