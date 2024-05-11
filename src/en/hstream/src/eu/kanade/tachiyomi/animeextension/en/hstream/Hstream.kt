@@ -101,7 +101,7 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (query.isNotBlank()) addQueryParameter("s", query)
             addQueryParameter("page", page.toString())
             addQueryParameter("order", params.order)
-            params.genres.forEach { addQueryParameter("tags[]", it) }
+            params.genres.forEachIndexed { index, genre -> addQueryParameter("tags[$index]", genre) }
             params.blacklisted.forEach { addQueryParameter("blacklist[]", it) }
             params.studios.forEach { addQueryParameter("studios[]", it) }
         }.build()
