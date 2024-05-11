@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.en.anymovie
+package eu.kanade.tachiyomi.animeextension.en.allmovies
 
 import android.app.Application
 import android.content.SharedPreferences
@@ -24,7 +24,7 @@ import uy.kohesive.injekt.api.get
 
 class AnyMovie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "AllMoviesForYou"
+    override val name = "AnyMovie"
 
     override val baseUrl = "https://anymovie.cc"
 
