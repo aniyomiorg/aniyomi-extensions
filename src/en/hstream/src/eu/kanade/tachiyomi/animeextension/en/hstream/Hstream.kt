@@ -101,7 +101,7 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (query.isNotBlank()) addQueryParameter("s", query)
             addQueryParameter("page", page.toString())
             addQueryParameter("order", params.order)
-            params.genres.forEach { addQueryParameter("tags[]", it) }
+            params.genres.forEachIndexed { index, genre -> addQueryParameter("tags[$index]", genre) }
             params.blacklisted.forEach { addQueryParameter("blacklist[]", it) }
             params.studios.forEach { addQueryParameter("studios[]", it) }
         }.build()
@@ -119,9 +119,9 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
         status = SAnime.COMPLETED
 
-        val floatleft = document.selectFirst("div.relative > div.float-left > div")!!
-        title = floatleft.selectFirst("h1")!!.text()
-        artist = floatleft.selectFirst("h2 > a")?.text()
+        val floatleft = document.selectFirst("div.relative > div.justify-between > div")!!
+        title = floatleft.selectFirst("div > h1")!!.text()
+        artist = floatleft.select("div > a:nth-of-type(3)").text()
 
         thumbnail_url = document.selectFirst("div.float-left > img.object-cover")?.absUrl("src")
         genre = document.select("ul.list-none > li > a").eachText().joinToString()
