@@ -119,9 +119,9 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
         status = SAnime.COMPLETED
 
-        val floatleft = document.selectFirst("div.relative > div.float-left > div")!!
-        title = floatleft.selectFirst("h1")!!.text()
-        artist = floatleft.selectFirst("h2 > a")?.text()
+        val floatleft = document.selectFirst("div.relative > div.justify-between > div")!!
+        title = floatleft.selectFirst("div > h1")!!.text()
+        artist = floatleft.select("div > a:nth-of-type(3)").text()
 
         thumbnail_url = document.selectFirst("div.float-left > img.object-cover")?.absUrl("src")
         genre = document.select("ul.list-none > li > a").eachText().joinToString()
