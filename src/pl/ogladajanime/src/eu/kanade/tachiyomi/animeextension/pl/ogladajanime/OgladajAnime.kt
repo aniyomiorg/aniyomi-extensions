@@ -14,13 +14,17 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -49,10 +53,9 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
-
     companion object {
         private val DATE_FORMATTER by lazy {
-            SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN)
+            SimpleDateFormat("dd.MM.yyyy", Locale.GERMANY)
         }
     }
 
@@ -134,27 +137,52 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Episodes ==============================
 
-    override fun episodeListRequest(anime: SAnime): Request {
-        return GET(anime.url, headers = headers)
-    }
+//    override fun episodeListRequest(anime: SAnime): Request {
+//        return GET(anime.url, headers = headers)
+//    }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        return super.episodeListParse(response).reversed()
+        val document = response.asJsoup()
+        val episodeList = mutableListOf<SEpisode>()
+
+        document.select("ul#ep_list > li").forEach { element ->
+            val episode = SEpisode.create()
+            val episodeNumber = element.attr("value").toFloatOrNull() ?: 0f
+            val episodeText = element.select("div > div > p").text()
+            val episodeImg = element.select("div > img").attr("alt")
+            val check = element.select("div > img")
+            if (check.isNotEmpty()) {
+                episode.name = if (episodeText.isNotEmpty()) {
+                    "[${episodeNumber.toInt()}] $episodeText ($episodeImg)"
+                } else {
+                    "Episode ${episodeNumber.toInt()} ($episodeImg)"
+                }
+                episode.episode_number = episodeNumber
+                episode.url = element.attr("ep_id")
+                episodeList.add(episode)
+            }
+        }
+        return episodeList.reversed()
     }
 
-    override fun episodeListSelector(): String = "ul#ep_list > li"
+    override fun episodeListSelector(): String = throw UnsupportedOperationException()
 
-    override fun episodeFromElement(element: Element): SEpisode  {
-        val episode = SEpisode.create()
-        episode.name = "a"
-        episode.episode_number =
-        episode.url = "episode"
-        return episode
-    }
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
     // ============================ Video Links =============================
 
+    override fun videoListRequest(episode: SEpisode): Request {
+//        val cos = episode.
+//        val urlAnime = anime.url+episode.episode_number
+//        val payload = urlAnime.toRequestBody("application/json; charset=utf-8".toMediaType())
+
+        return POST("https://ogladajanime.pl/manager.php?action=get_player_list&id=${episode.url}", headers = headers)
+
+    }
+
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
+        val response = client.newCall(videoListRequest(episode)).await()
+
         val parsed = json.decodeFromString<EpisodeType>(episode.url)
         val serverList = mutableListOf<String>()
 
