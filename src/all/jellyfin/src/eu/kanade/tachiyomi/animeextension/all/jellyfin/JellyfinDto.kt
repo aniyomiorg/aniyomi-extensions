@@ -114,7 +114,12 @@ data class ItemDto(
         }
         genre = genres?.joinToString(", ")
         author = studios?.joinToString(", ") { it.name }
-        status = seriesStatus.parseStatus()
+
+        if (type == "Movie") {
+            status = SAnime.COMPLETED
+        } else {
+            status = seriesStatus.parseStatus()
+        }
     }
 
     private fun String?.parseStatus(): Int = when (this) {
