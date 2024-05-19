@@ -124,6 +124,7 @@ class UniqueStream : DooPlay(
         "Release Year",
         arrayOf(
             Pair("<select>", ""),
+            Pair("2024", "2024"),
             Pair("2023", "2023"),
             Pair("2022", "2022"),
             Pair("2021", "2021"),

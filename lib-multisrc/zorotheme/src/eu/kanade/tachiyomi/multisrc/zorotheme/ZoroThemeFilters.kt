@@ -183,7 +183,7 @@ object ZoroThemeFilters {
             Pair("Most Watched", "most_watched"),
         )
 
-        val YEARS = arrayOf(ALL) + (1917..2023).map {
+        val YEARS = arrayOf(ALL) + (1917..2024).map {
             Pair(it.toString(), it.toString())
         }.reversed().toTypedArray()
 

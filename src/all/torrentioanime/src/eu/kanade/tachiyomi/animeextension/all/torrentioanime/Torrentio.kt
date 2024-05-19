@@ -480,8 +480,21 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                     val trackerList = animeTrackers.split(",").map { it.trim() }.filter { it.isNotBlank() }.joinToString("&tr=")
                     "magnet:?xt=urn:btih:${stream.infoHash}&dn=${stream.infoHash}&tr=$trackerList&index=${stream.fileIdx}"
                 } else stream.url ?: ""
-            Video(urlOrHash, stream.title ?: "", urlOrHash)
+            Video(urlOrHash, ((stream.name?.replace("Torrentio\n", "") ?: "") + "\n" + stream.title), urlOrHash)
         }.orEmpty()
+    }
+
+    override fun List<Video>.sort(): List<Video> {
+        val isDub = preferences.getBoolean(IS_DUB_KEY, IS_DUB_DEFAULT)
+        val isEfficient = preferences.getBoolean(IS_EFFICIENT_KEY, IS_EFFICIENT_DEFAULT)
+
+        return sortedWith(
+            compareBy(
+                { Regex("\\[(.+?) download]").containsMatchIn(it.quality) },
+                { isDub && !it.quality.contains("dubbed", true) },
+                { isEfficient && !arrayOf("hevc", "265", "av1").any { q -> it.quality.contains(q, true) } },
+            ),
+        )
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -600,6 +613,25 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putBoolean(key, newValue as Boolean).commit()
             }
+        }.also(screen::addPreference)
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = IS_DUB_KEY
+            title = "Dubbed Video Priority"
+            setDefaultValue(IS_DUB_DEFAULT)
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putBoolean(key, newValue as Boolean).commit()
+            }
+        }.also(screen::addPreference)
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = IS_EFFICIENT_KEY
+            title = "Efficient Video Priority"
+            setDefaultValue(IS_EFFICIENT_DEFAULT)
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putBoolean(key, newValue as Boolean).commit()
+            }
+            summary = "Codec: (HEVC / x265)  & AV1. High-quality video with less data usage."
         }.also(screen::addPreference)
     }
 
@@ -862,6 +894,12 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
 
         private const val UPCOMING_EP_KEY = "upcoming_ep"
         private const val UPCOMING_EP_DEFAULT = false
+
+        private const val IS_DUB_KEY = "dubbed"
+        private const val IS_DUB_DEFAULT = false
+
+        private const val IS_EFFICIENT_KEY = "efficient"
+        private const val IS_EFFICIENT_DEFAULT = false
 
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH)

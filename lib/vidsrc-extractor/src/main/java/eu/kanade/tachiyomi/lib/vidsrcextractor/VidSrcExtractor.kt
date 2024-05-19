@@ -77,7 +77,7 @@ class VidsrcExtractor(private val client: OkHttpClient, private val headers: Hea
         }
         val vidId = embedLink.substringAfterLast("/").substringBefore("?")
         val encodedID = encodeID(vidId, keyList)
-        val apiSlug = callFromFuToken(host, encodedID)
+        val apiSlug = callFromFuToken(host, encodedID, embedLink)
 
         return buildString {
             append("https://")
@@ -110,9 +110,13 @@ class VidsrcExtractor(private val client: OkHttpClient, private val headers: Hea
         return encoded.toString(Charsets.UTF_8).replace("/", "_").trim()
     }
 
-    private fun callFromFuToken(host: String, data: String): String {
+    private fun callFromFuToken(host: String, data: String, embedLink: String): String {
+        val refererHeaders = headers.newBuilder().apply {
+            add("Referer", embedLink)
+        }.build()
+
         val fuTokenScript = client.newCall(
-            GET("https://$host/futoken"),
+            GET("https://$host/futoken", headers = refererHeaders),
         ).execute().body.string()
 
         val js = buildString {

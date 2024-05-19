@@ -1,0 +1,12 @@
+ext {
+    extName = 'Hikari'
+    extClass = '.Hikari'
+    extVersionCode = 5
+}
+
+apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation(project(':lib:filemoon-extractor'))
+    implementation(project(':lib:vidhide-extractor'))
+}

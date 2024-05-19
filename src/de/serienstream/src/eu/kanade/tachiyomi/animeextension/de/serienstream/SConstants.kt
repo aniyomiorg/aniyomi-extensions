@@ -1,7 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.de.serienstream
 
-import android.content.SharedPreferences
-
 object SConstants {
     const val NAME_DOOD = "Doodstream"
     const val NAME_STAPE = "Streamtape"
@@ -27,14 +25,4 @@ object SConstants {
     const val PREFERRED_HOSTER = "preferred_hoster"
     const val PREFERRED_LANG = "preferred_lang"
     const val HOSTER_SELECTION = "hoster_selection"
-
-    const val LOGIN_TITLE = "E-Mail-Adresse"
-    const val LOGIN_DEFAULT = ""
-    const val PASSWORD_TITLE = "Passwort"
-    const val PASSWORD_DEFAULT = ""
-
-    const val LOGIN_URL = "http://186.2.175.5/login"
-
-    fun getPrefBaseLogin(preferences: SharedPreferences): String = preferences.getString(LOGIN_TITLE, LOGIN_DEFAULT)!!
-    fun getPrefBasePassword(preferences: SharedPreferences): String = preferences.getString(PASSWORD_TITLE, PASSWORD_DEFAULT)!!
 }

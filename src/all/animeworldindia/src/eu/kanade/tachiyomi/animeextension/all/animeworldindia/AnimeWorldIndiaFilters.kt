@@ -47,6 +47,7 @@ class AnimeWorldIndiaFilters {
 
     private fun getYearList() = listOf(
         StringQuery("Any", "all"),
+        StringQuery("2024", "2024"),
         StringQuery("2023", "2023"),
         StringQuery("2022", "2022"),
         StringQuery("2021", "2021"),

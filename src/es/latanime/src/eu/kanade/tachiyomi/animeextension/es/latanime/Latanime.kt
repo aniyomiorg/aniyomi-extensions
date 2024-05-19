@@ -107,6 +107,7 @@ class Latanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         "Año",
         arrayOf(
             Pair("Seleccionar", "false"),
+            Pair("2024", "2024"),
             Pair("2023", "2023"),
             Pair("2022", "2022"),
             Pair("2021", "2021"),
@@ -287,7 +288,7 @@ class Latanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val videos = OkruExtractor(client).videosFromUrl(url, prefix = prefix)
                     videoList.addAll(videos)
                 }
-                url.contains("mp4upload.com") -> {
+                url.contains("mp4upload") -> {
                     val videos = Mp4uploadExtractor(client).videosFromUrl(url, headers, prefix = "$prefix ")
                     videoList.addAll(videos)
                 }

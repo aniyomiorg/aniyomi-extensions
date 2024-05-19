@@ -3,7 +3,7 @@ ext {
     extClass = '.Cinemathek'
     themePkg = 'dooplay'
     baseUrl = 'https://cinemathek.net'
-    overrideVersionCode = 19
+    overrideVersionCode = 20
     isNsfw = true
 }
 

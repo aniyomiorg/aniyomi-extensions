@@ -98,6 +98,7 @@ class JetAnime : DooPlay(
         "Year",
         arrayOf(
             Pair("<select>", ""),
+            Pair("2024", "/annee/2024"),
             Pair("2023", "/annee/2023"),
             Pair("2022", "/annee/2022"),
             Pair("2021", "/annee/2021"),

@@ -3,7 +3,7 @@ ext {
     extClass = '.VoirCartoon'
     themePkg = 'dooplay'
     baseUrl = 'https://voircartoon.com'
-    overrideVersionCode = 4
+    overrideVersionCode = 5
     isNsfw = true
 }
 

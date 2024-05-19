@@ -1,7 +1,0 @@
-ext {
-    extName = 'Animes Aria'
-    extClass = '.AnimesAria'
-    extVersionCode = 2
-}
-
-apply from: "$rootDir/common.gradle"

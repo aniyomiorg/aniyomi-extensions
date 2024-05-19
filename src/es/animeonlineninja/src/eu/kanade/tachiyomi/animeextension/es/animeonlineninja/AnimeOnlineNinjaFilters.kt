@@ -114,7 +114,7 @@ object AnimeOnlineNinjaFilters {
             Pair("Audio Castellano \uD83C\uDDEA\uD83C\uDDF8", "anime-castellano"),
         )
 
-        val YEARS = arrayOf(EVERY) + (2023 downTo 1979).map {
+        val YEARS = arrayOf(EVERY) + (2024 downTo 1979).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 

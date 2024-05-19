@@ -30,7 +30,7 @@ class UAKino : ParsedAnimeHttpSource() {
 
     override val baseUrl = "https://uakino.club"
     private val animeUrl = "/animeukr"
-    private val popularUrl = "/f/c.year=1921,2023/sort=rating;desc"
+    private val popularUrl = "/f/c.year=1921,2024/sort=rating;desc"
 
     private val episodesAPI = "https://uakino.club/engine/ajax/playlists.php?news_id=%s&xfield=playlist" // %s - ID title
 

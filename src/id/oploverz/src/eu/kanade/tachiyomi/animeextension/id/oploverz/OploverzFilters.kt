@@ -198,6 +198,7 @@ object OploverzFilters {
             Pair("Spring 2021", "spring-2021"),
             Pair("Spring 2022", "spring-2022"),
             Pair("Spring 2023", "spring-2023"),
+            Pair("Spring 2024", "spring-2024"),
             Pair("Summer 1996", "summer-1996"),
             Pair("Summer 2012", "summer-2012"),
             Pair("Summer 2013", "summer-2013"),
