@@ -1,6 +1,6 @@
 ext {
-    extName = 'Docchi'
-    extClass = '.Docchi'
+    extName = 'OgladajAnime'
+    extClass = '.OgladajAnime'
     extVersionCode = 1
     isNsfw = true
 }
