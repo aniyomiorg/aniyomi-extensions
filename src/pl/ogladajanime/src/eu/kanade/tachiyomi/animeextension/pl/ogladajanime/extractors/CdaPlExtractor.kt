@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.pl.docchi.extractors
+package eu.kanade.tachiyomi.animeextension.pl.ogladajanime.extractors
 
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET

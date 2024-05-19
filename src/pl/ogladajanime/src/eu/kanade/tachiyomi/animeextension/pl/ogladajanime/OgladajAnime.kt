@@ -1,11 +1,11 @@
-package eu.kanade.tachiyomi.animeextension.pl.docchi
+package eu.kanade.tachiyomi.animeextension.pl.ogladajanime
 
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
-import eu.kanade.tachiyomi.animeextension.pl.docchi.extractors.CdaPlExtractor
+import eu.kanade.tachiyomi.animeextension.pl.ogladajanime.extractors.CdaPlExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -30,13 +30,13 @@ import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class Docchi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "Docchi"
+    override val name = "OgladajAnime"
 
-    override val baseUrl = "https://docchi.pl/"
+    override val baseUrl = "https://ogladajanime.pl"
 
-    private val apiUrl = " https://api.docchi.pl/v1"
+    // private val apiUrl = " https://api.docchi.pl/v1"
 
     override val lang = "pl"
 
@@ -139,95 +139,18 @@ class Docchi : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.asJsoup()
-        val episodeList = mutableListOf<SEpisode>()
-        var counter = 1
-
-        document.select("button:not(:contains(Wychodzące)):not(:contains(Warsztat)):not(:contains(Lista anime)) + div.dropdown-content > a").forEach seasons@{ season ->
-            val seasonDoc = client.newCall(
-                GET(response.request.url.toString() + "/${season.attr("href")}", headers = headers),
-            ).execute().asJsoup()
-            seasonDoc.select("table.lista > tbody > tr").reversed().forEach { ep ->
-                val episode = SEpisode.create()
-
-                // Skip over openings and engings
-                if (preferences.getBoolean("preferred_opening", true)) {
-                    if (season.text().contains("Openingi", true) || season.text().contains("Endingi", true)) {
-                        return@seasons
-                    }
-                }
-
-                if (ep.selectFirst("td > a") == null) {
-                    val (name, scanlator) = if (preferences.getBoolean("preferred_season_view", true)) {
-                        Pair(
-                            ep.selectFirst("td")!!.text(),
-                            season.text(),
-                        )
-                    } else {
-                        Pair(
-                            "[${season.text()}] ${ep.selectFirst("td")!!.text()}",
-                            null,
-                        )
-                    }
-
-                    val notUploaded = ep.selectFirst("td:contains(??.??.????)") != null
-
-                    episode.name = name
-                    episode.scanlator = if (notUploaded) {
-                        "(Jeszcze nie przesłane) $scanlator"
-                    } else {
-                        scanlator
-                    }
-                    episode.episode_number = counter.toFloat()
-                    episode.date_upload = ep.selectFirst("td:matches(\\d+\\.\\d+\\.\\d)")?.let { parseDate(it.text()) } ?: 0L
-                    val urls = ep.select("td > span[class*=link]").map {
-                        "https://${response.request.url.host}/${it.className().substringBefore("_link")}-${it.attr("rel")}.html"
-                    }
-                    episode.url = EpisodeType(
-                        "single",
-                        urls,
-                    ).toJsonString()
-                } else {
-                    val (name, scanlator) = if (preferences.getBoolean("preferred_season_view", true)) {
-                        Pair(
-                            ep.selectFirst("td")!!.text(),
-                            "${season.text()} • ${ep.selectFirst("td:matches([a-zA-Z]+):not(:has(a))")?.text()}",
-                        )
-                    } else {
-                        Pair(
-                            "[${season.text()}] ${ep.selectFirst("td")!!.text()}",
-                            ep.selectFirst("td:matches([a-zA-Z]+):not(:has(a))")?.text(),
-                        )
-                    }
-
-                    val notUploaded = ep.selectFirst("td:contains(??.??.????)") != null
-
-                    episode.name = name
-                    episode.episode_number = counter.toFloat()
-                    episode.date_upload = ep.selectFirst("td:matches(\\d+\\.\\d+\\.\\d)")?.let { parseDate(it.text()) } ?: 0L
-                    episode.scanlator = if (notUploaded) {
-                        "(Jeszcze nie przesłane) $scanlator"
-                    } else {
-                        scanlator
-                    }
-
-                    episode.url = EpisodeType(
-                        "multi",
-                        listOf("https://${response.request.url.host}/${ep.selectFirst("td a")!!.attr("href")}"),
-                    ).toJsonString()
-                }
-
-                episodeList.add(episode)
-                counter++
-            }
-        }
-
-        return episodeList.reversed()
+        return super.episodeListParse(response).reversed()
     }
 
-    override fun episodeListSelector(): String = throw UnsupportedOperationException()
+    override fun episodeListSelector(): String = "ul#ep_list > li"
 
-    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
+    override fun episodeFromElement(element: Element): SEpisode  {
+        val episode = SEpisode.create()
+        episode.name = "a"
+        episode.episode_number =
+        episode.url = "episode"
+        return episode
+    }
 
     // ============================ Video Links =============================
 
