@@ -37,6 +37,8 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    private val interceptor by lazy { GetSourcesInterceptor(VIDEO_REGEX, headers) }
+
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -48,7 +50,7 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector(): String = "div.pagination div.pagination-num i#nextpagination"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/trending/page/$page/")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/trending/page/$page/", headers)
 
     override fun popularAnimeSelector(): String = "div.film_list-wrap div.item"
 
@@ -139,8 +141,7 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoFrame = client.newCall(GET(videoUrl.toString())).execute().body.string()
         val embedUrl = videoFrame.substringAfter("embed_url\":\"").substringBefore("\"")
         val referer = headers.newBuilder().add("Referer", "$baseUrl/").build()
-        val videoRegex = Regex("""m3u8|.mp4""")
-        val webViewInterceptor = client.newBuilder().addInterceptor(GetSourcesInterceptor(videoRegex)).build()
+        val webViewInterceptor = client.newBuilder().addInterceptor(interceptor).build()
         val videoResponse = webViewInterceptor.newCall(GET(embedUrl, referer)).execute()
         val trueVideoUrl = videoResponse.request.url.toString()
         when {
@@ -256,7 +257,7 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/recent/page/$page/")
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/recent/page/$page/", headers)
 
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
 
@@ -280,26 +281,7 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(videoQualityPref)
     }
 
-    // =============================== Utilities ===============================
-    private fun titleEdit(title: String, details: Boolean = false): String {
-        return if (Regex("(?:فيلم|عرض)\\s(.*\\s[0-9]+)\\s(.+?)\\s").containsMatchIn(title)) {
-            val titleGroup = Regex("(?:فيلم|عرض)\\s(.*\\s[0-9]+)\\s(.+?)\\s").find(title)
-            val movieName = titleGroup!!.groupValues[1]
-            val type = titleGroup.groupValues[2]
-            movieName + if (details) " ($type)" else ""
-        } else if (Regex("(?:مسلسل|برنامج|انمي)\\s(.+)\\sالحلقة\\s(\\d+)").containsMatchIn(title)) {
-            val titleGroup = Regex("(?:مسلسل|برنامج|انمي)\\s(.+)\\sالحلقة\\s(\\d+)").find(title)
-            val seriesName = titleGroup!!.groupValues[1]
-            val epNum = titleGroup.groupValues[2]
-            if (details) {
-                "$seriesName (ep:$epNum)"
-            } else if (seriesName.contains("الموسم")) {
-                seriesName.split("الموسم")[0].trim()
-            } else {
-                seriesName
-            }
-        } else {
-            title
-        }
+    companion object {
+        private val VIDEO_REGEX by lazy { Regex("""m3u8|.mp4""") }
     }
 }

@@ -10,6 +10,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import eu.kanade.tachiyomi.network.GET
+import okhttp3.Headers
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.Interceptor
 import okhttp3.Request
@@ -20,7 +21,7 @@ import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-class GetSourcesInterceptor(private val searchRegex: Regex) : Interceptor {
+class GetSourcesInterceptor(private val searchRegex: Regex, private val globalHeaders: Headers) : Interceptor {
     private val context = Injekt.get<Application>()
     private val handler by lazy { Handler(Looper.getMainLooper()) }
 
@@ -62,7 +63,7 @@ class GetSourcesInterceptor(private val searchRegex: Regex) : Interceptor {
                 databaseEnabled = true
                 useWideViewPort = false
                 loadWithOverviewMode = false
-                userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0"
+                userAgentString = globalHeaders["User-Agent"]
             }
             webview.webViewClient = object : WebViewClient() {
                 override fun shouldInterceptRequest(
