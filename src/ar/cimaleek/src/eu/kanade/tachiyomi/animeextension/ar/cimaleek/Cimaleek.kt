@@ -121,23 +121,25 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    private fun extractVideos(element: Element, version: String): List<Video> {
-        fun generateRandomString(length: Int): String {
-            val characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-            val result = StringBuilder(length)
-            for (i in 0 until length) {
-                val randomIndex = (Math.random() * characters.length).toInt()
-                result.append(characters[randomIndex])
-            }
-            return result.toString()
+    private fun generateRandomString(): String {
+        val characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        val result = StringBuilder(16)
+        for (i in 0 until 16) {
+            val randomIndex = (Math.random() * characters.length).toInt()
+            result.append(characters[randomIndex])
         }
+        return result.toString()
+    }
+
+    private fun extractVideos(element: Element, version: String): List<Video> {
+
         val videoList = mutableListOf<Video>()
         val videoUrl = "$baseUrl/wp-json/lalaplayer/v2/".toHttpUrlOrNull()!!.newBuilder()
         videoUrl.addQueryParameter("p", element.attr("data-post"))
         videoUrl.addQueryParameter("t", element.attr("data-type"))
         videoUrl.addQueryParameter("n", element.attr("data-nume"))
         videoUrl.addQueryParameter("ver", version)
-        videoUrl.addQueryParameter("rand", generateRandomString(16))
+        videoUrl.addQueryParameter("rand", generateRandomString())
         val videoFrame = client.newCall(GET(videoUrl.toString())).execute().body.string()
         val embedUrl = videoFrame.substringAfter("embed_url\":\"").substringBefore("\"")
         val referer = headers.newBuilder().add("Referer", "$baseUrl/").build()
