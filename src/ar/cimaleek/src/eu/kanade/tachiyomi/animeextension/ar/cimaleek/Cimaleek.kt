@@ -132,7 +132,6 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun extractVideos(element: Element, version: String): List<Video> {
-
         val videoList = mutableListOf<Video>()
         val videoUrl = "$baseUrl/wp-json/lalaplayer/v2/".toHttpUrlOrNull()!!.newBuilder()
         videoUrl.addQueryParameter("p", element.attr("data-post"))
