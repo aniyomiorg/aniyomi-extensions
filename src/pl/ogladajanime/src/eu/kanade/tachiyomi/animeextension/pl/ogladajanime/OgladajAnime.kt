@@ -33,8 +33,6 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
