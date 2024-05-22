@@ -2,9 +2,9 @@ package eu.kanade.tachiyomi.animeextension.pl.ogladajanime
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.pl.ogladajanime.extractors.CdaPlExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,6 +14,8 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
+import eu.kanade.tachiyomi.lib.vkextractor.VkExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.await
@@ -23,11 +25,10 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.Headers
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import org.json.JSONObject
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
@@ -35,7 +36,6 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
-import org.json.JSONObject
 
 class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -43,15 +43,20 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val baseUrl = "https://ogladajanime.pl"
 
-    // private val apiUrl = " https://api.docchi.pl/v1"
-
     override val lang = "pl"
 
     override val supportsLatest = true
 
-    private var currentReferer = ""
-
     private val json: Json by injectLazy()
+
+    private val apiHeaders = Headers.Builder()
+        .set("Accept", "application/json, text/plain, */*")
+        .set("Referer", "$baseUrl/")
+        .set("Origin", baseUrl)
+        .set("Accept-Language", "pl,en-US;q=0.7,en;q=0.3")
+        .set("Host", "ogladajanime.pl")
+        .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0")
+        .build()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -140,9 +145,10 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Episodes ==============================
 
-//    override fun episodeListRequest(anime: SAnime): Request {
-//        return GET(anime.url, headers = headers)
-//    }
+    override fun episodeListRequest(anime: SAnime): Request {
+        val url = baseUrl + anime.url
+        return GET(url, apiHeaders)
+    }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
@@ -152,8 +158,10 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val episode = SEpisode.create()
             val episodeNumber = element.attr("value").toFloatOrNull() ?: 0f
             val episodeText = element.select("div > div > p").text()
+
             val episodeImg = element.select("div > img").attr("alt")
             val check = element.select("div > img")
+
             if (check.isNotEmpty()) {
                 episode.name = if (episodeText.isNotEmpty()) {
                     "[${episodeNumber.toInt()}] $episodeText ($episodeImg)"
@@ -174,30 +182,12 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-
-    override fun videoListParse(response: Response): List<Video> {
-
-
-
-
-
-//        val players =
-//        //val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
-//        return players.flatMap { player ->
-//            runCatching {
-//                val link = getPlayerUrl(player)
-//                //getPlayerVideos(link, player, hosterSelection)
-//            }.getOrElse { emptyList() }
-//        }
-   }
-
-
     private fun getPlayerUrl(player: String): String {
         val body = FormBody.Builder()
             .add("action", "change_player_url")
             .add("id", player)
             .build()
-        return client.newCall(POST("$baseUrl/manager.php", headers, body))
+        return client.newCall(POST("$baseUrl/manager.php", apiHeaders, body))
             .execute()
             .let { response ->
                 response.body.string()
@@ -206,18 +196,14 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     .replace("\\", "")
             }
     }
-    //POST("https://ogladajanime.pl/manager.php?action=change_player_url&id=${episode.url}", headers = headers)
-
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
-
         val body = FormBody.Builder()
             .add("action", "get_player_list")
             .add("id", episode.url)
             .build()
-        val response = client.newCall(POST("$baseUrl/manager.php", headers, body)).await()
+        val response = client.newCall(POST("$baseUrl/manager.php", apiHeaders, body)).await()
 
-        val serverList = mutableListOf<String>()
-
+        val serverList = mutableListOf<Pair<String, String>>()
 
         val jsonObject = JSONObject(response.body.string())
         val dataString = jsonObject.getString("data")
@@ -225,28 +211,40 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val dataObject = JSONObject(dataString)
         val playersArray = dataObject.getJSONArray("players")
 
-
-
         (0 until playersArray.length()).forEach {
             val id = playersArray.getJSONObject(it).getString("id")
-            val url = getPlayerUrl(id)
+            val sub = playersArray.getJSONObject(it).getString("sub").uppercase()
+            val ismy = playersArray.getJSONObject(it).getInt("ismy")
 
-            serverList.add(url)
+            val prefix = if (ismy > 0) {
+                "[$sub/Odwrócone Kolory] "
+            } else {
+                "[$sub] "
+            }
+            Log.i("dataHayan", "$prefix- ")
+            val check = playersArray.getJSONObject(it).getString("url")
+            if (check in listOf("vk", "cda", "mp4upload", "sibnet", "dailymotion")) {
+                val url = getPlayerUrl(id)
+                serverList.add(Pair(url, prefix))
+            }
         }
 
-        val videoList = serverList.parallelCatchingFlatMap { serverUrl ->
+        val videoList = serverList.parallelCatchingFlatMap { (serverUrl, prefix) ->
             when {
                 serverUrl.contains("vk.com") -> {
-                    VkExtractor(client).getVideosFromUrl(serverUrl, headers)
+                    VkExtractor(client, headers).videosFromUrl(serverUrl, prefix)
                 }
                 serverUrl.contains("mp4upload") -> {
-                    Mp4uploadExtractor(client).videosFromUrl(serverUrl, headers)
+                    Mp4uploadExtractor(client).videosFromUrl(serverUrl, headers, prefix)
                 }
                 serverUrl.contains("cda.pl") -> {
-                    CdaPlExtractor(client).getVideosFromUrl(serverUrl, headers)
+                    CdaPlExtractor(client).getVideosFromUrl(serverUrl, headers, prefix)
                 }
                 serverUrl.contains("dailymotion") -> {
-                    DailymotionExtractor(client, headers).videosFromUrl(serverUrl)
+                    DailymotionExtractor(client, headers).videosFromUrl(serverUrl, prefix)
+                }
+                serverUrl.contains("sibnet.ru") -> {
+                    SibnetExtractor(client).videosFromUrl(serverUrl, prefix)
                 }
                 else -> null
             }.orEmpty()
@@ -275,7 +273,7 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "1080")!!
-        val server = preferences.getString("preferred_server", "vstream")!!
+        val server = preferences.getString("preferred_server", "cda.pl")!!
 
         return this.sortedWith(
             compareBy(
@@ -285,17 +283,12 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ).reversed()
     }
 
-    private fun parseDate(dateStr: String): Long {
-        return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
-            .getOrNull() ?: 0L
-    }
-
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferowana jakość"
-            entries = arrayOf("1080p", "720p", "480p", "360p", "240p")
-            entryValues = arrayOf("1080", "720", "480", "360", "240")
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
             setDefaultValue("1080")
             summary = "%s"
 
@@ -321,31 +314,8 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
-        val seasonViewPref = SwitchPreferenceCompat(screen.context).apply {
-            key = "preferred_season_view"
-            title = "Przenieś nazwę sezonu do skanera"
-            setDefaultValue(false)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val new = newValue as Boolean
-                preferences.edit().putBoolean(key, new).commit()
-            }
-        }
-        val openEndPref = SwitchPreferenceCompat(screen.context).apply {
-            key = "preferred_opening"
-            title = "Usuń zakończenia i otwory"
-            summary = "Usuń zakończenia i otwarcia z listy odcinków"
-            setDefaultValue(false)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val new = newValue as Boolean
-                preferences.edit().putBoolean(key, new).commit()
-            }
-        }
 
         screen.addPreference(videoQualityPref)
         screen.addPreference(videoServerPref)
-        screen.addPreference(seasonViewPref)
-        screen.addPreference(openEndPref)
     }
 }

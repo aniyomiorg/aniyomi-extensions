@@ -20,7 +20,7 @@ class CdaPlExtractor(private val client: OkHttpClient) {
 
     private val json: Json by injectLazy()
 
-    fun getVideosFromUrl(url: String, headers: Headers): List<Video> {
+    fun getVideosFromUrl(url: String, headers: Headers, prefix: String): List<Video> {
         val videoList = mutableListOf<Video>()
 
         val embedHeaders = headers.newBuilder()
@@ -40,7 +40,7 @@ class CdaPlExtractor(private val client: OkHttpClient) {
             if (quality.value == data.video.quality) {
                 val videoUrl = decryptFile(data.video.file)
                 videoList.add(
-                    Video(videoUrl, "cda.pl - ${quality.key}", videoUrl),
+                    Video(videoUrl, "${prefix}cda.pl - ${quality.key}", videoUrl),
                 )
             } else {
                 val jsonBody = """
@@ -70,7 +70,7 @@ class CdaPlExtractor(private val client: OkHttpClient) {
                     response.body.string(),
                 )
                 videoList.add(
-                    Video(parsed.result.resp, "cda.pl - ${quality.key}", parsed.result.resp),
+                    Video(parsed.result.resp, "${prefix}cda.pl - ${quality.key}", parsed.result.resp),
                 )
             }
         }
