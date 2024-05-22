@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -21,6 +22,7 @@ import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
@@ -33,6 +35,7 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
+import org.json.JSONObject
 
 class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -171,50 +174,79 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun videoListRequest(episode: SEpisode): Request {
-//        val cos = episode.
-//        val urlAnime = anime.url+episode.episode_number
-//        val payload = urlAnime.toRequestBody("application/json; charset=utf-8".toMediaType())
 
-        return POST("https://ogladajanime.pl/manager.php?action=get_player_list&id=${episode.url}", headers = headers)
+    override fun videoListParse(response: Response): List<Video> {
 
+
+
+
+
+//        val players =
+//        //val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
+//        return players.flatMap { player ->
+//            runCatching {
+//                val link = getPlayerUrl(player)
+//                //getPlayerVideos(link, player, hosterSelection)
+//            }.getOrElse { emptyList() }
+//        }
+   }
+
+
+    private fun getPlayerUrl(player: String): String {
+        val body = FormBody.Builder()
+            .add("action", "change_player_url")
+            .add("id", player)
+            .build()
+        return client.newCall(POST("$baseUrl/manager.php", headers, body))
+            .execute()
+            .let { response ->
+                response.body.string()
+                    .substringAfter("\"data\":\"")
+                    .substringBefore("\",")
+                    .replace("\\", "")
+            }
     }
+    //POST("https://ogladajanime.pl/manager.php?action=change_player_url&id=${episode.url}", headers = headers)
 
     override suspend fun getVideoList(episode: SEpisode): List<Video> {
-        val response = client.newCall(videoListRequest(episode)).await()
 
-        val parsed = json.decodeFromString<EpisodeType>(episode.url)
+        val body = FormBody.Builder()
+            .add("action", "get_player_list")
+            .add("id", episode.url)
+            .build()
+        val response = client.newCall(POST("$baseUrl/manager.php", headers, body)).await()
+
         val serverList = mutableListOf<String>()
 
-        parsed.url.forEach {
-            val document = client.newCall(GET(it)).execute().asJsoup()
 
-            if (parsed.type == "single") {
-                serverList.add(
-                    document.selectFirst("iframe")?.attr("src")
-                        ?: document.selectFirst("span.odtwarzaj_vk")?.let { t -> "https://vk.com/video${t.attr("rel")}_${t.attr("id")}" } ?: "",
-                )
-            } else if (parsed.type == "multi") {
-                document.select("table.lista > tbody > tr.lista_hover").forEach { server ->
-                    val urlSpan = server.selectFirst("span[class*=link]")!!
-                    val serverDoc = client.newCall(
-                        GET("https://${it.toHttpUrl().host}/${urlSpan.className().substringBefore("_link")}-${urlSpan.attr("rel")}.html"),
-                    ).execute().asJsoup()
-                    serverList.add(
-                        serverDoc.selectFirst("iframe")?.attr("src")
-                            ?: serverDoc.selectFirst("span.odtwarzaj_vk")?.let { t -> "https://vk.com/video${t.attr("rel")}_${t.attr("id")}" } ?: "",
-                    )
-                }
-            }
+        val jsonObject = JSONObject(response.body.string())
+        val dataString = jsonObject.getString("data")
+
+        val dataObject = JSONObject(dataString)
+        val playersArray = dataObject.getJSONArray("players")
+
+
+
+        (0 until playersArray.length()).forEach {
+            val id = playersArray.getJSONObject(it).getString("id")
+            val url = getPlayerUrl(id)
+
+            serverList.add(url)
         }
 
         val videoList = serverList.parallelCatchingFlatMap { serverUrl ->
             when {
+                serverUrl.contains("vk.com") -> {
+                    VkExtractor(client).getVideosFromUrl(serverUrl, headers)
+                }
                 serverUrl.contains("mp4upload") -> {
                     Mp4uploadExtractor(client).videosFromUrl(serverUrl, headers)
                 }
                 serverUrl.contains("cda.pl") -> {
                     CdaPlExtractor(client).getVideosFromUrl(serverUrl, headers)
+                }
+                serverUrl.contains("dailymotion") -> {
+                    DailymotionExtractor(client, headers).videosFromUrl(serverUrl)
                 }
                 else -> null
             }.orEmpty()
