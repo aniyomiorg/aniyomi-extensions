@@ -189,7 +189,7 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .build()
         return client.newCall(POST("$baseUrl/manager.php", apiHeaders, body))
             .execute()
-            .let { response ->
+            .use { response ->
                 response.body.string()
                     .substringAfter("\"data\":\"")
                     .substringBefore("\",")
@@ -241,7 +241,7 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     CdaPlExtractor(client).getVideosFromUrl(serverUrl, headers, prefix)
                 }
                 serverUrl.contains("dailymotion") -> {
-                    DailymotionExtractor(client, headers).videosFromUrl(serverUrl, prefix)
+                    DailymotionExtractor(client, headers).videosFromUrl(serverUrl, "$prefix Dailymotion -")
                 }
                 serverUrl.contains("sibnet.ru") -> {
                     SibnetExtractor(client).videosFromUrl(serverUrl, prefix)
