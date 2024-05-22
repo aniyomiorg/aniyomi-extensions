@@ -126,7 +126,7 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
         return SAnime.create().apply {
-            // status = document.selectFirst("div.toggle-content > ul > li:contains(Status)")?.let { parseStatus(it.text()) } ?: SAnime.UNKNOWN
+            // status = document.selectFirst("div.toggle-content > ul > li:contains(Status)")?.let { parseStatus(it.text()) } ?: SAnime.UNKNOWN // Nie pamietam kiedyś sie to naprawi.
             description = document.selectFirst("p#animeDesc")?.text()
             genre = document.select("div.row > div.col-12 > span.badge[href^=/search/name/]").joinToString(", ") {
                 it.text()
