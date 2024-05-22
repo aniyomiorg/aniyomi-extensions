@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.pl.ogladajanime
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pl.ogladajanime.extractors.CdaPlExtractor
@@ -212,17 +211,23 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val playersArray = dataObject.getJSONArray("players")
 
         (0 until playersArray.length()).forEach {
-            val id = playersArray.getJSONObject(it).getString("id")
-            val sub = playersArray.getJSONObject(it).getString("sub").uppercase()
-            val ismy = playersArray.getJSONObject(it).getInt("ismy")
+            val player = playersArray.getJSONObject(it)
+            val id = player.getString("id")
+            var sub = player.getString("sub").uppercase()
+            val ismy = player.getInt("ismy")
+
+            // Modify sub if it's PL
+            if (player.getString("audio") == "pl") {
+                sub = "Dub PL"
+            }
 
             val prefix = if (ismy > 0) {
                 "[$sub/Odwrócone Kolory] "
             } else {
                 "[$sub] "
             }
-            Log.i("dataHayan", "$prefix- ")
-            val check = playersArray.getJSONObject(it).getString("url")
+
+            val check = player.getString("url")
             if (check in listOf("vk", "cda", "mp4upload", "sibnet", "dailymotion")) {
                 val url = getPlayerUrl(id)
                 serverList.add(Pair(url, prefix))
