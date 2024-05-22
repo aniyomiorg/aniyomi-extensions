@@ -71,7 +71,7 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             document.select(seasonListSelector()).parallelCatchingFlatMapBlocking { sElement ->
                 val seasonNum = sElement.select("span.se-a").text()
                 val seasonUrl = sElement.attr("href")
-                val seasonPage = client.newCall(GET(seasonUrl)).execute().asJsoup()
+                val seasonPage = client.newCall(GET(seasonUrl, headers)).execute().asJsoup()
                 seasonPage.select(episodeListSelector()).map { eElement ->
                     val episodeNum = eElement.select("span.serie").text().substringAfter("(").substringBefore(")")
                     val episodeUrl = eElement.attr("href")
@@ -139,7 +139,7 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         videoUrl.addQueryParameter("n", element.attr("data-nume"))
         videoUrl.addQueryParameter("ver", version)
         videoUrl.addQueryParameter("rand", generateRandomString())
-        val videoFrame = client.newCall(GET(videoUrl.toString())).execute().body.string()
+        val videoFrame = client.newCall(GET(videoUrl.toString(), headers)).execute().body.string()
         val embedUrl = videoFrame.substringAfter("embed_url\":\"").substringBefore("\"")
         val referer = headers.newBuilder().add("Referer", "$baseUrl/").build()
         val webViewInterceptor = client.newBuilder().addInterceptor(interceptor).build()
@@ -181,7 +181,7 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return if (query.isNotBlank()) {
             GET("$baseUrl/page/$page?s=$query", headers)
         } else {
-            val url = "$baseUrl/".toHttpUrlOrNull()!!.newBuilder()
+            val url = baseUrl.toHttpUrl().newBuilder()
             if (sectionFilter.state != 0) {
                 url.addPathSegment("category")
                 url.addPathSegment(sectionFilter.toUriPart())
