@@ -146,15 +146,13 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val embedUrl = videoFrame.substringAfter("embed_url\":\"").substringBefore("\"")
         val referer = headers.newBuilder().add("Referer", "$baseUrl/").build()
         val webViewResult = webViewResolver.getUrl(GET(embedUrl, referer))
-        val trueVideoUrl = webViewResult["url"]!!
-        val subtitleUrl = webViewResult["subtitle"]!!
         return when {
-             ".mp4" in trueVideoUrl -> {
-                Video(trueVideoUrl, element.text(), trueVideoUrl, headers = referer).let(::listOf)
+             ".mp4" in webViewResult.url -> {
+                Video(webViewResult.url, element.text(), webViewResult.url, headers = referer).let(::listOf)
             }
-            ".m3u8" in trueVideoUrl -> {
-                val subtitleList = if (subtitleUrl.isNotBlank()) Track(subtitleUrl, "Arabic").let(::listOf) else emptyList()
-                playlistUtils.extractFromHls(trueVideoUrl, videoNameGen = { "${element.text()}: $it" }, subtitleList = subtitleList)
+            ".m3u8" in webViewResult.url -> {
+                val subtitleList = if (webViewResult.subtitle.isNotBlank()) Track(webViewResult.subtitle, "Arabic").let(::listOf) else emptyList()
+                playlistUtils.extractFromHls(webViewResult.url, videoNameGen = { "${element.text()}: $it" }, subtitleList = subtitleList)
             }
             else -> emptyList()
         }

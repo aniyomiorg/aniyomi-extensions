@@ -19,10 +19,10 @@ class WebViewResolver(private val searchRegex: Regex, private val globalHeaders:
     private val handler by lazy { Handler(Looper.getMainLooper()) }
 
     @SuppressLint("SetJavaScriptEnabled")
-    fun getUrl(request: Request): MutableMap<String, String> {
+    fun getUrl(request: Request): Result {
         val latch = CountDownLatch(2)
         var webView: WebView? = null
-        val result = mutableMapOf("url" to "", "subtitle" to "")
+        val result = Result("", "")
         val origRequestUrl = request.url.toString()
         val headers = request.headers.toMultimap().mapValues { it.value.getOrNull(0) ?: "" }.toMutableMap()
 
@@ -44,11 +44,11 @@ class WebViewResolver(private val searchRegex: Regex, private val globalHeaders:
                 ): WebResourceResponse? {
                     val url = request.url.toString()
                     if ("vtt" in url) {
-                        result["subtitle"] = url
+                        result.subtitle = url
                         latch.countDown()
                     }
                     if (searchRegex.containsMatchIn(url)) {
-                        result["url"] = url
+                        result.url = url
                         latch.countDown()
                     }
                     return super.shouldInterceptRequest(view, request)
@@ -71,4 +71,6 @@ class WebViewResolver(private val searchRegex: Regex, private val globalHeaders:
     companion object {
         const val TIMEOUT_SEC: Long = 30
     }
+
+    data class Result(var url: String, var subtitle: String)
 }
