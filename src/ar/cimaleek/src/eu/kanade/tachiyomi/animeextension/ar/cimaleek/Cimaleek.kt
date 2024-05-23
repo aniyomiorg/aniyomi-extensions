@@ -12,8 +12,8 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
-import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
@@ -147,7 +147,7 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val referer = headers.newBuilder().add("Referer", "$baseUrl/").build()
         val webViewResult = webViewResolver.getUrl(GET(embedUrl, referer))
         return when {
-             ".mp4" in webViewResult.url -> {
+            ".mp4" in webViewResult.url -> {
                 Video(webViewResult.url, element.text(), webViewResult.url, headers = referer).let(::listOf)
             }
             ".m3u8" in webViewResult.url -> {
