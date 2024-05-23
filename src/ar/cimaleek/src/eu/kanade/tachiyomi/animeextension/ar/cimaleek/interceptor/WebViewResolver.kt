@@ -6,53 +6,25 @@ import android.os.Handler
 import android.os.Looper
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
-import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers
-import okhttp3.Headers.Companion.toHeaders
-import okhttp3.Interceptor
 import okhttp3.Request
-import okhttp3.Response
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
-import java.io.IOException
+import uy.kohesive.injekt.injectLazy
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-class GetSourcesInterceptor(private val searchRegex: Regex, private val globalHeaders: Headers) : Interceptor {
-    private val context = Injekt.get<Application>()
+class WebViewResolver(private val searchRegex: Regex, private val globalHeaders: Headers) {
+    private val context: Application by injectLazy()
     private val handler by lazy { Handler(Looper.getMainLooper()) }
 
-    private val initWebView by lazy {
-        WebSettings.getDefaultUserAgent(context)
-    }
-
-    @Synchronized
-    override fun intercept(chain: Interceptor.Chain): Response {
-        initWebView
-
-        val request = chain.request()
-
-        try {
-            val newRequest = resolveWithWebView(request)
-
-            return chain.proceed(newRequest ?: request)
-        } catch (e: Exception) {
-            throw IOException(e)
-        }
-    }
-
     @SuppressLint("SetJavaScriptEnabled")
-    private fun resolveWithWebView(request: Request): Request? {
-        val latch = CountDownLatch(1)
-
+    fun getUrl(request: Request): MutableMap<String, String> {
+        val latch = CountDownLatch(2)
         var webView: WebView? = null
-
+        val result = mutableMapOf("url" to "", "subtitle" to "")
         val origRequestUrl = request.url.toString()
         val headers = request.headers.toMultimap().mapValues { it.value.getOrNull(0) ?: "" }.toMutableMap()
-        var newRequest: Request? = null
 
         handler.post {
             val webview = WebView(context)
@@ -71,9 +43,12 @@ class GetSourcesInterceptor(private val searchRegex: Regex, private val globalHe
                     request: WebResourceRequest,
                 ): WebResourceResponse? {
                     val url = request.url.toString()
+                    if ("vtt" in url) {
+                        result["subtitle"] = url
+                        latch.countDown()
+                    }
                     if (searchRegex.containsMatchIn(url)) {
-                        val newHeaders = request.requestHeaders.toHeaders()
-                        newRequest = GET(url, newHeaders)
+                        result["url"] = url
                         latch.countDown()
                     }
                     return super.shouldInterceptRequest(view, request)
@@ -90,10 +65,10 @@ class GetSourcesInterceptor(private val searchRegex: Regex, private val globalHe
             webView?.destroy()
             webView = null
         }
-        return newRequest
+        return result
     }
 
     companion object {
-        const val TIMEOUT_SEC: Long = 20
+        const val TIMEOUT_SEC: Long = 30
     }
 }

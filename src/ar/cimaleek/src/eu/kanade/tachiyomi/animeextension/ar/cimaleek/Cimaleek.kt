@@ -4,18 +4,20 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.ar.cimaleek.interceptor.GetSourcesInterceptor
+import eu.kanade.tachiyomi.animeextension.ar.cimaleek.interceptor.WebViewResolver
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
-import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -37,7 +39,9 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val interceptor by lazy { GetSourcesInterceptor(VIDEO_REGEX, headers) }
+    private val webViewResolver by lazy { WebViewResolver(VIDEO_REGEX, headers) }
+
+    private val playlistUtils by lazy { PlaylistUtils(client, headers) }
 
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element): SAnime {
@@ -71,7 +75,7 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             document.select(seasonListSelector()).parallelCatchingFlatMapBlocking { sElement ->
                 val seasonNum = sElement.select("span.se-a").text()
                 val seasonUrl = sElement.attr("href")
-                val seasonPage = client.newCall(GET(seasonUrl, headers)).execute().asJsoup()
+                val seasonPage = client.newCall(GET(seasonUrl)).execute().asJsoup()
                 seasonPage.select(episodeListSelector()).map { eElement ->
                     val episodeNum = eElement.select("span.serie").text().substringAfter("(").substringBefore(")")
                     val episodeUrl = eElement.attr("href")
@@ -132,33 +136,28 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun extractVideos(element: Element, version: String): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val videoUrl = "$baseUrl/wp-json/lalaplayer/v2/".toHttpUrl().newBuilder()
+        val videoUrl = "$baseUrl/wp-json/lalaplayer/v2/".toHttpUrlOrNull()!!.newBuilder()
         videoUrl.addQueryParameter("p", element.attr("data-post"))
         videoUrl.addQueryParameter("t", element.attr("data-type"))
         videoUrl.addQueryParameter("n", element.attr("data-nume"))
         videoUrl.addQueryParameter("ver", version)
         videoUrl.addQueryParameter("rand", generateRandomString())
-        val videoFrame = client.newCall(GET(videoUrl.toString(), headers)).execute().body.string()
+        val videoFrame = client.newCall(GET(videoUrl.toString())).execute().body.string()
         val embedUrl = videoFrame.substringAfter("embed_url\":\"").substringBefore("\"")
         val referer = headers.newBuilder().add("Referer", "$baseUrl/").build()
-        val webViewInterceptor = client.newBuilder().addInterceptor(interceptor).build()
-        val videoResponse = webViewInterceptor.newCall(GET(embedUrl, referer)).execute()
-        val trueVideoUrl = videoResponse.request.url.toString()
-        when {
-            "index-v1-a1.m3u8" in trueVideoUrl || "list.m3u8" in trueVideoUrl || ".mp4" in trueVideoUrl -> {
-                videoList.add(Video(trueVideoUrl, element.text(), trueVideoUrl, headers = referer))
+        val webViewResult = webViewResolver.getUrl(GET(embedUrl, referer))
+        val trueVideoUrl = webViewResult["url"]!!
+        val subtitleUrl = webViewResult["subtitle"]!!
+        return when {
+             ".mp4" in trueVideoUrl -> {
+                Video(trueVideoUrl, element.text(), trueVideoUrl, headers = referer).let(::listOf)
             }
-            "master.m3u8" in trueVideoUrl -> {
-                videoResponse.body.string().substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
-                    val quality = it.substringAfter("RESOLUTION=").substringBefore("\n").substringAfter("x").substringBefore(",") + "p"
-                    val playUrl = it.substringAfter("\n").substringBefore("\n")
-                    val url = if (playUrl.startsWith("index")) trueVideoUrl.replace("master", "index-v1-a1") else playUrl
-                    videoList.add(Video(url, "${element.text()}: $quality", url, headers = referer))
-                }
+            ".m3u8" in trueVideoUrl -> {
+                val subtitleList = if (subtitleUrl.isNotBlank()) Track(subtitleUrl, "Arabic").let(::listOf) else emptyList()
+                playlistUtils.extractFromHls(trueVideoUrl, videoNameGen = { "${element.text()}: $it" }, subtitleList = subtitleList)
             }
+            else -> emptyList()
         }
-        return videoList
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -181,7 +180,7 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return if (query.isNotBlank()) {
             GET("$baseUrl/page/$page?s=$query", headers)
         } else {
-            val url = baseUrl.toHttpUrl().newBuilder()
+            val url = "$baseUrl/".toHttpUrlOrNull()!!.newBuilder()
             if (sectionFilter.state != 0) {
                 url.addPathSegment("category")
                 url.addPathSegment(sectionFilter.toUriPart())
@@ -283,6 +282,6 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private val VIDEO_REGEX by lazy { Regex("""m3u8|.mp4""") }
+        private val VIDEO_REGEX by lazy { Regex("\\.(mp4|m3u8)") }
     }
 }
