@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.pl.ogladajanime.extractors
+package eu.kanade.tachiyomi.lib.cdaextractor
 
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
@@ -21,8 +21,6 @@ class CdaPlExtractor(private val client: OkHttpClient) {
     private val json: Json by injectLazy()
 
     fun getVideosFromUrl(url: String, headers: Headers, prefix: String): List<Video> {
-        val videoList = mutableListOf<Video>()
-
         val embedHeaders = headers.newBuilder()
             .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
             .add("Host", url.toHttpUrl().host)
@@ -35,13 +33,10 @@ class CdaPlExtractor(private val client: OkHttpClient) {
         val data = json.decodeFromString<PlayerData>(
             document.selectFirst("div[player_data]")!!.attr("player_data"),
         )
-
-        data.video.qualities.forEach { quality ->
+        return data.video.qualities.map { quality ->
             if (quality.value == data.video.quality) {
                 val videoUrl = decryptFile(data.video.file)
-                videoList.add(
-                    Video(videoUrl, "${prefix}cda.pl - ${quality.key}", videoUrl),
-                )
+                Video(videoUrl, "${prefix}cda.pl - ${quality.key}", videoUrl)
             } else {
                 val jsonBody = """
                     {
@@ -69,13 +64,9 @@ class CdaPlExtractor(private val client: OkHttpClient) {
                 val parsed = json.decodeFromString<PostResponse>(
                     response.body.string(),
                 )
-                videoList.add(
-                    Video(parsed.result.resp, "${prefix}cda.pl - ${quality.key}", parsed.result.resp),
-                )
+                Video(parsed.result.resp, "${prefix}cda.pl - ${quality.key}", parsed.result.resp)
             }
         }
-
-        return videoList
     }
 
     // Credit: https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/extractor/cda.py

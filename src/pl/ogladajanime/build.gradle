@@ -1,7 +1,7 @@
 ext {
     extName = 'OgladajAnime'
     extClass = '.OgladajAnime'
-    extVersionCode = 6
+    extVersionCode = 1
     isNsfw = true
 }
 
@@ -13,7 +13,6 @@ dependencies {
     implementation(project(':lib:sibnet-extractor'))
     implementation(project(':lib:vk-extractor'))
     implementation(project(':lib:googledrive-extractor'))
-    //noinspection DuplicatePlatformClasses
-    implementation 'org.json:json:20210307'
+    implementation(project(':lib:cda-extractor'))
 
 }
