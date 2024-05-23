@@ -17,7 +17,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -136,7 +136,7 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun extractVideos(element: Element, version: String): List<Video> {
-        val videoUrl = "$baseUrl/wp-json/lalaplayer/v2/".toHttpUrlOrNull()!!.newBuilder()
+        val videoUrl = "$baseUrl/wp-json/lalaplayer/v2/".toHttpUrl().newBuilder()
         videoUrl.addQueryParameter("p", element.attr("data-post"))
         videoUrl.addQueryParameter("t", element.attr("data-type"))
         videoUrl.addQueryParameter("n", element.attr("data-nume"))
@@ -178,7 +178,7 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return if (query.isNotBlank()) {
             GET("$baseUrl/page/$page?s=$query", headers)
         } else {
-            val url = "$baseUrl/".toHttpUrlOrNull()!!.newBuilder()
+            val url = baseUrl.toHttpUrl().newBuilder()
             if (sectionFilter.state != 0) {
                 url.addPathSegment("category")
                 url.addPathSegment(sectionFilter.toUriPart())
