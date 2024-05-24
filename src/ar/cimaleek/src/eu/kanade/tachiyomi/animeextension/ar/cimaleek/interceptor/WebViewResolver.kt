@@ -14,17 +14,16 @@ import uy.kohesive.injekt.injectLazy
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-class WebViewResolver(private val searchRegex: Regex, private val globalHeaders: Headers) {
+class WebViewResolver(private val globalHeaders: Headers) {
     private val context: Application by injectLazy()
     private val handler by lazy { Handler(Looper.getMainLooper()) }
 
     @SuppressLint("SetJavaScriptEnabled")
-    fun getUrl(request: Request): Result {
+    fun getUrl(origRequestUrl: String, origRequestheader: Headers): Result {
         val latch = CountDownLatch(2)
         var webView: WebView? = null
         val result = Result("", "")
-        val origRequestUrl = request.url.toString()
-        val headers = request.headers.toMultimap().mapValues { it.value.getOrNull(0) ?: "" }.toMutableMap()
+        val headers = origRequestheader.toMultimap().mapValues { it.value.getOrNull(0) ?: "" }.toMutableMap()
 
         handler.post {
             val webview = WebView(context)
@@ -47,7 +46,7 @@ class WebViewResolver(private val searchRegex: Regex, private val globalHeaders:
                         result.subtitle = url
                         latch.countDown()
                     }
-                    if (searchRegex.containsMatchIn(url)) {
+                    if (VIDEO_REGEX.containsMatchIn(url)) {
                         result.url = url
                         latch.countDown()
                     }
@@ -69,7 +68,8 @@ class WebViewResolver(private val searchRegex: Regex, private val globalHeaders:
     }
 
     companion object {
-        const val TIMEOUT_SEC: Long = 30
+        const val TIMEOUT_SEC: Long = 25
+        private val VIDEO_REGEX by lazy { Regex("\\.(mp4|m3u8)") }
     }
 
     data class Result(var url: String, var subtitle: String)

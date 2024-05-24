@@ -39,7 +39,7 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val webViewResolver by lazy { WebViewResolver(VIDEO_REGEX, headers) }
+    private val webViewResolver by lazy { WebViewResolver(headers) }
 
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
 
@@ -75,7 +75,7 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             document.select(seasonListSelector()).parallelCatchingFlatMapBlocking { sElement ->
                 val seasonNum = sElement.select("span.se-a").text()
                 val seasonUrl = sElement.attr("href")
-                val seasonPage = client.newCall(GET(seasonUrl)).execute().asJsoup()
+                val seasonPage = client.newCall(GET(seasonUrl, headers)).execute().asJsoup()
                 seasonPage.select(episodeListSelector()).map { eElement ->
                     val episodeNum = eElement.select("span.serie").text().substringAfter("(").substringBefore(")")
                     val episodeUrl = eElement.attr("href")
@@ -142,10 +142,10 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         videoUrl.addQueryParameter("n", element.attr("data-nume"))
         videoUrl.addQueryParameter("ver", version)
         videoUrl.addQueryParameter("rand", generateRandomString())
-        val videoFrame = client.newCall(GET(videoUrl.toString())).execute().body.string()
+        val videoFrame = client.newCall(GET(videoUrl.toString(), headers)).execute().body.string()
         val embedUrl = videoFrame.substringAfter("embed_url\":\"").substringBefore("\"")
         val referer = headers.newBuilder().add("Referer", "$baseUrl/").build()
-        val webViewResult = webViewResolver.getUrl(GET(embedUrl, referer))
+        val webViewResult = webViewResolver.getUrl(embedUrl, referer)
         return when {
             ".mp4" in webViewResult.url -> {
                 Video(webViewResult.url, element.text(), webViewResult.url, headers = referer).let(::listOf)
@@ -277,9 +277,5 @@ class Cimaleek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         screen.addPreference(videoQualityPref)
-    }
-
-    companion object {
-        private val VIDEO_REGEX by lazy { Regex("\\.(mp4|m3u8)") }
     }
 }
