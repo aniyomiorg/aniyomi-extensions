@@ -17,11 +17,12 @@ import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.lib.vkextractor.VkExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -47,7 +48,7 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .set("Referer", "$baseUrl/")
         .set("Origin", baseUrl)
         .set("Accept-Language", "pl,en-US;q=0.7,en;q=0.3")
-        .set("Host", "ogladajanime.pl")
+        .set("Host", baseUrl.toHttpUrl().host)
         .build()
 
     private val preferences: SharedPreferences by lazy {
@@ -71,7 +72,7 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =============================== Latest ===============================
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/search/new/$page")
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/search/new/$page", headers)
 
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
 
@@ -81,7 +82,7 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =============================== Search ===============================
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/search/name/$query")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/search/name/$query", headers)
 
     override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
@@ -113,8 +114,7 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.asJsoup()
-        return document.select(episodeListSelector()).map { episodeFromElement(it) }.reversed()
+        return super.episodeListParse(response).reversed()
     }
 
     override fun episodeListSelector(): String = "ul#ep_list > li:has(div > img)"
@@ -125,17 +125,15 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodeText = element.select("div > div > p").text()
 
         val episodeImg = element.select("div > img").attr("alt")
-        val check = element.select("div > img")
 
-        if (check.isNotEmpty()) {
-            episode.name = if (episodeText.isNotEmpty()) {
-                "[${episodeNumber.toInt()}] $episodeText ($episodeImg)"
-            } else {
-                "Episode ${episodeNumber.toInt()} ($episodeImg)"
-            }
-            episode.episode_number = episodeNumber
-            episode.url = element.attr("ep_id")
+        episode.name = if (episodeText.isNotEmpty()) {
+            "[${episodeNumber.toInt()}] $episodeText ($episodeImg)"
+        } else {
+            "Episode ${episodeNumber.toInt()} ($episodeImg)"
         }
+        episode.episode_number = episodeNumber
+        episode.url = element.attr("ep_id")
+
         return episode
     }
 
@@ -173,27 +171,24 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val jsonResponse = json.decodeFromString<ApiResponse>(response.body.string())
         val dataObject = json.decodeFromString<ApiData>(jsonResponse.data)
-        val serverList = mutableListOf<Pair<String, String>>()
-
-        dataObject.players.forEach { player ->
+        val serverList = dataObject.players.mapNotNull { player ->
             var sub = player.sub.uppercase()
             if (sub == "PL" && player.audio == "PL") {
                 sub = "DUB PL"
             }
-
             val prefix = if (player.ismy > 0) {
                 "[$sub/Odwrócone Kolory] "
             } else {
                 "[$sub] "
             }
-
-            if (player.url in listOf("vk", "cda", "mp4upload", "sibnet", "dailymotion")) {
-                val url = getPlayerUrl(player.id)
-                serverList.add(Pair(url, prefix))
+            if (player.url !in listOf("vk", "cda", "mp4upload", "sibnet", "dailymotion")) {
+                return@mapNotNull null
             }
+            val url = getPlayerUrl(player.id)
+            Pair(url, prefix)
         }
-        // Jeśli dodadzą opcje z mozliwością edytowania mpv to zrobić tak zejak bedą odwrócone kolory to ustawia dane do mkv <3
-        val videoList = serverList.flatMap { (serverUrl, prefix) ->
+        // Jeśli dodadzą opcje z mozliwością edytowania mpv to zrobić tak ze jak bedą odwrócone kolory to ustawia dane do mkv <3
+        return serverList.parallelCatchingFlatMapBlocking { (serverUrl, prefix) ->
             when {
                 serverUrl.contains("vk.com") -> {
                     vkExtractor.videosFromUrl(serverUrl, prefix)
@@ -213,7 +208,6 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 else -> emptyList()
             }
         }
-        return videoList.sort()
     }
 
     override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
