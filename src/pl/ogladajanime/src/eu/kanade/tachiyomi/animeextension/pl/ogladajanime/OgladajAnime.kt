@@ -192,7 +192,7 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 serverList.add(Pair(url, prefix))
             }
         }
-       //Jeśli dodadzą opcje z mozliwością edytowania mpv to zrobić tak zejak bedą odwrócone kolory to ustawia dane do mkv <3
+        // Jeśli dodadzą opcje z mozliwością edytowania mpv to zrobić tak zejak bedą odwrócone kolory to ustawia dane do mkv <3
         val videoList = serverList.flatMap { (serverUrl, prefix) ->
             when {
                 serverUrl.contains("vk.com") -> {
@@ -250,7 +250,7 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this.sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
-                { it.quality.contains(server, false) },
+                { it.quality.contains(server, true) },
             ),
         ).reversed()
     }

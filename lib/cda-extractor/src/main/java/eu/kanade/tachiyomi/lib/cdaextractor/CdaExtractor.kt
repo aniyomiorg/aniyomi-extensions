@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.lib.cdaextractor
 
+import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -30,11 +31,18 @@ class CdaPlExtractor(private val client: OkHttpClient) {
             GET(url, headers = embedHeaders),
         ).execute().asJsoup()
 
+        //Nic lepszego nie wymyśliłem jak ktoś kto przegląda ten kod znajdzie sposób lepszy to chetnie przyjme radę <3
+        //Do you have any idea how to write it differently? I will accept advice!
+
+        val deletedMessage = "Materiał na który wskazywał ten link został usunięty przez jego właściciela lub Administratora!"
+
+        if (document.toString().contains(deletedMessage)) return emptyList()
+
         val data = json.decodeFromString<PlayerData>(
             document.selectFirst("div[player_data]")!!.attr("player_data"),
         )
         return data.video.qualities.map { quality ->
-            if (quality.value == data.video.quality) {
+            if (quality.value == data.video.quality && quality.value != "lq") {
                 val videoUrl = decryptFile(data.video.file)
                 Video(videoUrl, "${prefix}cda.pl - ${quality.key}", videoUrl)
             } else {
