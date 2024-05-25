@@ -63,7 +63,7 @@ class WebViewResolver() {
     }
 
     companion object {
-        const val TIMEOUT_SEC: Long = 25
+        const val TIMEOUT_SEC: Long = 20
         private val VIDEO_REGEX by lazy { Regex("\\.(mp4|m3u8)") }
     }
 }
