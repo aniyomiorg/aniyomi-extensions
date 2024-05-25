@@ -115,7 +115,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val iframe = document.selectFirst("iframe")!!.attr("src").substringBefore("&img")
         val webViewResult = webViewResolver.getUrl(iframe, headers)
-        return if(webViewResult.isNotBlank()) playlistUtils.extractFromHls(webViewResult) else emptyList()
+        return if (webViewResult.isNotBlank()) playlistUtils.extractFromHls(webViewResult) else emptyList()
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -151,9 +151,9 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             GET("$baseUrl/page/$page?s=$query", headers)
         } else {
             val url = "$baseUrl/".toHttpUrlOrNull()!!.newBuilder()
-            if(sectionFilter.state != 0){
+            if (sectionFilter.state != 0) {
                 url.addPathSegment(sectionFilter.toUriPart())
-            } else if(categoryFilter.state != 0) {
+            } else if (categoryFilter.state != 0) {
                 url.addPathSegment(categoryFilter.toUriPart())
                 url.addPathSegment(genreFilter.toUriPart().lowercase())
             } else {
@@ -213,7 +213,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         AnimeFilter.Separator(),
         AnimeFilter.Header("الفلتره تعمل فقط لو كان اقسام الموقع على 'اختر'"),
         CategoryFilter(),
-        GenreFilter()
+        GenreFilter(),
     )
     private class SectionFilter : PairFilter(
         "اقسام الموقع",
@@ -238,22 +238,22 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("الانمي الاعلي مشاهدة", "anime_top_views"),
             Pair("البرامج التليفزيونية", "tvshows"),
             Pair("البرامج التليفزيونية الاعلي مشاهدة", "tvshows_top_views"),
-            )
+        ),
     )
     private class CategoryFilter : PairFilter(
         "النوع",
         arrayOf(
             Pair("اختر", "none"),
-            Pair("افلام","movies-cats"),
-            Pair("مسلسلات","series_genres"),
-            Pair("انمى","anime-cats")
-        )
+            Pair("افلام", "movies-cats"),
+            Pair("مسلسلات", "series_genres"),
+            Pair("انمى", "anime-cats"),
+        ),
     )
     private class GenreFilter : SingleFilter(
         "التصنيف",
         arrayOf(
-            "Action", "Adventure", "Animation", "Western", "Sport", "Short", "Documentary", "Fantasy", "Sci-fi", "Romance", "Comedy", "Family", "Drama", "Thriller", "Crime", "Horror", "Biography"
-        ).sortedArray()
+            "Action", "Adventure", "Animation", "Western", "Sport", "Short", "Documentary", "Fantasy", "Sci-fi", "Romance", "Comedy", "Family", "Drama", "Thriller", "Crime", "Horror", "Biography",
+        ).sortedArray(),
     )
 
     open class SingleFilter(displayName: String, private val vals: Array<String>) :
