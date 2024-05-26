@@ -32,7 +32,7 @@ class Hackstore : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Hackstore"
 
-    override val baseUrl = "https://hackstore.rs"
+    override val baseUrl = "https://hackstore.to"
 
     override val lang = "es"
 
