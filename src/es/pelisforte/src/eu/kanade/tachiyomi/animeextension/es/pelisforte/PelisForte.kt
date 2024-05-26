@@ -37,7 +37,7 @@ open class PelisForte : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "PelisForte"
 
-    override val baseUrl = "https://pelisforte.nu"
+    override val baseUrl = "https://www1.pelisforte.se"
 
     override val lang = "es"
 
@@ -65,7 +65,7 @@ open class PelisForte : ConfigurableAnimeSource, AnimeHttpSource() {
         )
     }
 
-    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/ultimas-peliculas/page/$page", headers)
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/todas-las-peliculas/page/$page", headers)
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
