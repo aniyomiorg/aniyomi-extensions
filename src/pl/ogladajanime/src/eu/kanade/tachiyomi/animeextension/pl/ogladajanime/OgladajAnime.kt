@@ -127,13 +127,17 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodeImg = element.select("div > img").attr("alt").uppercase()
 
         if (episodeText.isNotEmpty()) {
-            if (episodeImg == "PL") {
-                episode.name = "${episodeNumber.toInt()} $episodeText"
-            } else episode.name = "${episodeNumber.toInt()} [$episodeImg] $episodeText"
+            episode.name = if (episodeImg == "PL") {
+                "${episodeNumber.toInt()} $episodeText"
+            } else {
+                "${episodeNumber.toInt()} [$episodeImg] $episodeText"
+            }
         } else {
-            if (episodeImg == "PL") {
-                episode.name = "${episodeNumber.toInt()} Odcinek"
-            } else episode.name = "${episodeNumber.toInt()} [$episodeImg] Odcinek"
+            episode.name = if (episodeImg == "PL") {
+                "${episodeNumber.toInt()} Odcinek"
+            } else {
+                "${episodeNumber.toInt()} [$episodeImg] Odcinek"
+            }
         }
 
         episode.episode_number = episodeNumber
