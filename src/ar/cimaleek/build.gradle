@@ -1,0 +1,11 @@
+ext {
+    extName = 'Cimaleek'
+    extClass = '.Cimaleek'
+    extVersionCode = 1
+}
+
+apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation(project(":lib:playlist-utils"))
+}
