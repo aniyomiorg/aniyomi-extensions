@@ -11,6 +11,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import uy.kohesive.injekt.injectLazy
 import java.io.ByteArrayInputStream
@@ -58,6 +59,17 @@ internal class RecaptchaV3Bypasser(private val client: OkHttpClient, private val
                     view?.evaluateJavascript("document.querySelector('input[name=_token]').value") {
                         token = it.trim('"')
                     }
+                }
+
+                override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                    if (url != null) {
+                        if (url.startsWith("data:")) return false
+                        if (url.startsWith("intent:")) return true
+                        val domain = url.toHttpUrl().host
+
+                        return !ALLOWED_HOSTS.contains(domain)
+                    }
+                    return true
                 }
 
                 override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
@@ -155,3 +167,12 @@ setInterval(async () => {
     items.forEach(x => {try { x.click() } catch (e) {} })
 }, 500)
 </script>"""
+
+private val ALLOWED_HOSTS = listOf(
+    "www.google.com",
+    "betteranime.net",
+    "fonts.googleapis.com",
+    "cdnjs.cloudflare.com",
+    "cdn.jsdelivr.net",
+    "www.gstatic.com",
+)
