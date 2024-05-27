@@ -15,14 +15,16 @@ class AnimePlayer : DooPlay(
 ) {
 
     // ============================== Popular ===============================
-    override fun popularAnimeSelector() = "div#featured-titles article div.poster"
+    override fun popularAnimeSelector() = "div#archive-content article div.poster"
 
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes/")
+
+    override fun popularAnimeNextPageSelector() = "a > i#nextpagination"
 
     // =============================== Latest ===============================
     override val latestUpdatesPath = "episodios"
 
-    override fun latestUpdatesNextPageSelector() = "a > i#nextpagination"
+    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
 
     // ============================ Video Links =============================
     override val prefQualityValues = arrayOf("360p", "720p")
