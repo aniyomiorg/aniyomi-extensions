@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.animeplayer
 
+import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.bloggerextractor.BloggerExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
@@ -7,6 +8,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Response
+import org.jsoup.nodes.Document
 
 class AnimePlayer : DooPlay(
     "pt-BR",
@@ -26,6 +28,24 @@ class AnimePlayer : DooPlay(
 
     override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
 
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document): SAnime {
+        val doc = getRealAnimeDoc(document)
+        val content = doc.selectFirst("div#contenedor > div.data")!!
+        return SAnime.create().apply {
+            doc.selectFirst("div.sheader div.poster > img")!!.let {
+                thumbnail_url = it.getImageUrl()
+                title = it.attr("alt").ifEmpty {
+                    content.selectFirst("div.data > h1")!!.text()
+                }
+            }
+
+            genre = content.select("div.sgeneros > a")
+                .eachText()
+                .joinToString()
+        }
+    }
+
     // ============================ Video Links =============================
     override val prefQualityValues = arrayOf("360p", "720p")
     override val prefQualityEntries = prefQualityValues
@@ -35,7 +55,7 @@ class AnimePlayer : DooPlay(
     override fun videoListParse(response: Response): List<Video> {
         val playerUrl = response.asJsoup()
             .selectFirst("div.playex iframe")
-            ?.attr("abs:src")
+            ?.absUrl("src")
             ?.toHttpUrlOrNull()
             ?: return emptyList()
 
