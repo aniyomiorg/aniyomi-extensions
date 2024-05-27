@@ -188,17 +188,17 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 sub = "Dub " + player.sub.uppercase()
             }
 
-            val subGroup = if (sub == player.sub_group.uppercase()) "" else player.sub_group
-            val subGroupPart = if (subGroup.isNotEmpty()) " $subGroup - " else " "
+            val subGroup = if (sub == player.sub_group?.uppercase()) "" else player.sub_group
+            val subGroupPart = if (subGroup?.isNotEmpty() == true) " $subGroup - " else " "
 
             val prefix = if (player.ismy > 0) {
-                if (player.sub == "pl" && player.sub_group.isNotEmpty()) {
+                if (player.sub == "pl" && player.sub_group?.isNotEmpty() == true) {
                     "[Odwrócone Kolory] $subGroup - "
                 } else {
                     "[$sub/Odwrócone Kolory]$subGroupPart"
                 }
             } else {
-                if (player.sub == "pl" && player.sub_group.isNotEmpty()) {
+                if (player.sub == "pl" && player.sub_group?.isNotEmpty() == true) {
                     "$subGroup - "
                 } else {
                     "[$sub]$subGroupPart"
@@ -248,7 +248,7 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val audio: String? = null,
         val sub: String,
         val url: String,
-        val sub_group: String,
+        val sub_group: String? = null,
         val ismy: Int,
     )
 
