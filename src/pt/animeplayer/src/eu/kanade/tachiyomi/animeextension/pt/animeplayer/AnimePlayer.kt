@@ -65,4 +65,7 @@ class AnimePlayer : DooPlay(
 
     // ============================== Filters ===============================
     override fun genresListSelector() = "ul.genres a"
+
+    // ============================= Utilities ==============================
+    override val animeMenuSelector = "div.pag_episodes div.item a[href] i.icon-bars"
 }
