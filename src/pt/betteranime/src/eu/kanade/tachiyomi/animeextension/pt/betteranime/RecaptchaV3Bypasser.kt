@@ -11,6 +11,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import uy.kohesive.injekt.injectLazy
 import java.io.ByteArrayInputStream
@@ -60,14 +61,25 @@ internal class RecaptchaV3Bypasser(private val client: OkHttpClient, private val
                     }
                 }
 
+                override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                    if (url != null) {
+                        if (url.startsWith("data:")) return false
+                        if (url.startsWith("intent:")) return true
+                        val domain = url.toHttpUrl().host
+
+                        return !ALLOWED_HOSTS.contains(domain)
+                    }
+                    return true
+                }
+
                 override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                     val url = request?.url.toString()
                     val reqHeaders = request?.requestHeaders.orEmpty()
                     // Our beloved token
-                    if (url.contains("/recaptcha/api2/anchor")) {
+                    if (url.contains("/recaptcha/api2/anchor") || url.contains("/recaptcha/api2/bframe")) {
                         // Injects the script to click on the captcha box
                         return injectScripts(url, reqHeaders, CLICK_BOX_SCRIPT, INTERCEPTOR_SCRIPT)
-                    } else if (reqHeaders.get("Accept").orEmpty().contains("text/html")) {
+                    } else if (reqHeaders.get("Accept").orEmpty().contains("text/html") && !url.startsWith("intent")) {
                         // Injects the XMLHttpRequest hack
                         return injectScripts(url, reqHeaders, INTERCEPTOR_SCRIPT)
                     }
@@ -94,9 +106,11 @@ internal class RecaptchaV3Bypasser(private val client: OkHttpClient, private val
         .mapValues { it.value.getOrNull(0) ?: "" }
         .toMutableMap()
         .apply {
-            remove("cross-origin-embedder-policy")
             remove("content-security-policy")
+            remove("cross-origin-embedder-policy")
+            remove("cross-origin-resource-policy")
             remove("report-to")
+            remove("x-xss-protection")
         }
 
     private fun injectScripts(
@@ -149,7 +163,16 @@ window.XMLHttpRequest.prototype.open = function(_unused_method, url, _unused_arg
 private const val CLICK_BOX_SCRIPT = """
 <script type="text/javascript">
 setInterval(async () => {
-    const items = document.querySelectorAll("#recaptcha-anchor, .recaptcha-checkbox, #rc-anchor-container span[role=checkbox]")
+    const items = document.querySelectorAll(".recaptcha-checkbox-checkmark, #recaptcha-anchor, .recaptcha-checkbox, #rc-anchor-container span[role=checkbox]")
     items.forEach(x => {try { x.click() } catch (e) {} })
 }, 500)
 </script>"""
+
+private val ALLOWED_HOSTS = listOf(
+    "www.google.com",
+    "betteranime.net",
+    "fonts.googleapis.com",
+    "cdnjs.cloudflare.com",
+    "cdn.jsdelivr.net",
+    "www.gstatic.com",
+)
