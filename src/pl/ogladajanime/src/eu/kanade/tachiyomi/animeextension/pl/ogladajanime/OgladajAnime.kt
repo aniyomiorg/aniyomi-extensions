@@ -124,13 +124,22 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodeNumber = element.attr("value").toFloatOrNull() ?: 0f
         val episodeText = element.select("div > div > p").text()
 
-        val episodeImg = element.select("div > img").attr("alt")
+        val episodeImg = element.select("div > img").attr("alt").uppercase()
 
-        episode.name = if (episodeText.isNotEmpty()) {
-            "[${episodeNumber.toInt()}] $episodeText ($episodeImg)"
+        if (episodeText.isNotEmpty()) {
+            episode.name = if (episodeImg == "PL") {
+                "${episodeNumber.toInt()} $episodeText"
+            } else {
+                "${episodeNumber.toInt()} [$episodeImg] $episodeText"
+            }
         } else {
-            "Episode ${episodeNumber.toInt()} ($episodeImg)"
+            episode.name = if (episodeImg == "PL") {
+                "${episodeNumber.toInt()} Odcinek"
+            } else {
+                "${episodeNumber.toInt()} [$episodeImg] Odcinek"
+            }
         }
+
         episode.episode_number = episodeNumber
         episode.url = element.attr("ep_id")
 
@@ -173,14 +182,29 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val dataObject = json.decodeFromString<ApiData>(jsonResponse.data)
         val serverList = dataObject.players.mapNotNull { player ->
             var sub = player.sub.uppercase()
-            if (sub == "PL" && player.audio == "PL") {
-                sub = "DUB PL"
+            if (player.audio == "pl") {
+                sub = "Lektor"
+            } else if (player.sub.isEmpty() && sub != "Lektor") {
+                sub = "Dub " + player.sub.uppercase()
             }
+
+            val subGroup = if (sub == player.sub_group?.uppercase()) "" else player.sub_group
+            val subGroupPart = if (subGroup?.isNotEmpty() == true) " $subGroup - " else " "
+
             val prefix = if (player.ismy > 0) {
-                "[$sub/Odwrócone Kolory] "
+                if (player.sub == "pl" && player.sub_group?.isNotEmpty() == true) {
+                    "[Odwrócone Kolory] $subGroup - "
+                } else {
+                    "[$sub/Odwrócone Kolory]$subGroupPart"
+                }
             } else {
-                "[$sub] "
+                if (player.sub == "pl" && player.sub_group?.isNotEmpty() == true) {
+                    "$subGroup - "
+                } else {
+                    "[$sub]$subGroupPart"
+                }
             }
+
             if (player.url !in listOf("vk", "cda", "mp4upload", "sibnet", "dailymotion")) {
                 return@mapNotNull null
             }
@@ -224,6 +248,7 @@ class OgladajAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val audio: String? = null,
         val sub: String,
         val url: String,
+        val sub_group: String? = null,
         val ismy: Int,
     )
 
