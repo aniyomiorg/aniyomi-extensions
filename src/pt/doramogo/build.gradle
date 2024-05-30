@@ -1,0 +1,14 @@
+ext {
+    extName = 'Doramogo'
+    extClass = '.Doramogo'
+    extVersionCode = 1
+}
+
+apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation(project(':lib:dailymotion-extractor'))
+    implementation(project(":lib:googledrive-extractor"))
+    implementation(project(":lib:playlist-utils"))
+    implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
+}
