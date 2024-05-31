@@ -9,18 +9,16 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
 import eu.kanade.tachiyomi.lib.googledriveextractor.GoogleDriveExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
-import eu.kanade.tachiyomi.util.parseAs
-import kotlinx.serialization.Serializable
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
@@ -28,7 +26,7 @@ class Doramogo : ParsedAnimeHttpSource() {
 
     override val name = "Doramogo"
 
-    override val baseUrl = "https://doramogo.com/"
+    override val baseUrl = "https://doramogo.com"
 
     override val lang = "pt-BR"
 
@@ -77,52 +75,25 @@ class Doramogo : ParsedAnimeHttpSource() {
         return AnimesPage(listOf(details), false)
     }
 
-    @Serializable
-    data class SearchResponseDto(
-        val results: List<String>,
-        val page: Int,
-        val total_page: Int = 1,
-    )
-
-    private val searchToken by lazy {
-        client.newCall(GET("$baseUrl/lista-de-animes", headers)).execute()
-            .asJsoup()
-            .selectFirst("div.menu_filter_box")!!
-            .attr("data-secury")
-    }
-
     override fun getFilterList() = DoramogoFilters.FILTER_LIST
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val params = DoramogoFilters.getSearchParameters(filters)
 
-        val url = "$baseUrl/search/$query".toHttpUrl().newBuilder()
+        val url = "$baseUrl/search".toHttpUrl().newBuilder()
+            .addPathSegment(query)
             .addIfNotBlank("filter_audio", params.audio)
             .addIfNotBlank("filter_genre", params.genre)
             .build()
-            .toString()
 
         return GET(url, headers = headers)
-    }
-
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        return runCatching {
-            val data = response.parseAs<SearchResponseDto>()
-            val animes = data.results.map(Jsoup::parse)
-                .mapNotNull { it.selectFirst(searchAnimeSelector()) }
-                .map(::searchAnimeFromElement)
-            val hasNext = data.total_page > data.page
-            AnimesPage(animes, hasNext)
-        }.getOrElse { AnimesPage(emptyList(), false) }
     }
 
     override fun searchAnimeSelector() = popularAnimeSelector()
 
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException()
-    }
+    override fun searchAnimeNextPageSelector() = null
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
@@ -152,32 +123,26 @@ class Doramogo : ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
 
-        val urls = document.select("div.source-box iframe")
-            .mapNotNull {
-                it.attr("src")
-            }
+        val urls = document.select("div.source-box iframe").map {
+            it.attr("src")
+        }
 
         return urls.parallelCatchingFlatMapBlocking { getVideosFromURL(it) }
     }
 
     private val dailymotionExtractor by lazy { DailymotionExtractor(client, headers) }
-    private val gdriveExtractor by lazy { GoogleDriveExtractor(client, headers) }
-    private val playlistUtils by lazy { PlaylistUtils(client, headers) }
     private val doramogoExtractor by lazy { DoramogoExtractor(client, headers) }
+    private val gdriveExtractor by lazy { GoogleDriveExtractor(client, headers) }
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val playlistUtils by lazy { PlaylistUtils(client, headers) }
     private fun getVideosFromURL(url: String): List<Video> {
         return when {
             "dailymotion" in url -> dailymotionExtractor.videosFromUrl(url)
+            "ok.ru" in url -> okruExtractor.videosFromUrl(url)
 
             "drive.google.com" in url -> {
-                // We need to do that bc the googledrive extractor is garbage.
-                val newUrl = when {
-                    url.contains("uc?id=") -> url
-                    else -> {
-                        val id = url.substringAfter("/d/").substringBefore("/")
-                        "https://drive.google.com/uc?id=$id"
-                    }
-                }
-                gdriveExtractor.videosFromUrl(newUrl, "GDrive")
+                val id = Regex("[\\w-]{28,}").find(url)?.groupValues?.get(0) ?: return emptyList()
+                gdriveExtractor.videosFromUrl(id, "GDrive")
             }
 
             "embedrise.com" in url -> {
@@ -188,6 +153,23 @@ class Doramogo : ParsedAnimeHttpSource() {
                     m3u8Url,
                     referer = url,
                     videoNameGen = { "Embedrise - $it" },
+                )
+            }
+
+            "streamable.com" in url -> {
+                val mp4Url = client.newCall(GET(url)).execute()
+                    .asJsoup()
+                    .selectFirst("video")
+                    ?.attr("src")
+                    ?.let {
+                        if (it.startsWith("//")) {
+                            return@let "https:$it"
+                        }
+                        it
+                    }
+                    ?: return emptyList()
+                listOf<Video>(
+                    Video(mp4Url, "Streamable", mp4Url, headers),
                 )
             }
 
