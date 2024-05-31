@@ -168,7 +168,7 @@ class Doramogo : ParsedAnimeHttpSource() {
                         it
                     }
                     ?: return emptyList()
-                listOf<Video>(
+                listOf(
                     Video(mp4Url, "Streamable", mp4Url, headers),
                 )
             }
