@@ -123,7 +123,7 @@ class Doramogo : ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
 
-        val urls = document.select("div.source-box iframe").map {
+        val urls = document.select("div.source-box iframe[src]").map {
             it.attr("src")
         }
 
