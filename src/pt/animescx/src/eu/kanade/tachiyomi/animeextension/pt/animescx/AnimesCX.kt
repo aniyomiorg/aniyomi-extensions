@@ -25,16 +25,25 @@ class AnimesCX : ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int): Request {
-        throw UnsupportedOperationException()
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/doramas-legendados/page/$page", headers)
+
+    override fun popularAnimeParse(response: Response): AnimesPage {
+        val doc = response.asJsoup()
+        val animes = doc.select(popularAnimeSelector()).map(::popularAnimeFromElement)
+
+        val hasNextPage = doc.selectFirst("a.rl_anime_pagination:last-child")
+            ?.let { it.attr("href").getPage() != doc.location().getPage() }
+            ?: false
+
+        return AnimesPage(animes, hasNextPage)
     }
 
-    override fun popularAnimeSelector(): String {
-        throw UnsupportedOperationException()
-    }
+    override fun popularAnimeSelector() = "div.listaAnimes_Riverlab_Container > a"
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException()
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        title = element.selectFirst("div.infolistaAnimes_RiverLab")!!.text()
+        thumbnail_url = element.selectFirst("img")?.absUrl("src")
     }
 
     override fun popularAnimeNextPageSelector(): String? {
@@ -122,6 +131,9 @@ class AnimesCX : ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document): String {
         throw UnsupportedOperationException()
     }
+
+    // ============================= Utilities ==============================
+    private fun String.getPage() = substringAfterLast("/page/").substringBefore("/")
 
     companion object {
         const val PREFIX_SEARCH = "id:"
