@@ -106,7 +106,7 @@ class AnimesCX : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) =
-        GET("$baseUrl/page/$page/?s=$query")
+        GET("$baseUrl/page/$page/?s=$query", headers)
 
     override fun searchAnimeSelector() = "article.rl_episodios:has(.rl_AnimeIndexImg)"
 
