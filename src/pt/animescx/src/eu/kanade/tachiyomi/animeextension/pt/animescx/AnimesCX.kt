@@ -7,9 +7,12 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.googledriveextractor.GoogleDriveExtractor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import eu.kanade.tachiyomi.util.parseAs
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.encodeToString
@@ -175,9 +178,32 @@ class AnimesCX : ParsedAnimeHttpSource() {
     }
 
     @Serializable
-    class VideoHost(val name: String, val link: String)
+    class VideoHost(val name: String, val url: String)
 
     // ============================ Video Links =============================
+    private val gdriveExtractor by lazy { GoogleDriveExtractor(client, headers) }
+
+    override suspend fun getVideoList(episode: SEpisode): List<Video> {
+        val data = episode.url.parseAs<Map<String, List<VideoHost>>>()
+
+        return data.flatMap { (quality, items) ->
+            items.flatMap {
+                when (it.name) {
+                    "MediaFire" -> {
+                        val doc = client.newCall(GET(it.url, headers)).await().asJsoup()
+                        val url = doc.selectFirst("a#downloadButton")?.attr("href")
+                        url?.let { listOf(Video(url, "Mediafire - $quality", url, headers)) }.orEmpty()
+                    }
+                    "Google Drive" -> {
+                        GDRIVE_REGEX.find(it.url)?.groupValues?.get(0)
+                            ?.let { gdriveExtractor.videosFromUrl(it, "GDrive - $quality") }
+                            .orEmpty()
+                    }
+                    else -> emptyList()
+                }
+            }
+        }
+    }
     override fun videoListParse(response: Response): List<Video> {
         throw UnsupportedOperationException()
     }
@@ -204,5 +230,7 @@ class AnimesCX : ParsedAnimeHttpSource() {
 
     companion object {
         const val PREFIX_SEARCH = "id:"
+
+        private val GDRIVE_REGEX = Regex("""[\w-]{28,}""")
     }
 }
