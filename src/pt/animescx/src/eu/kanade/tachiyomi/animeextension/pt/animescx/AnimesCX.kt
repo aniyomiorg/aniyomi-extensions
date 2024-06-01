@@ -91,7 +91,7 @@ class AnimesCX : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val path = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/$path"))
+            client.newCall(GET("$baseUrl/$path", headers))
                 .awaitSuccess()
                 .use(::searchAnimeByIdParse)
         } else {
