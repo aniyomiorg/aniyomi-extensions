@@ -22,7 +22,7 @@ class AnimesCX : ParsedAnimeHttpSource() {
 
     override val lang = "pt-BR"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/doramas-legendados/page/$page", headers)
@@ -51,9 +51,9 @@ class AnimesCX : ParsedAnimeHttpSource() {
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int): Request {
-        throw UnsupportedOperationException()
-    }
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/doramas-em-lancamento/page/$page", headers)
+
+    override fun latestUpdatesParse(response: Response) = popularAnimeParse(response)
 
     override fun latestUpdatesSelector(): String {
         throw UnsupportedOperationException()
