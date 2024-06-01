@@ -111,7 +111,7 @@ class AnimesCX : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     override fun searchAnimeSelector() = "article.rl_episodios:has(.rl_AnimeIndexImg)"
 
     override fun searchAnimeFromElement(element: Element) = SAnime.create().apply {
-        element.selectFirst("a")!!.run {
+        with(element.selectFirst("a")!!) {
             setUrlWithoutDomain(attr("href"))
             title = text()
         }
