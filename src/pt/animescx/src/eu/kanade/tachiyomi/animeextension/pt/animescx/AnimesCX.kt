@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.animescx
 
+import android.util.Base64
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -9,9 +10,19 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArrayBuilder
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.putJsonArray
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 
 class AnimesCX : ParsedAnimeHttpSource() {
 
@@ -23,6 +34,8 @@ class AnimesCX : ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
+    private val json: Json by injectLazy()
+
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/doramas-legendados/page/$page", headers)
 
@@ -30,11 +43,7 @@ class AnimesCX : ParsedAnimeHttpSource() {
         val doc = response.asJsoup()
         val animes = doc.select(popularAnimeSelector()).map(::popularAnimeFromElement)
 
-        val hasNextPage = doc.selectFirst("a.rl_anime_pagination:last-child")
-            ?.let { it.attr("href").getPage() != doc.location().getPage() }
-            ?: false
-
-        return AnimesPage(animes, hasNextPage)
+        return AnimesPage(animes, doc.hasNextPage())
     }
 
     override fun popularAnimeSelector() = "div.listaAnimes_Riverlab_Container > a"
@@ -120,13 +129,53 @@ class AnimesCX : ParsedAnimeHttpSource() {
         selectFirst(".rl_anime_meta:contains($text)")?.ownText().orEmpty()
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector(): String {
-        throw UnsupportedOperationException()
+    override fun episodeListSelector() = ".rl_anime_episodios > article.rl_episodios"
+
+    override fun episodeListParse(response: Response) = buildList {
+        var doc = response.asJsoup()
+
+        do {
+            if (isNotEmpty()) {
+                val url = doc.selectFirst("a.rl_anime_pagination:contains(›)")!!.absUrl("href")
+                doc = client.newCall(GET(url, headers)).execute().asJsoup()
+            }
+
+            doc.select(episodeListSelector())
+                .map(::episodeFromElement)
+                .also(::addAll)
+        } while (doc.hasNextPage())
+
+        reverse()
     }
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        throw UnsupportedOperationException()
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        val num = element.selectFirst("header")!!.text().substringAfterLast(' ')
+        episode_number = num.toFloatOrNull() ?: 0F
+        name = "Episódio $num"
+        scanlator = element.selectFirst("div.rl_episodios_info:contains(Fansub)")?.ownText()
+
+        url = json.encodeToString(
+            buildJsonObject {
+                element.select("div.rl_episodios_opcnome[onclick]").forEach {
+                    putJsonArray(it.text(), { getVideoHosts(it.attr("onclick"), element) })
+                }
+            },
+        )
     }
+
+    private fun JsonArrayBuilder.getVideoHosts(onclick: String, element: Element) {
+        val itemId = onclick.substringAfterLast("rlToggle('").substringBefore("'")
+        element.select("#$itemId a.rl_episodios_link").toList()
+            .filter { it.text() != "Mega" }
+            .forEach { el ->
+                val urlId = el.attr("href").substringAfter("id=")
+                val url = String(Base64.decode(urlId, Base64.DEFAULT)).reversed()
+                add(json.encodeToJsonElement(VideoHost.serializer(), VideoHost(el.text(), url)))
+            }
+    }
+
+    @Serializable
+    class VideoHost(val name: String, val link: String)
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
@@ -147,6 +196,11 @@ class AnimesCX : ParsedAnimeHttpSource() {
 
     // ============================= Utilities ==============================
     private fun String.getPage() = substringAfterLast("/page/").substringBefore("/")
+
+    private fun Document.hasNextPage() =
+        selectFirst("a.rl_anime_pagination:last-child")
+            ?.let { it.attr("href").getPage() != location().getPage() }
+            ?: false
 
     companion object {
         const val PREFIX_SEARCH = "id:"
