@@ -1,6 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.pt.animescx
 
+import android.app.Application
 import android.util.Base64
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -24,10 +28,11 @@ import kotlinx.serialization.json.putJsonArray
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 
-class AnimesCX : ParsedAnimeHttpSource() {
+class AnimesCX : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     override val name = "Animes CX"
 
@@ -38,6 +43,10 @@ class AnimesCX : ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     private val json: Json by injectLazy()
+
+    private val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/doramas-legendados/page/$page", headers)
@@ -220,6 +229,26 @@ class AnimesCX : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException()
     }
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
+    }
+
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+        }.also(screen::addPreference)
+    }
+
     // ============================= Utilities ==============================
     private fun String.getPage() = substringAfterLast("/page/").substringBefore("/")
 
@@ -232,5 +261,10 @@ class AnimesCX : ParsedAnimeHttpSource() {
         const val PREFIX_SEARCH = "id:"
 
         private val GDRIVE_REGEX = Regex("""[\w-]{28,}""")
+
+        private const val PREF_QUALITY_KEY = "pref_quality_key"
+        private const val PREF_QUALITY_TITLE = "Qualidade preferida"
+        private const val PREF_QUALITY_DEFAULT = "FULL HD"
+        private val PREF_QUALITY_ENTRIES = arrayOf("MP4", "SD", "HD", "FULL HD")
     }
 }
