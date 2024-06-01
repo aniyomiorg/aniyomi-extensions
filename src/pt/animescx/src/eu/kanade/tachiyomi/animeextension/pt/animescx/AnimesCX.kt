@@ -101,9 +101,23 @@ class AnimesCX : ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector() = "a.next.page-numbers"
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException()
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        val infos = document.selectFirst("div.rl_anime_metadados")!!
+        thumbnail_url = infos.selectFirst("img")?.absUrl("src")
+        title = infos.selectFirst(".rl_nome_anime")!!.text()
+
+        genre = infos.getInfo("Gêneros").replace(";", ",")
+        status = when (infos.getInfo("Status")) {
+            "Completo" -> SAnime.COMPLETED
+            "Lançando", "Sendo Legendado!" -> SAnime.ONGOING
+            else -> SAnime.UNKNOWN
+        }
+
+        description = infos.getInfo("Sinopse")
     }
+
+    private fun Element.getInfo(text: String) =
+        selectFirst(".rl_anime_meta:contains($text)")?.ownText().orEmpty()
 
     // ============================== Episodes ==============================
     override fun episodeListSelector(): String {
