@@ -9,7 +9,6 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -70,8 +69,8 @@ class AnimesCX : ParsedAnimeHttpSource() {
     // =============================== Search ===============================
     override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
-            val id = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/anime/$id"))
+            val path = query.removePrefix(PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/$path"))
                 .awaitSuccess()
                 .use(::searchAnimeByIdParse)
         } else {
@@ -85,21 +84,21 @@ class AnimesCX : ParsedAnimeHttpSource() {
         return AnimesPage(listOf(details), false)
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        throw UnsupportedOperationException()
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) =
+        GET("$baseUrl/page/$page/?s=$query")
+
+    override fun searchAnimeSelector() = "article.rl_episodios:has(.rl_AnimeIndexImg)"
+
+    override fun searchAnimeFromElement(element: Element) = SAnime.create().apply {
+        element.selectFirst("a")!!.run {
+            setUrlWithoutDomain(attr("href"))
+            title = text()
+        }
+
+        thumbnail_url = element.selectFirst("img")?.absUrl("src")
     }
 
-    override fun searchAnimeSelector(): String {
-        throw UnsupportedOperationException()
-    }
-
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException()
-    }
-
-    override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException()
-    }
+    override fun searchAnimeNextPageSelector() = "a.next.page-numbers"
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
