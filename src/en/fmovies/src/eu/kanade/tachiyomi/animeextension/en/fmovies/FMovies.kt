@@ -37,7 +37,7 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "FMovies"
 
-    override val baseUrl = "https://fmoviesz.to"
+    override val baseUrl = "https://fmovies24.to"
 
     override val lang = "en"
 
