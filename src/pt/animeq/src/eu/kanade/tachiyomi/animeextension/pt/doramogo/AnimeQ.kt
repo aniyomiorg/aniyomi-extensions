@@ -48,7 +48,7 @@ class AnimeQ : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         title = element.selectFirst("a img")!!.attr("title")
-        thumbnail_url = element.selectFirst("a img")!!.attr("src")
+        thumbnail_url = element.selectFirst("a img")?.tryGetAttr("abs:data-src", "abs:src")
     }
 
     override fun popularAnimeNextPageSelector() = null
@@ -61,8 +61,7 @@ class AnimeQ : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
         title = element.attr("title")
-        val img = element.selectFirst("div.EpsItemImg > img")
-        thumbnail_url = img?.attr("data-src")?.ifEmpty { img?.attr("src") }
+        thumbnail_url = element.selectFirst("div.EpsItemImg > img")?.tryGetAttr("abs:data-src", "abs:src")
     }
 
     override fun latestUpdatesNextPageSelector() = "div.ContainerEps a.next.page-numbers"
@@ -82,8 +81,7 @@ class AnimeQ : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
         title = element.attr("title").substringBefore(" – Todos os Epis")
-        val img = element.selectFirst("div.AniItemImg > img")
-        thumbnail_url = img?.attr("data-src")?.ifEmpty { img?.attr("src") }
+        thumbnail_url = element.selectFirst("div.AniItemImg > img")?.tryGetAttr("abs:data-src", "abs:src")
     }
 
     override fun searchAnimeNextPageSelector() = "div.ContainerEps a.next.page-numbers"
@@ -95,8 +93,7 @@ class AnimeQ : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return SAnime.create().apply {
             setUrlWithoutDomain(doc.location())
             title = doc.title().substringBefore(" – Todos os Epis")
-            val img = doc.selectFirst("#capaAnime > img")
-            thumbnail_url = img?.attr("data-src")?.ifEmpty { img?.attr("src") }
+            thumbnail_url = doc.selectFirst("#capaAnime > img")?.tryGetAttr("abs:data-src", "abs:src")
             description = doc.selectFirst("#sinopse2")?.text()
 
             with(doc.selectFirst("div.boxAnimeSobre")!!) {
@@ -143,7 +140,7 @@ class AnimeQ : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     "FHD" -> "1080p"
                     else -> format
                 }
-                val iframeSrc = it.selectFirst("iframe[src]")?.attr("data-litespeed-src")
+                val iframeSrc = it.selectFirst("iframe")?.tryGetAttr("data-litespeed-src", "src")
                 if (!iframeSrc.isNullOrBlank()) {
                     return@parallelCatchingFlatMapBlocking getVideosFromURL(iframeSrc, quality)
                 }
@@ -243,6 +240,11 @@ class AnimeQ : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .trim()
                 .takeUnless { it.isBlank() || it == "???" }
         }
+    }
+
+    private fun Element.tryGetAttr(vararg attributeKeys: String): String? {
+        val attributeKey = attributeKeys.first { hasAttr(it) }
+        return attributeKey?.let { attr(attributeKey) }
     }
 
     companion object {
