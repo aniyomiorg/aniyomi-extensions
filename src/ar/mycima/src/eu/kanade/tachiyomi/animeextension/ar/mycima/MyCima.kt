@@ -18,7 +18,6 @@ import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
-import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
@@ -147,8 +146,9 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val newHeader = headers.newBuilder().add("referer", "$baseUrl/").build()
         val iframeTxt = element.text().lowercase()
         return when {
-            element.hasClass("MyCimaServer") -> {
-                videosFromElement(iframeUrl, newHeader)
+            element.hasClass("MyCimaServer") && "/run/" in iframeUrl -> {
+                val mp4Url = iframeUrl.replace("?Key", "/?Key") + "&auto=true"
+                Video(mp4Url, "Default", mp4Url, newHeader).let(::listOf)
             }
 
             "govid" in iframeTxt || "vidbom" in iframeTxt || "vidshare" in iframeTxt -> {
@@ -172,27 +172,6 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun videoListSelector() = "ul.WatchServersList li"
-
-    private fun videosFromElement(url: String, newHeaders: Headers): List<Video> {
-        val document = client.newCall(GET(url, newHeaders)).execute().asJsoup()
-        val videoList = mutableListOf<Video>()
-        val script = document.selectFirst("script:containsData(player.qualityselector({)")
-        if (script != null) {
-            val data = script.data().substringAfter("sources: [").substringBefore("],")
-            val sources = data.split("format: '").drop(1)
-            for (source in sources) {
-                val src = source.substringAfter("src: \"").substringBefore("\"")
-                    .replace("https://localhost", baseUrl)
-                val quality = source.substringBefore("'") // .substringAfter("format: '")
-                val video = Video(src, quality, src, newHeaders)
-                videoList.add(video)
-            }
-            return videoList
-        }
-        val sourceTag = document.select("source").firstOrNull()!!
-        val trueUrl = sourceTag.absUrl("src").replace("https://localhost", baseUrl)
-        return Video(trueUrl, "Default", trueUrl, newHeaders).let(::listOf)
-    }
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "1080")!!
