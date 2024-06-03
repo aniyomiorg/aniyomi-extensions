@@ -23,7 +23,7 @@ import org.jsoup.nodes.Element
 class AnimesOnline : DooPlay(
     "pt-BR",
     "AnimesOnline",
-    "https://animesonline.nz",
+    "https://bakashi.tv",
 ) {
 
     override val id: Long = 2969482460524685571L
