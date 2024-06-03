@@ -20,9 +20,9 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
-class AnimesOnline : DooPlay(
+class Bakashi : DooPlay(
     "pt-BR",
-    "AnimesOnline",
+    "Bakashi",
     "https://bakashi.tv",
 ) {
 

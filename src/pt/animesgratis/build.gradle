@@ -1,6 +1,6 @@
 ext {
-    extName = 'AnimesOnline'
-    extClass = '.AnimesOnline'
+    extName = 'Bakashi'
+    extClass = '.Bakashi'
     themePkg = 'dooplay'
     baseUrl = 'https://bakashi.tv'
     overrideVersionCode = 9
