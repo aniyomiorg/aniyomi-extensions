@@ -22,6 +22,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.awaitSuccess
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -59,12 +60,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
         {"query": "${query.replace("\n", "")}", "variables": $variables}
         """.trimIndent().toRequestBody("application/json; charset=utf-8".toMediaType())
 
-        val request = Request.Builder()
-            .url("https://apis.justwatch.com/graphql")
-            .post(requestBody)
-            .build()
-
-        return request
+        return POST("https://apis.justwatch.com/graphql", headers = headers, body = requestBody)
     }
 
     // ============================== JustWatch Api Query ======================
@@ -159,31 +155,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int): Request {
-        val country = preferences.getString(PREF_REGION_KEY, PREF_REGION_DEFAULT)
-        val language = preferences.getString(PREF_JW_LANG_KEY, PREF_JW_LANG_DEFAULT)
-        val perPage = 40
-        val packages = ""
-        val year = 0
-        val objectTypes = ""
-        val variables = """
-            {
-              "first": $perPage,
-              "offset": ${(page - 1) * perPage},
-              "platform": "WEB",
-              "country": "$country",
-              "language": "$language",
-              "searchQuery": "",
-              "packages": [$packages],
-              "objectTypes": [$objectTypes],
-              "popularTitlesSortBy": "TRENDING",
-              "releaseYear": {
-                "min": $year,
-                "max": $year
-              }
-            }
-        """.trimIndent()
-
-        return makeGraphQLRequest(justWatchQuery(), variables)
+        return searchAnimeRequest(page, "", AnimeFilterList())
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
@@ -199,7 +171,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
     override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val id = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/anime/$id"))
+            client.newCall(GET("$baseUrl/anime/$id", headers))
                 .awaitSuccess()
                 .use(::searchAnimeByIdParse)
         } else {
@@ -226,7 +198,7 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
               "platform": "WEB",
               "country": "$country",
               "language": "$language",
-              "searchQuery": "${query.replace(Regex("[^A-Za-z0-9 ]"), "").trim()}",
+              "searchQuery": "${query.replace(searchQueryRegex, "").trim()}",
               "packages": [$packages],
               "objectTypes": [$objectTypes],
               "popularTitlesSortBy": "TRENDING",
@@ -238,6 +210,10 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
         """.trimIndent()
 
         return makeGraphQLRequest(justWatchQuery(), variables)
+    }
+
+    private val searchQueryRegex by lazy {
+        Regex("[^A-Za-z0-9 ]")
     }
 
     override fun searchAnimeParse(response: Response) = popularAnimeParse(response)
