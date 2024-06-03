@@ -18,7 +18,6 @@ import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -148,7 +147,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return when {
             element.hasClass("MyCimaServer") && "/run/" in iframeUrl -> {
                 val mp4Url = iframeUrl.replace("?Key", "/?Key") + "&auto=true"
-                Video(mp4Url, "Default", mp4Url, newHeader).let(::listOf)
+                Video(mp4Url, "Default (may take a while)", mp4Url, newHeader).let(::listOf)
             }
 
             "govid" in iframeTxt || "vidbom" in iframeTxt || "vidshare" in iframeTxt -> {
@@ -196,20 +195,14 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val sectionFilter = filterList.find { it is SectionFilter } as SectionFilter
         val categoryFilter = filterList.find { it is CategoryFilter } as CategoryFilter
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
-        val url = baseUrl.toHttpUrl().newBuilder()
-        if (query.isNotBlank()) {
-            url.addPathSegment("search/$query")
-            url.addPathSegment(categoryFilter.toUriPart() + page)
+        val url = baseUrl + if (query.isNotBlank()) {
+            "/search/$query/${categoryFilter.toUriPart()}$page/"
+        } else if (sectionFilter.state != 0){
+            "/${sectionFilter.toUriPart()}/page/$page/"
         } else {
-            if (sectionFilter.state != 0) {
-                url.addPathSegment(sectionFilter.toUriPart())
-                url.addPathSegment("page/$page")
-            } else {
-                url.addPathSegment("genre/" + genreFilter.toUriPart())
-                url.addPathSegment(categoryFilter.toUriPart() + page)
-            }
+            "/genre/${genreFilter.toUriPart()}/${categoryFilter.toUriPart()}$page/"
         }
-        return GET(url.toString(), headers)
+        return GET(url, headers)
     }
 
     // ============================== Details ==============================
