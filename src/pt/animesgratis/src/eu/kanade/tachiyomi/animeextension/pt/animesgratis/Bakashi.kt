@@ -28,7 +28,7 @@ class Bakashi : DooPlay(
 
     // ============================== Popular ===============================
     override fun popularAnimeSelector() = "div.items.featured article div.poster"
-    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes/")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes/", headers)
 
     // =============================== Search ===============================
     override fun searchAnimeSelector() = "div.result-item article div.thumbnail > a"
@@ -99,7 +99,7 @@ class Bakashi : DooPlay(
     }
 
     // ============================== Filters ===============================
-    override fun genresListRequest() = GET("$baseUrl/animes/")
+    override fun genresListRequest() = popularAnimeRequest()
     override fun genresListSelector() = "div.filter > div.select:first-child option:not([disabled])"
 
     override fun genresListParse(document: Document): Array<Pair<String, String>> {
