@@ -29,7 +29,7 @@ class Bakashi : DooPlay(
     override val id: Long = 2969482460524685571L
 
     // ============================== Popular ===============================
-    override fun popularAnimeSelector() = "div.sidebar.right article > a"
+    override fun popularAnimeSelector() = "div.items.featured article div.poster"
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes/")
 
     // =============================== Search ===============================
