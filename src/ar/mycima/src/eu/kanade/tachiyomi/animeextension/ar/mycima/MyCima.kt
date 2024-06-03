@@ -33,7 +33,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // TODO: Check frequency of url changes to potentially
     // add back overridable baseurl preference
-    override val baseUrl = "https://cdn3.wecima.watch"
+    override val baseUrl = "https://wecima.show"
 
     override val lang = "ar"
 
