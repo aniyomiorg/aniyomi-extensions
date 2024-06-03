@@ -55,7 +55,11 @@ class AnimesROLL : AnimeHttpSource() {
 
     // =============================== Search ===============================
     private fun searchAnimeByPathParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response)
+        val details = animeDetailsParse(response).apply {
+            setUrlWithoutDomain(response.request.url.toString())
+            initialized = true
+        }
+
         return AnimesPage(listOf(details), false)
     }
 

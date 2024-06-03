@@ -105,7 +105,14 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
         }
     }
 
-    private fun searchAnimeByIdParse(response: Response) = AnimesPage(listOf(animeDetailsParse(response)), false)
+    private fun searchAnimeByIdParse(response: Response): AnimesPage {
+        val details = animeDetailsParse(response).apply {
+            setUrlWithoutDomain(response.request.url.toString())
+            initialized = true
+        }
+
+        return AnimesPage(listOf(details), false)
+    }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val url = "$baseUrl/api/directory".toHttpUrl().newBuilder()
