@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesgratis
 
-import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.AnimesOnlinePlayerExtractor
+import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.NoaExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.RuplayExtractor
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -11,10 +11,8 @@ import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
-import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -64,7 +62,7 @@ class Bakashi : DooPlay(
     override val prefQualityEntries = prefQualityValues
 
     private val ruplayExtractor by lazy { RuplayExtractor(client) }
-    private val animesOnlineExtractor by lazy { AnimesOnlinePlayerExtractor(client) }
+    private val noaExtractor by lazy { NoaExtractor(client, headers) }
     private val bloggerExtractor by lazy { BloggerExtractor(client) }
     private val filemoonExtractor by lazy { FilemoonExtractor(client) }
     private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
@@ -79,40 +77,24 @@ class Bakashi : DooPlay(
             "streamwish" in name -> streamWishExtractor.videosFromUrl(url)
             "filemoon" in name -> filemoonExtractor.videosFromUrl(url)
             "mixdrop" in name -> mixDropExtractor.videoFromUrl(url)
-            "streamtape" in name ->
-                streamTapeExtractor.videoFromUrl(url)
-                    ?.let(::listOf)
-                    ?: emptyList()
-            "/player1/" in url || "/player2/" in url ->
-                animesOnlineExtractor.videosFromUrl(url)
+            "streamtape" in name -> streamTapeExtractor.videosFromUrl(url)
+            "/noance/" in url || "/noa" in url -> noaExtractor.videosFromUrl(url)
             "/player/" in url -> bloggerExtractor.videosFromUrl(url, headers)
             else -> emptyList()
         }
     }
 
     private fun getPlayerUrl(player: Element): String? {
-        val body = FormBody.Builder()
-            .add("action", "doo_player_ajax")
-            .add("post", player.attr("data-post"))
-            .add("nume", player.attr("data-nume"))
-            .add("type", player.attr("data-type"))
-            .build()
+        val playerId = player.attr("data-nume")
+        val iframe = player.root().selectFirst("div#source-player-$playerId iframe")
 
-        return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", headers, body))
-            .execute()
-            .let { response ->
-                response.body.string()
-                    .substringAfter("\"embed_url\":\"")
-                    .substringBefore("\",")
-                    .replace("\\", "")
-                    .takeIf(String::isNotBlank)
-                    ?.let {
-                        when {
-                            it.contains("$baseUrl/aviso/") ->
-                                it.toHttpUrl().queryParameter("url")
-                            else -> it
-                        }
-                    }
+        return iframe?.attr("src")?.takeIf(String::isNotBlank)
+            ?.let {
+                when {
+                    it.contains("/aviso/") ->
+                        it.toHttpUrl().queryParameter("url")
+                    else -> it
+                }
             }
     }
 
