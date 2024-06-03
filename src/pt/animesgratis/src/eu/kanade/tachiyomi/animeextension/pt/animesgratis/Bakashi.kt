@@ -99,7 +99,7 @@ class Bakashi : DooPlay(
     }
 
     // ============================== Filters ===============================
-    override fun genresListRequest() = popularAnimeRequest()
+    override fun genresListRequest() = popularAnimeRequest(0)
     override fun genresListSelector() = "div.filter > div.select:first-child option:not([disabled])"
 
     override fun genresListParse(document: Document): Array<Pair<String, String>> {
