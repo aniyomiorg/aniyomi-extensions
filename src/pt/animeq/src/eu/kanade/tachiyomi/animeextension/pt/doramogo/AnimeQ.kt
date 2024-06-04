@@ -227,8 +227,8 @@ class AnimeQ : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun parseStatus(statusString: String?): Int {
         return when {
-            statusString?.trim() == "Em lançamento" -> SAnime.ONGOING
-            statusString?.trim() == "Em Andamento" -> SAnime.ONGOING
+            statusString?.trim()?.lowercase() == "em lançamento" -> SAnime.ONGOING
+            statusString?.trim()?.lowercase() == "em andamento" -> SAnime.ONGOING
             statusString?.trim()?.let { REGEX_NUMBER.matches(it) } == true -> SAnime.COMPLETED
             else -> SAnime.UNKNOWN
         }
