@@ -208,7 +208,7 @@ class AnimeQ : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
-                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+                { REGEX_QUALITY.find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
             ),
         ).reversed()
     }
@@ -229,14 +229,15 @@ class AnimeQ : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return when {
             statusString?.trim() == "Em lançamento" -> SAnime.ONGOING
             statusString?.trim() == "Em Andamento" -> SAnime.ONGOING
-            statusString?.trim()?.let { Regex("\\d").matches(it) } == true -> SAnime.COMPLETED
+            statusString?.trim()?.let { REGEX_NUMBER.matches(it) } == true -> SAnime.COMPLETED
             else -> SAnime.UNKNOWN
         }
     }
 
     private fun Element.getInfo(key: String): String? {
         return selectFirst("div.boxAnimeSobreLinha:has(b:contains($key))")?.run {
-            ownText()
+            text()
+                .substringAfter(":")
                 .trim()
                 .takeUnless { it.isBlank() || it == "???" }
         }
@@ -248,6 +249,9 @@ class AnimeQ : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
+        private val REGEX_QUALITY by lazy { Regex("""(\d+)p""") }
+        private val REGEX_NUMBER by lazy { Regex("""\d+""") }
+
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
         private const val PREF_QUALITY_DEFAULT = "720p"
