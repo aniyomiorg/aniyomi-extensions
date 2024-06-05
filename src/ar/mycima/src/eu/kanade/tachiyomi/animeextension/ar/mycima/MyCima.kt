@@ -75,7 +75,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (movieSeries.isNullOrEmpty()) {
                 document.selectFirst("div.Poster--Single-begin > a")!!.let(::movieEpisode)
             } else {
-                movieSeries.map(::mSeriesEpisode).sortedBy { it.episode_number }
+                movieSeries.map(::mSeriesEpisode)
             }
         } else {
             val seasonsList = document.select(seasonsListSelector())
@@ -120,7 +120,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         episode.episode_number = when (type) {
             "series" -> "$seNum.${element.text().let(::getNumberFromEpsString)}".toFloat()
-            "mSeries" -> element.select(".year").text().let(::getNumberFromEpsString).toFloat()
+            "mSeries" -> element.select(".year").text().let(::getNumberFromEpsString).toFloat() * 0.1F
             else -> 1F
         }
 
