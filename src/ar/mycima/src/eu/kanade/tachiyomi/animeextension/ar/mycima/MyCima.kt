@@ -63,62 +63,51 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector() = "div.Episodes--Seasons--Episodes a"
+    override fun episodeListSelector() = "div.Episodes--Seasons--Episodes"
 
-    private fun seasonsNextPageSelector(seasonNumber: Int) =
-        "div.List--Seasons--Episodes > a:nth-child($seasonNumber)"
+    private fun seasonsListSelector() = "div.List--Seasons--Episodes a"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val episodes = mutableListOf<SEpisode>()
-
-        var seasonNumber = 1
-        fun addEpisodes(document: Document) {
-            if (document.select(episodeListSelector()).isNullOrEmpty()) {
-                if (!document.select("mycima singlerelated.hasdivider ${popularAnimeSelector()}")
-                        .isNullOrEmpty()
-                ) {
-                    document.select("mycima singlerelated.hasdivider ${popularAnimeSelector()}")
-                        .map { episodes.add(newEpisodeFromElement(it, "mSeries")) }
-                } else {
-                    episodes.add(
-                        newEpisodeFromElement(
-                            document.selectFirst("div.Poster--Single-begin > a")!!,
-                            "movie",
-                        ),
-                    )
-                }
+        val document = response.asJsoup()
+        return if (document.select(episodeListSelector()).isNullOrEmpty()) {
+            val movieSeries = document.select("singlerelated.hasdivider ${popularAnimeSelector()}")
+            if (movieSeries.isNullOrEmpty()) {
+                document.selectFirst("div.Poster--Single-begin")!!.let(::movieEpisode)
             } else {
-                document.select(episodeListSelector())
-                    .map { episodes.add(newEpisodeFromElement(it)) }
-                document.selectFirst(seasonsNextPageSelector(seasonNumber))?.let {
-                    seasonNumber++
-                    addEpisodes(
-                        client.newCall(GET(it.attr("abs:href"), headers)).execute().asJsoup(),
-                    )
+                movieSeries.map(::mSeriesEpisode)
+            }
+        } else {
+            val seasonsList = document.select(seasonsListSelector())
+            if (seasonsList.isNullOrEmpty()) {
+                document.select(episodeListSelector()).map(::newEpisodeFromElement)
+            } else {
+                seasonsList.flatMap { season ->
+                    val seNum = season.text().let(::getNumberFromEpsString)
+                    if (season.hasClass("selected")) {
+                        document.select(episodeListSelector()).map { newEpisodeFromElement(it, seNum) }
+                    } else {
+                        val seasonDoc = client.newCall(GET(season.absUrl("href"), headers)).execute().asJsoup()
+                        seasonDoc.select(episodeListSelector()).map{ newEpisodeFromElement(it, seNum) }
+                    }
                 }
             }
         }
-        addEpisodes(response.asJsoup())
-        return episodes
     }
 
-    private fun newEpisodeFromElement(element: Element, type: String = "series"): SEpisode {
+    private fun movieEpisode(element: Element): List<SEpisode> = newEpisodeFromElement(element,  type = "movie").let(::listOf)
+    private fun mSeriesEpisode(element: Element): SEpisode  = newEpisodeFromElement(element, type = "mSeries")
+
+    private fun newEpisodeFromElement(element: Element, seNum: String = "1", type: String = "series"): SEpisode {
         val episode = SEpisode.create()
-        val epNum = element.text().let(::getNumberFromEpsString)
-        episode.setUrlWithoutDomain(
-            if (type == "mSeries") element.select("a").attr("href") else element.attr("abs:href"),
-        )
-        if (type == "series") {
-            episode.episode_number = when {
-                epNum.isNotEmpty() -> epNum.toFloatOrNull() ?: 1F
-                else -> 1F
-            }
-        }
+        episode.setUrlWithoutDomain(element.select("a").attr("href"))
         episode.name = when (type) {
             "movie" -> "مشاهدة"
             "mSeries" -> element.select("a").attr("title")
-            else -> element.ownerDocument()!!.select("div.List--Seasons--Episodes a.selected")
-                .text() + element.text()
+            else -> "الموسم $seNum : ${element.text()}"
+        }
+        if (type == "series") {
+            val epNum = element.text().let(::getNumberFromEpsString)
+            episode.episode_number = "$seNum.$epNum".toFloat()
         }
         return episode
     }
