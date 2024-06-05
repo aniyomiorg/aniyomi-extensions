@@ -72,7 +72,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return if (document.select(episodeListSelector()).isNullOrEmpty()) {
             val movieSeries = document.select("singlerelated.hasdivider:contains(سلسلة) div.Thumb--GridItem a")
             if (movieSeries.isNotEmpty()) {
-                movieSeries.map(::mSeriesEpisode)
+                movieSeries.sortedBy { it.selectFirst(".year")!!.text().let(::getNumberFromEpsString) }.map(::mSeriesEpisode)
             } else {
                 document.selectFirst("div.Poster--Single-begin > a")!!.let(::movieEpisode)
             }
@@ -122,10 +122,8 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         episode.episode_number = when (type) {
             "series" -> "$seNum.${element.text().let(::getNumberFromEpsString)}".toFloat()
-            // "mSeries" -> element.selectFirst(".year")!!.text().let(::getNumberFromEpsString).toFloat()
             else -> 1F
         }
-
         return episode
     }
 
@@ -218,10 +216,12 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             document.selectFirst("li:contains(المسلسل) p") != null -> {
                 document.select("li:contains(المسلسل) p").text()
             }
-
+            document.selectFirst("singlerelated.hasdivider:contains(سلسلة) a") != null -> {
+                document.select("singlerelated.hasdivider:contains(سلسلة) a").text()
+            }
             else -> {
                 document.select("div.Title--Content--Single-begin > h1").text()
-                    .substringBefore(" (")
+                    .substringBefore(" (").replace("مشاهدة فيلم ", "").substringBefore("مترجم")
             }
         }
         anime.genre = document.select("li:contains(التصنيف) > p > a, li:contains(النوع) > p > a")
