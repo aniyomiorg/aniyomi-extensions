@@ -73,18 +73,16 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val movieSeries =
                 document.select("singlerelated.hasdivider:contains(سلسلة) ${popularAnimeSelector()}")
             if (movieSeries.isNullOrEmpty()) {
-                document.selectFirst("div.Poster--Single-begin")!!.let(::movieEpisode)
+                document.selectFirst("div.Poster--Single-begin > a")!!.let(::movieEpisode)
             } else {
-                movieSeries.sortedBy {
-                    it.select("span.year").text().let(::getNumberFromEpsString).toInt()
-                }.reversed().map(::mSeriesEpisode)
+                movieSeries.map(::mSeriesEpisode).sortedBy { it.episode_number }
             }
         } else {
             val seasonsList = document.select(seasonsListSelector())
             if (seasonsList.isNullOrEmpty()) {
                 document.select(episodeListSelector()).map(::newEpisodeFromElement)
             } else {
-                seasonsList.flatMap { season ->
+                seasonsList.reversed().flatMap { season ->
                     val seNum = season.text().let(::getNumberFromEpsString)
                     if (season.hasClass("selected")) {
                         document.select(episodeListSelector())
@@ -116,14 +114,16 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (type == "series") element.select("a").attr("href") else element.absUrl("href"),
         )
         episode.name = when (type) {
-            "movie" -> "مشاهدة"
+            "series" -> "الموسم $seNum : ${element.text()}"
             "mSeries" -> element.select("a").text()
-            else -> "الموسم $seNum : ${element.text()}"
+            else -> "مشاهدة"
         }
-        if (type == "series") {
-            val epNum = element.text().let(::getNumberFromEpsString)
-            episode.episode_number = "$seNum.$epNum".toFloat()
+        episode.episode_number = when (type) {
+            "series" -> "$seNum.${element.text().let(::getNumberFromEpsString)}".toFloat()
+            "mSeries" -> element.select(".year").text().let(::getNumberFromEpsString).toFloat()
+            else -> 1F
         }
+
         return episode
     }
 
