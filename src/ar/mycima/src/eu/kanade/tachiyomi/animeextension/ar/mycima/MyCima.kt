@@ -75,7 +75,12 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (movieSeries.isNullOrEmpty()) {
                 document.selectFirst("div.Poster--Single-begin > a")!!.let(::movieEpisode)
             } else {
-                movieSeries.map(::mSeriesEpisode)
+                movieSeries.mapIndexed { index, element ->
+                    SEpisode.create().apply {
+                        name = "$index: " + element.select("a").text()
+                        setUrlWithoutDomain(element.absUrl("href"))
+                    }
+                }
             }
         } else {
             val seasonsList = document.select(seasonsListSelector())
@@ -111,7 +116,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     ): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(
-            if (type == "series") element.select("a").attr("href") else element.absUrl("href"),
+            if (type == "series") element.select("a").attr("href") else element.absUrl("href")
         )
         episode.name = when (type) {
             "series" -> "الموسم $seNum : ${element.text()}"
