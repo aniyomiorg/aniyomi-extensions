@@ -70,9 +70,12 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
         return if (document.select(episodeListSelector()).isNullOrEmpty()) {
-            val movieSeries = document.select("singlerelated.hasdivider:contains(سلسلة) div.Thumb--GridItem a")
+            val movieSeries =
+                document.select("singlerelated.hasdivider:contains(سلسلة) div.Thumb--GridItem a")
             if (movieSeries.isNotEmpty()) {
-                movieSeries.sortedByDescending { it.selectFirst(".year")!!.text().let(::getNumberFromEpsString) }.map(::mSeriesEpisode)
+                movieSeries.sortedByDescending {
+                    it.selectFirst(".year")!!.text().let(::getNumberFromEpsString)
+                }.map(::mSeriesEpisode)
             } else {
                 document.selectFirst("div.Poster--Single-begin > a")!!.let(::movieEpisode)
             }
@@ -113,7 +116,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             when (type) {
                 "series" -> element.select("a").attr("href")
                 else -> element.absUrl("href")
-            }
+            },
         )
         episode.name = when (type) {
             "series" -> "الموسم $seNum : ${element.text()}"
@@ -216,9 +219,11 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             document.selectFirst("li:contains(المسلسل) p") != null -> {
                 document.select("li:contains(المسلسل) p").text()
             }
+
             document.selectFirst("singlerelated.hasdivider:contains(سلسلة) a") != null -> {
                 document.selectFirst("singlerelated.hasdivider:contains(سلسلة) a")!!.text()
             }
+
             else -> {
                 document.select("div.Title--Content--Single-begin > h1").text()
                     .substringBefore(" (").replace("مشاهدة فيلم ", "").substringBefore("مترجم")
@@ -332,8 +337,19 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p", "240p", "Vidbom", "Vidshare", "Dood", "Default")
-            entryValues = arrayOf("1080", "720", "480", "360", "240", "Vidbom", "Vidshare", "Dood", "Default")
+            entries = arrayOf(
+                "1080p",
+                "720p",
+                "480p",
+                "360p",
+                "240p",
+                "Vidbom",
+                "Vidshare",
+                "Dood",
+                "Default",
+            )
+            entryValues =
+                arrayOf("1080", "720", "480", "360", "240", "Vidbom", "Vidshare", "Dood", "Default")
             setDefaultValue("1080")
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
