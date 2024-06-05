@@ -71,17 +71,9 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         return if (document.select(episodeListSelector()).isNullOrEmpty()) {
             val movieSeries =
-                document.select("singlerelated.hasdivider:contains(سلسلة) ${popularAnimeSelector()}")
-            if (movieSeries.isNullOrEmpty()) {
-                document.selectFirst("div.Poster--Single-begin > a")!!.let(::movieEpisode)
-            } else {
-                movieSeries.mapIndexed { index, element ->
-                    SEpisode.create().apply {
-                        name = "$index: " + element.select("a").text()
-                        setUrlWithoutDomain(element.absUrl("href"))
-                    }
-                }
-            }
+                document.select("singlerelated.hasdivider").firstOrNull()
+            movieSeries?.select(popularAnimeSelector())?.map(::mSeriesEpisode)
+                ?: document.selectFirst("div.Poster--Single-begin > a")!!.let(::movieEpisode)
         } else {
             val seasonsList = document.select(seasonsListSelector())
             if (seasonsList.isNullOrEmpty()) {
