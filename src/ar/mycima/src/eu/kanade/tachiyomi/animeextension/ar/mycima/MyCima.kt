@@ -70,12 +70,9 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
         return if (document.select(episodeListSelector()).isNullOrEmpty()) {
-            val movieSeries =
-                document.select("singlerelated.hasdivider:contains(سلسلة) div.Thumb--GridItem a")
-            if (!movieSeries.isNullOrEmpty()) {
-                val episodes = mutableListOf<SEpisode>()
-                movieSeries.map { episodes.add(newEpisodeFromElement(it, "mSeries")) }
-                episodes
+            val movieSeries = document.select("singlerelated.hasdivider:contains(سلسلة) div.Thumb--GridItem a")
+            if (movieSeries.isNotEmpty()) {
+                movieSeries.map(::mSeriesEpisode)
             } else {
                 document.selectFirst("div.Poster--Single-begin > a")!!.let(::movieEpisode)
             }
@@ -125,7 +122,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         episode.episode_number = when (type) {
             "series" -> "$seNum.${element.text().let(::getNumberFromEpsString)}".toFloat()
-            "mSeries" -> element.selectFirst(".year")!!.text().let(::getNumberFromEpsString).toFloat() / 10
+            // "mSeries" -> element.selectFirst(".year")!!.text().let(::getNumberFromEpsString).toFloat()
             else -> 1F
         }
 
