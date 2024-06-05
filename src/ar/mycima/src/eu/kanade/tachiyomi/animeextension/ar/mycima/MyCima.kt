@@ -63,18 +63,21 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector() = "div.Episodes--Seasons--Episodes"
+    override fun episodeListSelector() = "div.Episodes--Seasons--Episodes a"
 
     private fun seasonsListSelector() = "div.List--Seasons--Episodes a"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
         return if (document.select(episodeListSelector()).isNullOrEmpty()) {
-            val movieSeries = document.select("singlerelated.hasdivider ${popularAnimeSelector()}")
+            val movieSeries =
+                document.select("singlerelated.hasdivider:contains(سلسلة) ${popularAnimeSelector()}")
             if (movieSeries.isNullOrEmpty()) {
                 document.selectFirst("div.Poster--Single-begin")!!.let(::movieEpisode)
             } else {
-                movieSeries.map(::mSeriesEpisode)
+                movieSeries.sortedBy {
+                    it.select("span.year").text().let(::getNumberFromEpsString).toInt()
+                }.reversed().map(::mSeriesEpisode)
             }
         } else {
             val seasonsList = document.select(seasonsListSelector())
@@ -84,25 +87,37 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 seasonsList.flatMap { season ->
                     val seNum = season.text().let(::getNumberFromEpsString)
                     if (season.hasClass("selected")) {
-                        document.select(episodeListSelector()).map { newEpisodeFromElement(it, seNum) }
+                        document.select(episodeListSelector())
+                            .map { newEpisodeFromElement(it, seNum) }
                     } else {
-                        val seasonDoc = client.newCall(GET(season.absUrl("href"), headers)).execute().asJsoup()
-                        seasonDoc.select(episodeListSelector()).map{ newEpisodeFromElement(it, seNum) }
+                        val seasonDoc =
+                            client.newCall(GET(season.absUrl("href"), headers)).execute().asJsoup()
+                        seasonDoc.select(episodeListSelector())
+                            .map { newEpisodeFromElement(it, seNum) }
                     }
                 }
             }
         }
     }
 
-    private fun movieEpisode(element: Element): List<SEpisode> = newEpisodeFromElement(element,  type = "movie").let(::listOf)
-    private fun mSeriesEpisode(element: Element): SEpisode  = newEpisodeFromElement(element, type = "mSeries")
+    private fun movieEpisode(element: Element): List<SEpisode> =
+        newEpisodeFromElement(element, type = "movie").let(::listOf)
 
-    private fun newEpisodeFromElement(element: Element, seNum: String = "1", type: String = "series"): SEpisode {
+    private fun mSeriesEpisode(element: Element): SEpisode =
+        newEpisodeFromElement(element, type = "mSeries")
+
+    private fun newEpisodeFromElement(
+        element: Element,
+        seNum: String = "1",
+        type: String = "series",
+    ): SEpisode {
         val episode = SEpisode.create()
-        episode.setUrlWithoutDomain(element.select("a").attr("href"))
+        episode.setUrlWithoutDomain(
+            if (type == "series") element.select("a").attr("href") else element.absUrl("href"),
+        )
         episode.name = when (type) {
             "movie" -> "مشاهدة"
-            "mSeries" -> element.select("a").attr("title")
+            "mSeries" -> element.select("a").text()
             else -> "الموسم $seNum : ${element.text()}"
         }
         if (type == "series") {
@@ -186,7 +201,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
         val url = baseUrl + if (query.isNotBlank()) {
             "/search/$query/${categoryFilter.toUriPart()}$page/"
-        } else if (sectionFilter.state != 0){
+        } else if (sectionFilter.state != 0) {
             "/${sectionFilter.toUriPart()}/page/$page/"
         } else {
             "/genre/${genreFilter.toUriPart()}/${categoryFilter.toUriPart()}$page/"
