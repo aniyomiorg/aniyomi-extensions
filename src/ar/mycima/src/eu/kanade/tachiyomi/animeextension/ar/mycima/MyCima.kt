@@ -71,7 +71,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         return if (document.select(episodeListSelector()).isNullOrEmpty()) {
             val movieSeries =
-                document.select("wecima singlerelated.hasdivider ${popularAnimeSelector()}")
+                document.select("singlerelated.hasdivider:contains(سلسلة) div.Thumb--GridItem a")
             if (!movieSeries.isNullOrEmpty()) {
                 val episodes = mutableListOf<SEpisode>()
                 movieSeries.map { episodes.add(newEpisodeFromElement(it, "mSeries")) }
@@ -113,16 +113,19 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     ): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(
-            if (type == "series") element.select("a").attr("href") else element.absUrl("href")
+            when (type) {
+                "series" -> element.select("a").attr("href")
+                else -> element.absUrl("href")
+            }
         )
         episode.name = when (type) {
             "series" -> "الموسم $seNum : ${element.text()}"
-            "mSeries" -> element.select("a").text()
+            "mSeries" -> element.text()
             else -> "مشاهدة"
         }
         episode.episode_number = when (type) {
             "series" -> "$seNum.${element.text().let(::getNumberFromEpsString)}".toFloat()
-            "mSeries" -> element.select(".year").text().let(::getNumberFromEpsString).toFloat() * 0.1F
+            "mSeries" -> element.selectFirst(".year")!!.text().let(::getNumberFromEpsString).toFloat() / 10
             else -> 1F
         }
 
