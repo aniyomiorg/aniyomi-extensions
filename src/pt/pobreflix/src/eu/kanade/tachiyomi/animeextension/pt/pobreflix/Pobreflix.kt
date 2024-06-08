@@ -45,13 +45,7 @@ class Pobreflix : DooPlay(
                     ?.let(::String)
                     ?: return@flatMap emptyList()
                 val url = data.replace("\\", "").substringAfter("url\":\"").substringBefore('"')
-                when {
-                    url.contains("superflix") ->
-                        superflixExtractor.videosFromUrl(url)
-                    url.contains("supercdn") ->
-                        supercdnExtractor.videosFromUrl(url)
-                    else -> genericExtractor(url)
-                }
+                genericExtractor(url)
             }.getOrElse { emptyList() }
         }
     }
@@ -59,6 +53,10 @@ class Pobreflix : DooPlay(
     private fun genericExtractor(url: String, language: String = ""): List<Video> {
         val langSubstr = "[$language]"
         return when {
+            url.contains("superflix") ->
+                superflixExtractor.videosFromUrl(url)
+            url.contains("supercdn") ->
+                supercdnExtractor.videosFromUrl(url)
             url.contains("filemoon") ->
                 filemoonExtractor.videosFromUrl(url, "$langSubstr Filemoon - ", headers = headers)
             url.contains("watch.brplayer") || url.contains("/watch?v=") ->
