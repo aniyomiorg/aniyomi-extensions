@@ -225,7 +225,8 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val jsonData = response.body.string()
-        return parseSearchJson(jsonData) }
+        return parseSearchJson(jsonData)
+    }
 
     // =============================== Latest ===============================
     override fun latestUpdatesRequest(page: Int): Request {
@@ -258,7 +259,11 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response)
+        val details = animeDetailsParse(response).apply {
+            setUrlWithoutDomain(response.request.url.toString())
+            initialized = true
+        }
+
         return AnimesPage(listOf(details), false)
     }
 
@@ -479,7 +484,9 @@ class Torrentio : ConfigurableAnimeSource, AnimeHttpSource() {
                 if (debridProvider == "none") {
                     val trackerList = animeTrackers.split(",").map { it.trim() }.filter { it.isNotBlank() }.joinToString("&tr=")
                     "magnet:?xt=urn:btih:${stream.infoHash}&dn=${stream.infoHash}&tr=$trackerList&index=${stream.fileIdx}"
-                } else stream.url ?: ""
+                } else {
+                    stream.url ?: ""
+                }
             Video(urlOrHash, ((stream.name?.replace("Torrentio\n", "") ?: "") + "\n" + stream.title), urlOrHash)
         }.orEmpty()
     }

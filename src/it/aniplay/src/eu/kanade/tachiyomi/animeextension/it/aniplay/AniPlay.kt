@@ -84,8 +84,11 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response)
-            .apply { setUrlWithoutDomain(response.request.url.toString()) }
+        val details = animeDetailsParse(response).apply {
+            setUrlWithoutDomain(response.request.url.toString())
+            initialized = true
+        }
+
         return AnimesPage(listOf(details), false)
     }
 
