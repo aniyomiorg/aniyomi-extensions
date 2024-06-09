@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.DirectoryDto
-import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.HomeListDto
+import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.HomePageDto
 import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.LongAnimeDto
 import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.ShortAnimeDto
 import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.SubtitleDto
@@ -52,7 +52,7 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/api/home-list", headers)
+    override fun popularAnimeRequest(page: Int) = GET(baseUrl, headers)
 
     private fun Int.parseStatus() = when (this) {
         1 -> SAnime.UNKNOWN // Not Yet Released
@@ -77,7 +77,10 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
     override fun popularAnimeParse(response: Response): AnimesPage {
         sudatchiFilters.fetchFilters()
         val titleLang = preferences.title
-        return AnimesPage(response.parseAs<HomeListDto>().animeSpotlight.map { it.toSAnime(titleLang) }, false)
+        val document = response.asJsoup()
+        val jsonString = document.selectFirst("script#__NEXT_DATA__")?.data() ?: return AnimesPage(emptyList(), false)
+        val data = json.decodeFromString<HomePageDto>(jsonString).props.pageProps.animeSpotlight
+        return AnimesPage(data.map { it.toSAnime(titleLang) }, false)
     }
 
     // =============================== Latest ===============================

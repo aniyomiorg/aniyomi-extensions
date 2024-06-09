@@ -26,9 +26,19 @@ data class ShortAnimeDto(
 )
 
 @Serializable
-data class HomeListDto(
+data class HomePagePropsPageProps(
     @SerialName("AnimeSpotlight")
     val animeSpotlight: List<ShortAnimeDto>,
+)
+
+@Serializable
+data class HomePageProps(
+    val pageProps: HomePagePropsPageProps,
+)
+
+@Serializable
+data class HomePageDto(
+    val props: HomePageProps,
 )
 
 @Serializable
