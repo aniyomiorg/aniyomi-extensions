@@ -1,9 +1,9 @@
 ext {
-    extName = 'AnimesOnline'
-    extClass = '.AnimesOnline'
+    extName = 'Bakashi'
+    extClass = '.Bakashi'
     themePkg = 'dooplay'
-    baseUrl = 'https://animesonline.nz'
-    overrideVersionCode = 9
+    baseUrl = 'https://bakashi.tv'
+    overrideVersionCode = 10
 }
 
 apply from: "$rootDir/common.gradle"

@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesgratis
 
-import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.AnimesOnlinePlayerExtractor
+import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.NoaExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.RuplayExtractor
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -11,26 +11,24 @@ import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
-import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
-class AnimesOnline : DooPlay(
+class Bakashi : DooPlay(
     "pt-BR",
-    "AnimesOnline",
-    "https://animesonline.nz",
+    "Bakashi",
+    "https://bakashi.tv",
 ) {
 
     override val id: Long = 2969482460524685571L
 
     // ============================== Popular ===============================
-    override fun popularAnimeSelector() = "div.sidebar.right article > a"
-    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes/")
+    override fun popularAnimeSelector() = "div.items.featured article div.poster"
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes/", headers)
 
     // =============================== Search ===============================
     override fun searchAnimeSelector() = "div.result-item article div.thumbnail > a"
@@ -64,7 +62,7 @@ class AnimesOnline : DooPlay(
     override val prefQualityEntries = prefQualityValues
 
     private val ruplayExtractor by lazy { RuplayExtractor(client) }
-    private val animesOnlineExtractor by lazy { AnimesOnlinePlayerExtractor(client) }
+    private val noaExtractor by lazy { NoaExtractor(client, headers) }
     private val bloggerExtractor by lazy { BloggerExtractor(client) }
     private val filemoonExtractor by lazy { FilemoonExtractor(client) }
     private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
@@ -79,45 +77,29 @@ class AnimesOnline : DooPlay(
             "streamwish" in name -> streamWishExtractor.videosFromUrl(url)
             "filemoon" in name -> filemoonExtractor.videosFromUrl(url)
             "mixdrop" in name -> mixDropExtractor.videoFromUrl(url)
-            "streamtape" in name ->
-                streamTapeExtractor.videoFromUrl(url)
-                    ?.let(::listOf)
-                    ?: emptyList()
-            "/player1/" in url || "/player2/" in url ->
-                animesOnlineExtractor.videosFromUrl(url)
+            "streamtape" in name -> streamTapeExtractor.videosFromUrl(url)
+            "/noance/" in url || "/noa" in url -> noaExtractor.videosFromUrl(url)
             "/player/" in url -> bloggerExtractor.videosFromUrl(url, headers)
             else -> emptyList()
         }
     }
 
     private fun getPlayerUrl(player: Element): String? {
-        val body = FormBody.Builder()
-            .add("action", "doo_player_ajax")
-            .add("post", player.attr("data-post"))
-            .add("nume", player.attr("data-nume"))
-            .add("type", player.attr("data-type"))
-            .build()
+        val playerId = player.attr("data-nume")
+        val iframe = player.root().selectFirst("div#source-player-$playerId iframe")
 
-        return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", headers, body))
-            .execute()
-            .let { response ->
-                response.body.string()
-                    .substringAfter("\"embed_url\":\"")
-                    .substringBefore("\",")
-                    .replace("\\", "")
-                    .takeIf(String::isNotBlank)
-                    ?.let {
-                        when {
-                            it.contains("$baseUrl/aviso/") ->
-                                it.toHttpUrl().queryParameter("url")
-                            else -> it
-                        }
-                    }
+        return iframe?.attr("src")?.takeIf(String::isNotBlank)
+            ?.let {
+                when {
+                    it.contains("/aviso/") ->
+                        it.toHttpUrl().queryParameter("url")
+                    else -> it
+                }
             }
     }
 
     // ============================== Filters ===============================
-    override fun genresListRequest() = GET("$baseUrl/animes/")
+    override fun genresListRequest() = popularAnimeRequest(0)
     override fun genresListSelector() = "div.filter > div.select:first-child option:not([disabled])"
 
     override fun genresListParse(document: Document): Array<Pair<String, String>> {

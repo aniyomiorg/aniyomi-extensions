@@ -2,9 +2,10 @@ package eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors
 
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 
-class AnimesOnlinePlayerExtractor(private val client: OkHttpClient) {
+class NoaExtractor(private val client: OkHttpClient, private val headers: Headers) {
     fun videosFromUrl(url: String): List<Video> {
         return client.newCall(GET(url)).execute()
             .body.string()
@@ -18,7 +19,7 @@ class AnimesOnlinePlayerExtractor(private val client: OkHttpClient) {
                     .substringAfter(":\"")
                     .substringBefore('"')
                     .replace("\\", "")
-                Video(videoUrl, "Player - $label", videoUrl)
+                Video(videoUrl, "Player - $label", videoUrl, headers)
             }
     }
 }
