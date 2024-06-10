@@ -35,35 +35,32 @@ data class AnimeDto(
 )
 
 @Serializable
-data class HomePagePropsPagePropsDto(
+data class HomePageDto(
     @SerialName("AnimeSpotlight")
     val animeSpotlight: List<AnimeDto>,
 )
 
 @Serializable
-data class HomePagePropsDto(
-    val pageProps: HomePagePropsPagePropsDto,
-)
-
-@Serializable
-data class HomePageDto(
-    val props: HomePagePropsDto,
-)
-
-@Serializable
-data class AnimePagePropsPagePropsDto(
+data class AnimePageDto(
     val animeData: AnimeDto,
 )
 
 @Serializable
-data class AnimePagePropsDto(
-    val pageProps: AnimePagePropsPagePropsDto,
+data class EpisodeDataDto(
+    val episode: EpisodeDto,
+    val subtitlesJson: String,
 )
 
 @Serializable
-data class AnimePageDto(
-    val props: AnimePagePropsDto,
+data class EpisodePageDto(
+    val episodeData: EpisodeDataDto,
 )
+
+@Serializable
+data class PagePropsDto<T>(val pageProps: T)
+
+@Serializable
+data class PropsDto<T>(val props: PagePropsDto<T>)
 
 @Serializable
 data class DirectoryDto(
@@ -83,27 +80,6 @@ data class SubtitleDto(
     val url: String,
     @SerialName("SubtitlesName")
     val subtitlesName: SubtitleLangDto,
-)
-
-@Serializable
-data class EpisodeDataDto(
-    val episode: EpisodeDto,
-    val subtitlesJson: String,
-)
-
-@Serializable
-data class EpisodePagePropsPagePropsDto(
-    val episodeData: EpisodeDataDto,
-)
-
-@Serializable
-data class EpisodePagePropsDto(
-    val pageProps: EpisodePagePropsPagePropsDto,
-)
-
-@Serializable
-data class EpisodePageDto(
-    val props: EpisodePagePropsDto,
 )
 
 @Serializable

@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.AnimePageDto
 import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.DirectoryDto
 import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.EpisodePageDto
 import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.HomePageDto
+import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.PropsDto
 import eu.kanade.tachiyomi.animeextension.all.sudatchi.dto.SubtitleDto
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -27,10 +28,10 @@ import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.nodes.Document
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.lang.Exception
 
 class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
 
@@ -75,7 +76,7 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
         status = statusId.parseStatus()
         thumbnail_url = when {
             imgUrl.startsWith("/") -> "$baseUrl$imgUrl"
-            else -> "https://$ipfsUrl/ipfs/$imgUrl"
+            else -> "$ipfsUrl/ipfs/$imgUrl"
         }
         genre = animeGenres?.joinToString { it.genre.name }
     }
@@ -84,8 +85,7 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
         sudatchiFilters.fetchFilters()
         val titleLang = preferences.title
         val document = response.asJsoup()
-        val jsonString = document.selectFirst("script#__NEXT_DATA__")?.data() ?: return AnimesPage(emptyList(), false)
-        val data = json.decodeFromString<HomePageDto>(jsonString).props.pageProps.animeSpotlight
+        val data = document.parseAs<HomePageDto>().animeSpotlight
         return AnimesPage(data.map { it.toSAnime(titleLang) }, false)
     }
 
@@ -141,8 +141,7 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
 
     override fun animeDetailsParse(response: Response): SAnime {
         val document = response.asJsoup()
-        val jsonString = document.selectFirst("script#__NEXT_DATA__")?.data() ?: throw Exception("couldn't get details")
-        val data = json.decodeFromString<AnimePageDto>(jsonString).props.pageProps.animeData
+        val data = document.parseAs<AnimePageDto>().animeData
         return data.toSAnime(preferences.title)
     }
 
@@ -151,8 +150,7 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
-        val jsonString = document.selectFirst("script#__NEXT_DATA__")?.data() ?: throw Exception("couldn't get episodes")
-        val anime = json.decodeFromString<AnimePageDto>(jsonString).props.pageProps.animeData
+        val anime = document.parseAs<AnimePageDto>().animeData
         return anime.episodes.map {
             SEpisode.create().apply {
                 name = it.title
@@ -169,8 +167,7 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val jsonString = document.selectFirst("script#__NEXT_DATA__")?.data() ?: return emptyList()
-        val data = json.decodeFromString<EpisodePageDto>(jsonString).props.pageProps.episodeData
+        val data = document.parseAs<EpisodePageDto>().episodeData
         val subtitles = json.decodeFromString<List<SubtitleDto>>(data.subtitlesJson)
         // val videoUrl = client.newCall(GET("$baseUrl/api/streams?episodeId=${data.episode.id}", headers)).execute().parseAs<StreamsDto>().url
         // keeping it in case the simpler solution breaks, can be hardcoded to this for now :
@@ -247,6 +244,11 @@ class Sudatchi : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // ============================= Utilities ==============================
+    private inline fun <reified T> Document.parseAs(): T {
+        val nextData = this.selectFirst("script#__NEXT_DATA__")!!.data()
+        return json.decodeFromString<PropsDto<T>>(nextData).props.pageProps
+    }
+
     private val SharedPreferences.quality get() = getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
     private val SharedPreferences.subtitles get() = getString(PREF_SUBTITLES_KEY, PREF_SUBTITLES_DEFAULT)!!
     private val SharedPreferences.title get() = getString(PREF_TITLE_KEY, PREF_TITLE_DEFAULT)!!
