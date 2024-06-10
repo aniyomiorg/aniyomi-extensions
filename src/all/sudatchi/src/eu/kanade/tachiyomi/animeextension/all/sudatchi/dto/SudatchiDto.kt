@@ -4,16 +4,23 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Genre(val name: String)
+data class GenreDto(val name: String)
 
 @Serializable
-data class AnimeGenreRelation(
+data class AnimeGenreRelationDto(
     @SerialName("Genre")
-    val genre: Genre,
+    val genre: GenreDto,
 )
 
 @Serializable
-data class ShortAnimeDto(
+data class EpisodeDto(
+    val title: String,
+    val id: Int,
+    val number: Int,
+)
+
+@Serializable
+data class AnimeDto(
     val titleRomanji: String?,
     val titleEnglish: String?,
     val titleJapanese: String?,
@@ -22,34 +29,44 @@ data class ShortAnimeDto(
     val statusId: Int,
     val imgUrl: String,
     @SerialName("AnimeGenres")
-    val animeGenres: List<AnimeGenreRelation>?,
+    val animeGenres: List<AnimeGenreRelationDto>?,
+    @SerialName("Episodes")
+    val episodes: List<EpisodeDto> = emptyList(),
 )
 
 @Serializable
-data class HomeListDto(
+data class HomePageDto(
     @SerialName("AnimeSpotlight")
-    val animeSpotlight: List<ShortAnimeDto>,
+    val animeSpotlight: List<AnimeDto>,
 )
+
+@Serializable
+data class AnimePageDto(
+    val animeData: AnimeDto,
+)
+
+@Serializable
+data class EpisodeDataDto(
+    val episode: EpisodeDto,
+    val subtitlesJson: String,
+)
+
+@Serializable
+data class EpisodePageDto(
+    val episodeData: EpisodeDataDto,
+)
+
+@Serializable
+data class PagePropsDto<T>(val pageProps: T)
+
+@Serializable
+data class PropsDto<T>(val props: PagePropsDto<T>)
 
 @Serializable
 data class DirectoryDto(
-    val animes: List<ShortAnimeDto>,
+    val animes: List<AnimeDto>,
     val page: Int,
     val pages: Int,
-)
-
-@Serializable
-data class Episode(
-    val title: String,
-    val id: Int,
-    val number: Int,
-)
-
-@Serializable
-data class LongAnimeDto(
-    val slug: String,
-    @SerialName("Episodes")
-    val episodes: List<Episode>,
 )
 
 @Serializable
@@ -63,27 +80,6 @@ data class SubtitleDto(
     val url: String,
     @SerialName("SubtitlesName")
     val subtitlesName: SubtitleLangDto,
-)
-
-@Serializable
-data class EpisodeDataDto(
-    val episode: Episode,
-    val subtitlesJson: String,
-)
-
-@Serializable
-data class PagePropsDto(
-    val episodeData: EpisodeDataDto,
-)
-
-@Serializable
-data class DataWatchDto(
-    val pageProps: PagePropsDto,
-)
-
-@Serializable
-data class WatchDto(
-    val props: DataWatchDto,
 )
 
 @Serializable
