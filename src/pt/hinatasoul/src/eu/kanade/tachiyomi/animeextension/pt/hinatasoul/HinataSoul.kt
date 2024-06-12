@@ -78,7 +78,11 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun searchAnimeBySlugParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response)
+        val details = animeDetailsParse(response).apply {
+            setUrlWithoutDomain(response.request.url.toString())
+            initialized = true
+        }
+
         return AnimesPage(listOf(details), false)
     }
 

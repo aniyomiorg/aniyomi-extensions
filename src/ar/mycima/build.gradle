@@ -1,11 +1,14 @@
 ext {
     extName = 'MY CIMA'
     extClass = '.MyCima'
-    extVersionCode = 20
+    extVersionCode = 22
 }
 
 apply from: "$rootDir/common.gradle"
 
 dependencies {
     implementation(project(':lib:uqload-extractor'))
+    implementation(project(':lib:vidbom-extractor'))
+    implementation(project(':lib:dood-extractor'))
+    implementation(project(':lib:okru-extractor'))
 }

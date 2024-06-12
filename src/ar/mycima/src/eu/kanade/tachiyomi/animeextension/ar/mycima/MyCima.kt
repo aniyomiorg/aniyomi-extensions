@@ -2,10 +2,8 @@ package eu.kanade.tachiyomi.animeextension.ar.mycima
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.ar.mycima.extractors.GoVadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -13,7 +11,10 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
+import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMapBlocking
@@ -23,13 +24,14 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 
 class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "MY Cima"
 
-    override val baseUrl by lazy { getPrefBaseUrl() }
+    // TODO: Check frequency of url changes to potentially
+    // add back overridable baseurl preference
+    override val baseUrl = "https://wecima.show"
 
     override val lang = "ar"
 
@@ -39,13 +41,14 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    // ============================== popular ==============================
-
-    override fun popularAnimeSelector(): String = "div.Grid--WecimaPosts div.GridItem div.Thumb--GridItem"
+    // ============================== Popular ==============================
+    override fun popularAnimeSelector(): String =
+        "div.Grid--WecimaPosts div.GridItem div.Thumb--GridItem"
 
     override fun popularAnimeNextPageSelector(): String = "ul.page-numbers li a.next"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/seriestv/top/?page_number=$page")
+    override fun popularAnimeRequest(page: Int): Request =
+        GET("$baseUrl/seriestv/top/?page_number=$page", headers)
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -59,116 +62,125 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    // ============================== episodes ==============================
-
+    // ============================== Episodes ==============================
     override fun episodeListSelector() = "div.Episodes--Seasons--Episodes a"
 
-    private fun seasonsNextPageSelector(seasonNumber: Int) = "div.List--Seasons--Episodes > a:nth-child($seasonNumber)"
+    private fun seasonsListSelector() = "div.List--Seasons--Episodes a"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val episodes = mutableListOf<SEpisode>()
-
-        var seasonNumber = 1
-        fun addEpisodes(document: Document) {
-            if (document.select(episodeListSelector()).isNullOrEmpty()) {
-                if (!document.select("mycima singlerelated.hasdivider ${popularAnimeSelector()}").isNullOrEmpty()) {
-                    document.select("mycima singlerelated.hasdivider ${popularAnimeSelector()}").map { episodes.add(newEpisodeFromElement(it, "mSeries")) }
-                } else {
-                    episodes.add(newEpisodeFromElement(document.selectFirst("div.Poster--Single-begin > a")!!, "movie"))
-                }
+        val document = response.asJsoup()
+        return if (document.select(episodeListSelector()).isNullOrEmpty()) {
+            val movieSeries =
+                document.select("singlerelated.hasdivider:contains(سلسلة) div.Thumb--GridItem a")
+            if (movieSeries.isNotEmpty()) {
+                movieSeries.sortedByDescending {
+                    it.selectFirst(".year")!!.text().let(::getNumberFromEpsString)
+                }.map(::mSeriesEpisode)
             } else {
-                document.select(episodeListSelector()).map { episodes.add(newEpisodeFromElement(it)) }
-                document.selectFirst(seasonsNextPageSelector(seasonNumber))?.let {
-                    seasonNumber++
-                    addEpisodes(
-                        client.newCall(GET(it.attr("abs:href"), headers)).execute().asJsoup(),
-                    )
+                document.selectFirst("div.Poster--Single-begin > a")!!.let(::movieEpisode)
+            }
+        } else {
+            val seasonsList = document.select(seasonsListSelector())
+            if (seasonsList.isNullOrEmpty()) {
+                document.select(episodeListSelector()).map(::newEpisodeFromElement)
+            } else {
+                seasonsList.reversed().flatMap { season ->
+                    val seNum = season.text().let(::getNumberFromEpsString)
+                    if (season.hasClass("selected")) {
+                        document.select(episodeListSelector())
+                            .map { newEpisodeFromElement(it, seNum) }
+                    } else {
+                        val seasonDoc =
+                            client.newCall(GET(season.absUrl("href"), headers)).execute().asJsoup()
+                        seasonDoc.select(episodeListSelector())
+                            .map { newEpisodeFromElement(it, seNum) }
+                    }
                 }
             }
         }
-        addEpisodes(response.asJsoup())
-        return episodes
     }
 
-    private fun newEpisodeFromElement(element: Element, type: String = "series"): SEpisode {
+    private fun movieEpisode(element: Element): List<SEpisode> =
+        newEpisodeFromElement(element, type = "movie").let(::listOf)
+
+    private fun mSeriesEpisode(element: Element): SEpisode =
+        newEpisodeFromElement(element, type = "mSeries")
+
+    private fun newEpisodeFromElement(
+        element: Element,
+        seNum: String = "1",
+        type: String = "series",
+    ): SEpisode {
         val episode = SEpisode.create()
-        val epNum = getNumberFromEpsString(element.text())
-        episode.setUrlWithoutDomain(if (type == "mSeries") element.select("a").attr("href") else element.attr("abs:href"))
-        if (type == "series") {
-            episode.episode_number = when {
-                epNum.isNotEmpty() -> epNum.toFloatOrNull() ?: 1F
-                else -> 1F
-            }
-        }
+        episode.setUrlWithoutDomain(
+            when (type) {
+                "series" -> element.select("a").attr("href")
+                else -> element.absUrl("href")
+            },
+        )
         episode.name = when (type) {
-            "movie" -> "مشاهدة"
-            "mSeries" -> element.select("a").attr("title")
-            else -> element.ownerDocument()!!.select("div.List--Seasons--Episodes a.selected").text() + element.text()
+            "series" -> "الموسم $seNum : ${element.text()}"
+            "mSeries" -> element.text().replace("مشاهدة فيلم ", "").substringBefore("مترجم")
+            else -> "مشاهدة"
+        }
+        episode.episode_number = when (type) {
+            "series" -> "$seNum.${element.text().let(::getNumberFromEpsString)}".toFloat()
+            else -> 1F
         }
         return episode
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
+    override fun episodeFromElement(element: Element): SEpisode =
+        throw UnsupportedOperationException()
 
-    private fun getNumberFromEpsString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }
-    }
+    private fun getNumberFromEpsString(epsStr: String): String = epsStr.filter { it.isDigit() }
 
-    // ============================== video urls ==============================
-
+    // ============================== Video Links ==============================
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        return document.select("ul.WatchServersList li btn").parallelCatchingFlatMapBlocking {
-            val frameURL = it.attr("data-url")
-            if (it.parent()?.hasClass("MyCimaServer") == true) {
-                val referer = response.request.url.encodedPath
-                val newHeader = headers.newBuilder().add("referer", baseUrl + referer).build()
-                val iframeResponse = client.newCall(GET(frameURL, newHeader)).execute().asJsoup()
-                videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
-            } else {
-                extractVideos(frameURL)
-            }
-        }
+        return document.select(videoListSelector())
+            .parallelCatchingFlatMapBlocking(::extractVideos)
     }
 
-    private fun extractVideos(url: String): List<Video> {
+    private val vidBomExtractor by lazy { VidBomExtractor(client) }
+    private val uqloadExtractor by lazy { UqloadExtractor(client) }
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val okruExtractor by lazy { OkruExtractor(client) }
+
+    private fun extractVideos(element: Element): List<Video> {
+        val iframeUrl = element.selectFirst("btn")!!.absUrl("data-url")
+        val newHeader = headers.newBuilder().add("referer", "$baseUrl/").build()
+        val iframeTxt = element.text().lowercase()
         return when {
-            GOVAD_REGEX.containsMatchIn(url) -> {
-                val finalUrl = GOVAD_REGEX.find(url)!!.groupValues[0]
-                val urlHost = GOVAD_REGEX.find(url)!!.groupValues[1]
-                GoVadExtractor(client).videosFromUrl("https://www.$finalUrl.html", urlHost)
+            element.hasClass("MyCimaServer") && "/run/" in iframeUrl -> {
+                val mp4Url = iframeUrl.replace("?Key", "/?Key") + "&auto=true"
+                Video(mp4Url, "Default (may take a while)", mp4Url, newHeader).let(::listOf)
             }
-            UQLOAD_REGEX.containsMatchIn(url) -> {
-                val finalUrl = UQLOAD_REGEX.find(url)!!.groupValues[0]
-                UqloadExtractor(client).videosFromUrl("https://www.$finalUrl.html")
+
+            "govid" in iframeTxt || "vidbom" in iframeTxt || "vidshare" in iframeTxt -> {
+                vidBomExtractor.videosFromUrl(iframeUrl, newHeader)
             }
+
+            "dood" in iframeTxt -> {
+                doodExtractor.videosFromUrl(iframeUrl)
+            }
+
+            "ok.ru" in iframeTxt -> {
+                okruExtractor.videosFromUrl(iframeUrl)
+            }
+
+            "uqload" in iframeTxt -> {
+                uqloadExtractor.videosFromUrl(iframeUrl)
+            }
+
             else -> null
         } ?: emptyList()
     }
 
-    override fun videoListSelector() = "body"
-
-    private fun videosFromElement(element: Element): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val script = element.select("script")
-            .firstOrNull { it.data().contains("player.qualityselector({") }
-        if (script != null) {
-            val data = element.data().substringAfter("sources: [").substringBefore("],")
-            val sources = data.split("format: '").drop(1)
-            for (source in sources) {
-                val src = source.substringAfter("src: \"").substringBefore("\"")
-                val quality = source.substringBefore("'") // .substringAfter("format: '")
-                val video = Video(src, quality, src)
-                videoList.add(video)
-            }
-            return videoList
-        }
-        val sourceTag = element.ownerDocument()!!.select("source").firstOrNull()!!
-        return listOf(Video(sourceTag.attr("src"), "Default", sourceTag.attr("src")))
-    }
+    override fun videoListSelector() = "ul.WatchServersList li"
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val quality = preferences.getString("preferred_quality", "1080")!!
         return sortedWith(
             compareBy { it.quality.contains(quality) },
         ).reversed()
@@ -178,65 +190,50 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
 
-    // ============================== search ==============================
+    // ============================== Search ==============================
+    override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a").attr("href"))
-        anime.title = element.select("a > strong").text()
-        anime.thumbnail_url = element.select("a > span.BG--GridItem").attr("data-lazy-style").substringAfter("-image:url(").substringBefore(");")
-        return anime
-    }
+    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
-    override fun searchAnimeNextPageSelector(): String = "ul.page-numbers li a.next"
-
-    override fun searchAnimeSelector(): String = "div.Grid--WecimaPosts div.GridItem div.Thumb--GridItem"
+    override fun searchAnimeSelector(): String = popularAnimeSelector()
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        if (query.isNotBlank()) {
-            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-                when (filter) {
-                    is SearchCategoryList -> {
-                        val catQ = getSearchCategoryList()[filter.state].query
-                        val catUrl = "$baseUrl/search/$query/" + if (catQ == "page/" && page == 1) "" else "$catQ$page"
-                        return GET(catUrl, headers)
-                    }
-                    else -> {}
-                }
-            }
+        val filterList = if (filters.isEmpty()) getFilterList() else filters
+        val sectionFilter = filterList.find { it is SectionFilter } as SectionFilter
+        val categoryFilter = filterList.find { it is CategoryFilter } as CategoryFilter
+        val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
+        val url = baseUrl + if (query.isNotBlank()) {
+            "/search/$query/${categoryFilter.toUriPart()}$page/"
+        } else if (sectionFilter.state != 0) {
+            "/${sectionFilter.toUriPart()}/page/$page/"
         } else {
-            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-                when (filter) {
-                    is CategoryList -> {
-                        if (filter.state > 0) {
-                            val catQ = getCategoryList()[filter.state].query
-                            val catUrl = "$baseUrl/$catQ/page/$page/"
-                            return GET(catUrl, headers)
-                        }
-                    }
-                    else -> {}
-                }
-            }
-            throw Exception("Choose a Filters")
+            "/genre/${genreFilter.toUriPart()}/${categoryFilter.toUriPart()}$page/"
         }
-        return GET(baseUrl, headers)
+        return GET(url, headers)
     }
 
-    // ============================== details ==============================
-
+    // ============================== Details ==============================
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = when {
             document.selectFirst("li:contains(المسلسل) p") != null -> {
                 document.select("li:contains(المسلسل) p").text()
             }
+
+            document.selectFirst("singlerelated.hasdivider:contains(سلسلة) a") != null -> {
+                document.selectFirst("singlerelated.hasdivider:contains(سلسلة) a")!!.text()
+            }
+
             else -> {
-                document.select("div.Title--Content--Single-begin > h1").text().substringBefore(" (")
+                document.select("div.Title--Content--Single-begin > h1").text()
+                    .substringBefore(" (").replace("مشاهدة فيلم ", "").substringBefore("مترجم")
             }
         }
-        anime.genre = document.select("li:contains(التصنيف) > p > a, li:contains(النوع) > p > a").joinToString(", ") { it.text() }
+        anime.genre = document.select("li:contains(التصنيف) > p > a, li:contains(النوع) > p > a")
+            .joinToString(", ") { it.text() }
         anime.description = document.select("div.AsideContext > div.StoryMovieContent").text()
-        anime.author = document.select("li:contains(شركات الإنتاج) > p > a").joinToString(", ") { it.text() }
+        anime.author =
+            document.select("li:contains(شركات الإنتاج) > p > a").joinToString(", ") { it.text() }
         // add alternative name to anime description
         document.select("li:contains( بالعربي) > p, li:contains(معروف) > p").text().let {
             if (it.isEmpty().not()) {
@@ -249,101 +246,111 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    // ============================== latest ==============================
+    // ============================== Latest ==============================
+    override fun latestUpdatesSelector(): String = popularAnimeSelector()
 
-    override fun latestUpdatesSelector(): String = "div.Grid--WecimaPosts div.GridItem div.Thumb--GridItem"
+    override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
 
-    override fun latestUpdatesNextPageSelector(): String = "ul.page-numbers li a.next"
+    override fun latestUpdatesFromElement(element: Element): SAnime =
+        popularAnimeFromElement(element)
 
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a").attr("href"))
-        anime.title = element.select("a > strong").text()
-        anime.thumbnail_url = element.select("a > span").attr("data-lazy-style").substringAfter("-image:url(").substringBefore(");")
-        return anime
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/page/$page", headers)
+
+    // ============================== Filters ==============================
+    override fun getFilterList() = AnimeFilterList(
+        AnimeFilter.Header("هذا القسم يعمل لو كان البحث فارع"),
+        SectionFilter(),
+        AnimeFilter.Separator(),
+        AnimeFilter.Header("النوع يستخدم فى البحث و التصنيف"),
+        CategoryFilter(),
+        AnimeFilter.Separator(),
+        AnimeFilter.Header("التصنيف يعمل لو كان اقسام الموقع على 'اختر' فقط"),
+        GenreFilter(),
+    )
+
+    private class CategoryFilter : PairFilter(
+        "النوع",
+        arrayOf(
+            Pair("فيلم", "page/"),
+            Pair("مسلسل", "list/series/?page_number="),
+            Pair("انمى", "list/anime/?page_number="),
+            Pair("برنامج", "list/tv/?page_number="),
+        ),
+    )
+
+    private class SectionFilter : PairFilter(
+        "اقسام الموقع",
+        arrayOf(
+            Pair("اختر", ""),
+            Pair("جميع الافلام", "movies"),
+            Pair("افلام اجنبى", "category/أفلام/10-movies-english-افلام-اجنبي"),
+            Pair("افلام عربى", "category/أفلام/افلام-عربي-arabic-movies"),
+            Pair("افلام هندى", "category/أفلام/افلام-هندي-indian-movies"),
+            Pair("افلام تركى", "category/أفلام/افلام-تركى-turkish-films"),
+            Pair("افلام وثائقية", "category/أفلام/افلام-وثائقية-documentary-films"),
+            Pair("افلام انمي", "category/افلام-كرتون"),
+            Pair(
+                "سلاسل افلام",
+                "category/أفلام/10-movies-english-افلام-اجنبي/سلاسل-الافلام-الكاملة-full-pack",
+            ),
+            Pair("مسلسلات", "seriestv"),
+            Pair("مسلسلات اجنبى", "category/مسلسلات/5-series-english-مسلسلات-اجنبي"),
+            Pair("مسلسلات عربى", "category/مسلسلات/5-series-english-مسلسلات-اجنبي"),
+            Pair("مسلسلات هندى", "category/مسلسلات/9-series-indian-مسلسلات-هندية"),
+            Pair("مسلسلات اسيوى", "category/مسلسلات/مسلسلات-اسيوية"),
+            Pair("مسلسلات تركى", "category/مسلسلات/8-مسلسلات-تركية-turkish-series"),
+            Pair("مسلسلات وثائقية", "category/مسلسلات/مسلسلات-وثائقية-documentary-series"),
+            Pair("مسلسلات انمي", "category/مسلسلات-كرتون"),
+            Pair("NETFLIX", "production/netflix"),
+            Pair("WARNER BROS", "production/warner-bros"),
+            Pair("LIONSGATE", "production/lionsgate"),
+            Pair("DISNEY", "production/walt-disney-pictures"),
+            Pair("COLUMBIA", "production/columbia-pictures"),
+        ),
+    )
+
+    private class GenreFilter : PairFilter(
+        "التصنيف",
+        arrayOf(
+            Pair("اكشن", "اكشن-action"),
+            Pair("مغامرات", "مغامرات-adventure"),
+            Pair("خيال علمى", "خيال-علمى-science-fiction"),
+            Pair("فانتازيا", "فانتازيا-fantasy"),
+            Pair("كوميديا", "كوميديا-comedy"),
+            Pair("دراما", "دراما-drama"),
+            Pair("جريمة", "جريمة-crime"),
+            Pair("اثارة", "اثارة-thriller"),
+            Pair("رعب", "رعب-horror"),
+            Pair("سيرة ذاتية", "سيرة-ذاتية-biography"),
+            Pair("كرتون", "كرتون"),
+            Pair("انيميشين", "انيميشين-anime"),
+        ),
+    )
+
+    open class PairFilter(displayName: String, private val vals: Array<Pair<String, String>>) :
+        AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
+        fun toUriPart() = vals[state].second
     }
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/page/$page")
-
-    // ============================== filters ==============================
-
-    override fun getFilterList() = AnimeFilterList(
-        AnimeFilter.Header("فلترات البحث"),
-        SearchCategoryList(searchCategoryNames),
-        AnimeFilter.Separator(),
-        AnimeFilter.Header("اقسام الموقع (تعمل فقط اذا كان البحث فارغ)"),
-        CategoryList(categoryNames),
-    )
-
-    private class SearchCategoryList(categories: Array<String>) : AnimeFilter.Select<String>("بحث عن", categories)
-    private class CategoryList(categories: Array<String>) : AnimeFilter.Select<String>("اختر قسم", categories)
-    private data class CatUnit(val name: String, val query: String)
-    private val searchCategoryNames = getSearchCategoryList().map {
-        it.name
-    }.toTypedArray()
-    private val categoryNames = getCategoryList().map {
-        it.name
-    }.toTypedArray()
-
-    private fun getSearchCategoryList() = listOf(
-        CatUnit("فيلم", "page/"),
-        CatUnit("مسلسل", "list/series/?page_number="),
-        CatUnit("انمى", "list/anime/?page_number="),
-        CatUnit("برنامج", "list/tv/?page_number="),
-    )
-    private fun getCategoryList() = listOf(
-        CatUnit("اختر", ""),
-        CatUnit("جميع الافلام", "category/أفلام/"),
-        CatUnit("افلام اجنبى", "category/أفلام/10-movies-english-افلام-اجنبي"),
-        CatUnit("افلام عربى", "category/أفلام/افلام-عربي-arabic-movies"),
-        CatUnit("افلام هندى", "category/أفلام/افلام-هندي-indian-movies"),
-        CatUnit("افلام تركى", "category/أفلام/افلام-تركى-turkish-films"),
-        CatUnit("افلام وثائقية", "category/أفلام/افلام-وثائقية-documentary-films"),
-        CatUnit("افلام انمي", "category/افلام-كرتون"),
-        CatUnit("سلاسل افلام", "category/أفلام/10-movies-english-افلام-اجنبي/سلاسل-الافلام-الكاملة-full-pack"),
-        CatUnit("مسلسلات", "category/مسلسلات"),
-        CatUnit("مسلسلات اجنبى", "category/مسلسلات/5-series-english-مسلسلات-اجنبي"),
-        CatUnit("مسلسلات عربى", "category/مسلسلات/5-series-english-مسلسلات-اجنبي"),
-        CatUnit("مسلسلات هندى", "category/مسلسلات/9-series-indian-مسلسلات-هندية"),
-        CatUnit("مسلسلات اسيوى", "category/مسلسلات/مسلسلات-اسيوية"),
-        CatUnit("مسلسلات تركى", "category/مسلسلات/8-مسلسلات-تركية-turkish-series"),
-        CatUnit("مسلسلات وثائقية", "category/مسلسلات/مسلسلات-وثائقية-documentary-series"),
-        CatUnit("مسلسلات انمي", "category/مسلسلات-كرتون"),
-        CatUnit("NETFLIX", "production/netflix"),
-        CatUnit("WARNER BROS", "production/warner-bros"),
-        CatUnit("LIONSGATE", "production/lionsgate"),
-        CatUnit("DISNEY", "production/walt-disney-pictures"),
-        CatUnit("COLUMBIA", "production/columbia-pictures"),
-    )
-
-    // preferred quality settings
-
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val baseUrlPref = androidx.preference.EditTextPreference(screen.context).apply {
-            key = PREF_BASE_URL_KEY
-            title = PREF_BASE_URL_TITLE
-            summary = getPrefBaseUrl()
-            this.setDefaultValue(PREF_BASE_URL_DEFAULT)
-            dialogTitle = PREF_BASE_URL_DIALOG_TITLE
-            dialogMessage = PREF_BASE_URL_DIALOG_MESSAGE
-
-            setOnPreferenceChangeListener { _, newValue ->
-                try {
-                    val res = preferences.edit().putString(PREF_BASE_URL_KEY, newValue as String).commit()
-                    Toast.makeText(screen.context, "Restart Aniyomi to apply changes", Toast.LENGTH_LONG).show()
-                    res
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    false
-                }
-            }
-        }
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = PREF_QUALITY_KEY
-            title = PREF_QUALITY_TITLE
-            entries = PREF_QUALITY_ENTRIES
-            entryValues = PREF_QUALITY_ENTRIES.map { it.replace("p", "") }.toTypedArray()
-            setDefaultValue(PREF_QUALITY_DEFAULT)
+            key = "preferred_quality"
+            title = "Preferred quality"
+            entries = arrayOf(
+                "1080p",
+                "720p",
+                "480p",
+                "360p",
+                "240p",
+                "Vidbom",
+                "Vidshare",
+                "Dood",
+                "Default",
+            )
+            entryValues =
+                arrayOf("1080", "720", "480", "360", "240", "Vidbom", "Vidshare", "Dood", "Default")
+            setDefaultValue("1080")
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -352,26 +359,6 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
-        screen.addPreference(baseUrlPref)
         screen.addPreference(videoQualityPref)
-    }
-
-    private fun getPrefBaseUrl(): String = preferences.getString(PREF_BASE_URL_KEY, PREF_BASE_URL_DEFAULT)!!
-
-    // ============================= Utilities ===================================
-    companion object {
-        private const val PREF_QUALITY_KEY = "preferred_quality"
-        private const val PREF_QUALITY_TITLE = "Preferred quality"
-        private const val PREF_QUALITY_DEFAULT = "1080"
-        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p", "240p")
-
-        private const val PREF_BASE_URL_DEFAULT = "https://cdn3.wecima.watch"
-        private const val PREF_BASE_URL_KEY = "default_domain"
-        private const val PREF_BASE_URL_TITLE = "Enter default domain"
-        private const val PREF_BASE_URL_DIALOG_TITLE = "Default domain"
-        private const val PREF_BASE_URL_DIALOG_MESSAGE = "You can change the site domain from here"
-
-        private val GOVAD_REGEX = Regex("(v[aie]d[bp][aoe]?m|myvii?d|govad|segavid|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+)")
-        private val UQLOAD_REGEX = Regex("(uqload\\.[ic]om?)/(?:embed-)?([0-9a-zA-Z]+)")
     }
 }

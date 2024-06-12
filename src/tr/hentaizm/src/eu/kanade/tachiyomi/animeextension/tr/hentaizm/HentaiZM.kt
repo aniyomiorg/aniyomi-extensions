@@ -115,7 +115,11 @@ class HentaiZM : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.asJsoup())
+        val details = animeDetailsParse(response.asJsoup()).apply {
+            setUrlWithoutDomain(response.request.url.toString())
+            initialized = true
+        }
+
         return AnimesPage(listOf(details), false)
     }
 

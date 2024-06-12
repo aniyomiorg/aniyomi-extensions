@@ -19,6 +19,7 @@ import eu.kanade.tachiyomi.util.asJsoup
 import eu.kanade.tachiyomi.util.parallelCatchingFlatMap
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
@@ -64,9 +65,13 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
     // =============================== Latest ===============================
     override fun latestUpdatesParse(response: Response): AnimesPage {
         val animes = response.asJsoup()
-        val seasons = animes.select("h2:contains(derniers ajouts) + .scrollBarStyled > div").flatMap {
-            val animeUrl = it.getElementsByTag("a").attr("href")
-            fetchAnimeSeasons(animeUrl)
+        val seasons = animes.select("#containerAjoutsAnimes > div").flatMap {
+            val animeUrl = it.getElementsByTag("a").attr("href").toHttpUrl()
+            val url = animeUrl.newBuilder()
+                .removePathSegment(animeUrl.pathSize - 2)
+                .removePathSegment(animeUrl.pathSize - 3)
+                .build()
+            fetchAnimeSeasons(url.toString())
         }
         return AnimesPage(seasons, false)
     }

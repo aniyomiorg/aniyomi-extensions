@@ -40,7 +40,7 @@ class AniSama : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     override val name = "AniSama"
 
-    override val baseUrl = "https://fr.anisama.net"
+    override val baseUrl = "https://v1.anisama.net"
 
     override val lang = "fr"
 
@@ -97,8 +97,11 @@ class AniSama : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.asJsoup())
-            .apply { setUrlWithoutDomain(response.request.url.toString()) }
+        val details = animeDetailsParse(response.asJsoup()).apply {
+            setUrlWithoutDomain(response.request.url.toString())
+            initialized = true
+        }
+
         return AnimesPage(listOf(details), false)
     }
 
