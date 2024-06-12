@@ -38,7 +38,7 @@ class MyStreamExtractor(private val client: OkHttpClient, private val headers: H
             .set("accept", "*/*")
             .build()
 
-        playlistUtils.extractFromHls(
+        return playlistUtils.extractFromHls(
             streamUrl,
             masterHeaders = newHeaders,
             videoHeaders = newHeaders,
