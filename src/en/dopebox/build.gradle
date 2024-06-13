@@ -1,9 +1,0 @@
-ext {
-    extName = 'DopeBox'
-    extClass = '.DopeBox'
-    themePkg = 'dopeflix'
-    baseUrl = 'https://dopebox.to'
-    overrideVersionCode = 9
-}
-
-apply from: "$rootDir/common.gradle"

@@ -1,8 +1,0 @@
-ext {
-    extName = 'Torrentio Anime (Torrent / Debrid)'
-    extClass = '.Torrentio'
-    extVersionCode = 7
-    containsNsfw = false
-}
-
-apply from: "$rootDir/common.gradle"

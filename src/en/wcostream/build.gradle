@@ -1,7 +1,0 @@
-ext {
-    extName = 'WCOStream'
-    extClass = '.WCOStream'
-    extVersionCode = 5
-}
-
-apply from: "$rootDir/common.gradle"

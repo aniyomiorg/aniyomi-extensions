@@ -1,7 +1,0 @@
-ext {
-    extName = 'UAKino'
-    extClass = '.UAKino'
-    extVersionCode = 2
-}
-
-apply from: "$rootDir/common.gradle"

@@ -1,7 +1,0 @@
-ext {
-    extName = 'ArabAnime'
-    extClass = '.ArabAnime'
-    extVersionCode = 2
-}
-
-apply from: "$rootDir/common.gradle"

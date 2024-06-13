@@ -1,7 +1,0 @@
-ext {
-    extName = 'Wcofun'
-    extClass = '.Wcofun'
-    extVersionCode = 13
-}
-
-apply from: "$rootDir/common.gradle"

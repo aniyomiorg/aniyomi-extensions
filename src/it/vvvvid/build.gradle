@@ -1,7 +1,0 @@
-ext {
-    extName = 'VVVVID'
-    extClass = '.VVVVID'
-    extVersionCode = 1
-}
-
-apply from: "$rootDir/common.gradle"
