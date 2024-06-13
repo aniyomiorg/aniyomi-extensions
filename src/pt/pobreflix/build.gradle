@@ -1,0 +1,18 @@
+ext {
+    extName = 'Pobreflix'
+    extClass = '.Pobreflix'
+    themePkg = 'dooplay'
+    baseUrl = 'https://pobreflix1.art'
+    overrideVersionCode = 9
+    isNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"
+
+dependencies {
+    implementation(project(":lib:filemoon-extractor"))
+    implementation(project(":lib:streamwish-extractor"))
+    implementation(project(":lib:streamtape-extractor"))
+    implementation(project(":lib:playlist-utils"))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+}
