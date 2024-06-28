@@ -145,11 +145,13 @@ data class ItemDto(
                 name = if (removeAffixes && prefix.isNotBlank()) prefix else "${prefix}Movie"
             }
             EpisodeType.EPISODE -> {
-                name = if (indexNumber == null) {
+                name = if (indexNumber == null || removeAffixes) {
                     "${prefix}${this@ItemDto.name}"
                 } else {
-                    episode_number = indexNumber.toFloat()
                     "${prefix}Ep. $indexNumber - ${this@ItemDto.name}"
+                }
+                indexNumber?.let {
+                    episode_number = it.toFloat()
                 }
             }
         }
