@@ -137,15 +137,22 @@ data class ItemDto(
         epDetails: Set<String>,
         epType: EpisodeType,
         prefix: String,
+        removeAffixes: Boolean,
     ): SEpisode = SEpisode.create().apply {
         when (epType) {
             EpisodeType.MOVIE -> {
                 episode_number = 1F
-                name = "${prefix}Movie"
+                name = if (removeAffixes && prefix.isNotBlank()) prefix else "${prefix}Movie"
             }
             EpisodeType.EPISODE -> {
-                episode_number = indexNumber?.toFloat() ?: 1F
-                name = "${prefix}Ep. $indexNumber - ${this@ItemDto.name}"
+                name = if (indexNumber == null || removeAffixes) {
+                    "${prefix}${this@ItemDto.name}"
+                } else {
+                    "${prefix}Ep. $indexNumber - ${this@ItemDto.name}"
+                }
+                indexNumber?.let {
+                    episode_number = it.toFloat()
+                }
             }
         }
 

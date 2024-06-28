@@ -326,19 +326,46 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
     private fun episodeListParse(response: Response, prefix: String): List<SEpisode> {
         val httpUrl = response.request.url
         val epDetails = preferences.getEpDetails
+        val removeAffixes = preferences.removeAffixes
         return if (response.request.url.toString().startsWith("$baseUrl/Users/")) {
             val data = response.parseAs<ItemDto>()
-            listOf(data.toSEpisode(baseUrl, userId!!, apiKey!!, epDetails, EpisodeType.MOVIE, prefix))
+            listOf(
+                data.toSEpisode(
+                    baseUrl,
+                    userId!!,
+                    apiKey!!,
+                    epDetails,
+                    EpisodeType.MOVIE,
+                    prefix,
+                    removeAffixes,
+                ),
+            )
         } else if (httpUrl.fragment == "series") {
             val data = response.parseAs<ItemsDto>()
             data.items.map {
                 val name = prefix + (it.seasonName?.let { "$it - " } ?: "")
-                it.toSEpisode(baseUrl, userId!!, apiKey!!, epDetails, EpisodeType.EPISODE, name)
+                it.toSEpisode(
+                    baseUrl,
+                    userId!!,
+                    apiKey!!,
+                    epDetails,
+                    EpisodeType.EPISODE,
+                    name,
+                    removeAffixes,
+                )
             }
         } else {
             val data = response.parseAs<ItemsDto>()
             data.items.map {
-                it.toSEpisode(baseUrl, userId!!, apiKey!!, epDetails, EpisodeType.EPISODE, prefix)
+                it.toSEpisode(
+                    baseUrl,
+                    userId!!,
+                    apiKey!!,
+                    epDetails,
+                    EpisodeType.EPISODE,
+                    prefix,
+                    removeAffixes,
+                )
             }
         }.reversed()
     }
@@ -492,6 +519,9 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
         private val PREF_EP_DETAILS = arrayOf("Overview", "Runtime", "Size")
         private val PREF_EP_DETAILS_DEFAULT = emptySet<String>()
 
+        private const val PREF_REMOVE_AFFIXES = "pref_remove_affixes"
+        private const val PREF_REMOVE_AFFIXES_DEFAULT = false
+
         private const val PREF_SUB_KEY = "preferred_subLang"
         private const val PREF_SUB_DEFAULT = "eng"
 
@@ -605,6 +635,18 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
             }
         }.also(screen::addPreference)
 
+        SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_REMOVE_AFFIXES
+            title = "Remove \"Movie\" and \"Ep .\" affixes from episode names"
+            summary = "Requires refreshing of old episode lists to take effect."
+            setDefaultValue(PREF_REMOVE_AFFIXES_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val new = newValue as Boolean
+                preferences.edit().putBoolean(key, new).commit()
+            }
+        }.also(screen::addPreference)
+
         ListPreference(screen.context).apply {
             key = PREF_SUB_KEY
             title = "Preferred sub language"
@@ -703,6 +745,9 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
 
     private val SharedPreferences.getEpDetails
         get() = getStringSet(PREF_EP_DETAILS_KEY, PREF_EP_DETAILS_DEFAULT)!!
+
+    private val SharedPreferences.removeAffixes
+        get() = getBoolean(PREF_REMOVE_AFFIXES, PREF_REMOVE_AFFIXES_DEFAULT)
 
     private val SharedPreferences.getSubPref
         get() = getString(PREF_SUB_KEY, PREF_SUB_DEFAULT)!!
