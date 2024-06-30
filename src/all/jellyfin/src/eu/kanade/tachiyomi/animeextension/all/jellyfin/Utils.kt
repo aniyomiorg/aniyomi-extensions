@@ -1,24 +1,144 @@
 package eu.kanade.tachiyomi.animeextension.all.jellyfin
 
-object JellyfinConstants {
+import android.content.SharedPreferences
+import android.text.Editable
+import android.text.TextWatcher
+import android.widget.Button
+import android.widget.Toast
+import androidx.preference.EditTextPreference
+import androidx.preference.PreferenceScreen
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNamingStrategy
+import okhttp3.Response
+
+val SharedPreferences.username
+    get() = getString(Jellyfin.USERNAME_KEY, Jellyfin.USERNAME_DEFAULT)!!
+
+val SharedPreferences.password
+    get() = getString(Jellyfin.PASSWORD_KEY, Jellyfin.PASSWORD_DEFAULT)!!
+
+val SharedPreferences.apiKey
+    get() = getString(Jellyfin.APIKEY_KEY, "")!!
+
+fun SharedPreferences.clearApiKey() {
+    edit().remove(Jellyfin.APIKEY_KEY).apply()
+}
+
+fun Long.formatBytes(): String = when {
+    this >= 1_000_000_000 -> "%.2f GB".format(this / 1_000_000_000.0)
+    this >= 1_000_000 -> "%.2f MB".format(this / 1_000_000.0)
+    this >= 1_000 -> "%.2f KB".format(this / 1_000.0)
+    this > 1 -> "$this bytes"
+    this == 1L -> "$this byte"
+    else -> ""
+}
+
+object PascalCaseToCamelCase : JsonNamingStrategy {
+    override fun serialNameForJson(
+        descriptor: SerialDescriptor,
+        elementIndex: Int,
+        serialName: String,
+    ): String {
+        return serialName.replaceFirstChar { it.uppercase() }
+    }
+}
+
+val JSON = Json {
+    ignoreUnknownKeys = true
+    namingStrategy = PascalCaseToCamelCase
+}
+
+inline fun <reified T> Response.parseAs(): T {
+    return JSON.decodeFromString(body.string())
+}
+
+fun PreferenceScreen.addEditTextPreference(
+    title: String,
+    default: String,
+    summary: String,
+    dialogMessage: String? = null,
+    inputType: Int? = null,
+    validate: ((String) -> Boolean)? = null,
+    validationMessage: String? = null,
+    key: String = title,
+    restartRequired: Boolean = false,
+    onComplete: () -> Unit = {},
+) {
+    EditTextPreference(context).apply {
+        this.key = key
+        this.title = title
+        this.summary = summary
+        this.setDefaultValue(default)
+        dialogTitle = title
+        this.dialogMessage = dialogMessage
+
+        setOnBindEditTextListener { editText ->
+            if (inputType != null) {
+                editText.inputType = inputType
+            }
+
+            if (validate != null) {
+                editText.addTextChangedListener(
+                    object : TextWatcher {
+                        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+                        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+                        override fun afterTextChanged(editable: Editable?) {
+                            requireNotNull(editable)
+
+                            val text = editable.toString()
+                            val isValid = text.isBlank() || validate(text)
+
+                            editText.error = if (!isValid) validationMessage else null
+                            editText.rootView.findViewById<Button>(android.R.id.button1)
+                                ?.isEnabled = editText.error == null
+                        }
+                    },
+                )
+            }
+        }
+
+        setOnPreferenceChangeListener { _, newValue ->
+            try {
+                val text = newValue as String
+                val result = text.isBlank() || validate?.invoke(text) ?: true
+
+                if (restartRequired && result) {
+                    Toast.makeText(context, "Restart Aniyomi to apply new setting.", Toast.LENGTH_LONG).show()
+                }
+
+                onComplete()
+
+                result
+            } catch (e: Exception) {
+                e.printStackTrace()
+                false
+            }
+        }
+    }.also(::addPreference)
+}
+
+object Constants {
     val QUALITIES_LIST = arrayOf(
-        Quality(480, 360, 292000, 128000, "360p - 420 kbps"),
-        Quality(854, 480, 528000, 192000, "480p - 720 kbps"),
-        Quality(854, 480, 1308000, 192000, "480p - 1.5 Mbps"),
-        Quality(854, 480, 2808000, 192000, "480p - 3 Mbps"),
-        Quality(1280, 720, 3808000, 192000, "720p - 4 Mbps"),
-        Quality(1280, 720, 5808000, 192000, "720p - 6 Mbps"),
-        Quality(1280, 720, 7808000, 192000, "720p - 8 Mbps"),
-        Quality(1920, 1080, 9808000, 192000, "1080p - 10 Mbps"),
-        Quality(1920, 1080, 14808000, 192000, "1080p - 15 Mbps"),
-        Quality(1920, 1080, 19808000, 192000, "1080p - 20 Mbps"),
-        Quality(1920, 1080, 39808000, 192000, "1080p - 40 Mbps"),
-        Quality(1920, 1080, 59808000, 192000, "1080p - 60 Mbps"),
-        Quality(3840, 2160, 80000000, 192000, "4K - 80 Mbps"),
         Quality(3840, 2160, 120000000, 192000, "4K - 120 Mbps"),
+        Quality(3840, 2160, 80000000, 192000, "4K - 80 Mbps"),
+        Quality(1920, 1080, 59808000, 192000, "1080p - 60 Mbps"),
+        Quality(1920, 1080, 39808000, 192000, "1080p - 40 Mbps"),
+        Quality(1920, 1080, 19808000, 192000, "1080p - 20 Mbps"),
+        Quality(1920, 1080, 14808000, 192000, "1080p - 15 Mbps"),
+        Quality(1920, 1080, 9808000, 192000, "1080p - 10 Mbps"),
+        Quality(1280, 720, 7808000, 192000, "720p - 8 Mbps"),
+        Quality(1280, 720, 5808000, 192000, "720p - 6 Mbps"),
+        Quality(1280, 720, 3808000, 192000, "720p - 4 Mbps"),
+        Quality(854, 480, 2808000, 192000, "480p - 3 Mbps"),
+        Quality(854, 480, 1308000, 192000, "480p - 1.5 Mbps"),
+        Quality(854, 480, 528000, 192000, "480p - 720 kbps"),
+        Quality(480, 360, 292000, 128000, "360p - 420 kbps"),
     )
 
-    data class Quality(
+    class Quality(
         val width: Int,
         val height: Int,
         val videoBitrate: Int,
@@ -26,7 +146,7 @@ object JellyfinConstants {
         val description: String,
     )
 
-    val PREF_VALUES = arrayOf(
+    val LANG_VALUES = arrayOf(
         "aar", "abk", "ace", "ach", "ada", "ady", "afh", "afr", "ain", "aka", "akk", "ale", "alt", "amh", "ang", "anp", "apa",
         "ara", "arc", "arg", "arn", "arp", "arw", "asm", "ast", "ath", "ava", "ave", "awa", "aym", "aze", "bai", "bak", "bal",
         "bam", "ban", "bas", "bej", "bel", "bem", "ben", "ber", "bho", "bik", "bin", "bis", "bla", "bod", "bos", "bra", "bre",
@@ -55,7 +175,7 @@ object JellyfinConstants {
         "zbl", "zen", "zgh", "zha", "zho", "zul", "zun", "zza",
     )
 
-    val PREF_ENTRIES = arrayOf(
+    val LANG_ENTRIES = arrayOf(
         "Qafaraf; ’Afar Af; Afaraf; Qafar af", "Аҧсуа бызшәа Aƥsua bızšwa; Аҧсшәа Aƥsua", "بهسا اچيه", "Lwo", "Dangme",
         "Адыгабзэ; Кӏахыбзэ", "El-Afrihili", "Afrikaans", "アイヌ・イタㇰ Ainu-itak", "Akan", "𒀝𒅗𒁺𒌑", "Уна́ӈам тунуу́; Унаӈан умсуу",
         "Алтай тили", "አማርኛ Amârıñâ", "Ænglisc; Anglisc; Englisc", "Angika", "Apache languages", "العَرَبِيَّة al'Arabiyyeẗ",
