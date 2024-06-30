@@ -42,10 +42,10 @@
   {
     "name": "Aniyomi: Jellyfin",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.jellyfin",
-    "apk": "aniyomi-all.jellyfin-v14.16.apk",
+    "apk": "aniyomi-all.jellyfin-v14.17.apk",
     "lang": "all",
-    "code": 16,
-    "version": "14.16",
+    "code": 17,
+    "version": "14.17",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -54,21 +54,21 @@
         "name": "Jellyfin (1)",
         "lang": "all",
         "id": "1100359934660540567",
-        "baseUrl": "http://127.0.0.1:8096",
+        "baseUrl": "",
         "versionId": 1
       },
       {
         "name": "Jellyfin (2)",
         "lang": "all",
         "id": "5716273013801838310",
-        "baseUrl": "http://127.0.0.1:8096",
+        "baseUrl": "",
         "versionId": 1
       },
       {
         "name": "Jellyfin (3)",
         "lang": "all",
         "id": "7066619062139039107",
-        "baseUrl": "http://127.0.0.1:8096",
+        "baseUrl": "",
         "versionId": 1
       }
     ]
