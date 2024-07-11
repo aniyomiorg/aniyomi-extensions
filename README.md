@@ -1,6 +1,6 @@
 | Install | Build | Support Server |
 |---------|-------|----------------|
-| ![Click here to install this repo](aniyomi://add-repo?url=https://raw.githubusercontent.com/aniyomiorg/aniyomi-extensions/repo/index.min.json) | ![CI](https://github.com/aniyomiorg/aniyomi-extensions/workflows/CI/badge.svg?event=push) | [![Discord](https://img.shields.io/discord/841701076242530374?label=discord&labelColor=7289da&color=2c2f33&style=flat)](https://discord.gg/F32UjdJZrR) |
+| [![Install](https://img.shields.io/badge/Click%20here%20to%20install%20this%20repo-green&style=flat)](https://intradeus.github.io/http-protocol-redirector/?r=aniyomi://add-repo?url=https://raw.githubusercontent.com/aniyomiorg/aniyomi-extensions/repo/index.min.json) | ![CI](https://github.com/aniyomiorg/aniyomi-extensions/workflows/CI/badge.svg?event=push) | [![Discord](https://img.shields.io/discord/841701076242530374?label=discord&labelColor=7289da&color=2c2f33&style=flat)](https://discord.gg/F32UjdJZrR) |
 
 # ![app icon](./.github/readme-images/app-icon.png)Aniyomi Extensions
 Aniyomi is a free and open source manga reader for Android 6.0 and above.
